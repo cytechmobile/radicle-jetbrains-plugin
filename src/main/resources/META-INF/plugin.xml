@@ -9,6 +9,13 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="com.github.jchrist.radicleintellijplugin.services.MyApplicationService"/>
         <projectService serviceImplementation="com.github.jchrist.radicleintellijplugin.services.MyProjectService"/>
+
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.github.jchrist.radicleintellijplugin.config.ApplicationSettingsConfigurable"
+                id="com.github.jchrist.radicleintellijplugin.config.ApplicationSettingsConfigurable"
+                displayName="My Application Settings"/>
+
     </extensions>
 
     <applicationListeners>
