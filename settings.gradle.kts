@@ -1,1 +1,1 @@
-rootProject.name = "radicle-intellij-plugin"
+rootProject.name = "radicle-jetbrains-plugin"
