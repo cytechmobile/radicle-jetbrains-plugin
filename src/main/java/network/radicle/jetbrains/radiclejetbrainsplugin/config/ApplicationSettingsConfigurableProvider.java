@@ -1,4 +1,4 @@
-package com.github.jchrist.radicleintellijplugin.config;
+package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;

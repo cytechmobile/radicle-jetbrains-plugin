@@ -1,4 +1,4 @@
-package com.github.jchrist.radicleintellijplugin
+package network.radicle.jetbrains.radiclejetbrainsplugin
 
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.psi.xml.XmlFile

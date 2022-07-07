@@ -1,8 +1,8 @@
-package com.github.jchrist.radicleintellijplugin.listeners;
+package network.radicle.jetbrains.radiclejetbrainsplugin.listeners;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.github.jchrist.radicleintellijplugin.services.MyProjectService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.MyProjectService;
 
 public class MyProjectManagerListener implements ProjectManagerListener {
 

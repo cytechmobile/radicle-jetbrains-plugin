@@ -1,7 +1,7 @@
-package com.github.jchrist.radicleintellijplugin.services;
+package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
 import com.intellij.openapi.project.Project;
-import com.github.jchrist.radicleintellijplugin.MyBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.MyBundle;
 
 public class MyProjectService {
 

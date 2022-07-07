@@ -1,25 +1,25 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.jchrist.radicleintellijplugin</id>
-    <name>radicle-intellij-plugin</name>
-    <vendor>jchrist</vendor>
+    <id>network.radicle.jetbrains</id>
+    <name>Radicle</name>
+    <vendor>Cytech</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.jchrist.radicleintellijplugin.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.jchrist.radicleintellijplugin.services.MyProjectService"/>
+        <applicationService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.MyApplicationService"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.MyProjectService"/>
 
         <applicationConfigurable
                 parentId="tools"
-                instance="com.github.jchrist.radicleintellijplugin.config.ApplicationSettingsConfigurable"
-                id="com.github.jchrist.radicleintellijplugin.config.ApplicationSettingsConfigurable"
+                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.ApplicationSettingsConfigurable"
+                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.ApplicationSettingsConfigurable"
                 displayName="My Application Settings"/>
 
     </extensions>
 
     <applicationListeners>
-        <listener class="com.github.jchrist.radicleintellijplugin.listeners.MyProjectManagerListener"
+        <listener class="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.MyProjectManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
 </idea-plugin>

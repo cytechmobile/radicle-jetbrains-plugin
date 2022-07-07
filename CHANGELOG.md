@@ -1,6 +1,6 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
-# radicle-intellij-plugin Changelog
+# radicle-jetbrains-plugin Changelog
 
 ## [Unreleased]
 ### Added

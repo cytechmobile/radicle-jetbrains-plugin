@@ -1,12 +1,9 @@
-package com.github.jchrist.radicleintellijplugin;
+package network.radicle.jetbrains.radiclejetbrainsplugin;
 
-import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ResourceBundle;
 
 public class MyBundle extends DynamicBundle {
     public static final String BUNDLE = "messages.MyBundle";
