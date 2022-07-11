@@ -14,7 +14,7 @@
                 parentId="tools"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
-                displayName="My Application Settings"/>
+                displayName="Radicle"/>
 
     </extensions>
 
