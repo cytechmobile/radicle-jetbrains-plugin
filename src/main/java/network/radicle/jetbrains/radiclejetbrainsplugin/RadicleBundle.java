@@ -5,10 +5,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class MyBundle extends DynamicBundle {
-    public static final String BUNDLE = "messages.MyBundle";
+public class RadicleBundle extends DynamicBundle {
+    public static final String BUNDLE = "messages.RadicleBundle";
 
-    public MyBundle() {
+    public RadicleBundle() {
         super(BUNDLE);
     }
 
@@ -18,6 +18,6 @@ public class MyBundle extends DynamicBundle {
     }
 
     public static @Nls @NotNull String message(@NotNull @NonNls String key, Object @NotNull ... params) {
-        return new MyBundle().getMessage(key, null, params);
+        return new RadicleBundle().getMessage(key, null, params);
     }
 }
