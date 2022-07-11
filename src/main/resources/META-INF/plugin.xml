@@ -7,19 +7,19 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.MyApplicationService"/>
-        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.MyProjectService"/>
+        <applicationService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
 
         <applicationConfigurable
                 parentId="tools"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
-                displayName="My Application Settings"/>
+                displayName="Radicle"/>
 
     </extensions>
 
     <applicationListeners>
-        <listener class="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.MyProjectManagerListener"
+        <listener class="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
 </idea-plugin>
