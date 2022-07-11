@@ -12,8 +12,8 @@
 
         <applicationConfigurable
                 parentId="tools"
-                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.ApplicationSettingsConfigurable"
-                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.ApplicationSettingsConfigurable"
+                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
+                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
                 displayName="My Application Settings"/>
 
     </extensions>
