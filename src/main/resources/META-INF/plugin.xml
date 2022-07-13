@@ -5,6 +5,12 @@
     <vendor>Cytech</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.vcs</depends>
+    <depends>Git4Idea</depends>
+
+    <!-- Declare the default resource location for localizing menu strings -->
+    <resource-bundle>messages.RadicleBundle</resource-bundle>
+
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService"/>
@@ -16,11 +22,26 @@
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
                 groupWeight="-400"
                 displayName="Radicle"/>
-
     </extensions>
 
     <applicationListeners>
         <listener class="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
     </applicationListeners>
+
+    <actions>
+        <!-- Radicle Group, under Git -->
+        <group
+            id="Radicle.MainMenu" compact="true"
+            text="Radicle" popup="true">
+            <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
+        </group>
+        <!-- Add your actions here -->
+        <action id="Radicle.Push" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction"
+                text="Push"
+                description="Radicle push">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first" />
+<!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
+        </action>
+    </actions>
 </idea-plugin>

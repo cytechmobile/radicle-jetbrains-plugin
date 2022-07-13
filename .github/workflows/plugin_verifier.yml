@@ -1,22 +1,13 @@
-# GitHub Actions Workflow created for testing and preparing the plugin release in following steps:
-# - validate Gradle Wrapper,
-# - run 'test' and 'verifyPlugin' tasks,
-# - run Qodana inspections,
-# - run 'buildPlugin' task and prepare artifact for the further tests,
-# - run 'runPluginVerifier' task,
-# - create a draft release.
-name: Build
+name: Plugin Verifier
 on:
   workflow_dispatch:
-  push:
+  pull_request:
+    branches: [main]
 
 jobs:
-  build:
-    name: Build
+  pluginVerifier:
+    name: Plugin Verifier
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.properties.outputs.version }}
-      changelog: ${{ steps.properties.outputs.changelog }}
     steps:
       # Check out current repository
       - name: Fetch Sources
@@ -49,15 +40,25 @@ jobs:
           echo "::set-output name=version::$VERSION"
           echo "::set-output name=name::$NAME"
           echo "::set-output name=changelog::$CHANGELOG"
+          echo "::set-output name=pluginVerifierHomeDir::~/.pluginVerifier"
 
-      # Run tests
-      - name: Run Tests
-        run: ./gradlew test
+          ./gradlew listProductsReleases # prepare list of IDEs for Plugin Verifier
 
-      # Collect Tests Result of failed tests
-      - name: Collect Tests Result
-        if: ${{ failure() }}
+      # Cache Plugin Verifier IDEs
+      - name: Setup Plugin Verifier IDEs Cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.properties.outputs.pluginVerifierHomeDir }}/ides
+          key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
+
+      # Run Verify Plugin task and IntelliJ Plugin Verifier tool
+      - name: Run Plugin Verification tasks
+        run: ./gradlew runPluginVerifier -Pplugin.verifier.home.dir=${{ steps.properties.outputs.pluginVerifierHomeDir }}
+
+      # Collect Plugin Verifier Result
+      - name: Collect Plugin Verifier Result
+        if: ${{ always() }}
         uses: actions/upload-artifact@v3
         with:
-          name: tests-result
-          path: ${{ github.workspace }}/build/reports/tests
+          name: pluginVerifier-result
+          path: ${{ github.workspace }}/build/reports/pluginVerifier
