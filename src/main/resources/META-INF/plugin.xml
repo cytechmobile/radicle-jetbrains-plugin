@@ -12,8 +12,8 @@
 
         <applicationConfigurable
                 parentId="project.propVCSSupport.Mappings"
-                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
-                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
+                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
+                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
                 groupWeight="-400"
                 displayName="Radicle"/>
 

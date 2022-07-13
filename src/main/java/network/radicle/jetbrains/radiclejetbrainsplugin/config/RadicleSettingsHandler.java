@@ -2,15 +2,15 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.ide.util.PropertiesComponent;
 
-public class RadiclePathHandler {
+public class RadicleSettingsHandler {
 
     static final String PATH_KEY = "path";
 
-    public RadiclePathHandler() {
+    public RadicleSettingsHandler() {
     }
 
-    public RadiclePath loadPath() {
-        return new RadiclePath(getPath());
+    public RadicleSettings loadSettings() {
+        return new RadicleSettings(getPath());
     }
 
     public void savePath(String path) {
