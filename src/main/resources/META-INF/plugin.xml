@@ -11,9 +11,10 @@
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
 
         <applicationConfigurable
-                parentId="tools"
+                parentId="project.propVCSSupport.Mappings"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings"
+                groupWeight="-400"
                 displayName="Radicle"/>
 
     </extensions>
