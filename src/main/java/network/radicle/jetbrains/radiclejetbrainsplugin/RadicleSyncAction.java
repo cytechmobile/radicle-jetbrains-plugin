@@ -22,8 +22,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RadiclePushAction extends AnAction {
-    private static final Logger logger = LoggerFactory.getLogger(RadiclePushAction.class);
+public class RadicleSyncAction extends AnAction {
+    private static final Logger logger = LoggerFactory.getLogger(RadicleSyncAction.class);
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -54,7 +54,7 @@ public class RadiclePushAction extends AnAction {
             var repo = repos.get(0);
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 // TODO: most probably there is a better way to understand if this repo is rad enabled
-                var output = rad.inspect(repo);
+                var output = rad.sync(repo);
                 var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
                 if (!success) {
                     logger.warn("error in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
@@ -62,6 +62,7 @@ public class RadiclePushAction extends AnAction {
                     return;
                 }
                 logger.info("success in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                showNotification(project, "", "Synced project with radicle seed node", NotificationType.INFORMATION, null);
             });
         // TODO: could be useful: PersistentDefaultAccountHolder and GithubProjectDefaultAccountHolder
     }

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 
 public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
@@ -45,6 +46,11 @@ public class RadicleApplicationService {
         return executeCommand(root.getRoot().getPath(), List.of("inspect"));
     }
 
+    public ProcessOutput sync(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("sync", "--branch",
+                Objects.requireNonNull(root.getCurrentBranchName())));
+    }
+
     public ProcessOutput executeCommand(String workDir, List<String> args) {
         final var settings = settingsHandler.loadSettings();
         final var radPath = settings.getPath();
@@ -63,7 +69,8 @@ public class RadicleApplicationService {
                 // we need parent environment to be present to our rad execution
                 .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
                 // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
-                .withEnvironment("PATH", new File(radPath).getParent() + File.pathSeparator + cmdLine.getParentEnvironment().get("PATH"));
+                .withEnvironment("PATH", new File(radPath).getParent() + File.pathSeparator +
+                        cmdLine.getParentEnvironment().get("PATH"));
         try {
             return ExecUtil.execAndGetOutput(cmdLine);
         } catch (ExecutionException ex) {
