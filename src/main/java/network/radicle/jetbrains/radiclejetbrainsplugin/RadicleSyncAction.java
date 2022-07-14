@@ -42,28 +42,28 @@ public class RadicleSyncAction extends AnAction {
         }
 
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-            var project = e.getProject();
-            var gitRepoManager = GitRepositoryManager.getInstance(project);
-            var repos = gitRepoManager.getRepositories();
-            if (repos.isEmpty()) {
-                logger.warn("no git repos found!");
+        var project = e.getProject();
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        if (repos.isEmpty()) {
+            logger.warn("no git repos found!");
+            return;
+        }
+        // TODO: handle multiple repos, which might or might not be under radicle
+        // most probably, we need to check for each git repo if it's "rad enabled" and handle only those
+        var repo = repos.get(0);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            // TODO: most probably there is a better way to understand if this repo is rad enabled
+            var output = rad.sync(repo);
+            var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
+            if (!success) {
+                logger.warn("error in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                showErrorNotification(e.getProject(), "radCliError", output.getStderr());
                 return;
             }
-            // TODO: handle multiple repos, which might or might not be under radicle
-            // most probably, we need to check for each git repo if it's "rad enabled" and handle only those
-            var repo = repos.get(0);
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                // TODO: most probably there is a better way to understand if this repo is rad enabled
-                var output = rad.sync(repo);
-                var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
-                if (!success) {
-                    logger.warn("error in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-                    showErrorNotification(e.getProject(), "radCliError", output.getStderr());
-                    return;
-                }
-                logger.info("success in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-                showNotification(project, "", "Synced project with radicle seed node", NotificationType.INFORMATION, null);
-            });
+            logger.info("success in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+            showNotification(project, "", "Synced project with radicle seed node", NotificationType.INFORMATION, null);
+        });
         // TODO: could be useful: PersistentDefaultAccountHolder and GithubProjectDefaultAccountHolder
     }
 
