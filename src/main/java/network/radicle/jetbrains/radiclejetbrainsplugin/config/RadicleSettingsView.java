@@ -14,6 +14,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,28 +49,16 @@ public class RadicleSettingsView implements SearchableConfigurable {
     }
 
     private void getRadVersion() {
-        GeneralCommandLine cmdLine = null;
-        if (SystemInfo.isWindows) {
-            //TODO remove wsl
-            cmdLine = new GeneralCommandLine("wsl",radPathField.getText(),"--version");
-        } else {
-            cmdLine = new GeneralCommandLine(radPathField.getText(),"--version");
+        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        ProcessOutput output = rad.getVersion();
+        var radInfo = output.getStdout();
+        var msg = RadicleBundle.message("radNotInstalled");
+        if (!Strings.isNullOrEmpty(radInfo) && radInfo.contains("rad")) {
+            var radInfoParts = radInfo.split(" ");
+            var version = radInfoParts.length > 1 ? radInfoParts[1] : "";
+            msg = RadicleBundle.message("radVersion") + version;
         }
-        cmdLine.setCharset(StandardCharsets.UTF_8);
-        try {
-            ProcessOutput output = ExecUtil.execAndGetOutput(cmdLine);
-            var radInfo = output.getStdout();
-            var msg = RadicleBundle.message("radNotInstalled");
-            if (!Strings.isNullOrEmpty(radInfo) && radInfo.contains("rad")) {
-                var radInfoParts = radInfo.split(" ");
-                var version = radInfoParts.length > 1 ? radInfoParts[1] : "";
-                msg = RadicleBundle.message("radVersion") + version;
-            }
-            updateRadVersionLabel(msg);
-        } catch (ExecutionException ex) {
-            logger.error("unable to run rad executable",ex.getMessage());
-            updateRadVersionLabel(ex.getMessage());
-        }
+        updateRadVersionLabel(msg);
     }
 
     private void updateRadVersionLabel(String msg) {
