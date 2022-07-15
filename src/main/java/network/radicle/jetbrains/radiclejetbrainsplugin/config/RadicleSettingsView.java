@@ -42,16 +42,8 @@ public class RadicleSettingsView implements SearchableConfigurable {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.settings = this.radicleSettingsHandler.loadSettings();
         initComponents();
-        testButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                    public void run() {
-                        getRadVersion();
-                    }
-                });
-            }
-        });
+        testButton.addActionListener(e ->
+                ApplicationManager.getApplication().executeOnPooledThread(this::getRadVersion));
     }
 
     private void getRadVersion() {
