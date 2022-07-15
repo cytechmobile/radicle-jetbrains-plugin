@@ -29,17 +29,30 @@ public class RadicleProjectService {
         project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new Notifications() {
             @Override
             public void notify(@NotNull Notification notification) {
-                /* Check intellij notification for successful git push message and if rad is configured */
-                var rsh = new RadicleSettingsHandler();
-                var rs = rsh.loadSettings();
-                if (notification.getDisplayId().equals(GIT_PUSH_DISPLAY_ID) &&
-                        notification.getType().equals(NotificationType.INFORMATION) && !Strings.isNullOrEmpty(rs.getPath())) {
+                /* Check intellij notification for successful git push message */
+                if (isGitPushNotification(notification)) {
+                    var rsh = new RadicleSettingsHandler();
+                    var rs = rsh.loadSettings();
                     var pushDetails = RadiclePrePushListener.getPushDetails();
-                    var dialog = new SelectActionDialog(pushDetails);
-                    dialog.showAndGet();
+                    /* Check if the user has configured rad */
+                    if (!Strings.isNullOrEmpty(rs.getPath())) {
+                        /* Check if user has configure plugin to run automatically rad sync */
+                        var radSync = rs.getRadSync();
+                        if (radSync != null && radSync) {
+                            //TODO run rad sync command
+                        } else if(radSync == null) {
+                            var dialog = new SelectActionDialog(pushDetails);
+                            dialog.showAndGet();
+                        }
+                    }
                 }
             }
         });
+    }
+
+    private boolean isGitPushNotification(Notification notification) {
+        return notification.getDisplayId().equals(GIT_PUSH_DISPLAY_ID) &&
+                notification.getType().equals(NotificationType.INFORMATION);
     }
 
 }

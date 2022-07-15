@@ -18,6 +18,10 @@ public class RadicleSettingsHandler {
         getApplicationProperties().setValue(PATH_KEY, path);
     }
 
+    public void saveRadSync(Boolean radSync) {
+        getApplicationProperties().setValue(RAD_SYNC_KEY, radSync);
+    }
+
     private String getPath() {
         return getApplicationProperties().getValue(PATH_KEY);
     }

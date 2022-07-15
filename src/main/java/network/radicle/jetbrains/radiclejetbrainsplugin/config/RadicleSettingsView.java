@@ -34,6 +34,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
     protected JPanel mainPanel;
     private JButton testButton;
     private JLabel radVersionLabel;
+    private JCheckBox runRadSync;
     private RadicleSettings settings;
     private final RadicleSettingsHandler radicleSettingsHandler;
 
@@ -98,13 +99,15 @@ public class RadicleSettingsView implements SearchableConfigurable {
     @Override
     public boolean isModified() {
         String selectedPath = getSelectedPath();
-        return Strings.isNullOrEmpty(selectedPath) || !selectedPath.equals(this.settings.getPath());
+        Boolean radSync = getRadSyncSelected();
+        return Strings.isNullOrEmpty(selectedPath) || !selectedPath.equals(this.settings.getPath()) ||
+                !radSync.equals(this.settings.getRadSync());
     }
 
     @Override
     public void apply() throws ConfigurationException {
-        String selectedPath = getSelectedPath();
-        radicleSettingsHandler.savePath(selectedPath);
+        radicleSettingsHandler.savePath(getSelectedPath());
+        radicleSettingsHandler.saveRadSync(getRadSyncSelected());
         this.settings = this.radicleSettingsHandler.loadSettings();
     }
 
@@ -120,9 +123,15 @@ public class RadicleSettingsView implements SearchableConfigurable {
         return radPathField.getText();
     }
 
+    private Boolean getRadSyncSelected() {
+        return runRadSync.isSelected();
+    }
+
     private void initComponents() {
         radPathField.setText(this.settings.getPath());
         radPathField.addBrowseFolderListener(browseFolderTitle, "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
+        var radSync = this.settings.getRadSync();
+        runRadSync.setSelected(radSync != null ? radSync : false);
     }
 }
