@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
 import com.google.common.base.Strings;
+import com.intellij.dvcs.push.PushInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -9,14 +10,16 @@ import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.SelectActionDialog;
-import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class RadicleProjectService {
 
     private static final Logger logger = Logger.getInstance(RadicleProjectService.class);
     private Project project = null;
     private final String GIT_PUSH_DISPLAY_ID = "git.push.result";
+    public List<PushInfo> pushDetails;
 
     public RadicleProjectService(Project project) {
         logger.info(RadicleBundle.message("projectService", project.getName()));
@@ -33,7 +36,6 @@ public class RadicleProjectService {
                 if (isGitPushNotification(notification)) {
                     var rsh = new RadicleSettingsHandler();
                     var rs = rsh.loadSettings();
-                    var pushDetails = RadiclePrePushListener.getPushDetails();
                     /* Check if the user has configured rad */
                     if (!Strings.isNullOrEmpty(rs.getPath())) {
                         /* Check if user has configure plugin to run automatically rad sync */
