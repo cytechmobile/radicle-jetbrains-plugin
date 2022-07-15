@@ -2,13 +2,15 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 public class RadicleSettings {
     private String path;
+    private Boolean radSync;
 
     public RadicleSettings() {
-        this("");
+        this("",null);
     }
 
-    public RadicleSettings(String path) {
+    public RadicleSettings(String path,Boolean radSync) {
         this.path = path;
+        this.radSync = radSync;
     }
 
     public String getPath() {
@@ -19,10 +21,19 @@ public class RadicleSettings {
         this.path = path;
     }
 
+    public Boolean getRadSync() {
+        return radSync;
+    }
+
+    public void setRadSync(Boolean radSync) {
+        this.radSync = radSync;
+    }
+
     @Override
     public String toString() {
-        return "RadiclePath{" +
+        return "RadicleSettings{" +
                 "path='" + path + '\'' +
+                ", radSync=" + radSync +
                 '}';
     }
 }
