@@ -4,7 +4,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.steps;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
-import com.intellij.remoterobot.fixtures.JListFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.Keyboard;
 import kotlin.Unit;
@@ -22,24 +21,27 @@ import static com.intellij.remoterobot.utils.UtilsKt.hasSingleComponent;
 import static java.time.Duration.ofSeconds;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture.byTitle;
 
-public class JavaExampleSteps {
+public class CommonSteps {
     final private RemoteRobot remoteRobot;
     final private Keyboard keyboard;
 
-    public JavaExampleSteps(RemoteRobot remoteRobot) {
+    public CommonSteps(RemoteRobot remoteRobot) {
         this.remoteRobot = remoteRobot;
         this.keyboard = new Keyboard(remoteRobot);
     }
 
-    public void createNewCommandLineProject() {
-        step("Create New Project", () -> {
+    public void importProjectFromVCS() {
+        step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(10));
-            welcomeFrame.createNewProjectLink().click();
+            welcomeFrame.importProjectLink().click();
 
-            final DialogFixture newProjectDialog = welcomeFrame.find(DialogFixture.class, byTitle("New Project"), Duration.ofSeconds(20));
-            newProjectDialog.find(JListFixture.class, byXpath("//div[@class='JBList']")).clickItem("New Project", true);
-            newProjectDialog.findText("Java").click();
-            newProjectDialog.button("Create").click();
+            final DialogFixture importProjectDialog = welcomeFrame.find(DialogFixture.class, byTitle("Get from Version Control"), Duration.ofSeconds(20));
+            final Locator urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
+            remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
+            final Keyboard keyboard = new Keyboard(remoteRobot);
+            keyboard.enterText("https://github.com/radicle-dev/radicle-cli");
+
+            importProjectDialog.button("Clone").click();
         });
     }
 
