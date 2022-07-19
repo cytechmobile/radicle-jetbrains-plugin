@@ -18,7 +18,7 @@ public class RadicleSettingsHandler {
         getApplicationProperties().setValue(PATH_KEY, path);
     }
 
-    public void saveRadSync(Boolean radSync) {
+    public void saveRadSync(String radSync) {
         getApplicationProperties().setValue(RAD_SYNC_KEY, radSync);
     }
 
@@ -26,8 +26,8 @@ public class RadicleSettingsHandler {
         return getApplicationProperties().getValue(PATH_KEY);
     }
 
-    private Boolean getRadSync() {
-        return getApplicationProperties().getBoolean(RAD_SYNC_KEY);
+    private String getRadSync() {
+        return getApplicationProperties().getValue(RAD_SYNC_KEY);
     }
 
     private PropertiesComponent getApplicationProperties() {

@@ -1,10 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.google.common.base.Strings;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NonNls;
@@ -20,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.nio.charset.StandardCharsets;
 
 public class RadicleSettingsView implements SearchableConfigurable {
 
@@ -62,11 +55,8 @@ public class RadicleSettingsView implements SearchableConfigurable {
     }
 
     private void updateRadVersionLabel(String msg) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-                radVersionLabel.setText(msg);
-            }
-        }, ModalityState.any());
+        ApplicationManager.getApplication().invokeLater(() ->
+                radVersionLabel.setText(msg), ModalityState.any());
     }
 
     @Override @NotNull @NonNls
@@ -90,14 +80,14 @@ public class RadicleSettingsView implements SearchableConfigurable {
         String selectedPath = getSelectedPath();
         Boolean radSync = getRadSyncSelected();
         return Strings.isNullOrEmpty(selectedPath) || !selectedPath.equals(this.settings.getPath()) ||
-                !radSync.equals(this.settings.getRadSync());
+                !radSync.equals(Boolean.parseBoolean(this.settings.getRadSync()));
     }
 
     @Override
     public void apply() throws ConfigurationException {
         radicleSettingsHandler.savePath(getSelectedPath());
-        radicleSettingsHandler.saveRadSync(getRadSyncSelected());
-        this.settings = this.radicleSettingsHandler.loadSettings();
+        radicleSettingsHandler.saveRadSync(getRadSyncSelected().toString());
+        settings = this.radicleSettingsHandler.loadSettings();
     }
 
     @Override
@@ -121,6 +111,6 @@ public class RadicleSettingsView implements SearchableConfigurable {
         radPathField.addBrowseFolderListener(browseFolderTitle, "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
         var radSync = this.settings.getRadSync();
-        runRadSync.setSelected(radSync != null ? radSync : false);
+        runRadSync.setSelected(!Strings.isNullOrEmpty(radSync) && Boolean.parseBoolean(radSync));
     }
 }

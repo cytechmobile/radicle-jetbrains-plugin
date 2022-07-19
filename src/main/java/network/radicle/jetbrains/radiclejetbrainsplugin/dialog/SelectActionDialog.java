@@ -1,8 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
 import com.intellij.dvcs.push.PushInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,23 +16,38 @@ import java.util.List;
 public class SelectActionDialog extends DialogWrapper {
     private JPanel contentPane;
     private JLabel allowRadLabel;
-    private List<PushInfo> pushInfoList;
+    private JRadioButton once;
+    private JRadioButton rememberMe;
+    private List<PushInfo> pushDetails;
+    private final RadicleSettingsHandler radicleSettingsHandler;
+    private final Project project;
 
-
-    public SelectActionDialog(List<PushInfo> pushInfoList) {
+    public SelectActionDialog(@NotNull Project project, List<PushInfo> pushInfoList) {
         super(true);
-        this.pushInfoList = pushInfoList;
+        this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.pushDetails = pushInfoList;
+        this.project = project;
         init();
     }
 
     @Override
     protected void doOKAction() {
         super.doOKAction();
+        if (rememberMe.isSelected()) {
+            radicleSettingsHandler.saveRadSync(Boolean.toString(true));
+        } else if (once.isSelected()) {
+            radicleSettingsHandler.saveRadSync(Boolean.toString(false));
+        }
+        if (rememberMe.isSelected() || once.isSelected()) {
+            ApplicationManager.getApplication().executeOnPooledThread(() ->
+                    RadicleSyncAction.sync(pushDetails, project));
+        }
     }
 
     @Override
     public void doCancelAction() {
         super.doCancelAction();
+        radicleSettingsHandler.saveRadSync(Boolean.toString(false));
     }
 
     @NotNull
@@ -41,10 +60,17 @@ public class SelectActionDialog extends DialogWrapper {
     @Override
     protected void init() {
         super.init();
-        setTitle(RadicleBundle.message("radDetected"));
+        once.addActionListener(e -> {
+            rememberMe.setSelected(false);
+            setOKActionEnabled(true);
+        });
+        rememberMe.addActionListener(e -> {
+            once.setSelected(false);
+            setOKActionEnabled(true);
+        });
         allowRadLabel.setText(RadicleBundle.message("allowRad"));
-        setOKButtonText(RadicleBundle.message("always"));
-        setCancelButtonText(RadicleBundle.message("justOnce"));
+        setTitle(RadicleBundle.message("radDetected"));
+        setOKActionEnabled(!rememberMe.isEnabled() && !once.isEnabled());
     }
 
     @Override
