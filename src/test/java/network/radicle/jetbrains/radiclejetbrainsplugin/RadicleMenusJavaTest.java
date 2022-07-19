@@ -66,30 +66,21 @@ public class RadicleMenusJavaTest {
                 keyboard.hotKey(VK_SHIFT, VK_META, VK_A);
                 keyboard.enterText("Radicle");
                 keyboard.enter();
-
             }else {
                 actionMenu(remoteRobot, "Git").click();
                 actionMenuItem(remoteRobot, "Radicle").isShowing();
             }
 
         });
-//        step("Launch the application", () -> {
-//            waitFor(Duration.ofSeconds(20), () -> !editor
-//                    .find(JButtonFixture.class, byXpath("//div[@class='TrafficLightButton']"))
-//                    .hasText("Analyzing..."));
-//            waitFor(Duration.ofSeconds(10), () -> editor.getGutter().getIcons().size() > 0);
-//            final GutterIcon runIcon = editor.getGutter().getIcons()
-//                    .stream()
-//                    .filter((it) -> it.getDescription().contains("run.svg"))
-//                    .findFirst()
-//                    .orElseThrow(() -> {
-//                        throw new IllegalStateException("No Run icon presents in the gutter");
-//                    });
-//            runIcon.click();
-//            idea.find(CommonContainerFixture.class, byXpath("//div[@class='HeavyWeightWindow']"), Duration.ofSeconds(4))
-//                    .button(byXpath("//div[@disabledicon='execute.svg']"), Duration.ofSeconds(4))
-//                    .click();
-//        });
+
+        step("Ensure Radicle sub-menu items (sync, push, init) show", () -> {
+            //TODO: implement
+        });
+
+        step("Ensure Radicle toolbar actions show", () -> {
+            //TODO: implement
+        });
+
 //        step("Check console output", () -> {
 //            final Locator locator = byXpath("//div[@class='ConsoleViewImpl']");
 //            waitFor(ofMinutes(1), () -> idea.findAll(ContainerFixture.class, locator).size() > 0);
