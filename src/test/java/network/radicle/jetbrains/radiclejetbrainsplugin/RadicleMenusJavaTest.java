@@ -68,7 +68,7 @@ public class RadicleMenusJavaTest {
                 keyboard.enter();
             }else {
                 actionMenu(remoteRobot, "Git").click();
-                actionMenuItem(remoteRobot, "Radicle").isShowing();
+                actionMenu(remoteRobot, "Radicle").isShowing();
             }
 
         });
