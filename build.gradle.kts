@@ -27,7 +27,7 @@ repositories {
     }
 }
 
-var remoteRobotVersion = "0.11.14"
+var remoteRobotVersion = "0.11.15"
 
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
@@ -128,6 +128,7 @@ tasks {
         systemProperty("jb.consents.confirmation.enabled", "false")
         systemProperty("ide.mac.file.chooser.native", "false")
         systemProperty("apple.laf.useScreenMenuBar", "false")
+        systemProperty("jbScreenMenuBar.enabled", "false")
         systemProperty("idea.trust.all.projects", "true")
         systemProperty("ide.show.tips.on.startup.default.value", "false")
         //    systemProperty "eap.require.license", "true"

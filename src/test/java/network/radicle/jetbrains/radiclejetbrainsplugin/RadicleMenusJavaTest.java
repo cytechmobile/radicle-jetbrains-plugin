@@ -60,17 +60,8 @@ public class RadicleMenusJavaTest {
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
         step("Ensure Radicle sub-menu category is visible", () -> {
-
-            // on Mac, menu bar is not really supported
-            if (remoteRobot.isMac()) {
-                keyboard.hotKey(VK_SHIFT, VK_META, VK_A);
-                keyboard.enterText("Radicle");
-                keyboard.enter();
-            }else {
-                actionMenu(remoteRobot, "Git").click();
-                actionMenu(remoteRobot, "Radicle").isShowing();
-            }
-
+            actionMenu(remoteRobot, "Git").click();
+            actionMenu(remoteRobot, "Radicle").isShowing();
         });
 
         step("Ensure Radicle sub-menu items (sync, push, init) show", () -> {
