@@ -5,19 +5,22 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 public class RadicleBundle extends DynamicBundle {
     public static final String BUNDLE = "messages.RadicleBundle";
+
+    public static final RadicleBundle INSTANCE = new RadicleBundle();
 
     public RadicleBundle() {
         super(BUNDLE);
     }
 
-    @Override
-    public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-        return super.getMessage(key, params);
+    public static @Nls @NotNull String message(@NotNull @NonNls String key, Object @NotNull ... params) {
+        return INSTANCE.messageOrDefault(key, key, params);
     }
 
-    public static @Nls @NotNull String message(@NotNull @NonNls String key, Object @NotNull ... params) {
-        return new RadicleBundle().getMessage(key, null, params);
+    public static Supplier<String> lazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
+        return () -> message(key, params);
     }
 }

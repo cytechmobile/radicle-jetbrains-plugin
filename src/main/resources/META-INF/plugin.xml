@@ -22,6 +22,8 @@
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
                 groupWeight="-400"
                 displayName="Radicle"/>
+        <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
+        <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
     </extensions>
 
     <applicationListeners>
@@ -37,9 +39,8 @@
             <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
         </group>
         <!-- Add your actions here -->
-        <action id="Radicle.Push" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction"
-                text="Push"
-                description="Radicle push">
+        <action id="Radicle.Sync" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction"
+                text="Sync" description="Radicle sync">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
 <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
