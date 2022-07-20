@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class RadicleSettingsView implements SearchableConfigurable {
 
@@ -37,26 +40,40 @@ public class RadicleSettingsView implements SearchableConfigurable {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.settings = this.radicleSettingsHandler.loadSettings();
         initComponents();
-        testButton.addActionListener(e ->
-                ApplicationManager.getApplication().executeOnPooledThread(this::getRadVersion));
     }
 
-    private void getRadVersion() {
+    private String getRadVersion() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         ProcessOutput output = rad.getVersion();
         var radInfo = output.getStdout();
-        var msg = RadicleBundle.message("radNotInstalled");
         if (!Strings.isNullOrEmpty(radInfo) && radInfo.contains("rad")) {
             var radInfoParts = radInfo.split(" ");
-            var version = radInfoParts.length > 1 ? radInfoParts[1] : "";
-            msg = RadicleBundle.message("radVersion") + version;
+            return radInfoParts.length > 1 ? radInfoParts[1] : "";
         }
-        updateRadVersionLabel(msg);
+        return "";
     }
 
-    private void updateRadVersionLabel(String msg) {
-        ApplicationManager.getApplication().invokeLater(() ->
-                radVersionLabel.setText(msg), ModalityState.any());
+    private String getRadPath() {
+        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        ProcessOutput output = rad.getRadPath();
+        var pathInfo = output.getStdoutLines();
+        /* which command return empty and where command return INFO if the os cant find the program path */
+        if (pathInfo.size() > 0 && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
+            return pathInfo.get(0);
+        }
+        return "";
+    }
+
+    private void updateRadVersionLabel() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var msg = RadicleBundle.message("radNotInstalled");
+            var version = getRadVersion();
+            if (!Strings.isNullOrEmpty(version)) {
+                msg = RadicleBundle.message("radVersion") + version;
+            }
+            String finalMsg = msg;
+            ApplicationManager.getApplication().invokeLater(() -> radVersionLabel.setText(finalMsg), ModalityState.any());
+        });
     }
 
     @Override @NotNull @NonNls
@@ -79,7 +96,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
     public boolean isModified() {
         String selectedPath = getSelectedPath();
         Boolean radSync = getRadSyncSelected();
-        return Strings.isNullOrEmpty(selectedPath) || !selectedPath.equals(this.settings.getPath()) ||
+        return !selectedPath.equals(this.settings.getPath()) ||
                 !radSync.equals(Boolean.parseBoolean(this.settings.getRadSync()));
     }
 
@@ -88,6 +105,40 @@ public class RadicleSettingsView implements SearchableConfigurable {
         radicleSettingsHandler.savePath(getSelectedPath());
         radicleSettingsHandler.saveRadSync(getRadSyncSelected().toString());
         settings = this.radicleSettingsHandler.loadSettings();
+    }
+
+    private void initListeners() {
+        testButton.addActionListener(e ->
+                ApplicationManager.getApplication().executeOnPooledThread(this::updateRadVersionLabel));
+
+        radPathField.getTextField().addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (radPathField.getText().contains(RadicleBundle.message("autoDetected"))) {
+                    radPathField.setText("");
+                    radPathField.getTextField().setForeground(JBColor.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (getSelectedPath().isEmpty()) {
+                    updateTextFieldPlaceholder();
+                }
+            }
+        });
+    }
+
+    private void updateTextFieldPlaceholder() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            String path = getRadPath();
+            if (!Strings.isNullOrEmpty(path) && radPathField != null) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    radPathField.getTextField().setForeground(JBColor.GRAY);
+                    radPathField.setText(RadicleBundle.message("autoDetected") + path);
+                }, ModalityState.any());
+            }
+        });
     }
 
     @Override
@@ -99,7 +150,11 @@ public class RadicleSettingsView implements SearchableConfigurable {
     }
 
     private String getSelectedPath() {
-        return radPathField.getText();
+        var path = radPathField.getText();
+        if (path.contains(RadicleBundle.message("autoDetected"))) {
+            path = path.split(":")[1].trim();
+        }
+        return path;
     }
 
     private Boolean getRadSyncSelected() {
@@ -112,5 +167,10 @@ public class RadicleSettingsView implements SearchableConfigurable {
                 new FileChooserDescriptor(true, false, false, false, false, false));
         var radSync = this.settings.getRadSync();
         runRadSync.setSelected(!Strings.isNullOrEmpty(radSync) && Boolean.parseBoolean(radSync));
+        initListeners();
+        if (Strings.isNullOrEmpty(getSelectedPath())) {
+            updateTextFieldPlaceholder();
+        }
+
     }
 }

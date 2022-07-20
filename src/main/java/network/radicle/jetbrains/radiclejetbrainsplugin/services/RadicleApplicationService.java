@@ -30,6 +30,10 @@ public class RadicleApplicationService {
         this.settingsHandler = radicleSettingsHandler;
     }
 
+    public ProcessOutput getRadPath() {
+        return executeCommand(".",".", List.of("which","rad"));
+    }
+
     public ProcessOutput getVersion() {
         return executeCommand(".", List.of("--version"));
     }
