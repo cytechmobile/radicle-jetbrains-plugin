@@ -44,5 +44,13 @@
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
 <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
+
+        <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction"
+                text="Rad Sync" description="Radicle sync from toolbar">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
+        </action>
+
+
+
     </actions>
 </idea-plugin>
