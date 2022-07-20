@@ -50,7 +50,10 @@
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
         </action>
 
-
+        <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullAction"
+                text="Rad Pull" description="Radicle pull from toolbar">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Sync.toolbar"/>
+        </action>
 
     </actions>
 </idea-plugin>
