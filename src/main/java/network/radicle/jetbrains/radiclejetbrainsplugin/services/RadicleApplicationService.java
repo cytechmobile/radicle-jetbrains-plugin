@@ -50,6 +50,10 @@ public class RadicleApplicationService {
         return executeCommand(root.getRoot().getPath(), List.of("inspect"));
     }
 
+    public ProcessOutput pull(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("pull"));
+    }
+
     public ProcessOutput sync(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("sync", "--branch",
                 Objects.requireNonNull(root.getCurrentBranchName())));
