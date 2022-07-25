@@ -24,6 +24,7 @@
                 displayName="Radicle"/>
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.CloneDialog"/>
     </extensions>
 
     <applicationListeners>
@@ -45,14 +46,25 @@
 <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
+        <action id="Radicle.Clone" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleCloneAction"
+                text="Clone" description="Radicle clone">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first" />
+            <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
+        </action>
+
         <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction"
-                text="Rad Sync" description="Radicle sync from toolbar">
+                text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
         </action>
 
-        <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullAction"
-                text="Rad Pull" description="Radicle pull from toolbar">
+        <action id="Radicle.Push.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction"
+                text="Rad Push" description="Radicle push from toolbar" icon="/icons/rad_push.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Sync.toolbar"/>
+        </action>
+
+        <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullAction"
+                text="Rad Pull" description="Radicle pull from toolbar" icon="/icons/rad_pull.svg">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Push.toolbar"/>
         </action>
 
     </actions>
