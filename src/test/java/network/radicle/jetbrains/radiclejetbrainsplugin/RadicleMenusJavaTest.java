@@ -40,6 +40,7 @@ public class RadicleMenusJavaTest {
     public void closeProject(final RemoteRobot remoteRobot) {
         step("Close the project", () -> {
             if (remoteRobot.isMac()) {
+                keyboard.hotKey(VK_ESCAPE);
                 keyboard.hotKey(VK_SHIFT, VK_META, VK_A);
                 keyboard.enterText("Close Project");
                 keyboard.enter();
