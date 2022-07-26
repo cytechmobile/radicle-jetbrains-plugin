@@ -53,6 +53,7 @@ public class RadicleMenusJavaTest {
 
     @Test
     @Video
+    @Tag("video")
     void initialiseRadicleProject(final RemoteRobot remoteRobot) {
         sharedSteps.importProjectFromVCS();
         sharedSteps.closeTipOfTheDay();

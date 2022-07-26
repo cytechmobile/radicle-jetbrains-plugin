@@ -35,7 +35,7 @@ jobs:
       - name: Tests
         run: |
           export DISPLAY=:99.0
-          gradle :test
+          gradle :check
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
@@ -74,7 +74,7 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
-        run: gradle :test
+        run: gradle :check
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
@@ -111,7 +111,7 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
-        run: gradle :test
+        run: gradle :check
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/

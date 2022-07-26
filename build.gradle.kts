@@ -141,7 +141,9 @@ tasks {
 
         // enable encryption on test side when use remote machine
         // systemProperty "robot.encryption.password", "my super secret"
-        useJUnitPlatform()
+        useJUnitPlatform(){
+            excludeTags("video")
+        }
     }
 
 
@@ -159,4 +161,16 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
+}
+
+
+
+val uiTestTask = tasks.register<Test>("uiTest") {
+    useJUnitPlatform {
+        includeTags("video")
+    }
+}
+
+tasks.check {
+    dependsOn(uiTestTask)
 }
