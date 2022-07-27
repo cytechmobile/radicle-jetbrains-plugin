@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.SelectActionDialog;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RadicleProjectService {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
@@ -23,7 +25,7 @@ public class RadicleProjectService {
     private Project project = null;
     private final String GIT_PUSH_DISPLAY_ID = "git.push.result";
     public List<PushInfo> pushDetails;
-    public boolean forceRadSync;
+    public boolean forceRadPush;
 
     public RadicleProjectService(Project project) {
         logger.info(RadicleBundle.message("projectService", project.getName()));
@@ -42,14 +44,19 @@ public class RadicleProjectService {
                     var rs = rsh.loadSettings();
                     /* Check if the user has configured rad */
                     if (!Strings.isNullOrEmpty(rs.getPath())) {
-                        /* Check if user has configured plugin to run automatically */
+                        var repos = pushDetails.stream().map(detail -> (GitRepository) detail.getRepository())
+                                .collect(Collectors.toList());
                         var radSync = rs.getRadSync();
-                        if (forceRadSync || (Boolean.parseBoolean(radSync))) {
-                            forceRadSync = false;
+                        if (forceRadPush) {
+                            forceRadPush = false;
                             ApplicationManager.getApplication().executeOnPooledThread(() ->
-                                    RadicleSyncAction.sync(pushDetails, project));
-                        } else if (Strings.isNullOrEmpty(radSync)) {
-                            var dialog = new SelectActionDialog(project, pushDetails);
+                                    RadiclePushAction.push(repos, project));
+                        /* Check if user has configured plugin to run automatically sync action */
+                        } else if (Boolean.parseBoolean(radSync)) {
+                            ApplicationManager.getApplication().executeOnPooledThread(() ->
+                                    RadicleSyncAction.sync(repos, project));
+                        } else {
+                            var dialog = new SelectActionDialog(project, repos);
                             dialog.showAndGet();
                         }
                     }

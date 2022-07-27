@@ -24,7 +24,6 @@
                 displayName="Radicle"/>
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
-        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.CloneDialog"/>
     </extensions>
 
     <applicationListeners>
@@ -41,13 +40,19 @@
         </group>
         <!-- Add your actions here -->
         <action id="Radicle.Sync" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction"
-                text="Sync" description="Radicle sync">
+                text="Synchronize" description="Radicle sync">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
 <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
-        <action id="Radicle.Clone" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleCloneAction"
-                text="Clone" description="Radicle clone">
+        <action id="Radicle.Pull" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullAction"
+                text="Pull" description="Radicle pull">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first" />
+            <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
+        </action>
+
+        <action id="Radicle.Push" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction"
+                text="Push" description="Radicle push">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>

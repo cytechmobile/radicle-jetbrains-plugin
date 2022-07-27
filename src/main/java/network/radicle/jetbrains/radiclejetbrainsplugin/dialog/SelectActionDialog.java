@@ -1,9 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
-import com.intellij.dvcs.push.PushInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -18,14 +18,14 @@ public class SelectActionDialog extends DialogWrapper {
     private JLabel allowRadLabel;
     private JRadioButton once;
     private JRadioButton rememberMe;
-    private List<PushInfo> pushDetails;
+    private List<GitRepository> repos;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private final Project project;
 
-    public SelectActionDialog(@NotNull Project project, List<PushInfo> pushInfoList) {
+    public SelectActionDialog(@NotNull Project project, List<GitRepository> repos) {
         super(true);
         this.radicleSettingsHandler = new RadicleSettingsHandler();
-        this.pushDetails = pushInfoList;
+        this.repos = repos;
         this.project = project;
         init();
     }
@@ -40,7 +40,7 @@ public class SelectActionDialog extends DialogWrapper {
         }
         if (rememberMe.isSelected() || once.isSelected()) {
             ApplicationManager.getApplication().executeOnPooledThread(() ->
-                    RadicleSyncAction.sync(pushDetails, project));
+                    RadicleSyncAction.sync(repos, project));
         }
     }
 
