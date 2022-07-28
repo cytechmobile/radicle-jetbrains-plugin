@@ -1,11 +1,11 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +39,8 @@ public class SelectActionDialog extends DialogWrapper {
             radicleSettingsHandler.saveRadSync(Boolean.toString(false));
         }
         if (rememberMe.isSelected() || once.isSelected()) {
-            ApplicationManager.getApplication().executeOnPooledThread(() ->
-                    RadicleSyncAction.sync(repos, project));
+            var basicAction = new BasicAction(new RadSync());
+            basicAction.perform(repos,project);
         }
     }
 

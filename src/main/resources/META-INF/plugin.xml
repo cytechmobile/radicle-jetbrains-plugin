@@ -39,35 +39,35 @@
             <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
         </group>
         <!-- Add your actions here -->
-        <action id="Radicle.Sync" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction"
+        <action id="Radicle.Sync" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncEvent"
                 text="Synchronize" description="Radicle sync">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
 <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
-        <action id="Radicle.Pull" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullAction"
+        <action id="Radicle.Pull" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullEvent"
                 text="Pull" description="Radicle pull">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
-        <action id="Radicle.Push" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction"
+        <action id="Radicle.Push" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushEvent"
                 text="Push" description="Radicle push">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
-        <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncAction"
+        <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncEvent"
                 text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
         </action>
 
-        <action id="Radicle.Push.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushAction"
+        <action id="Radicle.Push.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushEvent"
                 text="Rad Push" description="Radicle push from toolbar" icon="/icons/rad_push.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Sync.toolbar"/>
         </action>
 
-        <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullAction"
+        <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullEvent"
                 text="Rad Pull" description="Radicle pull from toolbar" icon="/icons/rad_pull.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Push.toolbar"/>
         </action>

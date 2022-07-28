@@ -1,17 +1,17 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin;
+package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
 import com.google.common.base.Strings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
@@ -23,51 +23,56 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RadicleSyncAction extends AnAction {
-    private static final Logger logger = LoggerFactory.getLogger(RadicleSyncAction.class);
+public class BasicAction {
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
+    private static final Logger logger = LoggerFactory.getLogger(BasicAction.class);
+    private RadAction action;
+
+    public BasicAction(RadAction action) {
+        this.action = action;
+    }
+
+    public static boolean isCliPathConfigured(@NotNull AnActionEvent e) {
         logger.debug("action performed: {}", e);
         var rsh = new RadicleSettingsHandler();
         var rs = rsh.loadSettings();
         logger.debug("settings are: {}", rs);
-
         // check if rad cli is configured
         if (Strings.isNullOrEmpty(rs.getPath())) {
             logger.warn("no rad cli path configured");
             final var project = e.getProject();
             showNotification(e.getProject(), "radCliPathMissing", "radCliPathMissingText", NotificationType.WARNING,
                     List.of(new ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
-            return;
+            return false;
         }
+        return true;
+    }
+
+    public static boolean hasGitRepos(@NotNull AnActionEvent e) {
         var project = e.getProject();
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         if (repos.isEmpty()) {
             logger.warn("no git repos found!");
-            return;
+            return false;
         }
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            sync(repos, project);
-        });
+        return true;
     }
 
-    public static void sync(List<GitRepository> repos, Project project) {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        for (var repo : repos) {
-            // TODO: most probably there is a better way to understand if this repo is rad enabled
-            var output = rad.sync(repo);
-            var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
-            if (!success) {
-                logger.warn("error in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-                showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
-                return;
+    public void perform (List<GitRepository> repos, Project project) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            for (var repo : repos) {
+                var output = action.run(repo);
+                var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
+                if (!success) {
+                    logger.warn(action.getLoggerErrorMessage() + " exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                    showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
+                    return;
+                }
+                logger.info(action.getLoggerErrorMessage() + " exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
             }
-            logger.info("success in rad inspect: exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-            showNotification(project, "", "Synced project with radicle seed node", NotificationType.INFORMATION, null);
-        }
-        // TODO: could be useful: PersistentDefaultAccountHolder and GithubProjectDefaultAccountHolder
+        });
     }
 
     public static class ConfigureRadCliNotificationAction extends NotificationAction {
@@ -103,4 +108,6 @@ public class RadicleSyncAction extends AnAction {
         }
         notif.notify(project);
     }
+
+
 }
