@@ -5,7 +5,7 @@ import git4idea.repo.GitRepository;
 
 public interface RadAction {
     ProcessOutput run(GitRepository repo);
-    String getLoggerErrorMessage();
-    String getLoggerSuccessMessage();
+    String getErrorMessage();
+    String getSuccessMessage();
     String getNotificationSuccessMessage();
 }

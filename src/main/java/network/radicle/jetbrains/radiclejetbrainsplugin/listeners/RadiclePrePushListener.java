@@ -17,7 +17,6 @@ public class RadiclePrePushListener implements PrePushHandler {
 
     @Override
     public @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
-        //TODO what i have to return here
         return "";
     }
 

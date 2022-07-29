@@ -40,19 +40,19 @@
         </group>
         <!-- Add your actions here -->
         <action id="Radicle.Sync" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncEvent"
-                text="Synchronize" description="Radicle sync">
-            <add-to-group group-id="Radicle.MainMenu" anchor="first" />
+                text="Synchronize" description="Radicle sync" icon="/icons/radicle_resize.svg">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first"  />
 <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
         <action id="Radicle.Pull" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePullEvent"
-                text="Pull" description="Radicle pull">
+                text="Pull" description="Radicle pull" icon="/icons/radicle_resize.svg">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
         <action id="Radicle.Push" class="network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushEvent"
-                text="Push" description="Radicle push">
+                text="Push" description="Radicle push" icon="/icons/radicle_resize.svg">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>

@@ -65,11 +65,11 @@ public class BasicAction {
                 var output = action.run(repo);
                 var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
                 if (!success) {
-                    logger.warn(action.getLoggerErrorMessage() + " exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                    logger.warn(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
                     showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
                     return;
                 }
-                logger.info(action.getLoggerErrorMessage() + " exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                logger.info(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
                 showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
             }
         });
