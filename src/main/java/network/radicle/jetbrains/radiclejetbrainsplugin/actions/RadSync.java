@@ -11,8 +11,7 @@ public class RadSync implements RadAction {
     @Override
     public ProcessOutput run (GitRepository repo) {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        var output = rad.sync(repo);
-        return output;
+        return rad.sync(repo);
     }
 
     @Override

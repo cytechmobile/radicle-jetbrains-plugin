@@ -11,8 +11,7 @@ public class RadPull implements RadAction {
     @Override
     public ProcessOutput run (GitRepository repo) {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        var output = rad.pull(repo);
-        return output;
+        return rad.pull(repo);
     }
 
     @Override
