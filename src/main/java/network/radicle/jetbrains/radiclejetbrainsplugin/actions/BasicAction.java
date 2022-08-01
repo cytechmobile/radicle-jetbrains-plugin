@@ -69,7 +69,7 @@ public class BasicAction {
                     showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
                     return;
                 }
-                logger.info(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+                logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
                 showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
             }
         });
