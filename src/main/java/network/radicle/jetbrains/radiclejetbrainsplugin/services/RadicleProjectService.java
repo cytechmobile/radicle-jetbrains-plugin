@@ -5,12 +5,13 @@ import com.intellij.dvcs.push.PushInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.TestDataProvider;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadPush;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadSync;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushEvent;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncEvent;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.SelectActionDialog;
 import org.jetbrains.annotations.NotNull;
@@ -49,12 +50,16 @@ public class RadicleProjectService {
                         var radSync = rs.getRadSync();
                         if (forceRadPush) {
                             forceRadPush = false;
-                            var basicAction = new BasicAction(new RadPush());
-                            basicAction.perform(repos, project);
+                            //TODO Is this right ?
+                            var pushEvent = new RadiclePushEvent();
+                            var pushAction = AnActionEvent.createFromAnAction(pushEvent,null,"somewhere",new TestDataProvider(project));
+                            pushEvent.actionPerformed(pushAction);
                             /* Check if user has configured plugin to run automatically sync action */
                         } else if (Boolean.parseBoolean(radSync)) {
-                            var basicAction = new BasicAction(new RadSync());
-                            basicAction.perform(repos,project);
+                            //TODO Is this right ?
+                            var syncEvent = new RadicleSyncEvent();
+                            var syncAction =  AnActionEvent.createFromAnAction(syncEvent,null,"somewhere",new TestDataProvider(project));
+                            syncEvent.actionPerformed(syncAction);
                         } else {
                             var dialog = new SelectActionDialog(project, repos);
                             dialog.showAndGet();

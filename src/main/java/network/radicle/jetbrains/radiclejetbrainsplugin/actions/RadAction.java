@@ -8,4 +8,5 @@ public interface RadAction {
     String getErrorMessage();
     String getSuccessMessage();
     String getNotificationSuccessMessage();
+    String getProgressBarTitle();
 }

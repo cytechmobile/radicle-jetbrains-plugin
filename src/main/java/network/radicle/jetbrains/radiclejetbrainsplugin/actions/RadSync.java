@@ -28,4 +28,9 @@ public class RadSync implements RadAction {
     public String getNotificationSuccessMessage() {
         return RadicleBundle.message("radSyncNotification");
     }
+
+    @Override
+    public String getProgressBarTitle() {
+        return RadicleBundle.message("radSyncProgressTitle");
+    }
 }

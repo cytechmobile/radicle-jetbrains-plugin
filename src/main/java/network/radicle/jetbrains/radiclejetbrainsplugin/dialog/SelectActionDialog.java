@@ -1,11 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.testFramework.TestDataProvider;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadSync;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncEvent;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +40,10 @@ public class SelectActionDialog extends DialogWrapper {
             radicleSettingsHandler.saveRadSync(Boolean.toString(false));
         }
         if (rememberMe.isSelected() || once.isSelected()) {
-            var basicAction = new BasicAction(new RadSync());
-            basicAction.perform(repos,project);
+            //TODO Is this right ?
+            var syncEvent = new RadicleSyncEvent();
+            var syncAction =  AnActionEvent.createFromAnAction(syncEvent,null,"somewhere",new TestDataProvider(project));
+            syncEvent.actionPerformed(syncAction);
         }
     }
 

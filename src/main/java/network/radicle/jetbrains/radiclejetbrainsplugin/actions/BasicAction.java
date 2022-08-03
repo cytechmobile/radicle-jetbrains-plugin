@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
@@ -21,15 +20,23 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
 public class BasicAction {
 
     private static final Logger logger = LoggerFactory.getLogger(BasicAction.class);
     private RadAction action;
+    private GitRepository repo;
+    private Project project;
+    private final CountDownLatch countDownLatch;
 
-    public BasicAction(RadAction action) {
+    public BasicAction(@NotNull RadAction action, @NotNull GitRepository repo, @NotNull Project project,
+                       @NotNull CountDownLatch countDownLatch) {
         this.action = action;
+        this.project = project;
+        this.repo = repo;
+        this.countDownLatch = countDownLatch;
     }
 
     public static boolean isCliPathConfigured(@NotNull AnActionEvent e) {
@@ -59,20 +66,18 @@ public class BasicAction {
         return true;
     }
 
-    public void perform (List<GitRepository> repos, Project project) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            for (var repo : repos) {
-                var output = action.run(repo);
-                var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
-                if (!success) {
-                    logger.warn(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-                    showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
-                    return;
-                }
-                logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-                showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
-            }
-        });
+    public void perform() {
+        var output = action.run(repo);
+        var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
+        countDownLatch.countDown();
+        //TODO maybe show notification inside Update Background Class
+        if (!success) {
+            logger.warn(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+            showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
+            return;
+        }
+        logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+        showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
     }
 
     public static class ConfigureRadCliNotificationAction extends NotificationAction {
@@ -82,6 +87,7 @@ public class BasicAction {
             super(msg);
             this.project = p;
         }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             logger.debug("clicked configure rad cli notification action");

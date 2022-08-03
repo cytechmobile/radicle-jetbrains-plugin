@@ -28,4 +28,9 @@ public class RadPull implements RadAction {
     public String getNotificationSuccessMessage() {
         return RadicleBundle.message("radPullNotification");
     }
+
+    @Override
+    public String getProgressBarTitle() {
+        return RadicleBundle.message("radPullProgressTitle");
+    }
 }
