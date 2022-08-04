@@ -1,28 +1,35 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin;
+package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepositoryManager;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadSync;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RadicleSyncEvent extends AnAction {
+public class RadicleSyncAction extends AnAction {
 
     protected CountDownLatch updateCountDown;
     protected AtomicBoolean executingFlag = new AtomicBoolean(false);
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        var project = e.getProject();
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        final var project = e.getProject();
+        assert project != null;
+        performAction(project);
+    }
+
+    public void performAction(@NotNull Project project) {
+        final var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
 
-        if (!BasicAction.isCliPathConfigured(e) || !BasicAction.hasGitRepos(e)) {
+        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project)) {
             return ;
         }
         this.updateCountDown = new CountDownLatch(repos.size());

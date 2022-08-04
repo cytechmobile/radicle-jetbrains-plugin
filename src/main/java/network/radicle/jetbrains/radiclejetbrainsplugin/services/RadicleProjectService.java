@@ -5,13 +5,11 @@ import com.intellij.dvcs.push.PushInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.TestDataProvider;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadiclePushEvent;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleSyncEvent;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.SelectActionDialog;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +20,9 @@ import java.util.stream.Collectors;
 
 public class RadicleProjectService {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
+    private static final String GIT_PUSH_DISPLAY_ID = "git.push.result";
 
     private Project project = null;
-    private final String GIT_PUSH_DISPLAY_ID = "git.push.result";
     public List<PushInfo> pushDetails;
     public boolean forceRadPush;
 
@@ -40,31 +38,32 @@ public class RadicleProjectService {
             @Override
             public void notify(@NotNull Notification notification) {
                 /* Check intellij notification for successful git push message */
-                if (isGitPushNotification(notification)) {
-                    var rsh = new RadicleSettingsHandler();
-                    var rs = rsh.loadSettings();
-                    /* Check if the user has configured rad */
-                    if (!Strings.isNullOrEmpty(rs.getPath())) {
-                        var repos = pushDetails.stream().map(detail -> (GitRepository) detail.getRepository())
-                                .collect(Collectors.toList());
-                        var radSync = rs.getRadSync();
-                        if (forceRadPush) {
-                            forceRadPush = false;
-                            //TODO Is this right ?
-                            var pushEvent = new RadiclePushEvent();
-                            var pushAction = AnActionEvent.createFromAnAction(pushEvent,null,"somewhere",new TestDataProvider(project));
-                            pushEvent.actionPerformed(pushAction);
-                            /* Check if user has configured plugin to run automatically sync action */
-                        } else if (Boolean.parseBoolean(radSync)) {
-                            //TODO Is this right ?
-                            var syncEvent = new RadicleSyncEvent();
-                            var syncAction =  AnActionEvent.createFromAnAction(syncEvent,null,"somewhere",new TestDataProvider(project));
-                            syncEvent.actionPerformed(syncAction);
-                        } else if(radSync == null) {
-                            var dialog = new SelectActionDialog(project, repos);
-                            dialog.showAndGet();
-                        }
-                    }
+                if (!isGitPushNotification(notification)) {
+                    logger.debug("not handling non-git-push notification: {}", notification);
+                    return;
+                }
+                var rsh = new RadicleSettingsHandler();
+                var rs = rsh.loadSettings();
+                /* Check if the user has configured rad */
+                if (Strings.isNullOrEmpty(rs.getPath())) {
+                    logger.debug("no path configured, not handling git-push notification: {} settings:{}",
+                            notification, rs);
+                    return;
+                }
+                var repos = pushDetails.stream().map(detail -> (GitRepository) detail.getRepository())
+                        .collect(Collectors.toList());
+                var radSync = rs.getRadSync();
+                if (forceRadPush) {
+                    forceRadPush = false;
+                    var pushEvent = new RadiclePushAction();
+                    pushEvent.performAction(project, null);
+                    /* Check if user has configured plugin to run automatically sync action */
+                } else if (Boolean.parseBoolean(radSync)) {
+                    var syncEvent = new RadicleSyncAction();
+                    syncEvent.performAction(project);
+                } else if(radSync == null) {
+                    var dialog = new SelectActionDialog(project, repos);
+                    dialog.showAndGet();
                 }
             }
         });

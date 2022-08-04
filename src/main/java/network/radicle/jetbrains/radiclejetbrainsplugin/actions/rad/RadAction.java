@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
+package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
