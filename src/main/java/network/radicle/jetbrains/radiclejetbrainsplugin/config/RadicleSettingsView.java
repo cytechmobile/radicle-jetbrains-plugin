@@ -1,10 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.google.common.base.Strings;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,16 +9,16 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.nio.charset.StandardCharsets;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class RadicleSettingsView implements SearchableConfigurable {
 
@@ -34,6 +31,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
     protected JPanel mainPanel;
     private JButton testButton;
     private JLabel radVersionLabel;
+    private JCheckBox runRadSync;
     private RadicleSettings settings;
     private final RadicleSettingsHandler radicleSettingsHandler;
 
@@ -42,49 +40,40 @@ public class RadicleSettingsView implements SearchableConfigurable {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.settings = this.radicleSettingsHandler.loadSettings();
         initComponents();
-        testButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                    public void run() {
-                        getRadVersion();
-                    }
-                });
-            }
-        });
     }
 
-    private void getRadVersion() {
-        GeneralCommandLine cmdLine = null;
-        if (SystemInfo.isWindows) {
-            //TODO remove wsl
-            cmdLine = new GeneralCommandLine("wsl",radPathField.getText(),"--version");
-        } else {
-            cmdLine = new GeneralCommandLine(radPathField.getText(),"--version");
+    private String getRadVersion() {
+        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        ProcessOutput output = rad.getVersion();
+        var radInfo = output.getStdout();
+        if (!Strings.isNullOrEmpty(radInfo) && radInfo.contains("rad")) {
+            var radInfoParts = radInfo.split(" ");
+            return radInfoParts.length > 1 ? radInfoParts[1] : "";
         }
-        cmdLine.setCharset(StandardCharsets.UTF_8);
-        try {
-            ProcessOutput output = ExecUtil.execAndGetOutput(cmdLine);
-            var radInfo = output.getStdout();
+        return "";
+    }
+
+    private String getRadPath() {
+        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        ProcessOutput output = rad.getRadPath();
+        var pathInfo = output.getStdoutLines();
+        /* which command return empty and where command return INFO if the os cant find the program path */
+        if (pathInfo.size() > 0 && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
+            return pathInfo.get(0);
+        }
+        return "";
+    }
+
+    private void updateRadVersionLabel() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var msg = RadicleBundle.message("radNotInstalled");
-            if (!Strings.isNullOrEmpty(radInfo) && radInfo.contains("rad")) {
-                var radInfoParts = radInfo.split(" ");
-                var version = radInfoParts.length > 1 ? radInfoParts[1] : "";
+            var version = getRadVersion();
+            if (!Strings.isNullOrEmpty(version)) {
                 msg = RadicleBundle.message("radVersion") + version;
             }
-            updateRadVersionLabel(msg);
-        } catch (ExecutionException ex) {
-            logger.error("unable to run rad executable",ex.getMessage());
-            updateRadVersionLabel(ex.getMessage());
-        }
-    }
-
-    private void updateRadVersionLabel(String msg) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-                radVersionLabel.setText(msg);
-            }
-        }, ModalityState.any());
+            String finalMsg = msg;
+            ApplicationManager.getApplication().invokeLater(() -> radVersionLabel.setText(finalMsg), ModalityState.any());
+        });
     }
 
     @Override @NotNull @NonNls
@@ -106,14 +95,50 @@ public class RadicleSettingsView implements SearchableConfigurable {
     @Override
     public boolean isModified() {
         String selectedPath = getSelectedPath();
-        return Strings.isNullOrEmpty(selectedPath) || !selectedPath.equals(this.settings.getPath());
+        Boolean radSync = getRadSyncSelected();
+        return !selectedPath.equals(this.settings.getPath()) ||
+                !radSync.equals(Boolean.parseBoolean(this.settings.getRadSync()));
     }
 
     @Override
-    public void apply() throws ConfigurationException {
-        String selectedPath = getSelectedPath();
-        radicleSettingsHandler.savePath(selectedPath);
-        this.settings = this.radicleSettingsHandler.loadSettings();
+    public void apply() {
+        radicleSettingsHandler.savePath(getSelectedPath());
+        radicleSettingsHandler.saveRadSync(getRadSyncSelected().toString());
+        settings = this.radicleSettingsHandler.loadSettings();
+    }
+
+    private void initListeners() {
+        testButton.addActionListener(e ->
+                ApplicationManager.getApplication().executeOnPooledThread(this::updateRadVersionLabel));
+
+        radPathField.getTextField().addFocusListener(new FocusListener() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (radPathField.getText().contains(RadicleBundle.message("autoDetected"))) {
+                    radPathField.setText("");
+                    radPathField.getTextField().setForeground(JBColor.BLACK);
+                }
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (getSelectedPath().isEmpty()) {
+                    updateTextFieldPlaceholder();
+                }
+            }
+        });
+    }
+
+    private void updateTextFieldPlaceholder() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            String path = getRadPath();
+            if (!Strings.isNullOrEmpty(path) && radPathField != null) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    radPathField.getTextField().setForeground(JBColor.GRAY);
+                    radPathField.setText(RadicleBundle.message("autoDetected") + path);
+                }, ModalityState.any());
+            }
+        });
     }
 
     @Override
@@ -125,12 +150,47 @@ public class RadicleSettingsView implements SearchableConfigurable {
     }
 
     private String getSelectedPath() {
-        return radPathField.getText();
+        var path = radPathField.getText();
+        if (path.contains(RadicleBundle.message("autoDetected"))) {
+            path = path.split(":")[1].trim();
+        }
+        return path;
+    }
+
+    private Boolean getRadSyncSelected() {
+        return runRadSync.isSelected();
     }
 
     private void initComponents() {
         radPathField.setText(this.settings.getPath());
         radPathField.addBrowseFolderListener(browseFolderTitle, "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
+        var radSync = this.settings.getRadSync();
+        runRadSync.setSelected(!Strings.isNullOrEmpty(radSync) && Boolean.parseBoolean(radSync));
+        initListeners();
+        if (Strings.isNullOrEmpty(getSelectedPath())) {
+            updateTextFieldPlaceholder();
+        }
+
+    }
+
+    public JLabel getRadVersionLabel() {
+        return radVersionLabel;
+    }
+
+    public JButton getTestButton() {
+        return testButton;
+    }
+
+    public JPanel getMainPanel() {
+        return mainPanel;
+    }
+
+    public TextFieldWithBrowseButton getPathField() {
+        return radPathField;
+    }
+
+    public JCheckBox getRadSyncCheckBox() {
+        return runRadSync;
     }
 }
