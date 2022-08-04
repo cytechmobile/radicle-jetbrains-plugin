@@ -33,6 +33,7 @@ public class RadiclePushAction extends AnAction {
         }
 
         var rps = project.getService(RadicleProjectService.class);
+        // TODO check what happens if git push dialog is canceled
         rps.forceRadPush = true;
         openGitPushDialog(project, e);
     }

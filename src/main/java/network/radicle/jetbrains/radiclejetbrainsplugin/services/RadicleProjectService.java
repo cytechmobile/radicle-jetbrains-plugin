@@ -53,14 +53,11 @@ public class RadicleProjectService {
                 var repos = pushDetails.stream().map(detail -> (GitRepository) detail.getRepository())
                         .collect(Collectors.toList());
                 var radSync = rs.getRadSync();
-                if (forceRadPush) {
+                if (forceRadPush || Boolean.parseBoolean(radSync)) {
                     forceRadPush = false;
-                    var pushEvent = new RadiclePushAction();
-                    pushEvent.performAction(project, null);
+                    var syncAction = new RadicleSyncAction();
+                    syncAction.performAction(project, repos);
                     /* Check if user has configured plugin to run automatically sync action */
-                } else if (Boolean.parseBoolean(radSync)) {
-                    var syncEvent = new RadicleSyncAction();
-                    syncEvent.performAction(project);
                 } else if(radSync == null) {
                     var dialog = new SelectActionDialog(project, repos);
                     dialog.showAndGet();
