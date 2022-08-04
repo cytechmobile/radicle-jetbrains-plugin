@@ -60,7 +60,7 @@ public class RadicleProjectService {
                             var syncEvent = new RadicleSyncEvent();
                             var syncAction =  AnActionEvent.createFromAnAction(syncEvent,null,"somewhere",new TestDataProvider(project));
                             syncEvent.actionPerformed(syncAction);
-                        } else {
+                        } else if(radSync == null) {
                             var dialog = new SelectActionDialog(project, repos);
                             dialog.showAndGet();
                         }

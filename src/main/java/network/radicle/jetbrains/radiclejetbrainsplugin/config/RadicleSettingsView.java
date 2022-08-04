@@ -101,7 +101,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
     }
 
     @Override
-    public void apply() throws ConfigurationException {
+    public void apply() {
         radicleSettingsHandler.savePath(getSelectedPath());
         radicleSettingsHandler.saveRadSync(getRadSyncSelected().toString());
         settings = this.radicleSettingsHandler.loadSettings();
@@ -172,5 +172,25 @@ public class RadicleSettingsView implements SearchableConfigurable {
             updateTextFieldPlaceholder();
         }
 
+    }
+
+    public JLabel getRadVersionLabel() {
+        return radVersionLabel;
+    }
+
+    public JButton getTestButton() {
+        return testButton;
+    }
+
+    public JPanel getMainPanel() {
+        return mainPanel;
+    }
+
+    public TextFieldWithBrowseButton getPathField() {
+        return radPathField;
+    }
+
+    public JCheckBox getRadSyncCheckBox() {
+        return runRadSync;
     }
 }
