@@ -25,8 +25,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
 public class BasicAction {
-
     private static final Logger logger = LoggerFactory.getLogger(BasicAction.class);
+    public static final String NOTIFICATION_GROUP = "Radicle.NotificationGroup";
+
     private RadAction action;
     private GitRepository repo;
     private Project project;
@@ -87,7 +88,7 @@ public class BasicAction {
             Collection<NotificationAction> actions) {
         type = type != null ? type : NotificationType.ERROR;
         var notif = NotificationGroupManager.getInstance()
-                .getNotificationGroup("Radicle.NotificationGroup")
+                .getNotificationGroup(NOTIFICATION_GROUP)
                 .createNotification(
                         Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title),
                         RadicleBundle.message(content), type);

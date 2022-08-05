@@ -41,4 +41,8 @@ public class RadiclePullAction extends AnAction {
                 updateCountDown, executingFlag);
         new Thread(ubt::queue).start();
     }
+
+    public CountDownLatch getUpdateCountDown() {
+        return updateCountDown;
+    }
 }

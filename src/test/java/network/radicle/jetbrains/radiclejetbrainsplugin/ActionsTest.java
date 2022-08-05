@@ -9,6 +9,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.junit.After;
@@ -29,8 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class ActionsTest extends HeavyPlatformTestCase {
-    final CountDownLatch latch = new CountDownLatch(1);
-
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
     private final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
     private static final String radPath = "/usr/bin/rad";
@@ -57,22 +56,17 @@ public class ActionsTest extends HeavyPlatformTestCase {
         radStub = new RadStub();
         ServiceContainerUtil.replaceService(app, RadicleApplicationService.class, radStub, getTestRootDisposable());
 
-        mbc = app.getMessageBus().connect();
+        mbc = getProject().getMessageBus().connect();
         mbc.setDefaultHandler(
                 (event1, params) -> {
-                    // assertThat(params).hasSize(1);
-                    // assertThat(params[0]).isInstanceOf(Notification.class);
+                    assertThat(params).hasSize(1);
+                    assertThat(params[0]).isInstanceOf(Notification.class);
                     Notification n = (Notification) params[0];
-                    latch.countDown();
-                    logger.warn("captured notification: " + n.getTitle() + " " + n.getContent());
-                    try {
-                        notificationsQueue.put(n);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    logger.warn("captured notification: " + n);
+                    notificationsQueue.add(n);
                 });
         mbc.subscribe(Notifications.TOPIC);
-        logger.warn("created message bus connection and subscribed to notifications:"+mbc);
+        logger.warn("created message bus connection and subscribed to notifications: {}" + mbc);
     }
 
     @After
@@ -91,10 +85,16 @@ public class ActionsTest extends HeavyPlatformTestCase {
     public void radPullTest() throws InterruptedException {
         var rpa = new RadiclePullAction();
         rpa.performAction(getProject());
+        var result = rpa.getUpdateCountDown().await(10, TimeUnit.SECONDS);
+        assertThat(result).isTrue();
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         assertThat(cmd.getExePath()).isEqualTo(radPath);
         assertThat(cmd.getCommandLineString()).contains("pull");
+
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(new RadPull().getNotificationSuccessMessage());
     }
 }
