@@ -39,7 +39,7 @@ public class SelectActionDialog extends DialogWrapper {
         }
         if (rememberMe.isSelected() || once.isSelected()) {
             var syncEvent = new RadicleSyncAction();
-            syncEvent.performAction(project);
+            syncEvent.performAction(project, repos);
         }
     }
 
