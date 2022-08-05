@@ -1,16 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.tests.JUnit5Runner;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
     RadicleSettingsHandler radicleSettingsHandler;
@@ -18,6 +14,14 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
     @Before
     public void before() {
         radicleSettingsHandler = new RadicleSettingsHandler();
+        radicleSettingsHandler.savePath(null);
+        radicleSettingsHandler.saveRadSync(null);
+    }
+
+    @After
+    public void after() {
+        radicleSettingsHandler.savePath(null);
+        radicleSettingsHandler.saveRadSync(null);
     }
 
     @Test

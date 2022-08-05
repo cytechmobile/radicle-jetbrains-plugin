@@ -11,11 +11,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     private RadicleSettingsView radicleSettingsView;
+    RadStub radStub;
 
     @Before
     public void before() throws ConfigurationException {
         radicleSettingsView = new RadicleSettingsView();
         radicleSettingsView.apply();
+        radStub = RadStub.replaceRadicleApplicationService(this);
     }
 
     @Test

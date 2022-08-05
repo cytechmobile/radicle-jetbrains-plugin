@@ -51,9 +51,7 @@ public class ActionsTest extends HeavyPlatformTestCase {
         radicleSettingsHandler.savePath(radPath);
 
         /* initialize rad stub service */
-        final var app = ApplicationManager.getApplication();
-        radStub = new RadStub();
-        ServiceContainerUtil.replaceService(app, RadicleApplicationService.class, radStub, getTestRootDisposable());
+        radStub = RadStub.replaceRadicleApplicationService(this);
 
         mbc = getProject().getMessageBus().connect();
         mbc.setDefaultHandler(
