@@ -1,15 +1,19 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.junit.After;
@@ -32,6 +36,7 @@ public class ActionsTest extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
     private final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
     private static final String radPath = "/usr/bin/rad";
+    private static final String wsl = "wsl";
     private static final String remoteName = "testRemote";
     private RadicleSettingsHandler radicleSettingsHandler;
     private String remoteRepoPath;
@@ -67,7 +72,7 @@ public class ActionsTest extends HeavyPlatformTestCase {
     }
 
     @After
-    public final void after() throws Exception {
+    public final void after() {
         if(mbc != null) {
             mbc.disconnect();
         }
@@ -87,11 +92,37 @@ public class ActionsTest extends HeavyPlatformTestCase {
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
-        assertThat(cmd.getExePath()).isEqualTo(radPath);
-        assertThat(cmd.getCommandLineString()).contains("pull");
+        assertCmd(cmd);
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(new RadPull().getNotificationSuccessMessage());
+    }
+
+    @Test
+    public void radSyncTest() throws InterruptedException {
+        var rsa = new RadicleSyncAction();
+        rsa.performAction(getProject());
+
+        var result = rsa.getUpdateCountDown().await(10, TimeUnit.SECONDS);
+        assertThat(result).isTrue();
+
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("sync");
+        var not = notificationsQueue.poll(10,TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(new RadSync().getNotificationSuccessMessage());
+    }
+
+    public void assertCmd(GeneralCommandLine cmd) {
+        if (SystemInfo.isWindows) {
+            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            var path = cmd.getParametersList().get(0);
+            assertThat(path).isEqualTo(radPath);
+        } else {
+            assertThat(cmd.getExePath()).isEqualTo(radPath);
+        }
     }
 }
