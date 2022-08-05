@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
+package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;

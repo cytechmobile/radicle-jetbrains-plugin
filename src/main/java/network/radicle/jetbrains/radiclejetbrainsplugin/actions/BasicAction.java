@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
@@ -39,33 +40,6 @@ public class BasicAction {
         this.countDownLatch = countDownLatch;
     }
 
-    public static boolean isCliPathConfigured(@NotNull AnActionEvent e) {
-        logger.debug("action performed: {}", e);
-        var rsh = new RadicleSettingsHandler();
-        var rs = rsh.loadSettings();
-        logger.debug("settings are: {}", rs);
-        // check if rad cli is configured
-        if (Strings.isNullOrEmpty(rs.getPath())) {
-            logger.warn("no rad cli path configured");
-            final var project = e.getProject();
-            showNotification(e.getProject(), "radCliPathMissing", "radCliPathMissingText", NotificationType.WARNING,
-                    List.of(new ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean hasGitRepos(@NotNull AnActionEvent e) {
-        var project = e.getProject();
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        var repos = gitRepoManager.getRepositories();
-        if (repos.isEmpty()) {
-            logger.warn("no git repos found!");
-            return false;
-        }
-        return true;
-    }
-
     public void perform() {
         var output = action.run(repo);
         var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
@@ -80,20 +54,28 @@ public class BasicAction {
         showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
     }
 
-    public static class ConfigureRadCliNotificationAction extends NotificationAction {
-        final Project project;
-
-        public ConfigureRadCliNotificationAction(Project p, Supplier<String> msg) {
-            super(msg);
-            this.project = p;
+    public static boolean isCliPathConfigured(@NotNull Project project) {
+        var rsh = new RadicleSettingsHandler();
+        var rs = rsh.loadSettings();
+        logger.debug("settings are: {}", rs);
+        // check if rad cli is configured
+        if (Strings.isNullOrEmpty(rs.getPath())) {
+            logger.warn("no rad cli path configured");
+            showNotification(project, "radCliPathMissing", "radCliPathMissingText", NotificationType.WARNING,
+                    List.of(new ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
+            return false;
         }
+        return true;
+    }
 
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            logger.debug("clicked configure rad cli notification action");
-            notification.hideBalloon();
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsView.class);
+    public static boolean hasGitRepos(@NotNull Project project) {
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        if (repos.isEmpty()) {
+            logger.warn("no git repos found!");
+            return false;
         }
+        return true;
     }
 
     public static void showErrorNotification(Project project, String title, String content) {
@@ -115,5 +97,19 @@ public class BasicAction {
         notif.notify(project);
     }
 
+    public static class ConfigureRadCliNotificationAction extends NotificationAction {
+        final Project project;
 
+        public ConfigureRadCliNotificationAction(Project p, Supplier<String> msg) {
+            super(msg);
+            this.project = p;
+        }
+
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            logger.debug("clicked configure rad cli notification action");
+            notification.hideBalloon();
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsView.class);
+        }
+    }
 }

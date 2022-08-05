@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin;
+package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
@@ -19,25 +19,30 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class RadiclePushEvent extends AnAction {
+public class RadiclePushAction extends AnAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         var project = e.getProject();
-        if (!BasicAction.isCliPathConfigured(e) || !BasicAction.hasGitRepos(e)) {
+        performAction(project, e);
+    }
+
+    public void performAction(Project project, @Nullable AnActionEvent e) {
+        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project)) {
             return ;
         }
 
-        openGitPushDialog(project, e);
         var rps = project.getService(RadicleProjectService.class);
+        // TODO check what happens if git push dialog is canceled
         rps.forceRadPush = true;
+        openGitPushDialog(project, e);
     }
 
-    private void openGitPushDialog(Project project , @NotNull AnActionEvent e) {
+    private void openGitPushDialog(@NotNull Project project , @Nullable AnActionEvent e) {
         VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
-        Collection<Repository> repositories = e.getData(CommonDataKeys.EDITOR) != null
-                ? ContainerUtil.emptyList()
-                : collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
+        final Collection<Repository> repositories = e == null || e.getData(CommonDataKeys.EDITOR) != null ?
+                ContainerUtil.emptyList() :
+                collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
         VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
         new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories),
                 selectedFile != null ? manager.getRepositoryForFileQuick(selectedFile) : null).show();
