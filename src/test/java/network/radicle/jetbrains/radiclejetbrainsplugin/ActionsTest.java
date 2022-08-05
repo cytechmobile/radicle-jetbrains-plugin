@@ -2,13 +2,13 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.junit.After;
@@ -20,10 +20,12 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class ActionsTest extends HeavyPlatformTestCase {
@@ -38,8 +40,7 @@ public class ActionsTest extends HeavyPlatformTestCase {
     private GitRepository repository;
 
     private MessageBusConnection mbc;
-    private RadicleSyncAction syncAction;
-
+    private RadStub radStub;
 
     @Before
     public void before() throws IOException {
@@ -51,11 +52,11 @@ public class ActionsTest extends HeavyPlatformTestCase {
         radicleSettingsHandler.loadSettings();
         radicleSettingsHandler.savePath(radPath);
 
-        /* initialize rad repository */
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        rad.executeCommand(repository.getRoot().getPath(), List.of("init"));
-        syncAction = new RadicleSyncAction();
-        Application app = ApplicationManager.getApplication();
+        /* initialize rad stub service */
+        final var app = ApplicationManager.getApplication();
+        radStub = new RadStub();
+        ServiceContainerUtil.replaceService(app, RadicleApplicationService.class, radStub, getTestRootDisposable());
+
         mbc = app.getMessageBus().connect();
         mbc.setDefaultHandler(
                 (event1, params) -> {
@@ -88,9 +89,12 @@ public class ActionsTest extends HeavyPlatformTestCase {
 
     @Test
     public void radPullTest() throws InterruptedException {
+        var rpa = new RadiclePullAction();
+        rpa.performAction(getProject());
 
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        assertThat(cmd.getExePath()).isEqualTo(radPath);
+        assertThat(cmd.getCommandLineString()).contains("pull");
     }
-
-
-
 }

@@ -60,7 +60,7 @@ public class RadicleApplicationService {
         return executeCommand(radPath, workDir, args, repo);
     }
 
-    public static ProcessOutput executeCommand(
+    public ProcessOutput executeCommand(
             String radPath, String workDir, List<String> args, @Nullable GitRepository repo) {
         final var cmdLine = new GeneralCommandLine();
         if (SystemInfo.isWindows) {
@@ -80,7 +80,7 @@ public class RadicleApplicationService {
             if (console != null) {
                 console.showCommandLine("[" + workDir + "] " + cmdLine.getCommandLineString());
             }
-            var result = ExecUtil.execAndGetOutput(cmdLine);
+            var result = execAndGetOutput(cmdLine);
 
             if (console != null) {
                 var stdout = result.getStdout();
@@ -97,5 +97,9 @@ public class RadicleApplicationService {
             logger.error("unable to execute rad command", ex);
             return new ProcessOutput(-1);
         }
+    }
+
+    public ProcessOutput execAndGetOutput(GeneralCommandLine cmdLine) throws ExecutionException {
+        return ExecUtil.execAndGetOutput(cmdLine);
     }
 }
