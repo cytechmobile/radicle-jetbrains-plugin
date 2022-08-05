@@ -34,8 +34,6 @@ public class SelectActionDialog extends DialogWrapper {
         super.doOKAction();
         if (rememberMe.isSelected()) {
             radicleSettingsHandler.saveRadSync(Boolean.toString(true));
-        } else if (once.isSelected()) {
-            radicleSettingsHandler.saveRadSync(Boolean.toString(false));
         }
         if (rememberMe.isSelected() || once.isSelected()) {
             var syncEvent = new RadicleSyncAction();
@@ -46,7 +44,6 @@ public class SelectActionDialog extends DialogWrapper {
     @Override
     public void doCancelAction() {
         super.doCancelAction();
-        radicleSettingsHandler.saveRadSync(Boolean.toString(false));
     }
 
     @NotNull

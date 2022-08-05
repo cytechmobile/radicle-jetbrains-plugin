@@ -37,8 +37,12 @@ public class RadicleApplicationService {
         return executeCommand(".", ".", List.of("which","rad"), null);
     }
 
-    public ProcessOutput getVersion() {
-        return executeCommand(".", List.of("--version"), null);
+    public ProcessOutput getVersion(String path) {
+        if (Strings.isNullOrEmpty(path)) {
+            return executeCommand(".", List.of("--version"), null);
+        } else {
+            return executeCommand(path,".", List.of("--version"), null);
+        }
     }
 
     public ProcessOutput push(GitRepository root) {
@@ -53,6 +57,7 @@ public class RadicleApplicationService {
         return executeCommand(root.getRoot().getPath(), List.of("sync", "--branch",
                 Objects.requireNonNull(root.getCurrentBranchName())), root);
     }
+
 
     public ProcessOutput executeCommand(String workDir, List<String> args, @Nullable GitRepository repo) {
         final var settings = settingsHandler.loadSettings();

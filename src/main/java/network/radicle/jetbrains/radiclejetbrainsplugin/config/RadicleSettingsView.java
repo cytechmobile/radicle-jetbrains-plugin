@@ -42,9 +42,16 @@ public class RadicleSettingsView implements SearchableConfigurable {
         initComponents();
     }
 
-    private String getRadVersion() {
+    private boolean isValidPath() {
+        return !Strings.isNullOrEmpty(getRadVersion());
+    }
+
+    protected String getRadVersion() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        ProcessOutput output = rad.getVersion();
+        if (Strings.isNullOrEmpty(getSelectedPath())) {
+            return "";
+        }
+        ProcessOutput output = rad.getVersion(getSelectedPath());
         var radInfo = output.getStdout();
         if (!Strings.isNullOrEmpty(radInfo) && radInfo.contains("rad")) {
             var radInfoParts = radInfo.split(" ");
@@ -53,7 +60,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
         return "";
     }
 
-    private String getRadPath() {
+    protected String getRadPath() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         ProcessOutput output = rad.getRadPath();
         var pathInfo = output.getStdoutLines();
@@ -102,7 +109,13 @@ public class RadicleSettingsView implements SearchableConfigurable {
 
     @Override
     public void apply() {
-        radicleSettingsHandler.savePath(getSelectedPath());
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (isValidPath()) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    radicleSettingsHandler.savePath(getSelectedPath());
+                }, ModalityState.any());
+            }
+        });
         radicleSettingsHandler.saveRadSync(getRadSyncSelected().toString());
         settings = this.radicleSettingsHandler.loadSettings();
     }

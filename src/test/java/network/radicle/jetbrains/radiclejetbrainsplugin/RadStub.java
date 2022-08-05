@@ -20,6 +20,8 @@ public class RadStub extends RadicleApplicationService {
         var stdout = "stdout";
         if (cmdLine.getCommandLineString().contains("--version")) {
             stdout = "rad 0.6.0";
+        } else if (cmdLine.getCommandLineString().contains("which")) {
+            stdout = "/usr/bin/rad";
         }
         return new ProcessOutput(stdout, "stderr", 0, false, false);
     }
