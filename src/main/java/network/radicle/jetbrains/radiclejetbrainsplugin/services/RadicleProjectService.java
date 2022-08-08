@@ -51,6 +51,13 @@ public class RadicleProjectService {
                             notification, rs);
                     return;
                 }
+
+                if (pushDetails == null || pushDetails.isEmpty()) {
+                    logger.debug("no push details found, not handling git-push notification : {} settings:{}",
+                            notification, rs);
+                    return;
+                }
+
                 var repos = pushDetails.stream().map(detail -> (GitRepository) detail.getRepository())
                         .collect(Collectors.toList());
                 var radSync = rs.getRadSync();

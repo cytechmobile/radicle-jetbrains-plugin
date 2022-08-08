@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -19,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -57,24 +56,39 @@ public class BasicAction {
         showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
     }
 
-    public static boolean isSeedNodeConfigured(@NotNull Project project) {
+    public static boolean isRadInitialized(@NotNull Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
-        var workDir = repos.get(0).getRoot().getPath();
-        var seedNodes = List.of("https://pine.radicle.garden","https://willow.radicle.garden","https://maple.radicle.garden");
-        boolean hasSeedNode = false;
-        final String gitConfigFile = "/.git/config";
-        Path filePath = Path.of(workDir + gitConfigFile);
         try {
-            String content = Files.readString(filePath);
-            for (String node : seedNodes) {
-                hasSeedNode = content.contains(node);
+            var remote = GitConfigUtil.getValue(project, repos.get(0).getRoot(), "remote.rad.url");
+            if (!Strings.isNullOrEmpty(remote)) {
+                return true;
             }
         } catch (Exception e) {
-            logger.warn("unable to read git config file",e);
+            logger.warn("unable to read git config file", e);
+        }
+        showErrorNotification(project, "radCliError", RadicleBundle.message("initializationError"));
+        return false;
+    }
+
+    public static boolean isSeedNodeConfigured(@NotNull Project project) {
+        var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
+        boolean hasSeedNode = false;
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        try {
+            var seed = GitConfigUtil.getValue(project, repos.get(0).getRoot(), "rad.seed");
+            if (!Strings.isNullOrEmpty(seed)) {
+                for (String node : seedNodes) {
+                    hasSeedNode = seed.contains(node);
+                    if (hasSeedNode) break;
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("unable to read git config file", e);
         }
         if (!hasSeedNode) {
-            showErrorNotification(project, "radCliError",RadicleBundle.message("seedNodeMissing"));
+            showErrorNotification(project, "radCliError", RadicleBundle.message("seedNodeMissing"));
         }
         return hasSeedNode;
     }

@@ -29,7 +29,7 @@ public class RadiclePullAction extends AnAction {
         var repos = gitRepoManager.getRepositories();
 
         if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project) ||
-                !BasicAction.isSeedNodeConfigured(project)) {
+                !BasicAction.isSeedNodeConfigured(project) || !BasicAction.isRadInitialized(project)) {
             return ;
         }
 

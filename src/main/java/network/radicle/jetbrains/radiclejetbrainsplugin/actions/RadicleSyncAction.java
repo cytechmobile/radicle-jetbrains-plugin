@@ -35,7 +35,7 @@ public class RadicleSyncAction extends AnAction {
 
     public void performAction(@NotNull Project project, @NotNull List<GitRepository> repos) {
         if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project) ||
-                !BasicAction.isSeedNodeConfigured(project)) {
+                !BasicAction.isSeedNodeConfigured(project) || !BasicAction.isRadInitialized(project)) {
             return ;
         }
         this.updateCountDown = new CountDownLatch(repos.size());
