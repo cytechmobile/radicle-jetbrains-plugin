@@ -66,8 +66,12 @@ public class RadicleMenusJavaTest {
             actionMenu(remoteRobot, "Radicle").isShowing();
         });
 
-        step("Ensure Radicle sub-menu items (sync, push, init) show", () -> {
-            //TODO: implement
+        step("Ensure Radicle sub-menu items (sync, push, pull) show", () -> {
+            actionMenu(remoteRobot, "Git").click();
+            actionMenu(remoteRobot, "Radicle").click();
+            actionMenuItem(remoteRobot, "Pull").isShowing();
+            actionMenuItem(remoteRobot, "Push").isShowing();
+            actionMenuItem(remoteRobot, "Sync").isShowing();
         });
 
         step("Ensure Radicle toolbar actions show", () -> {
