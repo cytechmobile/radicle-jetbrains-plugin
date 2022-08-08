@@ -56,7 +56,15 @@ public class BasicAction {
         showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
     }
 
-    public static boolean isRadInitialized(@NotNull Project project) {
+    public static boolean isValidConfiguration(@NotNull Project project) {
+        if (!isCliPathConfigured(project) || !hasGitRepos(project) ||
+                !isSeedNodeConfigured(project) || !isRadInitialized(project)) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isRadInitialized(@NotNull Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         try {
@@ -71,7 +79,7 @@ public class BasicAction {
         return false;
     }
 
-    public static boolean isSeedNodeConfigured(@NotNull Project project) {
+    private static boolean isSeedNodeConfigured(@NotNull Project project) {
         var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
         boolean hasSeedNode = false;
         var gitRepoManager = GitRepositoryManager.getInstance(project);
@@ -93,7 +101,7 @@ public class BasicAction {
         return hasSeedNode;
     }
 
-    public static boolean isCliPathConfigured(@NotNull Project project) {
+    private static boolean isCliPathConfigured(@NotNull Project project) {
         var rsh = new RadicleSettingsHandler();
         var rs = rsh.loadSettings();
         logger.debug("settings are: {}", rs);
@@ -107,10 +115,11 @@ public class BasicAction {
         return true;
     }
 
-    public static boolean hasGitRepos(@NotNull Project project) {
+    private static boolean hasGitRepos(@NotNull Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         if (repos.isEmpty()) {
+            showErrorNotification(project, "radCliError", RadicleBundle.message("noGitRepos"));
             logger.warn("no git repos found!");
             return false;
         }

@@ -34,10 +34,10 @@ public class RadicleSyncAction extends AnAction {
     }
 
     public void performAction(@NotNull Project project, @NotNull List<GitRepository> repos) {
-        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project) ||
-                !BasicAction.isSeedNodeConfigured(project) || !BasicAction.isRadInitialized(project)) {
+        if (!BasicAction.isValidConfiguration(project)) {
             return ;
         }
+
         this.updateCountDown = new CountDownLatch(repos.size());
         var sync = new RadSync();
         repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
