@@ -31,10 +31,15 @@ var remoteRobotVersion = "0.11.15"
 
 dependencies {
     testImplementation("org.assertj:assertj-core:3.23.1")
-    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
+    // Logging Network Calls
+    testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
-
+    // Video Recording
+    implementation("com.automation-remarks:video-recorder-junit5:2.0")
 }
 
 
@@ -102,6 +107,17 @@ tasks {
                 getOrNull(properties("pluginVersion")) ?: getLatest()
             }.toHTML()
         })
+    }
+
+    test {
+        // enable here nad in runIdeForUiTests block - to log the retrofit HTTP calls
+        // systemProperty "debug-retrofit", "enable"
+
+        // enable encryption on test side when use remote machine
+        // systemProperty "robot.encryption.password", "my super secret"
+        useJUnitPlatform(){
+            excludeTags("video")
+        }
     }
 
     // Configure UI tests plugin
