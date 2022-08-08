@@ -144,7 +144,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
         });
     }
 
-    private void updateTextFieldPlaceholder() {
+    protected void updateTextFieldPlaceholder() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             String path = getRadPath();
             if (!Strings.isNullOrEmpty(path) && radPathField != null) {

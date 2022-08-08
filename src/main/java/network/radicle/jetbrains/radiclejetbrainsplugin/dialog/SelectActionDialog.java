@@ -78,4 +78,16 @@ public class SelectActionDialog extends DialogWrapper {
     protected @Nullable JComponent createCenterPanel() {
         return contentPane;
     }
+
+    public JCheckBox getRememberCheckBox() {
+        return remember;
+    }
+
+    public JRadioButton getYesRadio() {
+        return yesRadio;
+    }
+
+    public JRadioButton getNoRadio() {
+        return noRadio;
+    }
 }

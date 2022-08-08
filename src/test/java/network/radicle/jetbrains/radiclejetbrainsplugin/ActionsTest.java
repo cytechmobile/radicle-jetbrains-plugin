@@ -1,12 +1,16 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.PushInfo;
+import com.intellij.dvcs.push.PushSource;
+import com.intellij.dvcs.push.PushSpec;
+import com.intellij.dvcs.push.PushTarget;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -16,6 +20,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
@@ -43,17 +48,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(JUnit4.class)
 public class ActionsTest extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
-    private final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
+    public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
     public static final String radVersion = "0.6.0";
     public static final String radPath = "/usr/bin/rad";
     public static final String wsl = "wsl";
     private static final String remoteName = "testRemote";
     private RadicleSettingsHandler radicleSettingsHandler;
     private String remoteRepoPath;
-    private GitRepository repository;
+    public GitRepository repository;
 
     private MessageBusConnection mbc;
-    private RadStub radStub;
+    public RadStub radStub;
 
     @Before
     public void before() throws IOException {
@@ -86,7 +91,6 @@ public class ActionsTest extends HeavyPlatformTestCase {
         logger.warn("created message bus connection and subscribed to notifications: {}" + mbc);
     }
 
-
     @After
     public final void after() {
         if(mbc != null) {
@@ -118,7 +122,6 @@ public class ActionsTest extends HeavyPlatformTestCase {
         assertPushAction();
 
         /* enable auto sync */
-
         radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.YES);
         notif.notify(super.getProject());
         assertPushAction();
@@ -173,6 +176,13 @@ public class ActionsTest extends HeavyPlatformTestCase {
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("radCliPathMissingText"));
 
+        var rps = new RadiclePushAction();
+        var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
+        rps.performAction(getProject(),actionEvent);
+
+        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
+
         radicleSettingsHandler.savePath(radPath);
     }
 
@@ -192,8 +202,9 @@ public class ActionsTest extends HeavyPlatformTestCase {
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
 
-        var rps = new RadiclePullAction();
-        rps.performAction(getProject());
+        var rps = new RadiclePushAction();
+        var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
+        rps.performAction(getProject(),actionEvent);
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
@@ -216,8 +227,9 @@ public class ActionsTest extends HeavyPlatformTestCase {
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
 
-        var rps = new RadiclePullAction();
-        rps.performAction(getProject());
+        var rps = new RadiclePushAction();
+        var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
+        rps.performAction(getProject(),actionEvent);
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
@@ -272,7 +284,6 @@ public class ActionsTest extends HeavyPlatformTestCase {
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
-
     }
 
     private void removeSeedNodeFromConfig() {

@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     private RadicleSettingsView radicleSettingsView;
-    RadStub radStub;
+    private RadStub radStub;
 
     @Before
     public void before() {

@@ -34,6 +34,9 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
         var newSettings = radicleSettingsHandler.loadSettings();
         assertThat(newSettings.getPath()).isEqualTo(ActionsTest.radPath);
         assertThat(newSettings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.NO);
+        newSettings = radicleSettingsHandler.loadSettings();
+        assertThat(newSettings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.NO.val);
     }
 
 
