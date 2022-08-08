@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.JBColor;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.List;
 
 public class RadicleSettingsView implements SearchableConfigurable {
 
@@ -31,7 +31,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
     protected JPanel mainPanel;
     private JButton testButton;
     private JLabel radVersionLabel;
-    private JCheckBox runRadSync;
+    private JComboBox radSyncList;
     private RadicleSettings settings;
     private final RadicleSettingsHandler radicleSettingsHandler;
 
@@ -102,21 +102,23 @@ public class RadicleSettingsView implements SearchableConfigurable {
     @Override
     public boolean isModified() {
         String selectedPath = getSelectedPath();
-        Boolean radSync = getRadSyncSelected();
+        var radSync = (ComboItem) radSyncList.getSelectedItem();
         return !selectedPath.equals(this.settings.getPath()) ||
-                !radSync.equals(Boolean.parseBoolean(this.settings.getRadSync()));
+                !radSync.key.equals(this.settings.getRadSync());
     }
 
     @Override
     public void apply() {
+        var path = getSelectedPath();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (isValidPath()) {
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    radicleSettingsHandler.savePath(getSelectedPath());
+                    radicleSettingsHandler.savePath(path);
                 }, ModalityState.any());
             }
         });
-        radicleSettingsHandler.saveRadSync(getRadSyncSelected().toString());
+        var radSync = (ComboItem) radSyncList.getSelectedItem();
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.from(radSync.key));
         settings = this.radicleSettingsHandler.loadSettings();
     }
 
@@ -170,21 +172,30 @@ public class RadicleSettingsView implements SearchableConfigurable {
         return path;
     }
 
-    private Boolean getRadSyncSelected() {
-        return runRadSync.isSelected();
-    }
-
     private void initComponents() {
         radPathField.setText(this.settings.getPath());
         radPathField.addBrowseFolderListener(browseFolderTitle, "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
+
+        var askItem = new ComboItem(RadicleSettings.RadSyncType.ASK.val, RadicleSettings.RadSyncType.ASK.name);
+        var yesItem = new ComboItem(RadicleSettings.RadSyncType.YES.val, RadicleSettings.RadSyncType.YES.name);
+        var noItem = new ComboItem(RadicleSettings.RadSyncType.NO.val, RadicleSettings.RadSyncType.NO.name);
+
+        radSyncList.addItem(askItem);
+        radSyncList.addItem(yesItem);
+        radSyncList.addItem(noItem);
+
         var radSync = this.settings.getRadSync();
-        runRadSync.setSelected(!Strings.isNullOrEmpty(radSync) && Boolean.parseBoolean(radSync));
+        radSyncList.setSelectedIndex(radSync);
         initListeners();
         if (Strings.isNullOrEmpty(getSelectedPath())) {
             updateTextFieldPlaceholder();
         }
 
+    }
+
+    public JComboBox getComboBox() {
+        return radSyncList;
     }
 
     public JLabel getRadVersionLabel() {
@@ -203,7 +214,21 @@ public class RadicleSettingsView implements SearchableConfigurable {
         return radPathField;
     }
 
-    public JCheckBox getRadSyncCheckBox() {
-        return runRadSync;
+    private class ComboItem {
+        private Integer key;
+        private String value;
+
+        public ComboItem(Integer key, String value)
+        {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public String toString()
+        {
+            return value;
+        }
     }
+
 }

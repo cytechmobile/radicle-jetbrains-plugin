@@ -22,6 +22,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +56,9 @@ public class ActionsTest extends HeavyPlatformTestCase {
 
         /* initialize rad stub service */
         radStub = RadStub.replaceRadicleApplicationService(this);
+
+        /* add seed node in config */
+        addSeedNodeInConfig(remoteRepoPath);
 
         mbc = getProject().getMessageBus().connect();
         mbc.setDefaultHandler(
@@ -126,7 +130,6 @@ public class ActionsTest extends HeavyPlatformTestCase {
         assertThat(result).isTrue();
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(cmd).isNotNull();
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("sync");
         var not = notificationsQueue.poll(10,TimeUnit.SECONDS);
@@ -134,13 +137,26 @@ public class ActionsTest extends HeavyPlatformTestCase {
         assertThat(not.getContent()).contains(new RadSync().getNotificationSuccessMessage());
     }
 
-    public void assertCmd(GeneralCommandLine cmd) {
+    public static void assertCmd(GeneralCommandLine cmd) {
+        assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
             assertThat(cmd.getExePath()).isEqualTo(wsl);
             var path = cmd.getParametersList().get(0);
             assertThat(path).isEqualTo(radPath);
         } else {
             assertThat(cmd.getExePath()).isEqualTo(radPath);
+        }
+    }
+
+    public void addSeedNodeInConfig(String repoPath) {
+        try {
+            final String gitConfigFile = "/.git/config";
+            Path filePath = Path.of(repoPath + gitConfigFile);
+            String content = Files.readString(filePath);
+            content += "\n[rad]\n\tseed=https://maple.radicle.garden/";
+            Files.writeString(filePath, content);
+        } catch (Exception e) {
+            logger.warn("unable to write seed node in config file");
         }
     }
 }

@@ -28,7 +28,8 @@ public class RadiclePushAction extends AnAction {
     }
 
     public void performAction(Project project, @Nullable AnActionEvent e) {
-        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project)) {
+        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project) ||
+                !BasicAction.isSeedNodeConfigured(project)) {
             return ;
         }
 

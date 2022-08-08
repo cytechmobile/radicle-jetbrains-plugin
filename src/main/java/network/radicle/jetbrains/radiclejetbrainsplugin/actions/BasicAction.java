@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -53,6 +55,28 @@ public class BasicAction {
         }
         logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
         showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
+    }
+
+    public static boolean isSeedNodeConfigured(@NotNull Project project) {
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        var workDir = repos.get(0).getRoot().getPath();
+        var seedNodes = List.of("https://pine.radicle.garden","https://willow.radicle.garden","https://maple.radicle.garden");
+        boolean hasSeedNode = false;
+        final String gitConfigFile = "/.git/config";
+        Path filePath = Path.of(workDir + gitConfigFile);
+        try {
+            String content = Files.readString(filePath);
+            for (String node : seedNodes) {
+                hasSeedNode = content.contains(node);
+            }
+        } catch (Exception e) {
+            logger.warn("unable to read git config file",e);
+        }
+        if (!hasSeedNode) {
+            showErrorNotification(project, "radCliError",RadicleBundle.message("seedNodeMissing"));
+        }
+        return hasSeedNode;
     }
 
     public static boolean isCliPathConfigured(@NotNull Project project) {

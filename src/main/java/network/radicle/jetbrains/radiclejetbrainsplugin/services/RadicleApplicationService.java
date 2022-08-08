@@ -9,7 +9,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -17,8 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,31 +64,9 @@ public class RadicleApplicationService {
         return executeCommand(radPath, workDir, args, repo);
     }
 
-    private boolean isSeedNodeConfigured(String workDir) {
-        var seedNodes = List.of("pine.radicle.garden","willow.radicle.garden","mapple.radicle.garden");
-        boolean hasSeedNode = false;
-        final String gitConfigFile = "/.git/config";
-        Path filePath = Path.of(workDir + gitConfigFile);
-        try {
-            String content = Files.readString(filePath);
-            for (String node : seedNodes) {
-                hasSeedNode = content.contains(node);
-                if (hasSeedNode) break;
-            }
-        } catch (Exception e) {
-            logger.warn("unable to read git config file",e);
-        }
-        return hasSeedNode;
-    }
-
     public ProcessOutput executeCommand(
             String radPath, String workDir, List<String> args, @Nullable GitRepository repo) {
         final var cmdLine = new GeneralCommandLine();
-        if (!isSeedNodeConfigured(workDir)) {
-            var po = new ProcessOutput(-1);
-            po.appendStderr(RadicleBundle.message("seedNodeMissing"));
-            return po;
-        }
         if (SystemInfo.isWindows) {
             //TODO remove wsl
             cmdLine.withExePath("wsl").withParameters(radPath);

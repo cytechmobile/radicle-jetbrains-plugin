@@ -10,6 +10,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.SelectActionDialog;
 import org.jetbrains.annotations.NotNull;
@@ -53,12 +54,12 @@ public class RadicleProjectService {
                 var repos = pushDetails.stream().map(detail -> (GitRepository) detail.getRepository())
                         .collect(Collectors.toList());
                 var radSync = rs.getRadSync();
-                if (forceRadPush || Boolean.parseBoolean(radSync)) {
+                if (forceRadPush || radSync == RadicleSettings.RadSyncType.YES.val) {
                     forceRadPush = false;
                     var syncAction = new RadicleSyncAction();
                     syncAction.performAction(project, repos);
                     /* Check if user has configured plugin to run automatically sync action */
-                } else if(radSync == null) {
+                } else if(radSync == RadicleSettings.RadSyncType.ASK.val) {
                     var dialog = new SelectActionDialog(project, repos);
                     dialog.showAndGet();
                 }

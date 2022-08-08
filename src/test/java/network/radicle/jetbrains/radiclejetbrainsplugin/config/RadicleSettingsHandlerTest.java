@@ -15,25 +15,25 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
     public void before() {
         radicleSettingsHandler = new RadicleSettingsHandler();
         radicleSettingsHandler.savePath(null);
-        radicleSettingsHandler.saveRadSync(null);
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.ASK);
     }
 
     @After
     public void after() {
         radicleSettingsHandler.savePath(null);
-        radicleSettingsHandler.saveRadSync(null);
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.ASK);
     }
 
     @Test
     public void loadSettings() {
         var settings = radicleSettingsHandler.loadSettings();
-        assertThat(settings.getPath()).isNull();
-        assertThat(settings.getRadSync()).isNull();
+        assertThat(settings.getPath()).isEmpty();
+        assertThat(settings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.ASK.val);
         radicleSettingsHandler.savePath(ActionsTest.radPath);
-        radicleSettingsHandler.saveRadSync("true");
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.YES);
         var newSettings = radicleSettingsHandler.loadSettings();
         assertThat(newSettings.getPath()).isEqualTo(ActionsTest.radPath);
-        assertThat(newSettings.getRadSync()).isEqualTo("true");
+        assertThat(newSettings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
     }
 
 

@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.ActionsTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
@@ -12,12 +13,11 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
-
     private RadicleSettingsView radicleSettingsView;
     RadStub radStub;
 
     @Before
-    public void before() throws ConfigurationException {
+    public void before() {
         radicleSettingsView = new RadicleSettingsView();
         radicleSettingsView.apply();
         radStub = RadStub.replaceRadicleApplicationService(this);
@@ -39,20 +39,23 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     @Test
-    public void testIsModifiedApply() throws ConfigurationException {
+    public void testIsModifiedApply() throws ConfigurationException, InterruptedException {
         assertThat(radicleSettingsView.isModified()).isFalse();
-        radicleSettingsView.getPathField().setText("/usr/bin/rad");
+        radicleSettingsView.getPathField().setText("/radpath");
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
-        assertThat(radicleSettingsView.isModified()).isFalse();
-        assertThat(radicleSettingsView.getPathField().getText()).isEqualTo("/usr/bin/rad");
 
-        assertThat(radicleSettingsView.getRadSyncCheckBox().isSelected()).isFalse();
-        radicleSettingsView.getRadSyncCheckBox().setSelected(true);
+        radicleSettingsView = new RadicleSettingsView();
+        assertThat(radicleSettingsView.isModified()).isFalse();
+        assertThat(radicleSettingsView.getComboBox().getSelectedIndex()).isEqualTo(RadicleSettings.RadSyncType.ASK.val);
+
+        radicleSettingsView.getComboBox().setSelectedIndex(RadicleSettings.RadSyncType.YES.val);
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
+
+        radicleSettingsView = new RadicleSettingsView();
         assertThat(radicleSettingsView.isModified()).isFalse();
-        assertThat(radicleSettingsView.getRadSyncCheckBox().isSelected()).isTrue();
+        assertThat(radicleSettingsView.getComboBox().getSelectedIndex()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
     }
 
     @Test
@@ -66,14 +69,16 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void getRadPathTest() throws InterruptedException {
-        radicleSettingsView.getPathField().setText(ActionsTest.radPath);
-        radicleSettingsView.apply();
-
         var path = radicleSettingsView.getRadPath();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(path).isEqualTo(ActionsTest.radPath);
         assertThat(cmd).isNotNull();
-        assertThat(cmd.getExePath()).isEqualTo(ActionsTest.wsl);
+        if (SystemInfo.isWindows) {
+            assertThat(cmd.getExePath()).isEqualTo(ActionsTest.wsl);
+            assertThat(cmd.getParametersList().get(0)).isEqualTo(".");
+        } else {
+            assertThat(cmd.getExePath()).isEqualTo(".");
+        }
         assertThat(cmd.getCommandLineString()).contains("which rad");
     }
 
@@ -84,9 +89,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(cmd).isNotNull();
+        ActionsTest.assertCmd(cmd);
         assertThat(version).isEqualTo(ActionsTest.radVersion);
-        assertThat(cmd.getExePath()).isEqualTo(ActionsTest.wsl);
         assertThat(cmd.getCommandLineString()).contains(ActionsTest.radPath + " --version");
     }
 
