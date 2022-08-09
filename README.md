@@ -1,8 +1,8 @@
 # radicle-jetbrains-plugin
 
 ![Build](https://github.com/cytechmobile/radicle-jetbrains-plugin/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/19662.svg)](https://plugins.jetbrains.com/plugin/19662)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/19662.svg)](https://plugins.jetbrains.com/plugin/19662)
+[![Version](https://img.shields.io/jetbrains/plugin/v/19664.svg)](https://plugins.jetbrains.com/plugin/19664)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/19664.svg)](https://plugins.jetbrains.com/plugin/19664)
 
 <!-- Plugin description -->
 Integration of Radicle with Jetbrains IDEs
