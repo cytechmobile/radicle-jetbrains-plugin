@@ -34,18 +34,18 @@ public class RadicleSyncAction extends AnAction {
     }
 
     public void performAction(@NotNull Project project, @NotNull List<GitRepository> repos) {
-        if (!BasicAction.isValidConfiguration(project)) {
-            return ;
-        }
-
         this.updateCountDown = new CountDownLatch(repos.size());
-        var sync = new RadSync();
-        repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
-                new BasicAction(sync,repo,project,updateCountDown).perform()));
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (BasicAction.isValidConfiguration(project)) {
+                var sync = new RadSync();
+                repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
+                        new BasicAction(sync,repo,project,updateCountDown).perform()));
 
-        UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message(sync.getProgressBarTitle()),
-                updateCountDown,executingFlag);
-        new Thread(ubt::queue).start();
+                UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message(sync.getProgressBarTitle()),
+                        updateCountDown,executingFlag);
+                new Thread(ubt::queue).start();
+            }
+        });
     }
 
     public CountDownLatch getUpdateCountDown() {
