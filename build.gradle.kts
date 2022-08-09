@@ -7,7 +7,7 @@ plugins {
     // Java support
     id("java")
     // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    id("org.jetbrains.kotlin.jvm") version "1.7.10"
     // Gradle IntelliJ Plugin
     id("org.jetbrains.intellij") version "1.8.0"
     // Gradle Changelog Plugin
@@ -21,7 +21,7 @@ version = properties("pluginVersion")
 
 // Configure project's dependencies
 repositories {
-    mavenCentral();
+    mavenCentral()
     maven {
         url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     }
@@ -30,16 +30,18 @@ repositories {
 var remoteRobotVersion = "0.11.15"
 
 dependencies {
-    testImplementation("org.assertj:assertj-core:3.23.1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.0")
+    testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
+    testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.0")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
+
+    testImplementation("org.assertj:assertj-core:3.23.1")
+
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
-    // Video Recording
-    implementation("com.automation-remarks:video-recorder-junit5:2.0")
 }
 
 
@@ -109,25 +111,43 @@ tasks {
         })
     }
 
+    downloadRobotServerPlugin {
+        version.set(remoteRobotVersion)
+    }
+
+
+    // Configure UI tests plugin
+    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
+    runIdeForUiTests {
+        //    In case your Idea is launched on remote machine you can enable public port and enable encryption of JS calls
+        //    systemProperty "robot-server.host.public", "true"
+        //    systemProperty "robot.encryption.enabled", "true"
+        //    systemProperty "robot.encryption.password", "my super secret"
+
+        systemProperty("robot-server.port", "8082")
+        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
+        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
+        systemProperty("jb.consents.confirmation.enabled", "false")
+        systemProperty("ide.mac.file.chooser.native", "false")
+        systemProperty("apple.laf.useScreenMenuBar", "false")
+        systemProperty("jbScreenMenuBar.enabled", "false")
+        systemProperty("idea.trust.all.projects", "true")
+        systemProperty("ide.show.tips.on.startup.default.value", "false")
+        //    systemProperty "eap.require.license", "true"
+
+    }
+
     test {
         // enable here nad in runIdeForUiTests block - to log the retrofit HTTP calls
         // systemProperty "debug-retrofit", "enable"
 
         // enable encryption on test side when use remote machine
         // systemProperty "robot.encryption.password", "my super secret"
-        useJUnitPlatform(){
+        useJUnitPlatform{
             excludeTags("video")
         }
     }
 
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-    runIdeForUiTests {
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
-    }
 
     signPlugin {
         certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
@@ -143,4 +163,16 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
+}
+
+
+
+val uiTestTask = tasks.register<Test>("uiTest") {
+    useJUnitPlatform {
+        includeTags("video")
+    }
+}
+
+tasks.check {
+    dependsOn(uiTestTask)
 }
