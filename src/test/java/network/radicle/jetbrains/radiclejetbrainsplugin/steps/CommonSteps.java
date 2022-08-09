@@ -11,6 +11,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.WelcomeFrameFixture;
 
+import java.nio.file.Path;
 import java.time.Duration;
 
 import static com.intellij.remoterobot.fixtures.dataExtractor.TextDataPredicatesKt.contains;
@@ -22,24 +23,29 @@ import static java.time.Duration.ofSeconds;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture.byTitle;
 
 public class CommonSteps {
-    final private RemoteRobot remoteRobot;
-    final private Keyboard keyboard;
+    private final RemoteRobot remoteRobot;
 
     public CommonSteps(RemoteRobot remoteRobot) {
         this.remoteRobot = remoteRobot;
-        this.keyboard = new Keyboard(remoteRobot);
     }
 
-    public void importProjectFromVCS() {
+    public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(10));
             welcomeFrame.importProjectLink().click();
 
-            final DialogFixture importProjectDialog = welcomeFrame.find(DialogFixture.class, byTitle("Get from Version Control"), Duration.ofSeconds(20));
-            final Locator urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
+            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byTitle("Get from Version Control"), Duration.ofSeconds(20));
+            final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
-            final Keyboard keyboard = new Keyboard(remoteRobot);
-            keyboard.enterText("https://github.com/radicle-dev/radicle-cli");
+            final var keyboard = new Keyboard(remoteRobot);
+            keyboard.enterText("https://github.com/radicle-dev/radicle-cli", 0);
+
+            final var dirInputFieldLocator = byXpath("//div[@class='TextFieldWithBrowseButton']");
+            remoteRobot.find(ComponentFixture.class, dirInputFieldLocator, Duration.ofSeconds(20)).click();
+            //create tmp dir to clone project to:
+            keyboard.selectAll();
+            keyboard.backspace();
+            keyboard.enterText(localDir.toAbsolutePath().toString(), 0);
 
             importProjectDialog.button("Clone").click();
         });
