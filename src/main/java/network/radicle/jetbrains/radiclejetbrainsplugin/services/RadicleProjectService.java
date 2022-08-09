@@ -76,7 +76,7 @@ public class RadicleProjectService {
 
     private boolean isGitPushNotification(Notification notification) {
         return notification.getDisplayId() != null && notification.getDisplayId().equals(GIT_PUSH_DISPLAY_ID) &&
-                notification.getType().equals(NotificationType.INFORMATION);
+                notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up");
     }
 
 }
