@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/19662.svg)](https://plugins.jetbrains.com/plugin/19662)
 
 <!-- Plugin description -->
- 
+Integration of Radicle with Jetbrains IDEs
 <!-- Plugin description end -->
 
 ## Installation
