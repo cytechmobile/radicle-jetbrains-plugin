@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin;
+package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
