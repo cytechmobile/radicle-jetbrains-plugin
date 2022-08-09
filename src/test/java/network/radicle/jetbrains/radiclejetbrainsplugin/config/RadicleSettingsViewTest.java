@@ -14,10 +14,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     private RadicleSettingsView radicleSettingsView;
+    private RadicleSettingsHandler radicleSettingsHandler;
     private RadStub radStub;
 
     @Before
     public void before() {
+        radicleSettingsHandler = new RadicleSettingsHandler();
         radicleSettingsView = new RadicleSettingsView();
         radicleSettingsView.apply();
         radStub = RadStub.replaceRadicleApplicationService(this);
@@ -84,9 +86,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void getRadVersion() throws InterruptedException {
-        radicleSettingsView.getPathField().setText(ActionsTest.radPath);
-        radicleSettingsView.apply();
-
+        radicleSettingsHandler.savePath(ActionsTest.radPath);
+        radicleSettingsView = new RadicleSettingsView();
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         ActionsTest.assertCmd(cmd);
