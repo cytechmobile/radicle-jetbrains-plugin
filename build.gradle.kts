@@ -37,6 +37,8 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.0")
 
+    testImplementation("org.assertj:assertj-core:3.23.1")
+
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
@@ -141,7 +143,7 @@ tasks {
 
         // enable encryption on test side when use remote machine
         // systemProperty "robot.encryption.password", "my super secret"
-        useJUnitPlatform(){
+        useJUnitPlatform{
             excludeTags("video")
         }
     }

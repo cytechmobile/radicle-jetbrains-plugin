@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +16,9 @@ import java.util.List;
 public class SelectActionDialog extends DialogWrapper {
     private JPanel contentPane;
     private JLabel allowRadLabel;
-    private JRadioButton once;
-    private JRadioButton rememberMe;
+    private JRadioButton yesRadio;
+    private JRadioButton noRadio;
+    private JCheckBox remember;
     private List<GitRepository> repos;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private final Project project;
@@ -32,48 +34,60 @@ public class SelectActionDialog extends DialogWrapper {
     @Override
     protected void doOKAction() {
         super.doOKAction();
-        if (rememberMe.isSelected()) {
-            radicleSettingsHandler.saveRadSync(Boolean.toString(true));
-        } else if (once.isSelected()) {
-            radicleSettingsHandler.saveRadSync(Boolean.toString(false));
-        }
-        if (rememberMe.isSelected() || once.isSelected()) {
+        if (yesRadio.isSelected()) {
             var syncEvent = new RadicleSyncAction();
-            syncEvent.performAction(project);
+            syncEvent.performAction(project, repos);
+        }
+
+        if (remember.isSelected()) {
+            var radType = yesRadio.isSelected() ? RadicleSettings.RadSyncType.YES :
+                    RadicleSettings.RadSyncType.NO;
+            radicleSettingsHandler.saveRadSync(radType);
         }
     }
 
     @Override
     public void doCancelAction() {
         super.doCancelAction();
-        radicleSettingsHandler.saveRadSync(Boolean.toString(false));
     }
 
     @NotNull
     @Override
     protected Action[] createActions() {
         super.createDefaultActions();
-        return new Action[] {getOKAction(),getCancelAction()};
+        return new Action[] {remember.getAction(),getOKAction(),getCancelAction()};
     }
 
     @Override
     protected void init() {
         super.init();
-        once.addActionListener(e -> {
-            rememberMe.setSelected(false);
+        yesRadio.addActionListener(e -> {
+            noRadio.setSelected(false);
             setOKActionEnabled(true);
         });
-        rememberMe.addActionListener(e -> {
-            once.setSelected(false);
+        noRadio.addActionListener(e -> {
+            yesRadio.setSelected(false);
             setOKActionEnabled(true);
         });
         allowRadLabel.setText(RadicleBundle.message("allowRad"));
         setTitle(RadicleBundle.message("radDetected"));
-        setOKActionEnabled(!rememberMe.isEnabled() && !once.isEnabled());
+        setOKActionEnabled(!noRadio.isEnabled() && !yesRadio.isEnabled());
     }
 
     @Override
     protected @Nullable JComponent createCenterPanel() {
         return contentPane;
+    }
+
+    public JCheckBox getRememberCheckBox() {
+        return remember;
+    }
+
+    public JRadioButton getYesRadio() {
+        return yesRadio;
+    }
+
+    public JRadioButton getNoRadio() {
+        return noRadio;
     }
 }
