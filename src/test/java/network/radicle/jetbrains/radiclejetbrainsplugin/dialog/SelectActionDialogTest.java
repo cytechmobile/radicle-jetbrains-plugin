@@ -4,6 +4,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.ActionsTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import java.util.List;
@@ -16,8 +17,16 @@ public class SelectActionDialogTest extends ActionsTest {
     private RadicleSettingsHandler radicleSettingsHandler ;
 
     @Before
-    public void init() {
+    public void beforeTest() {
         radicleSettingsHandler = new RadicleSettingsHandler();
+        radicleSettingsHandler.savePath(null);
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.ASK);
+    }
+
+    @After
+    public void afterTest() {
+        radicleSettingsHandler.savePath(null);
+        radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.ASK);
     }
 
     @Test
