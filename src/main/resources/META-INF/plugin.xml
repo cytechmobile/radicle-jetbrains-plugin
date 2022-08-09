@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>network.radicle.jetbrains</id>
     <name>Radicle</name>
-    <vendor>Cytech</vendor>
+    <vendor>CytechMobile</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.vcs</depends>
