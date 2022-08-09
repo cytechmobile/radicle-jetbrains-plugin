@@ -88,6 +88,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     public void getRadVersion() throws InterruptedException {
         radicleSettingsHandler.savePath(ActionsTest.radPath);
         radicleSettingsView = new RadicleSettingsView();
+        /* pop rad path command from queue.Its comming from apply method in before */
+        radStub.commands.poll(10, TimeUnit.SECONDS);
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         ActionsTest.assertCmd(cmd);
