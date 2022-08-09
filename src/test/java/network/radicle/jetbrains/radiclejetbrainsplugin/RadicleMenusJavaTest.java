@@ -3,6 +3,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.intellij.remoterobot.RemoteRobot;
+import com.intellij.remoterobot.fixtures.ComponentFixture;
+import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.Keyboard;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.steps.CommonSteps;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
 import static java.awt.event.KeyEvent.*;
@@ -54,27 +57,34 @@ public class RadicleMenusJavaTest {
     @Tag("video")
     void initialiseRadicleProject(final RemoteRobot remoteRobot) {
         sharedSteps.importProjectFromVCS();
-        sharedSteps.closeTipOfTheDay();
+//        sharedSteps.closeTipOfTheDay();
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
         step("Ensure Radicle sub-menu category is visible", () -> {
+            keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").isShowing();
         });
 
         step("Ensure Radicle sub-menu items (sync, push, pull) show", () -> {
+            keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").click();
             actionMenuItem(remoteRobot, "Pull").isShowing();
             actionMenuItem(remoteRobot, "Push").isShowing();
-            actionMenuItem(remoteRobot, "Sync").isShowing();
+            actionMenuItem(remoteRobot, "Synchronize").isShowing();
         });
 
         step("Ensure Radicle toolbar actions show", () -> {
-            //TODO: implement
+            keyboard.hotKey(VK_ESCAPE);
+            isXPathComponentVisible(idea, "//div[@myicon='rad_pull.svg']");
+            isXPathComponentVisible(idea, "//div[@myicon='rad_push.svg']");
+            isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
         });
+
+
 
 //        step("Check console output", () -> {
 //            final Locator locator = byXpath("//div[@class='ConsoleViewImpl']");
@@ -82,5 +92,10 @@ public class RadicleMenusJavaTest {
 //            waitFor(ofMinutes(1), () -> idea.find(ComponentFixture.class, locator)
 //                    .hasText("Hello from UI test"));
 //        });
+    }
+
+    private void isXPathComponentVisible(IdeaFrame idea, String xpath) {
+        final Locator locator = byXpath(xpath);
+        idea.find(ComponentFixture.class, locator).isShowing();
     }
 }
