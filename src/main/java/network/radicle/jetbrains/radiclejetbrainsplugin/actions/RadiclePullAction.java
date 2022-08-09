@@ -27,18 +27,20 @@ public class RadiclePullAction extends AnAction {
     public void performAction(Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
+        updateCountDown = new CountDownLatch(repos.size());
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (BasicAction.isValidConfiguration(project)) {
+                var pull = new RadPull();
+                repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
+                        new BasicAction(pull, repo, project, updateCountDown).perform()));
+                UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message(pull.getProgressBarTitle()),
+                        updateCountDown, executingFlag);
+                new Thread(ubt::queue).start();
+            }
+        });
+    }
 
-        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project)) {
-            return ;
-        }
-
-        this.updateCountDown = new CountDownLatch(repos.size());
-        var pull = new RadPull();
-        repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
-                new BasicAction(pull, repo, project, updateCountDown).perform()));
-
-        UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message(pull.getProgressBarTitle()),
-                updateCountDown, executingFlag);
-        new Thread(ubt::queue).start();
+    public CountDownLatch getUpdateCountDown() {
+        return updateCountDown;
     }
 }

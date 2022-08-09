@@ -2,12 +2,15 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.ide.util.PropertiesComponent;
 
+import java.util.Arrays;
+
 public class RadicleSettingsHandler {
 
     static final String PATH_KEY = "path";
     static final String RAD_SYNC_KEY = "radSyncKey";
 
     public RadicleSettingsHandler() {
+
     }
 
     public RadicleSettings loadSettings() {
@@ -18,16 +21,16 @@ public class RadicleSettingsHandler {
         getApplicationProperties().setValue(PATH_KEY, path);
     }
 
-    public void saveRadSync(String radSync) {
-        getApplicationProperties().setValue(RAD_SYNC_KEY, radSync);
+    public void saveRadSync(RadicleSettings.RadSyncType type) {
+        getApplicationProperties().setValue(RAD_SYNC_KEY,type.val,RadicleSettings.RadSyncType.ASK.val);
     }
 
     private String getPath() {
-        return getApplicationProperties().getValue(PATH_KEY);
+        return getApplicationProperties().getValue(PATH_KEY,"");
     }
 
-    private String getRadSync() {
-        return getApplicationProperties().getValue(RAD_SYNC_KEY);
+    private Integer getRadSync() {
+        return getApplicationProperties().getInt(RAD_SYNC_KEY,RadicleSettings.RadSyncType.ASK.val);
     }
 
     private PropertiesComponent getApplicationProperties() {
