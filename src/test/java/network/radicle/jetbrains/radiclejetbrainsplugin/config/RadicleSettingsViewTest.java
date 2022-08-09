@@ -4,7 +4,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
-import network.radicle.jetbrains.radiclejetbrainsplugin.ActionsTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,10 +14,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     private RadicleSettingsView radicleSettingsView;
+    private RadicleSettingsHandler radicleSettingsHandler;
     private RadStub radStub;
 
     @Before
     public void before() {
+        radicleSettingsHandler = new RadicleSettingsHandler();
         radicleSettingsView = new RadicleSettingsView();
         radicleSettingsView.apply();
         radStub = RadStub.replaceRadicleApplicationService(this);
@@ -85,9 +86,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void getRadVersion() throws InterruptedException {
-        radicleSettingsView.getPathField().setText(AbstractIT.radPath);
-        radicleSettingsView.apply();
-
+        radicleSettingsHandler.savePath(AbstractIT.radPath);
+        radicleSettingsView = new RadicleSettingsView();
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         AbstractIT.assertCmd(cmd);
