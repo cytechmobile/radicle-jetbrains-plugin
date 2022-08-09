@@ -40,8 +40,6 @@ dependencies {
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
-    // Video Recording
-    implementation("com.automation-remarks:video-recorder-junit5:2.0")
 }
 
 

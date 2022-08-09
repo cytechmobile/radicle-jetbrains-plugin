@@ -2,7 +2,6 @@
 
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
-import com.automation.remarks.junit5.Video;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.utils.Keyboard;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
@@ -52,7 +51,6 @@ public class RadicleMenusJavaTest {
     }
 
     @Test
-    @Video
     @Tag("video")
     void initialiseRadicleProject(final RemoteRobot remoteRobot) {
         sharedSteps.importProjectFromVCS();
