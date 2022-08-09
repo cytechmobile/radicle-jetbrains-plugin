@@ -19,10 +19,10 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Before
     public void before() {
+        radStub = RadStub.replaceRadicleApplicationService(this);
         radicleSettingsHandler = new RadicleSettingsHandler();
         radicleSettingsView = new RadicleSettingsView();
         radicleSettingsView.apply();
-        radStub = RadStub.replaceRadicleApplicationService(this);
     }
 
     @Test
@@ -87,6 +87,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     @Test
     public void getRadVersion() throws InterruptedException {
         radicleSettingsHandler.savePath(AbstractIT.radPath);
+        /* pop previous command from queue ( placeholder triggers it ) */
+        radStub.commands.poll(10, TimeUnit.SECONDS);
         radicleSettingsView = new RadicleSettingsView();
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
