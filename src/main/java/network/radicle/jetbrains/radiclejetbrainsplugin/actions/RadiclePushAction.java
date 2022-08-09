@@ -7,6 +7,7 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,14 +29,14 @@ public class RadiclePushAction extends AnAction {
     }
 
     public void performAction(Project project, @Nullable AnActionEvent e) {
-        if (!BasicAction.isCliPathConfigured(project) || !BasicAction.hasGitRepos(project)) {
-            return ;
-        }
-
-        var rps = project.getService(RadicleProjectService.class);
-        // TODO check what happens if git push dialog is canceled
-        rps.forceRadPush = true;
-        openGitPushDialog(project, e);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (BasicAction.isValidConfiguration(project)) {
+                var rps = project.getService(RadicleProjectService.class);
+                // TODO check what happens if git push dialog is canceled
+                rps.forceRadPush = true;
+                openGitPushDialog(project, e);
+            }
+        });
     }
 
     private void openGitPushDialog(@NotNull Project project , @Nullable AnActionEvent e) {

@@ -8,6 +8,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -25,8 +26,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
 public class BasicAction {
-
     private static final Logger logger = LoggerFactory.getLogger(BasicAction.class);
+    public static final String NOTIFICATION_GROUP = "Radicle.NotificationGroup";
+
     private RadAction action;
     private GitRepository repo;
     private Project project;
@@ -54,7 +56,52 @@ public class BasicAction {
         showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
     }
 
-    public static boolean isCliPathConfigured(@NotNull Project project) {
+    public static boolean isValidConfiguration(@NotNull Project project) {
+        if (!isCliPathConfigured(project) || !hasGitRepos(project) ||
+                !isSeedNodeConfigured(project) || !isRadInitialized(project)) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean isRadInitialized(@NotNull Project project) {
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        try {
+            var remote = GitConfigUtil.getValue(project, repos.get(0).getRoot(), "remote.rad.url");
+            if (!Strings.isNullOrEmpty(remote)) {
+                return true;
+            }
+        } catch (Exception e) {
+            logger.warn("unable to read git config file", e);
+        }
+        showErrorNotification(project, "radCliError", RadicleBundle.message("initializationError"));
+        return false;
+    }
+
+    private static boolean isSeedNodeConfigured(@NotNull Project project) {
+        var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
+        boolean hasSeedNode = false;
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        try {
+            var seed = GitConfigUtil.getValue(project, repos.get(0).getRoot(), "rad.seed");
+            if (!Strings.isNullOrEmpty(seed)) {
+                for (String node : seedNodes) {
+                    hasSeedNode = seed.contains(node);
+                    if (hasSeedNode) break;
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("unable to read git config file", e);
+        }
+        if (!hasSeedNode) {
+            showErrorNotification(project, "radCliError", RadicleBundle.message("seedNodeMissing"));
+        }
+        return hasSeedNode;
+    }
+
+    private static boolean isCliPathConfigured(@NotNull Project project) {
         var rsh = new RadicleSettingsHandler();
         var rs = rsh.loadSettings();
         logger.debug("settings are: {}", rs);
@@ -68,10 +115,11 @@ public class BasicAction {
         return true;
     }
 
-    public static boolean hasGitRepos(@NotNull Project project) {
+    private static boolean hasGitRepos(@NotNull Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         if (repos.isEmpty()) {
+            showErrorNotification(project, "radCliError", RadicleBundle.message("noGitRepos"));
             logger.warn("no git repos found!");
             return false;
         }
@@ -87,7 +135,7 @@ public class BasicAction {
             Collection<NotificationAction> actions) {
         type = type != null ? type : NotificationType.ERROR;
         var notif = NotificationGroupManager.getInstance()
-                .getNotificationGroup("Radicle.NotificationGroup")
+                .getNotificationGroup(NOTIFICATION_GROUP)
                 .createNotification(
                         Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title),
                         RadicleBundle.message(content), type);
