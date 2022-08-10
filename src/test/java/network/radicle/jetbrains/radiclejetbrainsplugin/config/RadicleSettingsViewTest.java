@@ -3,7 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
-import network.radicle.jetbrains.radiclejetbrainsplugin.ActionsTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
 import org.junit.Before;
 import org.junit.Test;
@@ -73,10 +73,10 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     public void getRadPathTest() throws InterruptedException {
         var path = radicleSettingsView.getRadPath();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(path).isEqualTo(ActionsTest.radPath);
+        assertThat(path).isEqualTo(AbstractIT.radPath);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(ActionsTest.wsl);
+            assertThat(cmd.getExePath()).isEqualTo(AbstractIT.wsl);
             assertThat(cmd.getParametersList().get(0)).isEqualTo(".");
         } else {
             assertThat(cmd.getExePath()).isEqualTo(".");
@@ -86,15 +86,15 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void getRadVersion() throws InterruptedException {
-        radicleSettingsHandler.savePath(ActionsTest.radPath);
-        radicleSettingsView = new RadicleSettingsView();
-        /* pop rad path command from queue.Its comming from apply method in before */
+        radicleSettingsHandler.savePath(AbstractIT.radPath);
+        /* pop previous command from queue ( placeholder triggers it ) */
         radStub.commands.poll(10, TimeUnit.SECONDS);
+        radicleSettingsView = new RadicleSettingsView();
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        ActionsTest.assertCmd(cmd);
-        assertThat(version).isEqualTo(ActionsTest.radVersion);
-        assertThat(cmd.getCommandLineString()).contains(ActionsTest.radPath + " --version");
+        AbstractIT.assertCmd(cmd);
+        assertThat(version).isEqualTo(AbstractIT.radVersion);
+        assertThat(cmd.getCommandLineString()).contains(AbstractIT.radPath + " --version");
     }
 
 }

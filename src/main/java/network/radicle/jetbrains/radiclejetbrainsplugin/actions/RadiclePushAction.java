@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,7 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PushDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +30,11 @@ public class RadiclePushAction extends AnAction {
     public void performAction(Project project, @Nullable AnActionEvent e) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             if (BasicAction.isValidConfiguration(project)) {
-                var rps = project.getService(RadicleProjectService.class);
-                // TODO check what happens if git push dialog is canceled
-                rps.forceRadPush = true;
-                openGitPushDialog(project, e);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    var rps = project.getService(RadicleProjectService.class);
+                    rps.forceRadPush = true;
+                    openGitPushDialog(project, e);
+                });
             }
         });
     }
@@ -45,7 +45,7 @@ public class RadiclePushAction extends AnAction {
                 ContainerUtil.emptyList() :
                 collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
         VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
-        new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories),
+        new PushDialog(project, DvcsUtil.sortRepositories(repositories),
                 selectedFile != null ? manager.getRepositoryForFileQuick(selectedFile) : null).show();
     }
 

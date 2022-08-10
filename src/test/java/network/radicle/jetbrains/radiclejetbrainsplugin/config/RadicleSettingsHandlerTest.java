@@ -1,7 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
-import network.radicle.jetbrains.radiclejetbrainsplugin.ActionsTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,10 +29,10 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
         var settings = radicleSettingsHandler.loadSettings();
         assertThat(settings.getPath()).isEmpty();
         assertThat(settings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.ASK.val);
-        radicleSettingsHandler.savePath(ActionsTest.radPath);
+        radicleSettingsHandler.savePath(AbstractIT.radPath);
         radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.YES);
         var newSettings = radicleSettingsHandler.loadSettings();
-        assertThat(newSettings.getPath()).isEqualTo(ActionsTest.radPath);
+        assertThat(newSettings.getPath()).isEqualTo(AbstractIT.radPath);
         assertThat(newSettings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
         radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.NO);
         newSettings = radicleSettingsHandler.loadSettings();
