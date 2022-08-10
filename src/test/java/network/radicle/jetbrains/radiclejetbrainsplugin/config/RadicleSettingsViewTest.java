@@ -77,11 +77,12 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
             assertThat(cmd.getExePath()).isEqualTo(AbstractIT.wsl);
-            assertThat(cmd.getParametersList().get(0)).isEqualTo(".");
+            assertThat(cmd.getParametersList().get(0)).isEqualTo("bash");
+            assertThat(cmd.getParametersList().get(1)).isEqualTo("-ic");
         } else {
             assertThat(cmd.getExePath()).isEqualTo(".");
         }
-        assertThat(cmd.getCommandLineString()).contains("which rad");
+        assertThat(cmd.getCommandLineString()).contains(". which rad");
     }
 
     @Test

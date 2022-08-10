@@ -82,8 +82,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
             assertThat(cmd.getExePath()).isEqualTo(wsl);
-            var path = cmd.getParametersList().get(0);
-            assertThat(path).isEqualTo(radPath);
+            assertThat("bash").isEqualTo(cmd.getParametersList().get(0));
+            assertThat("-ic").isEqualTo(cmd.getParametersList().get(1));
+            assertThat(cmd.getParametersList().get(2)).contains(radPath);
         } else {
             assertThat(cmd.getExePath()).isEqualTo(radPath);
         }
