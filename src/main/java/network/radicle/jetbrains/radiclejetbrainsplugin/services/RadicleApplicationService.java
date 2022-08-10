@@ -69,11 +69,11 @@ public class RadicleApplicationService {
         final var cmdLine = new GeneralCommandLine();
         if (SystemInfo.isWindows) {
             //TODO remove wsl
-            cmdLine.withExePath("wsl").withParameters(radPath);
+            cmdLine.withExePath("wsl").withParameters("bash","-ic").withParameters(radPath + " " + String.join(" ",args));
         } else {
-            cmdLine.withExePath(radPath);
+            cmdLine.withExePath(radPath).withParameters(args);
         }
-        cmdLine.withCharset(StandardCharsets.UTF_8).withParameters(args).withWorkDirectory(workDir)
+        cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
                 // we need parent environment to be present to our rad execution
                 .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
                 // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
