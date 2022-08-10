@@ -26,6 +26,36 @@ It requires the Git plugin, as well as [radicle cli](https://radicle.network/get
   Download the [latest release](https://github.com/cytechmobile/radicle-jetbrains-plugin/releases/latest) and install it manually using
   <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
 
+## Usage 
+
+### Prerequisites
+
+* A Radicle-initialised Git repo
+* The `rad` [Command Line Interface (CLI) tool](https://github.com/radicle-dev/radicle-cli) installed
+* A configured Radicle identity, with `rad auth`. Follow the [Radicle CLI quick start guide](https://radicle.network/get-started.html) for more info. 
+
+
+* On Windows: 
+  * Windows Subsystem for Linux (WSL) 2
+  * Keychain 2.8.5 (e.g. with `sudo apt-get install keychain` or `sudo dnf install keychain` )
+  * //TODO: ~/.profile
+  * //TODO: ...
+  
+### Contributing Changes (Pushing to Seed Node)
+
+* Open a Radicle-initialised repo in your Jetbrains IDE.
+* Make some changes and commit them locally.
+* You now need to use `Git -> Radicle -> Push` from the main menu, which will: 
+  * push these changes to your local Radicle monorepo (happens with `git push rad`), 
+  * sync these changes with the seed node (happens with `rad sync`).
+
+
+### Accepting Contributed Changes (Pulling from Seed Node)
+
+* Open a Radicle-initialised repo in your Jetbrains IDE.
+* Ensure a seed node has been configured. 
+* Use `Git -> Radicle -> Pull` (or the corresponding toolbar icon) to fetch changes from the seed node. 
+* Merge changes as appropriate, using your IDE.
 
 ---
 Plugin based on the [IntelliJ Platform Plugin Template][template].
