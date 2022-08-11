@@ -3,5 +3,21 @@
 # radicle-jetbrains-plugin Changelog
 
 ## [Unreleased]
+
 ### Added
+- Added Radicle menu and toolbar buttons by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/13
+- Added Radicle section in settings by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
+- Includes first non-UI Tests by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/25
+- Includes first UI Tests by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/18
+- improve plugin description by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/31
+- Adds usage instructions by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/34
+- Fix Draft Release GH Action by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/35
 - Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+
+### New Contributors
+- @gsaslis made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/1
+- @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
+- @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
+
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/commits/v0.1.0-alpha
+
