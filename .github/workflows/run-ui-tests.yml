@@ -1,6 +1,8 @@
 name: Run UI Tests
 on:
-  workflow_dispatch
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
 jobs:
   build-for-ui-test-linux:
     runs-on: ubuntu-latest
@@ -35,7 +37,7 @@ jobs:
       - name: Tests
         run: |
           export DISPLAY=:99.0
-          gradle :check
+          ./gradlew :uiTest
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
@@ -74,7 +76,7 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
-        run: gradle :check
+        run: ./gradlew :uiTest
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
@@ -88,7 +90,7 @@ jobs:
   build-for-ui-test-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
@@ -111,7 +113,7 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
-        run: gradle :check
+        run: ./gradlew :uiTest
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
