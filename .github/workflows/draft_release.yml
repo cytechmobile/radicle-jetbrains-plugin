@@ -70,6 +70,8 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: buildPluginArtifact
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
 
       # Check out current repository
