@@ -4,6 +4,7 @@
 
 ## [Unreleased]
 
+## [0.1.1-alpha]
 ### Added
 - Added Radicle menu and toolbar buttons by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/13
 - Added Radicle section in settings by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
