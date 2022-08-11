@@ -30,12 +30,12 @@ jobs:
           java-version: 17
       - name: Setup radicle-cli
         run: |
-          apt update
-          apt install curl ca-certificates gnupg -y
-          curl https://europe-west6-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add -
-          echo deb https://europe-west6-apt.pkg.dev/projects/radicle-services radicle-cli main | tee -a /etc/apt/sources.list.d/radicle-registry.list
-          apt update
-          apt install radicle-cli -y
+          sudo apt update
+          sudo apt install curl ca-certificates gnupg -y
+          curl https://europe-west6-apt.pkg.dev/doc/repo-signing-key.gpg | sudo apt-key add -
+          echo deb https://europe-west6-apt.pkg.dev/projects/radicle-services radicle-cli main | sudo tee -a /etc/apt/sources.list.d/radicle-registry.list
+          sudo apt update
+          sudo apt install radicle-cli -y
       # Set environment variables
       - name: Export Properties
         id: properties
