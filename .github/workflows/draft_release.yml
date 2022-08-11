@@ -68,7 +68,7 @@ jobs:
   releaseDraft:
     name: Release Draft
     if: github.event_name != 'pull_request'
-    needs: build
+    needs: buildPluginArtifact
     runs-on: ubuntu-latest
     steps:
 
@@ -90,10 +90,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create v${{ needs.build.outputs.version }} \
+          gh release create v${{ needs.buildPluginArtifact.outputs.version }} \
             --draft \
-            --title "v${{ needs.build.outputs.version }}" \
+            --title "v${{ needs.buildPluginArtifact.outputs.version }}" \
             --notes "$(cat << 'EOM'
-          ${{ needs.build.outputs.changelog }}
+          ${{ needs.buildPluginArtifact.outputs.changelog }}
           EOM
           )"
