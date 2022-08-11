@@ -36,9 +36,10 @@ It requires the Git plugin, as well as [radicle cli](https://radicle.network/get
 
 
 * On Windows: 
-  * Windows Subsystem for Linux (WSL) 2
+  * Windows Subsystem for Linux (WSL) 2 (The following steps are required in the default WSL2 distribution)
   * Keychain 2.8.5 (e.g. with `sudo apt-get install keychain` or `sudo dnf install keychain` )
-  * Add the following line to your shell configuration (~/.bashrc or ~/.zshrc)
+  * Add the following line to your bash shell configuration `~/.bashrc`. Even if you are using a different shell, such as zsh, these need to exist in your bash shell configuration.
+
   ```bash
   eval `keychain --quiet --eval --agents ssh id_rsa`
   ```
