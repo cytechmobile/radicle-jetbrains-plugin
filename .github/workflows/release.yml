@@ -18,7 +18,7 @@ jobs:
     steps:
       # Check out current repository
       - name: Fetch Sources
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.release.tag_name }}
 
@@ -28,7 +28,14 @@ jobs:
         with:
           distribution: corretto
           java-version: 17
-
+      - name: Setup radicle-cli
+        run: |
+          apt update
+          apt install curl ca-certificates gnupg -y
+          curl https://europe-west6-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add -
+          echo deb https://europe-west6-apt.pkg.dev/projects/radicle-services radicle-cli main | tee -a /etc/apt/sources.list.d/radicle-registry.list
+          apt update
+          apt install radicle-cli -y
       # Set environment variables
       - name: Export Properties
         id: properties
