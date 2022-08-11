@@ -43,7 +43,6 @@ dependencies {
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 }
 
-
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
     pluginName.set(properties("pluginName"))
@@ -162,9 +161,11 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
     }
+
+    buildSearchableOptions {
+        enabled = false
+    }
 }
-
-
 
 val uiTestTask = tasks.register<Test>("uiTest") {
     useJUnitPlatform {
