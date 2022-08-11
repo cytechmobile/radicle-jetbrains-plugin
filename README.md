@@ -38,8 +38,11 @@ It requires the Git plugin, as well as [radicle cli](https://radicle.network/get
 * On Windows: 
   * Windows Subsystem for Linux (WSL) 2
   * Keychain 2.8.5 (e.g. with `sudo apt-get install keychain` or `sudo dnf install keychain` )
-  * //TODO: ~/.profile
-  * //TODO: ...
+  * Add the following line to your shell configuration (~/.bashrc or ~/.zshrc)
+  ```bash
+  eval `keychain --quiet --eval --agents ssh id_rsa`
+  ```
+  * Run `rad auth` in your project directory
   
 ### Contributing Changes (Pushing to Seed Node)
 
