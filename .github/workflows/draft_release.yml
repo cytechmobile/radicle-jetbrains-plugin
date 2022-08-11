@@ -44,6 +44,14 @@ jobs:
           echo "::set-output name=name::$NAME"
           echo "::set-output name=changelog::$CHANGELOG"
 
+      - name: Setup radicle-cli
+        run: |
+          apt update
+          apt install curl ca-certificates gnupg -y
+          curl https://europe-west6-apt.pkg.dev/doc/repo-signing-key.gpg | apt-key add -
+          echo deb https://europe-west6-apt.pkg.dev/projects/radicle-services radicle-cli main | tee -a /etc/apt/sources.list.d/radicle-registry.list
+          apt update
+          apt install radicle-cli -y
 
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
