@@ -45,7 +45,7 @@ public class RadicleMenusJavaTest {
     public void beforeEach() {
         step("Create tmp dir", () -> {
             try {
-                tmpDir = Files.createTempDirectory("test-project-" + System.currentTimeMillis());
+                tmpDir = Files.createTempDirectory("test-project");
             } catch (Exception e) {
                 logger.warn("error creating temp directory", e);
                 Assertions.fail("error creating temp directory", e);
@@ -81,7 +81,7 @@ public class RadicleMenusJavaTest {
 
     @Test
     @Tag("video")
-    void initialiseRadicleProject(final RemoteRobot remoteRobot) {
+    void initialiseRadicleProject(final RemoteRobot remoteRobot) throws InterruptedException {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new CommonSteps(remoteRobot);
         sharedSteps.importProjectFromVCS(tmpDir);
@@ -89,15 +89,11 @@ public class RadicleMenusJavaTest {
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+
         step("Ensure Radicle sub-menu category is visible", () -> {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").isShowing();
-        });
-
-        step("Ensure Radicle sub-menu items (sync, push, pull) show", () -> {
-            keyboard.hotKey(VK_ESCAPE);
-            actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").click();
             actionMenuItem(remoteRobot, "Pull").isShowing();
             actionMenuItem(remoteRobot, "Push").isShowing();
@@ -110,7 +106,6 @@ public class RadicleMenusJavaTest {
             isXPathComponentVisible(idea, "//div[@myicon='rad_push.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
         });
-
 
 
 //        step("Check console output", () -> {
