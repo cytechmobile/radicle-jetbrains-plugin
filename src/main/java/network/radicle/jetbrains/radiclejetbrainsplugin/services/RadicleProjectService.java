@@ -8,7 +8,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -75,8 +74,21 @@ public class RadicleProjectService {
     }
 
     private boolean isGitPushNotification(Notification notification) {
-        return notification.displayId != null && notification.displayId.equals(GIT_PUSH_DISPLAY_ID) &&
-                notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up");
+        try {
+            String displayId = "";
+            var fields = Notification.class.getDeclaredFields();
+            for (var f : fields) {
+                if (f.getName().equals("displayId") || f.getName().equals("myDisplayId")) {
+                    f.setAccessible(true);
+                    displayId = (String) f.get(notification);
+                    break;
+                }
+            }
+            return displayId != null && displayId.equals(GIT_PUSH_DISPLAY_ID) &&
+                    notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up");
+        } catch (Exception e) {
+            logger.warn("Unable to get displayId value",e);
+            return false;
+        }
     }
-
 }

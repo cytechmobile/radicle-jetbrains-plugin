@@ -136,11 +136,12 @@ public class BasicAction {
         type = type != null ? type : NotificationType.ERROR;
         var notif = NotificationGroupManager.getInstance()
                 .getNotificationGroup(NOTIFICATION_GROUP)
-                .createNotification(
-                        Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title),
-                        "", RadicleBundle.message(content),type);
+                .createNotification(RadicleBundle.message(content),type);
+        notif.setTitle(Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title));
         if (actions != null && !actions.isEmpty()) {
-            notif.addActions(actions);
+            for (var action : actions) {
+                notif.addAction(action);
+            }
         }
         notif.notify(project);
     }
