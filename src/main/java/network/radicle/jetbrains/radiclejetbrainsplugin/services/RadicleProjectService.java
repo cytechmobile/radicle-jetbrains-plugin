@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class RadicleProjectService {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
-    private static final String GIT_PUSH_DISPLAY_ID = "git.push.result";
+    private static final String GIT_PUSH_GROUP_ID = "Vcs Notifications";
 
     private Project project = null;
     public List<PushInfo> pushDetails;
@@ -75,16 +75,7 @@ public class RadicleProjectService {
 
     private boolean isGitPushNotification(Notification notification) {
         try {
-            String displayId = "";
-            var fields = Notification.class.getDeclaredFields();
-            for (var f : fields) {
-                if (f.getName().equals("displayId") || f.getName().equals("myDisplayId")) {
-                    f.setAccessible(true);
-                    displayId = (String) f.get(notification);
-                    break;
-                }
-            }
-            return displayId != null && displayId.equals(GIT_PUSH_DISPLAY_ID) &&
+            return notification.getGroupId().equals(GIT_PUSH_GROUP_ID) &&
                     notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up");
         } catch (Exception e) {
             logger.warn("Unable to get displayId value",e);

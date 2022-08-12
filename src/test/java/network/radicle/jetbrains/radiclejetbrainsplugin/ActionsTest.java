@@ -41,11 +41,11 @@ public class ActionsTest extends AbstractIT {
         srv.pushDetails = details;
         srv.forceRadPush = true;
 
-        final String GIT_PUSH_DISPLAY_ID = "git.push.result";
         var notif = NotificationGroupManager.getInstance()
-                .getNotificationGroup(BasicAction.NOTIFICATION_GROUP)
+                .getNotificationGroup("Vcs Notifications")
                 .createNotification(
-                        RadicleBundle.message("test") ,RadicleBundle.message("somecontent"), NotificationType.INFORMATION,null,GIT_PUSH_DISPLAY_ID);
+                        RadicleBundle.message("test") ,RadicleBundle.message("somecontent"), NotificationType.INFORMATION,null);
+
         notif.notify(super.getProject());
 
         assertPushAction();
