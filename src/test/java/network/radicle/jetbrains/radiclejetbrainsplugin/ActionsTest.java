@@ -44,7 +44,7 @@ public class ActionsTest extends AbstractIT {
         var notif = NotificationGroupManager.getInstance()
                 .getNotificationGroup("Vcs Notifications")
                 .createNotification(
-                        RadicleBundle.message("test") ,RadicleBundle.message("somecontent"), NotificationType.INFORMATION,null);
+                        RadicleBundle.message("test") ,"Pushed 1 commit", NotificationType.INFORMATION,null);
 
         notif.notify(super.getProject());
 

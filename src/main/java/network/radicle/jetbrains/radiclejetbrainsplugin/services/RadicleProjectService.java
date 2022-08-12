@@ -76,7 +76,8 @@ public class RadicleProjectService {
     private boolean isGitPushNotification(Notification notification) {
         try {
             return notification.getGroupId().equals(GIT_PUSH_GROUP_ID) &&
-                    notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up");
+                    notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up") &&
+                    notification.getContent().contains("Pushed");
         } catch (Exception e) {
             logger.warn("Unable to get displayId value",e);
             return false;
