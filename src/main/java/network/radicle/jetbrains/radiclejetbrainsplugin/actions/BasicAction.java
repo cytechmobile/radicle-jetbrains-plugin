@@ -132,13 +132,13 @@ public class BasicAction {
 
     public static void showNotification(
             Project project, String title, String content, NotificationType type,
-            Collection<NotificationAction> actions) {
+            List<NotificationAction> actions) {
         type = type != null ? type : NotificationType.ERROR;
         var notif = NotificationGroupManager.getInstance()
                 .getNotificationGroup(NOTIFICATION_GROUP)
                 .createNotification(
                         Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title),
-                        RadicleBundle.message(content), type);
+                        "", RadicleBundle.message(content),type);
         if (actions != null && !actions.isEmpty()) {
             notif.addActions(actions);
         }

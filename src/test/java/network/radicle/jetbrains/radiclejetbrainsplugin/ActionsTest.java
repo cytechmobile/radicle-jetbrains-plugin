@@ -45,8 +45,7 @@ public class ActionsTest extends AbstractIT {
         var notif = NotificationGroupManager.getInstance()
                 .getNotificationGroup(BasicAction.NOTIFICATION_GROUP)
                 .createNotification(
-                        RadicleBundle.message("test"), RadicleBundle.message("somecontent"), NotificationType.INFORMATION);
-        notif.setDisplayId(GIT_PUSH_DISPLAY_ID);
+                        RadicleBundle.message("test") ,RadicleBundle.message("somecontent"), NotificationType.INFORMATION,null,GIT_PUSH_DISPLAY_ID);
         notif.notify(super.getProject());
 
         assertPushAction();

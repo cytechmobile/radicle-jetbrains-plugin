@@ -23,7 +23,10 @@ public class RadStub extends RadicleApplicationService {
         } else if (cmdLine.getCommandLineString().contains("which")) {
             stdout = "/usr/bin/rad";
         }
-        return new ProcessOutput(stdout, "stderr", 0, false, false);
+        var pr = new ProcessOutput(0);
+        pr.appendStderr("stderr");
+        pr.appendStdout(stdout);
+        return pr;
     }
 
     public static RadStub replaceRadicleApplicationService(UsefulTestCase utc) {
