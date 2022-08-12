@@ -45,7 +45,7 @@ public class RadicleMenusJavaTest {
     public void beforeEach() {
         step("Create tmp dir", () -> {
             try {
-                tmpDir = Files.createTempDirectory("test-project");
+                tmpDir = Files.createTempDirectory("test-project-" + System.currentTimeMillis());
             } catch (Exception e) {
                 logger.warn("error creating temp directory", e);
                 Assertions.fail("error creating temp directory", e);
