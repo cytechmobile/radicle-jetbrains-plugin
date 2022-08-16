@@ -8,7 +8,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class RadicleProjectService {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
-    private static final String GIT_PUSH_DISPLAY_ID = "git.push.result";
+    private static final String GIT_PUSH_GROUP_ID = "Vcs Notifications";
 
     private Project project = null;
     public List<PushInfo> pushDetails;
@@ -75,8 +74,13 @@ public class RadicleProjectService {
     }
 
     private boolean isGitPushNotification(Notification notification) {
-        return notification.getDisplayId() != null && notification.getDisplayId().equals(GIT_PUSH_DISPLAY_ID) &&
-                notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up");
+        try {
+            return notification.getGroupId().equals(GIT_PUSH_GROUP_ID) &&
+                    notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up") &&
+                    notification.getContent().contains("Pushed");
+        } catch (Exception e) {
+            logger.warn("Unable to get displayId value",e);
+            return false;
+        }
     }
-
 }
