@@ -5,19 +5,17 @@ import com.intellij.dvcs.push.PushSource;
 import com.intellij.dvcs.push.PushSpec;
 import com.intellij.dvcs.push.PushTarget;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
+import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -86,6 +84,22 @@ public class ActionsTest extends AbstractIT {
         var not = notificationsQueue.poll(10,TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(new RadSync().getNotificationSuccessMessage());
+    }
+
+    @Test
+    public void testSuccessNotificationAfterInstalled() throws InterruptedException {
+        radicleSettingsHandler.savePath("");
+        var rm = new RadicleManagerListener();
+        rm.projectOpened(getProject());
+
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
+
+        radicleSettingsHandler.savePath(radPath);
+        rm.projectOpened(getProject());
+        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNull();
     }
 
     @Test

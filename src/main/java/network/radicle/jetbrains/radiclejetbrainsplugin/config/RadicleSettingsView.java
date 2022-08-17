@@ -165,7 +165,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
     }
 
     private String getSelectedPath() {
-        var path = radPathField.getText();
+        var path = radPathField != null ? radPathField.getText() : "";
         if (path.contains(RadicleBundle.message("autoDetected"))) {
             path = path.split(":")[1].trim();
         }
