@@ -3,6 +3,9 @@
 # radicle-jetbrains-plugin Changelog
 
 ## [Unreleased]
+- Show a notification every time the user open a new project, to remind him to configure the plugin path
+- Fix a bug in settings
+- Update icons
 
 ## [0.1.2-alpha]
 - Change java version from 17 to 11 and change platform version from 2022.2 to 2020.3
