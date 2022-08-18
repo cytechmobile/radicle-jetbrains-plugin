@@ -12,10 +12,7 @@
 ## [0.1.2-alpha]
 - Change java version from 17 to 11 and change platform version from 2022.2 to 2020.3
 
-## [0.1.2-alpha]
-- Change java version from 17 to 11 and change platform version from 2022.2 to 2020.3
-
-## [0.1.2-alpha]
+## [0.1.1-alpha]
 
 ### Added
 - Added Radicle menu and toolbar buttons by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/13
