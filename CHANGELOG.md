@@ -3,6 +3,7 @@
 # radicle-jetbrains-plugin Changelog
 
 ## [Unreleased]
+- Add radicle icons in the navigation bar
 
 ## [0.1.3-alpha]
 - Show a notification every time the user open a new project, to remind him to configure the plugin path
