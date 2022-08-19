@@ -57,20 +57,36 @@
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
-        <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction"
+        <action id="Radicle.Sync.navBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction"
                 text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
         </action>
 
+        <action id="Radicle.Push.navBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction"
+                text="Rad Push" description="Radicle push from toolbar" icon="/icons/rad_push.svg">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Sync.navBartoolbar"/>
+        </action>
+
+        <action id="Radicle.Pull.navBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction"
+                text="Rad Pull" description="Radicle pull from toolbar" icon="/icons/rad_pull.svg">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Push.navBartoolbar"/>
+        </action>
+
+        <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction"
+                text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
+            <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
+        </action>
+
         <action id="Radicle.Push.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction"
                 text="Rad Push" description="Radicle push from toolbar" icon="/icons/rad_push.svg">
-            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Sync.toolbar"/>
+            <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Sync.toolbar"/>
         </action>
 
         <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction"
                 text="Rad Pull" description="Radicle pull from toolbar" icon="/icons/rad_pull.svg">
-            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Push.toolbar"/>
+            <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Push.toolbar"/>
         </action>
+
 
     </actions>
 </idea-plugin>
