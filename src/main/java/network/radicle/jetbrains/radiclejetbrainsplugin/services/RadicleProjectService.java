@@ -5,9 +5,11 @@ import com.intellij.dvcs.push.PushInfo;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -65,9 +67,15 @@ public class RadicleProjectService {
                     var syncAction = new RadicleSyncAction();
                     syncAction.performAction(project, repos);
                     /* Check if user has configured plugin to run automatically sync action */
-                } else if(radSync == RadicleSettings.RadSyncType.ASK.val) {
-                    var dialog = new SelectActionDialog(project, repos);
-                    dialog.showAndGet();
+                } else if (radSync == RadicleSettings.RadSyncType.ASK.val) {
+                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                       if (BasicAction.isRadInitialized(project,false)) {
+                           ApplicationManager.getApplication().invokeLater(() -> {
+                               var dialog = new SelectActionDialog(project, repos);
+                               dialog.showAndGet();
+                           });
+                       }
+                    });
                 }
             }
         });
