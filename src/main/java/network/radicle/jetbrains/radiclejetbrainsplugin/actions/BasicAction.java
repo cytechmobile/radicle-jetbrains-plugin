@@ -58,13 +58,13 @@ public class BasicAction {
 
     public static boolean isValidConfiguration(@NotNull Project project) {
         if (!isCliPathConfigured(project) || !hasGitRepos(project) ||
-                !isSeedNodeConfigured(project) || !isRadInitialized(project)) {
+                !isSeedNodeConfigured(project) || !isRadInitialized(project, true)) {
             return false;
         }
         return true;
     }
 
-    private static boolean isRadInitialized(@NotNull Project project) {
+    public static boolean isRadInitialized(@NotNull Project project, boolean showNotification) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         try {
@@ -75,7 +75,9 @@ public class BasicAction {
         } catch (Exception e) {
             logger.warn("unable to read git config file", e);
         }
-        showErrorNotification(project, "radCliError", RadicleBundle.message("initializationError"));
+        if (showNotification) {
+            showErrorNotification(project, "radCliError", RadicleBundle.message("initializationError"));
+        }
         return false;
     }
 
