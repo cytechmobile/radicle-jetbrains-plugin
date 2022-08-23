@@ -41,8 +41,11 @@ It requires the Git plugin, as well as [radicle cli](https://radicle.network/get
   * Add the following line to your bash shell configuration `~/.bashrc`. Even if you are using a different shell, such as zsh, these need to exist in your bash shell configuration.
 
   ```bash
-  eval `keychain --quiet --eval --agents ssh id_rsa`
+  eval `keychain --quiet --eval --agents ssh id_rsa`;
+  export WSLENV=$WSLENV:SSH_AGENT_PID:SSH_AUTH_SOCK;
   ```
+  * Open window terminal and run Intellij from wsl (e.g ```wsl bash -lic "path"``` )
+  * Open Intellij and set the ```Git``` executable to be the git installed in Windows Subsystem for linux
   * Run `rad auth` in your project directory
   
 ### Contributing Changes (Pushing to Seed Node)
