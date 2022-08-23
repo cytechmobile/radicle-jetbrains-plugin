@@ -5,6 +5,7 @@
 ## [Unreleased]
 - Add radicle icons in the navigation bar
 - Check if the project is rad initialized before show the dialog
+- Update windows instructions
 
 ## [0.1.3-alpha]
 - Show a notification every time the user open a new project, to remind him to configure the plugin path
