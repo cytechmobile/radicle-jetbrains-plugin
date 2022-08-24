@@ -40,7 +40,7 @@ public class CommonSteps {
             final var keyboard = new Keyboard(remoteRobot);
             keyboard.enterText("https://github.com/radicle-dev/radicle-cli", 0);
 
-            final var dirInputFieldLocator = byXpath("//div[@class='ExtendableTextField']");
+            final var dirInputFieldLocator = byXpath("//div[@class='TextFieldWithBrowseButton']");
             remoteRobot.find(ComponentFixture.class, dirInputFieldLocator, Duration.ofSeconds(20)).click();
             //create tmp dir to clone project to:
             keyboard.selectAll();
