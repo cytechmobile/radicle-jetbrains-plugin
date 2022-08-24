@@ -3,6 +3,8 @@
 # radicle-jetbrains-plugin Changelog
 
 ## [Unreleased]
+
+## [0.1.4-alpha]
 - Add radicle icons in the navigation bar
 - Check if the project is rad initialized before show the dialog
 - Update windows instructions
@@ -17,7 +19,6 @@
 - Change java version from 17 to 11 and change platform version from 2022.2 to 2020.3
 
 ## [0.1.1-alpha]
-
 ### Added
 - Added Radicle menu and toolbar buttons by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/13
 - Added Radicle section in settings by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
@@ -27,6 +28,7 @@
 - Adds usage instructions by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/34
 - Fix Draft Release GH Action by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/35
 - Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+
 
 
 
