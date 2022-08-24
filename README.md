@@ -30,7 +30,7 @@ It requires the Git plugin, as well as [radicle cli](https://radicle.network/get
 
 ### Prerequisites
 
-* The `rad` [Command Line Interface (CLI) tool](https://github.com/radicle-dev/radicle-cli) installed, at least v0.6.0.
+* The `rad` Command Line Interface (CLI) tool installed, at least v0.6.0. Please check [here](https://radicle.xyz/get-started) for installation details. 
 
   In your terminal, enter the command `rad --version`. The output should be similar to:
 ```bash
