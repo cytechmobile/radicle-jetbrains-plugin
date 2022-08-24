@@ -1,3 +1,5 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.intellij.remoterobot.RemoteRobot;
@@ -8,6 +10,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.steps.CommonSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -42,7 +45,7 @@ public class RadicleMenusJavaTest {
     public void beforeEach() {
         step("Create tmp dir", () -> {
             try {
-                tmpDir = Files.createTempDirectory("test-project-" + System.currentTimeMillis());
+                tmpDir = Files.createTempDirectory("test-project");
             } catch (Exception e) {
                 logger.warn("error creating temp directory", e);
                 Assertions.fail("error creating temp directory", e);
@@ -78,7 +81,7 @@ public class RadicleMenusJavaTest {
 
     @Test
     @Tag("video")
-    void initialiseRadicleProject(final RemoteRobot remoteRobot) throws InterruptedException {
+    void initialiseRadicleProject(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new CommonSteps(remoteRobot);
         sharedSteps.importProjectFromVCS(tmpDir);
@@ -86,6 +89,20 @@ public class RadicleMenusJavaTest {
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+        step("Ensure Radicle sub-menu category is visible", () -> {
+            keyboard.hotKey(VK_ESCAPE);
+            actionMenu(remoteRobot, "Git").click();
+            actionMenu(remoteRobot, "Radicle").isShowing();
+        });
+
+        step("Ensure Radicle sub-menu items (sync, push, pull) show", () -> {
+            keyboard.hotKey(VK_ESCAPE);
+            actionMenu(remoteRobot, "Git").click();
+            actionMenu(remoteRobot, "Radicle").click();
+            actionMenuItem(remoteRobot, "Pull").isShowing();
+            actionMenuItem(remoteRobot, "Push").isShowing();
+            actionMenuItem(remoteRobot, "Synchronize").isShowing();
+        });
 
         step("Ensure Radicle toolbar actions show", () -> {
             keyboard.hotKey(VK_ESCAPE);
@@ -94,14 +111,7 @@ public class RadicleMenusJavaTest {
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
         });
 
-        step("Ensure Radicle sub-menu category is visible", () -> {
-            actionMenu(remoteRobot, "Git").click();
-            actionMenu(remoteRobot, "Radicle").click();
-            actionMenuItem(remoteRobot, "Pull").isShowing();
-            actionMenuItem(remoteRobot, "Push").isShowing();
-            actionMenuItem(remoteRobot, "Synchronize").isShowing();
-            keyboard.hotKey(VK_ESCAPE);
-        });
+
 
 //        step("Check console output", () -> {
 //            final Locator locator = byXpath("//div[@class='ConsoleViewImpl']");
