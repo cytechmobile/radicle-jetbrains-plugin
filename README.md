@@ -30,9 +30,15 @@ It requires the Git plugin, as well as [radicle cli](https://radicle.network/get
 
 ### Prerequisites
 
+* The `rad` [Command Line Interface (CLI) tool](https://github.com/radicle-dev/radicle-cli) installed, at least v0.6.0.
+
+  In your terminal, enter the command `rad --version`. The output should be similar to:
+```bash
+$ rad --version
+rad 0.6.0
+```
+* A configured Radicle identity, with `rad auth`. Follow the [Radicle CLI quick start guide](https://radicle.network/get-started.html) for more info.
 * A Radicle-initialised Git repo
-* The `rad` [Command Line Interface (CLI) tool](https://github.com/radicle-dev/radicle-cli) installed
-* A configured Radicle identity, with `rad auth`. Follow the [Radicle CLI quick start guide](https://radicle.network/get-started.html) for more info. 
 
 
 * On Windows: 
