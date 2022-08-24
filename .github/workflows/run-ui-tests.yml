@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
       - name: Setup FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v1
         with:
@@ -20,14 +20,14 @@ jobs:
           # errors especially on GitHub-hosted macos machines.
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Clean
-        run: ./gradlew :clean
+        run: gradle :clean
       - name: Run Idea
         run: |
           export DISPLAY=:99.0
           Xvfb -ac :99 -screen 0 1920x1080x24 &
           sleep 10
           mkdir -p build/reports
-          ./gradlew :runIdeForUiTests > build/reports/idea.log &
+          gradle :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v2
         with:
@@ -56,7 +56,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
       - name: Setup FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v1
         with:
@@ -64,11 +64,11 @@ jobs:
           # errors especially on GitHub-hosted macos machines.
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Clean
-        run: ./gradlew :clean
+        run: gradle :clean
       - name: Run Idea
         run: |
           mkdir -p build/reports
-          ./gradlew :runIdeForUiTests > build/reports/idea.log &
+          gradle :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v2
         with:
@@ -95,7 +95,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: corretto
-          java-version: 11
+          java-version: 17
       - name: Setup FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v1
         with:
@@ -103,7 +103,7 @@ jobs:
           # errors especially on GitHub-hosted macos machines.
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Clean
-        run: ./gradlew.bat :clean
+        run: gradle :clean
       - name: Run Idea
         run: start gradlew.bat :runIdeForUiTests
       - name: Wait for Idea started
@@ -113,7 +113,7 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
-        run: ./gradlew.bat :uiTest
+        run: ./gradlew :uiTest
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
