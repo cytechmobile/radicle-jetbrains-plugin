@@ -27,7 +27,7 @@ repositories {
     }
 }
 
-var remoteRobotVersion = "0.11.15"
+var remoteRobotVersion = "0.11.16"
 
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
