@@ -172,3 +172,40 @@ val uiTestTask = tasks.register<Test>("uiTest") {
 tasks.check {
     dependsOn(uiTestTask)
 }
+
+tasks.create("bumpVersion") {
+    group = "version"
+    description = "Increments the version in this build file everywhere it is used."
+    fun generateVersion(): String {
+        val updateMode = properties["mode"] ?: "patch" // By default, update the patch
+        var prjVersion = version.toString()
+        var channel = ""
+        if (prjVersion.contains("-")) {
+            // version also contains release channel (e.g. alpha)
+            val parts = prjVersion.split("-")
+            prjVersion = parts[0]
+            channel = parts[1]
+        }
+        val (oldMajor, oldMinor, oldPatch) = prjVersion.split(".").map(String::toInt)
+        var (newMajor, newMinor, newPatch) = arrayOf(oldMajor, oldMinor, 0)
+        when (updateMode) {
+            "major" -> newMajor = (oldMajor + 1).also { newMinor = 0 }
+            "minor" -> newMinor = oldMinor + 1
+            else -> newPatch = oldPatch + 1
+        }
+        var newVersion = "$newMajor.$newMinor.$newPatch"
+        if (channel.isNotEmpty()) {
+            newVersion = "$newVersion-$channel"
+        }
+        return newVersion
+    }
+    doLast {
+        val oldVersion = version.toString()
+        val newVersion = properties["overrideVersion"] as String? ?: generateVersion()
+        val propsFile = file("gradle.properties")
+        val oldContent = propsFile.readText()
+        println("bumping version from <$oldVersion> to <$newVersion>")
+        val newContent = oldContent.replace("pluginVersion = $oldVersion", "pluginVersion = $newVersion")
+        propsFile.writeText(newContent)
+    }
+}

@@ -81,6 +81,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # bump version to next patch
+          ./gradlew bumpVersion
+
           VERSION="${{ github.event.release.tag_name }}"
           BRANCH="changelog-update-$VERSION"
 
