@@ -22,6 +22,13 @@
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
                 groupWeight="-400"
                 displayName="Radicle"/>
+
+        <projectConfigurable
+                groupId="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
+                displayName="Identities"
+                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView"
+                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView" />
+
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
     </extensions>

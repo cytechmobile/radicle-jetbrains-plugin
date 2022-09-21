@@ -4,9 +4,9 @@ import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
 
 public interface RadAction {
-    ProcessOutput run(GitRepository repo);
+    ProcessOutput run();
     String getErrorMessage();
     String getSuccessMessage();
     String getNotificationSuccessMessage();
-    String getProgressBarTitle();
+    GitRepository getRepo();
 }

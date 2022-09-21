@@ -9,4 +9,5 @@ public interface RadicleIcons {
     Icon RadiclePush = IconLoader.getIcon("/icons/rad_push.svg", RadicleIcons.class);
     Icon RadiclePull = IconLoader.getIcon("/icons/rad_pull.svg", RadicleIcons.class);
     Icon RadicleSync = IconLoader.getIcon("/icons/rad_sync.svg", RadicleIcons.class);
+    Icon CheckIcon = IconLoader.getIcon("/icons/check.svg", RadicleIcons.class);
 }

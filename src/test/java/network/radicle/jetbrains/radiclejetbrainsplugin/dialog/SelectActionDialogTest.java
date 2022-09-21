@@ -82,6 +82,6 @@ public class SelectActionDialogTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10,TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(new RadSync().getNotificationSuccessMessage());
+        assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
     }
 }

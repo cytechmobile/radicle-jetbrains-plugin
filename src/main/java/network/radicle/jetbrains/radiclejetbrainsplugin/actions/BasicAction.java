@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
 import com.google.common.base.Strings;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
@@ -32,7 +32,7 @@ public class BasicAction {
     private RadAction action;
     private GitRepository repo;
     private Project project;
-    private final CountDownLatch countDownLatch;
+    private CountDownLatch countDownLatch;
 
     public BasicAction(@NotNull RadAction action, @NotNull GitRepository repo, @NotNull Project project,
                        @NotNull CountDownLatch countDownLatch) {
@@ -42,18 +42,26 @@ public class BasicAction {
         this.countDownLatch = countDownLatch;
     }
 
-    public void perform() {
-        var output = action.run(repo);
+    public BasicAction(@NotNull RadAction action, Project project, @NotNull CountDownLatch countDownLatch) {
+        this.action = action;
+        this.project = project;
+        this.countDownLatch = countDownLatch;
+    }
+
+    public ProcessOutput perform() {
+        var output = action.run();
         var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
         countDownLatch.countDown();
-        //TODO maybe show notification inside Update Background Class
         if (!success) {
             logger.warn(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-            showErrorNotification(repo.getProject(), "radCliError", output.getStderr());
-            return;
+            showErrorNotification(repo != null ? repo.getProject() : project, "radCliError", output.getStderr());
+            return output;
         }
         logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-        showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
+        if (!action.getNotificationSuccessMessage().isEmpty()) {
+            showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
+        }
+        return output;
     }
 
     public static boolean isValidConfiguration(@NotNull Project project) {
