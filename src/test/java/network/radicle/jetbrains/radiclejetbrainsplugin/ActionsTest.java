@@ -91,7 +91,7 @@ public class ActionsTest extends AbstractIT {
         } else {
             assertThat(firstCommand.getExePath()).isEmpty();
             assertThat(secondCommand.getExePath()).isEmpty();
-            assertThat(thirdCommand.getExePath()).isEmpty();
+            assertThat(thirdCommand.getExePath()).isEqualTo(radPath);
         }
         assertTrue(firstCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
                 firstCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE= >> ~/.bashrc") ||
@@ -151,7 +151,7 @@ public class ActionsTest extends AbstractIT {
         } else {
             assertThat(firstCommand.getExePath()).isEmpty();
             assertThat(secondCommand.getExePath()).isEmpty();
-            assertThat(thirdCommand.getExePath()).isEmpty();
+            assertThat(thirdCommand.getExePath()).isEqualTo(radPath);
         }
 
         assertTrue(firstCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
