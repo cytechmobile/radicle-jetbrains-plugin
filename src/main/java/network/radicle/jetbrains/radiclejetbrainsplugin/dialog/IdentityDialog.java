@@ -29,10 +29,6 @@ public class IdentityDialog extends DialogWrapper {
     @Override
     protected void doOKAction() {
         super.doOKAction();
-        // ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        //    //TODO show notification
-        //     BasicAction.createNewIdentity(nameField.getText(),passphraseField.getText());
-        // });
     }
 
     @Override

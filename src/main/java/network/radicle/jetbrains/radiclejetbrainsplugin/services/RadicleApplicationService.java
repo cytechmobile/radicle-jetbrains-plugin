@@ -24,6 +24,7 @@ public class RadicleApplicationService {
 
     private final RadicleSettingsHandler settingsHandler;
     private final String RAD_PASSPHRASE="RAD_PASSPHRASE";
+    private String radConfigPath = "";
 
     public RadicleApplicationService() {
         this(new RadicleSettingsHandler());
@@ -32,6 +33,14 @@ public class RadicleApplicationService {
     @NonInjectable
     public RadicleApplicationService(RadicleSettingsHandler radicleSettingsHandler) {
         this.settingsHandler = radicleSettingsHandler;
+    }
+
+    public void setRadConfigPath(String path) {
+        this.radConfigPath = path;
+    }
+
+    public String getRadConfigPath() {
+        return this.radConfigPath;
     }
 
     public ProcessOutput getRadPath() {

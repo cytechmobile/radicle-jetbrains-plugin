@@ -34,6 +34,10 @@ public class RadSelf implements RadAction {
 
     private String getConfigPath() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var cacheConfigPath = rad.getRadConfigPath();
+        if (!cacheConfigPath.isEmpty()) {
+            return cacheConfigPath;
+        }
         try {
             var output = rad.self(false);
             if (output.getExitCode() == 0) {
@@ -43,7 +47,9 @@ public class RadSelf implements RadAction {
                 Pattern r = Pattern.compile(pattern);
                 Matcher m = r.matcher(path);
                 if (m.find()) {
-                    return m.group();
+                    var configPath = m.group();
+                    rad.setRadConfigPath(configPath);
+                    return configPath;
                 }
             }
         } catch (Exception e) {
@@ -53,9 +59,13 @@ public class RadSelf implements RadAction {
     }
 
     private ProcessOutput getProfiles() {
+        var configPath = getConfigPath();
+        errorMsg = RadicleBundle.message("profilesError");
+        if (configPath.isEmpty()) {
+            return new ProcessOutput(-1);
+        }
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         var output = rad.executeCommand("", ".", List.of("ls", getConfigPath()), null);
-        errorMsg = RadicleBundle.message("profilesError");
         return output;
     }
 

@@ -17,6 +17,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAuth;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.ConfirmationDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import org.jetbrains.annotations.NonNls;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
+    public static final String ID = RadicleBundle.message("radicle");
     protected JPanel mainPanel;
     protected JBTable table;
     private Icon checkIcon = RadicleIcons.CheckIcon;
@@ -42,12 +44,12 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
     @Override
     public @NotNull @NonNls String getId() {
-        return null;
+        return ID;
     }
 
     @Override
     public @NlsContexts.ConfigurableName String getDisplayName() {
-        return null;
+        return ID;
     }
 
     public String getActiveProfile() {
@@ -168,10 +170,15 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
         @Override
         public void run(AnActionButton anActionButton) {
+            var confirmDialog = new ConfirmationDialog(RadicleBundle.message("removeIdentityConfirm"),
+                    RadicleBundle.message("removeIdentity"));
             var selectedRow =  table.getSelectedRow();
             var tableModel = (DefaultTableModel) table.getModel();
             var profile = (String) tableModel.getValueAt(selectedRow,0);
-            removeProfile(profile);
+            var okButton = confirmDialog.showAndGet();
+            if (okButton) {
+                removeProfile(profile);
+            }
         }
     }
 
