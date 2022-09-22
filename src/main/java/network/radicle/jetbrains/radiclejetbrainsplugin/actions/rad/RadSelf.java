@@ -24,11 +24,19 @@ public class RadSelf implements RadAction {
 
     public RadSelf(RadSelfAction action) {
         this.action = action;
+        setMessages();
+    }
+
+    private void setMessages() {
+        if (action == RadSelfAction.ACTIVE_PROFILE) {
+            errorMsg = RadicleBundle.message("activeProfileError");
+        } else if (action == RadSelfAction.GET_PROFILES) {
+            errorMsg = RadicleBundle.message("profilesError");
+        }
     }
 
     public ProcessOutput activeProfile() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        errorMsg = RadicleBundle.message("activeProfileError");
         return rad.self(true);
     }
 
@@ -60,13 +68,11 @@ public class RadSelf implements RadAction {
 
     private ProcessOutput getProfiles() {
         var configPath = getConfigPath();
-        errorMsg = RadicleBundle.message("profilesError");
         if (configPath.isEmpty()) {
             return new ProcessOutput(-1);
         }
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        var output = rad.executeCommand("", ".", List.of("ls", getConfigPath()), null);
-        return output;
+        return rad.executeCommand("", ".", List.of("ls", getConfigPath()), null);
     }
 
     @Override

@@ -11,7 +11,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import git4idea.config.GitConfigUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -30,17 +29,9 @@ public class BasicAction {
     public static final String NOTIFICATION_GROUP = "Radicle.NotificationGroup";
 
     private RadAction action;
-    private GitRepository repo;
     private Project project;
     private CountDownLatch countDownLatch;
 
-    public BasicAction(@NotNull RadAction action, @NotNull GitRepository repo, @NotNull Project project,
-                       @NotNull CountDownLatch countDownLatch) {
-        this.action = action;
-        this.project = project;
-        this.repo = repo;
-        this.countDownLatch = countDownLatch;
-    }
 
     public BasicAction(@NotNull RadAction action, Project project, @NotNull CountDownLatch countDownLatch) {
         this.action = action;
@@ -54,7 +45,7 @@ public class BasicAction {
         countDownLatch.countDown();
         if (!success) {
             logger.warn(action.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-            showErrorNotification(repo != null ? repo.getProject() : project, "radCliError", output.getStderr());
+            showErrorNotification(project, "radCliError", output.getStderr());
             return output;
         }
         logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
@@ -64,38 +55,29 @@ public class BasicAction {
         return output;
     }
 
-    public static boolean isValidConfiguration(@NotNull Project project) {
-        if (!isCliPathConfigured(project) || !hasGitRepos(project) ||
-                !isSeedNodeConfigured(project) || !isRadInitialized(project, true)) {
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean isRadInitialized(@NotNull Project project, boolean showNotification) {
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        var repos = gitRepoManager.getRepositories();
-        try {
-            var remote = GitConfigUtil.getValue(project, repos.get(0).getRoot(), "remote.rad.url");
-            if (!Strings.isNullOrEmpty(remote)) {
-                return true;
+    public static List<GitRepository> getInitializedReposWithNodeConfigured(List<GitRepository> repos, boolean showNotification) {
+        var initializedRepos = new java.util.ArrayList<>(List.<GitRepository>of());
+        for (var repo : repos) {
+            try {
+                var remote = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "remote.rad.url");
+                if (!Strings.isNullOrEmpty(remote) && isSeedNodeConfigured(repo)) {
+                    initializedRepos.add(repo);
+                }
+            } catch (Exception e) {
+                logger.warn("unable to read git config file", e);
             }
-        } catch (Exception e) {
-            logger.warn("unable to read git config file", e);
         }
-        if (showNotification) {
-            showErrorNotification(project, "radCliError", RadicleBundle.message("initializationError"));
+        if (showNotification && initializedRepos.isEmpty()) {
+            showErrorNotification(null, "radCliError", RadicleBundle.message("initializationError"));
         }
-        return false;
+        return initializedRepos;
     }
 
-    private static boolean isSeedNodeConfigured(@NotNull Project project) {
+    private static boolean isSeedNodeConfigured(GitRepository repo) {
         var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
         boolean hasSeedNode = false;
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        var repos = gitRepoManager.getRepositories();
         try {
-            var seed = GitConfigUtil.getValue(project, repos.get(0).getRoot(), "rad.seed");
+            var seed = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "rad.seed");
             if (!Strings.isNullOrEmpty(seed)) {
                 for (String node : seedNodes) {
                     hasSeedNode = seed.contains(node);
@@ -106,12 +88,12 @@ public class BasicAction {
             logger.warn("unable to read git config file", e);
         }
         if (!hasSeedNode) {
-            showErrorNotification(project, "radCliError", RadicleBundle.message("seedNodeMissing"));
+            showErrorNotification(repo.getProject(), "radCliError", RadicleBundle.message("seedNodeMissing"));
         }
         return hasSeedNode;
     }
 
-    private static boolean isCliPathConfigured(@NotNull Project project) {
+    public static boolean isCliPathConfigured(Project project) {
         var rsh = new RadicleSettingsHandler();
         var rs = rsh.loadSettings();
         logger.debug("settings are: {}", rs);
@@ -119,18 +101,7 @@ public class BasicAction {
         if (Strings.isNullOrEmpty(rs.getPath())) {
             logger.warn("no rad cli path configured");
             showNotification(project, "radCliPathMissing", "radCliPathMissingText", NotificationType.WARNING,
-                    List.of(new ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
-            return false;
-        }
-        return true;
-    }
-
-    private static boolean hasGitRepos(@NotNull Project project) {
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        var repos = gitRepoManager.getRepositories();
-        if (repos.isEmpty()) {
-            showErrorNotification(project, "radCliError", RadicleBundle.message("noGitRepos"));
-            logger.warn("no git repos found!");
+                    List.of(new ConfigureRadCliNotificationAction(null, RadicleBundle.lazyMessage("configure"))));
             return false;
         }
         return true;

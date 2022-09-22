@@ -23,7 +23,7 @@ public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
 
     private final RadicleSettingsHandler settingsHandler;
-    private final String RAD_PASSPHRASE="RAD_PASSPHRASE";
+    private static final String RAD_PASSPHRASE="RAD_PASSPHRASE";
     private String radConfigPath = "";
 
     public RadicleApplicationService() {

@@ -36,11 +36,6 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     protected JPanel mainPanel;
     protected JBTable table;
     private Icon checkIcon = RadicleIcons.CheckIcon;
-    private @NotNull Project project;
-
-    public RadicleSettingsIdentitiesView(@NotNull Project project) {
-        this.project = project;
-    }
 
     @Override
     public @NotNull @NonNls String getId() {
@@ -54,14 +49,14 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
     public String getActiveProfile() {
         var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
-        var output = new BasicAction(radSelf, project, new CountDownLatch(1)).perform();
+        var output = new BasicAction(radSelf, null, new CountDownLatch(1)).perform();
         var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n","") : "";
         return activeProfile;
     }
 
     public List<String> getProfiles() {
         var radSelf = new RadSelf(RadSelf.RadSelfAction.GET_PROFILES);
-        var output = new BasicAction(radSelf,project, new CountDownLatch(1)).perform();
+        var output = new BasicAction(radSelf,null, new CountDownLatch(1)).perform();
         var loadedProfiles = output.getExitCode() == 0 ? Arrays.asList(output.getStdout().split(",")) : List.<String>of();
         return loadedProfiles;
     }
@@ -163,7 +158,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
         public void removeProfile(String profile) {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var auth = new RadAuth(profile,"", RadAuth.RadAuthAction.REMOVE_IDENTITY);
-                new BasicAction(auth,project,new CountDownLatch(1)).perform();
+                new BasicAction(auth,null,new CountDownLatch(1)).perform();
                 initializeData();
             });
         }
@@ -188,7 +183,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var auth = new RadAuth(name, passphrase,
                         RadAuth.RadAuthAction.CREATE_IDENTITY);
-                new BasicAction(auth, project, new CountDownLatch(1)).perform();
+                new BasicAction(auth, null, new CountDownLatch(1)).perform();
                 initializeData();
             });
         }
@@ -213,7 +208,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var auth = new RadAuth(profile, "",
                         RadAuth.RadAuthAction.SET_DEFAULT_IDENTITY);
-                new BasicAction(auth, project, new CountDownLatch(1)).perform();
+                new BasicAction(auth, null, new CountDownLatch(1)).perform();
                 initializeData();
             });
         }

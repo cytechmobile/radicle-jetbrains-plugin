@@ -69,7 +69,8 @@ public class RadicleProjectService {
                     /* Check if user has configured plugin to run automatically sync action */
                 } else if (radSync == RadicleSettings.RadSyncType.ASK.val) {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                       if (BasicAction.isRadInitialized(project,false)) {
+                       var initializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, false);
+                       if (!initializedRepos.isEmpty()) {
                            ApplicationManager.getApplication().invokeLater(() -> {
                                var dialog = new SelectActionDialog(project, repos);
                                dialog.showAndGet();

@@ -19,6 +19,23 @@ public class RadAuth implements RadAction {
         this.name = name;
         this.passphrase = passphrase;
         this.action = action;
+        setMessages();
+    }
+
+    private void setMessages() {
+        if (action == RadAuthAction.CREATE_IDENTITY) {
+            successMsg = RadicleBundle.message("createIdentitySuccess");
+            notificationSuccessMsg = RadicleBundle.message("createIdentitySuccess");
+            errorMsg = RadicleBundle.message("createIdentityError");
+        } else if (action == RadAuthAction.SET_DEFAULT_IDENTITY) {
+            successMsg = RadicleBundle.message("setDefaultIdentitySuccess");
+            notificationSuccessMsg =  RadicleBundle.message("setDefaultIdentitySuccess");
+            errorMsg = RadicleBundle.message("setDefaultIdentityError");
+        } else if (action == RadAuthAction.REMOVE_IDENTITY) {
+            successMsg = RadicleBundle.message("removeIdentitySuccess");
+            notificationSuccessMsg = RadicleBundle.message("removeIdentitySuccess");
+            errorMsg = RadicleBundle.message("removeIdentityError");
+        }
     }
 
     public enum RadAuthAction {
@@ -27,17 +44,11 @@ public class RadAuth implements RadAction {
 
     public ProcessOutput removeIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        successMsg = RadicleBundle.message("removeIdentitySuccess");
-        notificationSuccessMsg = RadicleBundle.message("removeIdentitySuccess");
-        errorMsg = RadicleBundle.message("removeIdentityError");
         return rad.removeIdentity(name);
     }
 
     public ProcessOutput setDefaultIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        successMsg = RadicleBundle.message("setDefaultIdentitySuccess");
-        notificationSuccessMsg =  RadicleBundle.message("setDefaultIdentitySuccess");
-        errorMsg = RadicleBundle.message("setDefaultIdentityError");
         var output =  rad.auth(name,passphrase,true);
         var msg = output.getStderr();
         if (msg.contains("Adding your radicle key to ssh-agent")) {
@@ -49,9 +60,6 @@ public class RadAuth implements RadAction {
 
     public  ProcessOutput createNewIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        successMsg = RadicleBundle.message("createIdentitySuccess");
-        notificationSuccessMsg = RadicleBundle.message("createIdentitySuccess");
-        errorMsg = RadicleBundle.message("createIdentityError");
         return rad.auth(name,passphrase,false);
     }
 

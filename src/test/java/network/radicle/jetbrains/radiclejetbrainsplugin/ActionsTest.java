@@ -58,7 +58,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void getActiveProfileTest() throws InterruptedException {
-        var identitiesView = new RadicleSettingsIdentitiesView(super.getProject());
+        var identitiesView = new RadicleSettingsIdentitiesView();
         identitiesView.getActiveProfile();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
@@ -72,7 +72,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void setDefaultProfileTest() throws InterruptedException {
-        var identitiesView = new RadicleSettingsIdentitiesView(super.getProject());
+        var identitiesView = new RadicleSettingsIdentitiesView();
         RadicleSettingsIdentitiesView.DefaultProfileButton defaultIdentity = identitiesView.new DefaultProfileButton();
         defaultIdentity.setDefaultProfile("test");
 
@@ -112,7 +112,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void removeIdentityTest() throws InterruptedException {
-        var identitiesView = new RadicleSettingsIdentitiesView(super.getProject());
+        var identitiesView = new RadicleSettingsIdentitiesView();
         RadicleSettingsIdentitiesView.RemoveProfileButton removeIdentity = identitiesView.new RemoveProfileButton();
         removeIdentity.removeProfile("test");
 
@@ -132,7 +132,7 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void createIdentityTest() throws InterruptedException {
 
-        var identitiesView = new RadicleSettingsIdentitiesView(super.getProject());
+        var identitiesView = new RadicleSettingsIdentitiesView();
         RadicleSettingsIdentitiesView.AddProfileButton createNewIdentity = identitiesView.new AddProfileButton();
         createNewIdentity.addProfile("test","test");
 
@@ -175,8 +175,6 @@ public class ActionsTest extends AbstractIT {
     public void radPullAction() throws InterruptedException {
         var rpa = new RadiclePullAction();
         rpa.performAction(getProject());
-        var result = rpa.getUpdateCountDown().await(10, TimeUnit.SECONDS);
-        assertThat(result).isTrue();
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
@@ -191,9 +189,6 @@ public class ActionsTest extends AbstractIT {
     public void radSyncAction() throws InterruptedException {
         var rsa = new RadicleSyncAction();
         rsa.performAction(getProject());
-
-        var result = rsa.getUpdateCountDown().await(10, TimeUnit.SECONDS);
-        assertThat(result).isTrue();
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
@@ -247,7 +242,7 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
-    public void testSeedNodeError() throws InterruptedException {
+    public void testSeeNodeErrorSync() throws InterruptedException {
         removeSeedNodeFromConfig();
 
         var rsa = new RadicleSyncAction();
@@ -255,18 +250,27 @@ public class ActionsTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
+    }
 
+    @Test
+    public void testSeeNodeErrorPull() throws InterruptedException {
+        removeSeedNodeFromConfig();
         var rpa = new RadiclePullAction();
         rpa.performAction(getProject());
 
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
+    }
 
+
+    @Test
+    public void testSeedNodeErrorPush() throws InterruptedException {
+        removeSeedNodeFromConfig();
         var rps = new RadiclePushAction();
         var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
         rps.performAction(getProject(),actionEvent);
 
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
 
         addSeedNodeInConfig();

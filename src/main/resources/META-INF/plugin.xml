@@ -23,7 +23,7 @@
                 groupWeight="-400"
                 displayName="Radicle"/>
 
-        <projectConfigurable
+        <applicationConfigurable
                 groupId="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
                 displayName="Identities"
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView"
