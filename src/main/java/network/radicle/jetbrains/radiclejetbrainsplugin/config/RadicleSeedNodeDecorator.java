@@ -23,6 +23,10 @@ public class RadicleSeedNodeDecorator {
 
     public RadicleSeedNodeDecorator() {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
+        loadSettings();
+    }
+
+    public void loadSettings() {
         this.settings = this.radicleSettingsHandler.loadSettings();
         this.loadedSeedNodes = this.settings.getSeedNodes();
         cpLoadedSeedNodes = new ArrayList<>(this.loadedSeedNodes);
@@ -56,6 +60,7 @@ public class RadicleSeedNodeDecorator {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
         table.setRowSelectionAllowed(true);
+        table.setDefaultEditor(Object.class,null);
         table.setRowHeight(20);
         tableModel.addColumn(RadicleBundle.message("seedNode"));
         tableModel.addColumn(RadicleBundle.message("port"));

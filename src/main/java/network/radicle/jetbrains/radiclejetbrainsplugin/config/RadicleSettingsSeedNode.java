@@ -47,6 +47,7 @@ public class RadicleSettingsSeedNode implements SearchableConfigurable {
     @Override
     public void apply() {
         radicleSettingsHandler.saveSeedNodes(seedNodeDecorator.getCpLoadedSeedNodes());
+        seedNodeDecorator.loadSettings();
     }
 
     private void initComponents() {
