@@ -33,7 +33,7 @@ public class RadicleSettingsSeedNodeTest extends LightPlatform4TestCase {
 
     @Test
     public void testDefaultSeedNodes() {
-        var loadedSeedNodes = radicleSeetingsSeedNodeView.getLoadedSeedNodes();
+        var loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
         assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
     }
 
@@ -44,18 +44,19 @@ public class RadicleSettingsSeedNodeTest extends LightPlatform4TestCase {
         var port = "8080";
 
         var newSeedNode = seedNode + RadicleSettingsHandler.RAD_SEED_SEPERATOR + port;
-        var addSeedNode = radicleSeetingsSeedNodeView.new AddSeedNode();
-        addSeedNode.addNode(seedNode,port);
+        var addSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator();
+        addSeedNode.new AddSeedNode().addNode(seedNode,port);
+
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
         radicleSeetingsSeedNodeView.createComponent();
-        var loadedSeedNodes = radicleSeetingsSeedNodeView.getLoadedSeedNodes();
+        var loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
         assertThat(loadedSeedNodes).contains(newSeedNode);
 
         var tableIndex = loadedSeedNodes.indexOf(newSeedNode);
         //Edit seed node
-        var editSeedNode = radicleSeetingsSeedNodeView.new EditSeedNode();
+        var editSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator().new EditSeedNode();
         var domain = "pine.radicle.garden";
         var newPort = "8085";
         editSeedNode.editNode(domain,newPort,seedNode,port,tableIndex);
@@ -65,16 +66,14 @@ public class RadicleSettingsSeedNodeTest extends LightPlatform4TestCase {
         //Remove seed node
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
         radicleSeetingsSeedNodeView.createComponent();
-        var removeSeedNode = radicleSeetingsSeedNodeView.new RemoveSeedNode();
+        var removeSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator().new RemoveSeedNode();
         removeSeedNode.removeNode(domain,newPort,tableIndex);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
 
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
-        loadedSeedNodes = radicleSeetingsSeedNodeView.getLoadedSeedNodes();
+        loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
         assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
     }
-
-
 
 }
