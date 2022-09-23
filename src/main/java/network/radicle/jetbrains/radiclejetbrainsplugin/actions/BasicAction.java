@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
@@ -56,7 +57,7 @@ public class BasicAction {
     }
 
     public static List<GitRepository> getInitializedReposWithNodeConfigured(List<GitRepository> repos, boolean showNotification) {
-        var initializedRepos = new java.util.ArrayList<>(List.<GitRepository>of());
+        var initializedRepos = new ArrayList<GitRepository>();
         for (var repo : repos) {
             try {
                 var remote = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "remote.rad.url");

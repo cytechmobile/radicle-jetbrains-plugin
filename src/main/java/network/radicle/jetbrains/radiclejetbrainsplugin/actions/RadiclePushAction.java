@@ -29,19 +29,21 @@ public class RadiclePushAction extends AnAction {
     }
 
     public void performAction(Project project, @Nullable AnActionEvent e) {
+        if (!BasicAction.isCliPathConfigured(project)) {
+            return ;
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            if (BasicAction.isCliPathConfigured(project)) {
-                var gitRepoManager = GitRepositoryManager.getInstance(project);
-                var repos = gitRepoManager.getRepositories();
-                var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
-                if (!radInitializedRepos.isEmpty()) {
-                    ApplicationManager.getApplication().invokeLater(() -> {
-                        var rps = project.getService(RadicleProjectService.class);
-                        rps.forceRadPush = true;
-                        openGitPushDialog(project, e);
-                    });
-                }
+            var gitRepoManager = GitRepositoryManager.getInstance(project);
+            var repos = gitRepoManager.getRepositories();
+            var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            if (radInitializedRepos.isEmpty()) {
+                return;
             }
+            ApplicationManager.getApplication().invokeLater(() -> {
+                var rps = project.getService(RadicleProjectService.class);
+                rps.forceRadPush = true;
+                openGitPushDialog(project, e);
+            });
         });
     }
 

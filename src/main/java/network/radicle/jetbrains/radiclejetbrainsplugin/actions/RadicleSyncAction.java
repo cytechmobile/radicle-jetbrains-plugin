@@ -39,6 +39,9 @@ public class RadicleSyncAction extends AnAction {
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            if (radInitializedRepos.isEmpty()) {
+                return;
+            }
             updateCountDown = new CountDownLatch(radInitializedRepos.size());
             radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var sync = new RadSync(repo);
@@ -47,7 +50,6 @@ public class RadicleSyncAction extends AnAction {
             UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radSyncProgressTitle"),
                     updateCountDown, executingFlag);
             new Thread(ubt::queue).start();
-
         });
     }
 }

@@ -32,6 +32,9 @@ public class RadiclePullAction extends AnAction {
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            if (radInitializedRepos.isEmpty()) {
+                return ;
+            }
             updateCountDown = new CountDownLatch(radInitializedRepos.size());
             radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var pull = new RadPull(repo);
