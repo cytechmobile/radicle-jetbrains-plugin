@@ -112,6 +112,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
         table.setRowSelectionAllowed(true);
+        table.setDefaultEditor(Object.class,null);
         table.setRowHeight(30);
 
         tableModel.addColumn(RadicleBundle.message("peerId"));

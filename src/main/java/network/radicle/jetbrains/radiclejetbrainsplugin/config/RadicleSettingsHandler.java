@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 import com.intellij.ide.util.PropertiesComponent;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RadicleSettingsHandler {
 
@@ -48,11 +49,23 @@ public class RadicleSettingsHandler {
     }
 
     public void saveSeedNodes(List<String> seedNodes) {
-        getApplicationProperties().setList(RAD_SEED_KEY, seedNodes);
+        String seedListToString = null;
+        if (seedNodes != null) {
+             seedListToString = seedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
+        }
+        getApplicationProperties().setValue(RAD_SEED_KEY, seedListToString);
     }
 
     private List<String> getSeedNodes() {
-        return getApplicationProperties().getList(RAD_SEED_KEY);
+        var seeds = getApplicationProperties().getValue(RAD_SEED_KEY);
+        if (seeds != null) {
+            if (seeds.isEmpty()) {
+                return List.of();
+            } else {
+                return List.of(seeds.split(","));
+            }
+        }
+        return null;
     }
 
     private void saveDefaultSeedNodes() {
