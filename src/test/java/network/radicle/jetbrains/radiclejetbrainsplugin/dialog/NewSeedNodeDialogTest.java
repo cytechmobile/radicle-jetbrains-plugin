@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.SeedNode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -76,7 +77,7 @@ public class NewSeedNodeDialogTest extends AbstractIT {
     public void testSeedNodeExists() {
         var domain = "pine.radicle.garden";
         var port = "8080";
-        var loadedSeedNodes = List.of(domain + RadicleSettingsHandler.RAD_SEED_SEPERATOR + port);
+        var loadedSeedNodes = List.of(new SeedNode(domain,port));
         var addSeedNodeDialog = new AddSeedNodeDialog(loadedSeedNodes);
         var nodeField = addSeedNodeDialog.getNodeField();
         var portField = addSeedNodeDialog.getPortField();

@@ -7,21 +7,21 @@ import java.util.stream.Collectors;
 
 public class RadicleSettingsHandler {
 
-    static final String PATH_KEY = "path";
-    static final String RAD_SYNC_KEY = "radSyncKey";
-    static final String RAD_SEED_KEY = "radSeedKey";
+    public static final String PATH_KEY = "path";
+    public static final String RAD_SYNC_KEY = "radSyncKey";
+    public static final String RAD_SEED_KEY = "radSeedKey";
 
     public static final String RAD_SEED_SEPERATOR = "|";
     public static final String DEFAULT_SEED_PORT = "8777";
 
-    static final String PINE_DOMAIN_NAME = "pine.radicle.garden";
-    static final String WILLOW_DOMAIN_NAME = "willow.radicle.garden";
-    static final String MAPLE_DOMAIN_NAME = "maple.radicle.garden";
+    public static final String PINE_DOMAIN_NAME = "pine.radicle.garden";
+    public static final String WILLOW_DOMAIN_NAME = "willow.radicle.garden";
+    public static final String MAPLE_DOMAIN_NAME = "maple.radicle.garden";
 
-    static final List<String> DEFAULT_SEED_NODES = List.of(
-            PINE_DOMAIN_NAME + RAD_SEED_SEPERATOR + DEFAULT_SEED_PORT,
-            WILLOW_DOMAIN_NAME + RAD_SEED_SEPERATOR + DEFAULT_SEED_PORT,
-            MAPLE_DOMAIN_NAME + RAD_SEED_SEPERATOR + DEFAULT_SEED_PORT
+    static final List<SeedNode> DEFAULT_SEED_NODES = List.of(
+            new SeedNode(PINE_DOMAIN_NAME,DEFAULT_SEED_PORT),
+            new SeedNode(WILLOW_DOMAIN_NAME,DEFAULT_SEED_PORT),
+            new SeedNode(MAPLE_DOMAIN_NAME,DEFAULT_SEED_PORT)
     );
 
     public RadicleSettingsHandler() {
@@ -48,7 +48,7 @@ public class RadicleSettingsHandler {
         return getApplicationProperties().getInt(RAD_SYNC_KEY,RadicleSettings.RadSyncType.ASK.val);
     }
 
-    public void saveSeedNodes(List<String> seedNodes) {
+    public void saveSeedNodes(List<SeedNode> seedNodes) {
         String seedListToString = null;
         if (seedNodes != null) {
              seedListToString = seedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
@@ -56,13 +56,14 @@ public class RadicleSettingsHandler {
         getApplicationProperties().setValue(RAD_SEED_KEY, seedListToString);
     }
 
-    private List<String> getSeedNodes() {
+    private List<SeedNode> getSeedNodes() {
         var seeds = getApplicationProperties().getValue(RAD_SEED_KEY);
         if (seeds != null) {
             if (seeds.isEmpty()) {
                 return List.of();
             } else {
-                return List.of(seeds.split(","));
+                var stringNodes = seeds.split(",");
+                return SeedNode.getNodesFromString(stringNodes);
             }
         }
         return null;

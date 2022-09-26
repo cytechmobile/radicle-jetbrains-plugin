@@ -44,7 +44,7 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
         //Add seed node
         var seedNode = "192.168.1.1";
         var port = "8080";
-        var newSeedNode = seedNode + RadicleSettingsHandler.RAD_SEED_SEPERATOR + port;
+        var newSeedNode = new SeedNode(seedNode,port);
         var addSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator();
         addSeedNode.new AddSeedNode().addNode(seedNode,port);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
@@ -63,7 +63,7 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
         loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
-        assertThat(loadedSeedNodes).contains(domain + RadicleSettingsHandler.RAD_SEED_SEPERATOR + newPort);
+        assertThat(loadedSeedNodes).contains(new SeedNode(domain,newPort));
         assertThat(loadedSeedNodes.size()).isEqualTo(4);
 
         //Remove seed node

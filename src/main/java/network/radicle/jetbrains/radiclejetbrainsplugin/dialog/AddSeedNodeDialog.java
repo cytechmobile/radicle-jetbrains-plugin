@@ -5,6 +5,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.SeedNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +16,11 @@ import java.util.List;
 public class AddSeedNodeDialog extends DialogWrapper {
     private JPanel contentPane;
     private JTextField nodeField;
-    private List<String> loadedSeedNodes;
+    private List<SeedNode> loadedSeedNodes;
     private JTextField portField;
     private JLabel errorField;
 
-    public AddSeedNodeDialog(List<String> seedNodes) {
+    public AddSeedNodeDialog(List<SeedNode> seedNodes) {
         super(true);
         portField.setText(RadicleSettingsHandler.DEFAULT_SEED_PORT);
         this.loadedSeedNodes = seedNodes;
@@ -27,7 +28,7 @@ public class AddSeedNodeDialog extends DialogWrapper {
         init();
     }
 
-    public AddSeedNodeDialog(String name, String port, List<String> seedNodes) {
+    public AddSeedNodeDialog(String name, String port, List<SeedNode> seedNodes) {
         super(true);
         nodeField.setText(name);
         portField.setText(port);
@@ -37,8 +38,8 @@ public class AddSeedNodeDialog extends DialogWrapper {
     }
 
     private boolean nodeExists() {
-        var seedNode = this.nodeField.getText() + RadicleSettingsHandler.RAD_SEED_SEPERATOR + this.portField.getText();
-        if (loadedSeedNodes.contains(seedNode)){
+        var seedNode = new SeedNode(this.nodeField.getText(),this.portField.getText());
+        if (loadedSeedNodes.contains(seedNode)) {
             return true;
         }
         return false;

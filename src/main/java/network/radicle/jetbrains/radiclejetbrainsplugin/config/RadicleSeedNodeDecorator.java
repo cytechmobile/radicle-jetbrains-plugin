@@ -19,8 +19,8 @@ public class RadicleSeedNodeDecorator {
     private final RadicleSettingsHandler radicleSettingsHandler;
     private RadicleSettings settings;
     protected JBTable table;
-    private List<String> loadedSeedNodes;
-    private ArrayList<String> cpLoadedSeedNodes;
+    private List<SeedNode> loadedSeedNodes;
+    private List<SeedNode> cpLoadedSeedNodes;
 
     public RadicleSeedNodeDecorator() {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
@@ -33,25 +33,18 @@ public class RadicleSeedNodeDecorator {
         cpLoadedSeedNodes = new ArrayList<>(this.loadedSeedNodes);
     }
 
-    private String concatenate(String seedNode, String port) {
-        return seedNode + RadicleSettingsHandler.RAD_SEED_SEPERATOR + port;
-    }
-
     private void initializeData() {
         var tableModel = (DefaultTableModel) table.getModel();
         for (var seedNode : loadedSeedNodes) {
-            var parts = seedNode.split("\\" + RadicleSettingsHandler.RAD_SEED_SEPERATOR);
-            var node = parts[0];
-            var port = parts[1];
-            tableModel.addRow(new Object[]{node,port});
+            tableModel.addRow(new Object[]{seedNode.host,seedNode.port});
         }
     }
 
-    public List<String> getLoadedSeedNodes() {
+    public List<SeedNode> getLoadedSeedNodes() {
         return loadedSeedNodes;
     }
 
-    public ArrayList<String> getCpLoadedSeedNodes() {
+    public List<SeedNode> getCpLoadedSeedNodes() {
         return cpLoadedSeedNodes;
     }
 
@@ -79,7 +72,7 @@ public class RadicleSeedNodeDecorator {
     public class AddSeedNode implements AnActionButtonRunnable {
 
         public void addNode(String seedNode, String port) {
-            cpLoadedSeedNodes.add(concatenate(seedNode,port));
+            cpLoadedSeedNodes.add(new SeedNode(seedNode,port));
             var tableModel = (DefaultTableModel) table.getModel();
             tableModel.addRow(new Object[]{seedNode,port});
         }
@@ -99,7 +92,8 @@ public class RadicleSeedNodeDecorator {
     public class RemoveSeedNode implements AnActionButtonRunnable {
 
         public void removeNode(String seedNode, String port, int selectedRow) {
-            cpLoadedSeedNodes.remove(concatenate(seedNode,port));
+            var node = new SeedNode(seedNode,port);
+            cpLoadedSeedNodes.removeIf(n -> n.toString().equals(node.toString()));
             var tableModel = (DefaultTableModel) table.getModel();
             tableModel.removeRow(selectedRow);
         }
@@ -125,8 +119,10 @@ public class RadicleSeedNodeDecorator {
             var tableModel = (DefaultTableModel) table.getModel();
             tableModel.setValueAt(newSeedNode,selectedRow,0);
             tableModel.setValueAt(newPort,selectedRow,1);
-            var index = cpLoadedSeedNodes.indexOf(concatenate(oldSeedNode,oldPort));
-            cpLoadedSeedNodes.set(index, concatenate(newSeedNode, newPort));
+            var index = cpLoadedSeedNodes.indexOf(new SeedNode(oldSeedNode,oldPort));
+            if (index > -1) {
+                cpLoadedSeedNodes.set(index, new SeedNode(newSeedNode,newPort));
+            }
         }
 
         @Override
