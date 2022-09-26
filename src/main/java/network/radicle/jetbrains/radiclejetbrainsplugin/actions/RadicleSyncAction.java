@@ -34,21 +34,22 @@ public class RadicleSyncAction extends AnAction {
     }
 
     public void performAction(@NotNull Project project, @NotNull List<GitRepository> repos) {
-        this.updateCountDown = new CountDownLatch(repos.size());
+        if (!BasicAction.isCliPathConfigured(project)) {
+            return ;
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            if (BasicAction.isValidConfiguration(project)) {
-                var sync = new RadSync();
-                repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
-                        new BasicAction(sync,repo,project,updateCountDown).perform()));
-
-                UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message(sync.getProgressBarTitle()),
-                        updateCountDown,executingFlag);
-                new Thread(ubt::queue).start();
+            var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            if (radInitializedRepos.isEmpty()) {
+                return;
             }
+            updateCountDown = new CountDownLatch(radInitializedRepos.size());
+            radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                var sync = new RadSync(repo);
+                new BasicAction(sync, repo.getProject(), updateCountDown).perform();
+            }));
+            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radSyncProgressTitle"),
+                    updateCountDown, executingFlag);
+            new Thread(ubt::queue).start();
         });
-    }
-
-    public CountDownLatch getUpdateCountDown() {
-        return updateCountDown;
     }
 }

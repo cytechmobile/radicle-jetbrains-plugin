@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -32,7 +33,8 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     protected String remoteRepoPath;
     protected GitRepository repository;
 
-    private MessageBusConnection mbc;
+
+    private MessageBusConnection mbc,applicationMbc;
     public RadStub radStub;
 
     @Before
@@ -52,7 +54,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         /* add seed node in config */
         addSeedNodeInConfig();
         initializeProject();
-
+        applicationMbc =  ApplicationManager.getApplication().getMessageBus().connect();
         mbc = getProject().getMessageBus().connect();
         mbc.setDefaultHandler(
                 (event1, params) -> {
@@ -62,6 +64,15 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
                     logger.warn("captured notification: " + n);
                     notificationsQueue.add(n);
                 });
+        applicationMbc.setDefaultHandler(
+                (event1, params) -> {
+                    assertThat(params).hasSize(1);
+                    assertThat(params[0]).isInstanceOf(Notification.class);
+                    Notification n = (Notification) params[0];
+                    logger.warn("captured notification: " + n);
+                    notificationsQueue.add(n);
+                });
+        applicationMbc.subscribe(Notifications.TOPIC);
         mbc.subscribe(Notifications.TOPIC);
         logger.warn("created message bus connection and subscribed to notifications: {}" + mbc);
     }

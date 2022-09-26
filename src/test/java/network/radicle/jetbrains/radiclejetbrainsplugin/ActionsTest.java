@@ -8,6 +8,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
@@ -15,6 +16,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncActio
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
@@ -55,11 +57,124 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
+    public void getActiveProfileTest() throws InterruptedException {
+        var identitiesView = new RadicleSettingsIdentitiesView();
+        identitiesView.getActiveProfile();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        if (SystemInfo.isWindows) {
+            assertThat(cmd.getExePath()).isEqualTo(wsl);
+        } else {
+            assertThat(cmd.getExePath()).isEqualTo(radPath);
+        }
+        assertThat(cmd.getCommandLineString()).contains("self --profile");
+    }
+
+    @Test
+    public void setDefaultProfileTest() throws InterruptedException {
+        var identitiesView = new RadicleSettingsIdentitiesView();
+        RadicleSettingsIdentitiesView.DefaultProfileButton defaultIdentity = identitiesView.new DefaultProfileButton();
+        defaultIdentity.setDefaultProfile("test");
+
+        var firstCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var secondCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var thirdCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+
+        assertThat(firstCommand).isNotNull();
+        assertThat(secondCommand).isNotNull();
+        assertThat(thirdCommand).isNotNull();
+
+        if (SystemInfo.isWindows) {
+            assertThat(firstCommand.getExePath()).isEqualTo(wsl);
+            assertThat(secondCommand.getExePath()).isEqualTo(wsl);
+            assertThat(thirdCommand.getExePath()).isEqualTo(wsl);
+        } else {
+            assertThat(firstCommand.getExePath()).isEmpty();
+            assertThat(secondCommand.getExePath()).isEmpty();
+            assertThat(thirdCommand.getExePath()).isEqualTo(radPath);
+        }
+        assertTrue(firstCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
+                firstCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE= >> ~/.bashrc") ||
+                firstCommand.getCommandLineString().contains("auth --stdin test"));
+
+        assertTrue(secondCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
+                secondCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE= >> ~/.bashrc") ||
+                secondCommand.getCommandLineString().contains("auth --stdin test"));
+
+        assertTrue(thirdCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
+                thirdCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE= >> ~/.bashrc") ||
+                thirdCommand.getCommandLineString().contains("auth --stdin test"));
+
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(RadicleBundle.message("setDefaultIdentitySuccess"));
+    }
+
+    @Test
+    public void removeIdentityTest() throws InterruptedException {
+        var identitiesView = new RadicleSettingsIdentitiesView();
+        RadicleSettingsIdentitiesView.RemoveProfileButton removeIdentity = identitiesView.new RemoveProfileButton();
+        removeIdentity.removeProfile("test");
+
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        if (SystemInfo.isWindows) {
+            assertThat(cmd.getExePath()).isEqualTo(wsl);
+        } else {
+            assertThat(cmd.getExePath()).isEqualTo(radPath);
+        }
+        assertThat(cmd.getCommandLineString()).contains("rm --no-confirm --no-passphrase");
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(RadicleBundle.message("removeIdentitySuccess"));
+    }
+
+    @Test
+    public void createIdentityTest() throws InterruptedException {
+
+        var identitiesView = new RadicleSettingsIdentitiesView();
+        RadicleSettingsIdentitiesView.AddProfileButton createNewIdentity = identitiesView.new AddProfileButton();
+        createNewIdentity.addProfile("test","test");
+
+        var firstCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var secondCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var thirdCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+
+        assertThat(firstCommand).isNotNull();
+        assertThat(secondCommand).isNotNull();
+        assertThat(thirdCommand).isNotNull();
+
+        if (SystemInfo.isWindows) {
+            assertThat(firstCommand.getExePath()).isEqualTo(wsl);
+            assertThat(secondCommand.getExePath()).isEqualTo(wsl);
+            assertThat(thirdCommand.getExePath()).isEqualTo(wsl);
+        } else {
+            assertThat(firstCommand.getExePath()).isEmpty();
+            assertThat(secondCommand.getExePath()).isEmpty();
+            assertThat(thirdCommand.getExePath()).isEqualTo(radPath);
+        }
+
+        assertTrue(firstCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
+                firstCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE=test >> ~/.bashrc") ||
+                firstCommand.getCommandLineString().contains("auth --init --name test"));
+
+        assertTrue(secondCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
+                secondCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE=test >> ~/.bashrc") ||
+                secondCommand.getCommandLineString().contains("auth --init --name test"));
+
+        assertTrue(thirdCommand.getCommandLineString().contains("sed -i /RAD_PASSPHRASE/d ~/.bashrc") ||
+                thirdCommand.getCommandLineString().contains("echo export RAD_PASSPHRASE=test >> ~/.bashrc") ||
+                thirdCommand.getCommandLineString().contains("auth --init --name test"));
+
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(RadicleBundle.message("createIdentitySuccess"));
+    }
+
+    @Test
     public void radPullAction() throws InterruptedException {
         var rpa = new RadiclePullAction();
         rpa.performAction(getProject());
-        var result = rpa.getUpdateCountDown().await(10, TimeUnit.SECONDS);
-        assertThat(result).isTrue();
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
@@ -67,7 +182,7 @@ public class ActionsTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(new RadPull().getNotificationSuccessMessage());
+        assertThat(not.getContent()).contains(new RadPull(null).getNotificationSuccessMessage());
     }
 
     @Test
@@ -75,15 +190,12 @@ public class ActionsTest extends AbstractIT {
         var rsa = new RadicleSyncAction();
         rsa.performAction(getProject());
 
-        var result = rsa.getUpdateCountDown().await(10, TimeUnit.SECONDS);
-        assertThat(result).isTrue();
-
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("sync");
         var not = notificationsQueue.poll(10,TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(new RadSync().getNotificationSuccessMessage());
+        assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
     }
 
     @Test
@@ -130,7 +242,7 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
-    public void testSeedNodeError() throws InterruptedException {
+    public void testSeeNodeErrorSync() throws InterruptedException {
         removeSeedNodeFromConfig();
 
         var rsa = new RadicleSyncAction();
@@ -138,18 +250,27 @@ public class ActionsTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
+    }
 
+    @Test
+    public void testSeeNodeErrorPull() throws InterruptedException {
+        removeSeedNodeFromConfig();
         var rpa = new RadiclePullAction();
         rpa.performAction(getProject());
 
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
+    }
 
+
+    @Test
+    public void testSeedNodeErrorPush() throws InterruptedException {
+        removeSeedNodeFromConfig();
         var rps = new RadiclePushAction();
         var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
         rps.performAction(getProject(),actionEvent);
 
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
 
         addSeedNodeInConfig();
@@ -193,8 +314,8 @@ public class ActionsTest extends AbstractIT {
         assertThat(not1).isNotNull();
         boolean hasSuccessSyncNotification = false;
 
-        if (not1.getContent().contains(new RadSync().getNotificationSuccessMessage()) ||
-                not.getContent().contains(new RadSync().getNotificationSuccessMessage())) {
+        if (not1.getContent().contains(new RadSync(null).getNotificationSuccessMessage()) ||
+                not.getContent().contains(new RadSync(null).getNotificationSuccessMessage())) {
             hasSuccessSyncNotification = true;
         }
         assertThat(hasSuccessSyncNotification).isTrue();
