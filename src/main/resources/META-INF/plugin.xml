@@ -25,9 +25,17 @@
 
         <applicationConfigurable
                 groupId="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
-                displayName="Seed Nodes"
+                displayName="Identities"
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView"
-                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNode" />
+                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView" />
+
+        <applicationConfigurable
+                groupId="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
+                displayName="Seed Nodes"
+                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView"
+                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView" />
+
+
 
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>

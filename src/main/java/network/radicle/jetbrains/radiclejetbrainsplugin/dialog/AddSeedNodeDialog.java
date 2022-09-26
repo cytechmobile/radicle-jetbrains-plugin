@@ -36,7 +36,7 @@ public class AddSeedNodeDialog extends DialogWrapper {
         init();
     }
 
-    private boolean isNodeExists() {
+    private boolean nodeExists() {
         var seedNode = this.nodeField.getText() + RadicleSettingsHandler.RAD_SEED_SEPERATOR + this.portField.getText();
         if (loadedSeedNodes.contains(seedNode)){
             return true;
@@ -67,7 +67,7 @@ public class AddSeedNodeDialog extends DialogWrapper {
             this.errorField.setText(RadicleBundle.message("invalidSeedNode"));
         } else if (!isValidPort(portField.getText())){
             this.errorField.setText(RadicleBundle.message("invalidPort"));
-        } else if(isNodeExists()) {
+        } else if(nodeExists()) {
             this.errorField.setText(RadicleBundle.message("seedNodeExists"));
         } else {
             super.doOKAction();

@@ -12,6 +12,7 @@ public class RadicleSettingsHandler {
 
     public static final String RAD_SEED_SEPERATOR = "|";
     public static final String DEFAULT_SEED_PORT = "8777";
+
     static final String PINE_DOMAIN_NAME = "pine.radicle.garden";
     static final String WILLOW_DOMAIN_NAME = "willow.radicle.garden";
     static final String MAPLE_DOMAIN_NAME = "maple.radicle.garden";

@@ -7,6 +7,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.AddSeedNodeDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.ConfirmationDialog;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -23,10 +24,10 @@ public class RadicleSeedNodeDecorator {
 
     public RadicleSeedNodeDecorator() {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
-        loadSettings();
+        loadSeedNodes();
     }
 
-    public void loadSettings() {
+    public void loadSeedNodes() {
         this.settings = this.radicleSettingsHandler.loadSettings();
         this.loadedSeedNodes = this.settings.getSeedNodes();
         cpLoadedSeedNodes = new ArrayList<>(this.loadedSeedNodes);
@@ -73,7 +74,6 @@ public class RadicleSeedNodeDecorator {
                 .setRemoveAction(new RemoveSeedNode())
                 .setEditAction(new EditSeedNode());
         return toolbarDecorator;
-
     }
 
     public class AddSeedNode implements AnActionButtonRunnable {
@@ -106,11 +106,16 @@ public class RadicleSeedNodeDecorator {
 
         @Override
         public void run(AnActionButton anActionButton) {
-            var selectedRow =  table.getSelectedRow();
-            var tableModel = (DefaultTableModel) table.getModel();
-            var seedNode = (String) tableModel.getValueAt(selectedRow,0);
-            var port = (String) tableModel.getValueAt(selectedRow,1);
-            removeNode(seedNode,port,selectedRow);
+            var confirmationDialog = new ConfirmationDialog(RadicleBundle.message("removeSeedNodeConfirm"),
+                    RadicleBundle.message("removeSeedNode"));
+            var okButton = confirmationDialog.showAndGet();
+            if (okButton) {
+                var selectedRow =  table.getSelectedRow();
+                var tableModel = (DefaultTableModel) table.getModel();
+                var seedNode = (String) tableModel.getValueAt(selectedRow,0);
+                var port = (String) tableModel.getValueAt(selectedRow,1);
+                removeNode(seedNode,port,selectedRow);
+            }
         }
     }
 

@@ -11,14 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RadicleSettingsSeedNode implements SearchableConfigurable {
+public class RadicleSettingsSeedNodeView implements SearchableConfigurable {
 
     private final RadicleSettingsHandler radicleSettingsHandler;
     public static final String ID = RadicleBundle.message("radicle");
     protected JPanel mainPanel;
     private RadicleSeedNodeDecorator seedNodeDecorator;
 
-    public RadicleSettingsSeedNode() {
+    public RadicleSettingsSeedNodeView() {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         seedNodeDecorator = new RadicleSeedNodeDecorator();
     }
@@ -47,7 +47,7 @@ public class RadicleSettingsSeedNode implements SearchableConfigurable {
     @Override
     public void apply() {
         radicleSettingsHandler.saveSeedNodes(seedNodeDecorator.getCpLoadedSeedNodes());
-        seedNodeDecorator.loadSettings();
+        seedNodeDecorator.loadSeedNodes();
     }
 
     private void initComponents() {

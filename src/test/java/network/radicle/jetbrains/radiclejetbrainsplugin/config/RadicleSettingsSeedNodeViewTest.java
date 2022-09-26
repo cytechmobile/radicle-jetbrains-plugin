@@ -6,24 +6,24 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RadicleSettingsSeedNodeTest extends LightPlatform4TestCase {
-    private RadicleSettingsSeedNode radicleSeetingsSeedNodeView;
+public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
+    private RadicleSettingsSeedNodeView radicleSeetingsSeedNodeView;
 
     @Before
     public void before() {
-        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
+        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
         radicleSeetingsSeedNodeView.createComponent();
         radicleSeetingsSeedNodeView.apply();
     }
 
     @Test
     public void testGetId() {
-        assertThat(radicleSeetingsSeedNodeView.getId()).isEqualTo(RadicleSettingsSeedNode.ID);
+        assertThat(radicleSeetingsSeedNodeView.getId()).isEqualTo(RadicleSettingsSeedNodeView.ID);
     }
 
     @Test
     public void testDisplayName() {
-        assertThat(radicleSeetingsSeedNodeView.getDisplayName()).isEqualTo(RadicleSettingsSeedNode.ID);
+        assertThat(radicleSeetingsSeedNodeView.getDisplayName()).isEqualTo(RadicleSettingsSeedNodeView.ID);
     }
 
     @Test
@@ -49,7 +49,7 @@ public class RadicleSettingsSeedNodeTest extends LightPlatform4TestCase {
 
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
-        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
+        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
         radicleSeetingsSeedNodeView.createComponent();
         var loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
         assertThat(loadedSeedNodes).contains(newSeedNode);
@@ -64,14 +64,14 @@ public class RadicleSettingsSeedNodeTest extends LightPlatform4TestCase {
         radicleSeetingsSeedNodeView.apply();
 
         //Remove seed node
-        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
+        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
         radicleSeetingsSeedNodeView.createComponent();
         var removeSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator().new RemoveSeedNode();
         removeSeedNode.removeNode(domain,newPort,tableIndex);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
 
-        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNode();
+        radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
         loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
         assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
     }
