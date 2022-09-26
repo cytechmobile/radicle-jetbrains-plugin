@@ -4,6 +4,8 @@ import com.intellij.testFramework.LightPlatform4TestCase;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
@@ -42,11 +44,9 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
         //Add seed node
         var seedNode = "192.168.1.1";
         var port = "8080";
-
         var newSeedNode = seedNode + RadicleSettingsHandler.RAD_SEED_SEPERATOR + port;
         var addSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator();
         addSeedNode.new AddSeedNode().addNode(seedNode,port);
-
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
@@ -54,14 +54,17 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
         var loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
         assertThat(loadedSeedNodes).contains(newSeedNode);
 
-        var tableIndex = loadedSeedNodes.indexOf(newSeedNode);
         //Edit seed node
+        var tableIndex = loadedSeedNodes.indexOf(newSeedNode);
         var editSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator().new EditSeedNode();
         var domain = "pine.radicle.garden";
         var newPort = "8085";
         editSeedNode.editNode(domain,newPort,seedNode,port,tableIndex);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
+        loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
+        assertThat(loadedSeedNodes).contains(domain + RadicleSettingsHandler.RAD_SEED_SEPERATOR + newPort);
+        assertThat(loadedSeedNodes.size()).isEqualTo(4);
 
         //Remove seed node
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();

@@ -62,6 +62,9 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     }
 
     private void initializeData() {
+        if (table == null) {
+            return ;
+        }
         removeRows();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var activeProfile = getActiveProfile();
