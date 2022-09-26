@@ -69,12 +69,14 @@ public class RadicleProjectService {
                     /* Check if user has configured plugin to run automatically sync action */
                 } else if (radSync == RadicleSettings.RadSyncType.ASK.val) {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                       if (BasicAction.isRadInitialized(project,false)) {
-                           ApplicationManager.getApplication().invokeLater(() -> {
-                               var dialog = new SelectActionDialog(project, repos);
-                               dialog.showAndGet();
-                           });
-                       }
+                        var initializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, false);
+                        if (initializedRepos.isEmpty()) {
+                            return;
+                        }
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            var dialog = new SelectActionDialog(project, repos);
+                            dialog.showAndGet();
+                        });
                     });
                 }
             }

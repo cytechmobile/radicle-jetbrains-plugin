@@ -27,20 +27,23 @@ public class RadiclePullAction extends AnAction {
     public void performAction(Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
-        updateCountDown = new CountDownLatch(repos.size());
+        if (!BasicAction.isCliPathConfigured(project)) {
+            return ;
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            if (BasicAction.isValidConfiguration(project)) {
-                var pull = new RadPull();
-                repos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() ->
-                        new BasicAction(pull, repo, project, updateCountDown).perform()));
-                UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message(pull.getProgressBarTitle()),
-                        updateCountDown, executingFlag);
-                new Thread(ubt::queue).start();
+            var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            if (radInitializedRepos.isEmpty()) {
+                return ;
             }
+            updateCountDown = new CountDownLatch(radInitializedRepos.size());
+            radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                var pull = new RadPull(repo);
+                new BasicAction(pull, repo.getProject(), updateCountDown).perform();
+            }));
+            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radPullProgressTitle"),
+                    updateCountDown, executingFlag);
+            new Thread(ubt::queue).start();
         });
     }
 
-    public CountDownLatch getUpdateCountDown() {
-        return updateCountDown;
-    }
 }

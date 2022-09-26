@@ -8,10 +8,21 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicat
 
 public class RadPull implements RadAction {
 
+    private GitRepository repo;
+
+    public RadPull(GitRepository repo) {
+        this.repo = repo;
+    }
+
     @Override
-    public ProcessOutput run (GitRepository repo) {
+    public ProcessOutput run () {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.pull(repo);
+    }
+
+    @Override
+    public GitRepository getRepo() {
+        return repo;
     }
 
     @Override
@@ -29,8 +40,4 @@ public class RadPull implements RadAction {
         return RadicleBundle.message("radPullNotification");
     }
 
-    @Override
-    public String getProgressBarTitle() {
-        return RadicleBundle.message("radPullProgressTitle");
-    }
 }

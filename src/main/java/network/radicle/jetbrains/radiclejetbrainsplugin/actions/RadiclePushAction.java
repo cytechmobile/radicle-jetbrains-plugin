@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PushDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
@@ -28,14 +29,21 @@ public class RadiclePushAction extends AnAction {
     }
 
     public void performAction(Project project, @Nullable AnActionEvent e) {
+        if (!BasicAction.isCliPathConfigured(project)) {
+            return ;
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            if (BasicAction.isValidConfiguration(project)) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    var rps = project.getService(RadicleProjectService.class);
-                    rps.forceRadPush = true;
-                    openGitPushDialog(project, e);
-                });
+            var gitRepoManager = GitRepositoryManager.getInstance(project);
+            var repos = gitRepoManager.getRepositories();
+            var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            if (radInitializedRepos.isEmpty()) {
+                return;
             }
+            ApplicationManager.getApplication().invokeLater(() -> {
+                var rps = project.getService(RadicleProjectService.class);
+                rps.forceRadPush = true;
+                openGitPushDialog(project, e);
+            });
         });
     }
 

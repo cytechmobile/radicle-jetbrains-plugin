@@ -23,6 +23,8 @@ public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
 
     private final RadicleSettingsHandler settingsHandler;
+    private static final String RAD_PASSPHRASE="RAD_PASSPHRASE";
+    private String radConfigPath = "";
 
     public RadicleApplicationService() {
         this(new RadicleSettingsHandler());
@@ -33,8 +35,24 @@ public class RadicleApplicationService {
         this.settingsHandler = radicleSettingsHandler;
     }
 
+    public void setRadConfigPath(String path) {
+        this.radConfigPath = path;
+    }
+
+    public String getRadConfigPath() {
+        return this.radConfigPath;
+    }
+
     public ProcessOutput getRadPath() {
         return executeCommand(".", ".", List.of("which","rad"), null);
+    }
+
+    public ProcessOutput self(boolean activeProfile) {
+        if (activeProfile) {
+            return executeCommand(".",List.of("self","--profile"),null);
+        } else {
+            return executeCommand(".",List.of("self"),null);
+        }
     }
 
     public ProcessOutput getVersion(String path) {
@@ -42,6 +60,33 @@ public class RadicleApplicationService {
             return executeCommand(".", List.of("--version"), null);
         } else {
             return executeCommand(path,".", List.of("--version"), null);
+        }
+    }
+
+    public ProcessOutput removeIdentity(String profile) {
+        return executeCommand(".",List.of("rm","--no-confirm","--no-passphrase",profile),null);
+    }
+
+    private ProcessOutput setEnvVar(String var,String value) {
+        var removeVarPr = executeCommand("",".",List.of("sed","-i","/RAD_PASSPHRASE/d","~/.bashrc"),null);
+        var addVarPr = executeCommand("",".",List.of("echo","export",var + "=" + value,">>","~/.bashrc"),null);
+        if (removeVarPr.getExitCode() == 0 && addVarPr.getExitCode() == 0) {
+            return new ProcessOutput(0);
+        }
+        return new ProcessOutput(-1);
+    }
+
+    public ProcessOutput auth(String name,String passphrase,boolean setDefaultProfile) {
+        var output = setEnvVar(RAD_PASSPHRASE,passphrase);
+        if (output.getExitCode() != 0) {
+            var newOutput = new ProcessOutput(-1);
+            newOutput.appendStderr("Unable to set RAD_PASSPHRASE in bashrc file");
+            return newOutput;
+        }
+        if (setDefaultProfile) {
+            return executeCommand(".",List.of("auth","--stdin",name),null);
+        } else {
+            return executeCommand(".",List.of("auth","--init","--name",name),null);
         }
     }
 
