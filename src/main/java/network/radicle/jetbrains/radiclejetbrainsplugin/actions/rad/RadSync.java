@@ -8,8 +8,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicat
 
 public class RadSync implements RadAction {
 
+    private GitRepository repo;
+
+    public RadSync(GitRepository repo) {
+        this.repo = repo;
+    }
+
     @Override
-    public ProcessOutput run (GitRepository repo) {
+    public ProcessOutput run () {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.sync(repo);
     }
@@ -29,8 +35,9 @@ public class RadSync implements RadAction {
         return RadicleBundle.message("radSyncNotification");
     }
 
+
     @Override
-    public String getProgressBarTitle() {
-        return RadicleBundle.message("radSyncProgressTitle");
+    public GitRepository getRepo() {
+        return repo;
     }
 }
