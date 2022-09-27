@@ -1,10 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class RadicleSettings {
     private String path;
     private Integer radSync;
+    private List<SeedNode> seedNodes;
 
     public enum RadSyncType {
         ASK(0,"Ask"), YES(1,"Yes"), NO(2,"No");
@@ -21,9 +23,10 @@ public class RadicleSettings {
         }
     }
 
-    public RadicleSettings(String path,Integer radSync) {
+    public RadicleSettings(String path,Integer radSync, List<SeedNode> seedNodes) {
         this.path = path;
         this.radSync = radSync;
+        this.seedNodes = seedNodes;
     }
 
     public String getPath() {
@@ -32,6 +35,10 @@ public class RadicleSettings {
 
     public Integer getRadSync() {
         return radSync;
+    }
+
+    public List<SeedNode> getSeedNodes() {
+        return seedNodes;
     }
 
     @Override
