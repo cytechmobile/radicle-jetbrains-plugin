@@ -70,10 +70,11 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     protected JButton loadMore;
     protected AsyncProcessIcon searchSpinner;
 
+    private ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
-    private int page;
+    protected int page;
 
     public enum SelectionType {
         SEEDNODE, PROJECT
@@ -83,13 +84,18 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         SEARCH_FIELD,BROWSE_FIELD
     }
 
-    public CloneRadDialog(@NotNull Project project) {
+    public CloneRadDialog(@NotNull Project project,ProjectApi api) {
         this.loadedProjects = new ArrayList<>();
         this.project = project;
+        this.projectApi = api;
         initializeIdentityPanel();
         initializeProjectPanel();
         initializeSeedNodePanel();
         initializeMainPanel();
+    }
+
+    public CloneRadDialog(@NotNull Project project) {
+        this(project,new ProjectApi());
     }
 
     private void setActiveProfile() {
@@ -131,7 +137,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         var clone = new RadClone(selectedProject.radUrl,parentDirectory);
         var countDownLatch = new CountDownLatch(1);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var pr = new BasicAction(clone,null,countDownLatch).perform();
+            var pr = new BasicAction(clone,project,countDownLatch).perform();
             if (pr.getExitCode() != 0) {
                 return ;
             }
@@ -257,18 +263,18 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
             bar.setValue(bar.getMaximum());
         });
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radProjects = ProjectApi.fetchRadProjects(selectedSeedNode, page);
+            var radProjects = projectApi.fetchRadProjects(selectedSeedNode, page);
+            if (radProjects == null) {
+                BasicAction.showErrorNotification(project, RadicleBundle.message("httpRequestErrorTitle"),
+                        RadicleBundle.message("httpRequestErrorDesc"));
+            }
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (radProjects != null) {
                     loadedProjects.addAll(radProjects);
                     radProjects.forEach(p -> projectModel.addElement(p));
-                    if (!radProjects.isEmpty()) {
-                        loadMore.setEnabled(true);
-                    }
-                } else {
+                }
+                if (radProjects == null || !radProjects.isEmpty()) {
                     loadMore.setEnabled(true);
-                    BasicAction.showErrorNotification(project, RadicleBundle.message("httpRequestErrorTitle"),
-                            RadicleBundle.message("httpRequestErrorDesc"));
                 }
                 searchSpinner.setVisible(false);
             }, ModalityState.any());
@@ -276,7 +282,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     }
 
 
-    private class LoadButtonListener implements ActionListener {
+    protected class LoadButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             page++;
@@ -348,20 +354,22 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         }
     }
 
-    private class ListSelectionListener implements javax.swing.event.ListSelectionListener {
+    protected class ListSelectionListener implements javax.swing.event.ListSelectionListener {
         private final SelectionType type;
 
         public ListSelectionListener(SelectionType type) {
             this.type = type;
         }
 
-        private void loadProjects() {
+        protected void loadProjects() {
             var selectedRow = myDecorator.getTable().getSelectedRow();
             if (selectedRow != -1) {
                 page = 0;
                 projectModel.clear();
-                var seedName = (String) myDecorator.getTable().getModel().getValueAt(myDecorator.getTable().getSelectedRow(),0);
-                var port = (String) myDecorator.getTable().getModel().getValueAt(myDecorator.getTable().getSelectedRow(),1);
+                var seedName = (String) myDecorator.getTable().getModel()
+                        .getValueAt(myDecorator.getTable().getSelectedRow(),0);
+                var port = (String) myDecorator.getTable().getModel()
+                        .getValueAt(myDecorator.getTable().getSelectedRow(),1);
                 selectedSeedNode = new SeedNode(seedName,port);
                 fetchProjects();
             }

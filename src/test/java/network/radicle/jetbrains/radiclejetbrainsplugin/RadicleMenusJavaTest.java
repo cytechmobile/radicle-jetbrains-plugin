@@ -102,6 +102,7 @@ public class RadicleMenusJavaTest {
             actionMenuItem(remoteRobot, "Pull").isShowing();
             actionMenuItem(remoteRobot, "Push").isShowing();
             actionMenuItem(remoteRobot, "Synchronize").isShowing();
+            actionMenuItem(remoteRobot, "Clone").isShowing();
         });
 
         step("Ensure Radicle toolbar actions show", () -> {
@@ -109,6 +110,7 @@ public class RadicleMenusJavaTest {
             isXPathComponentVisible(idea, "//div[@myicon='rad_pull.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_push.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
+            isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");
         });
 
 

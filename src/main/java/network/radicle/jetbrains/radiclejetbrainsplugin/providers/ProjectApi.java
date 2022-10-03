@@ -4,36 +4,38 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class ProjectApi {
     private static final Logger logger = LoggerFactory.getLogger(ProjectApi.class);
-    private static final int TIMEOUT = 10;
     private static final int PER_PAGE = 10;
+    private HttpClient client;
 
-    public static List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
+    public ProjectApi() {
+        this.client = HttpClientBuilder.create().build();
+    }
+
+    public ProjectApi(HttpClient client) {
+        this.client = client;
+    }
+
+    public  List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
         var url = "https://" + selectedNode.host + ":" + selectedNode.port + "/v1/projects?per-page=" + PER_PAGE +
                 "&page=" + page;
         try {
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(url))
-                    .GET()
-                    .timeout(Duration.ofSeconds(TIMEOUT))
-                    .build();
-            var res = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (res != null && res.statusCode() == 200) {
-                return convertJsonToObject(res.body(), selectedNode);
+            var res = client.execute(new HttpGet(url));
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
+                String response = EntityUtils.toString(res.getEntity());
+                return convertJsonToObject(response, selectedNode);
             }
             return null;
         } catch (Exception e) {
@@ -42,7 +44,7 @@ public class ProjectApi {
         }
     }
 
-    private static List<RadProject> convertJsonToObject(String json, SeedNode selectedNode) {
+    private List<RadProject> convertJsonToObject(String json, SeedNode selectedNode) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() {});

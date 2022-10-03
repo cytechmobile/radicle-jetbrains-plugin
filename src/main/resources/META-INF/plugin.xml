@@ -72,7 +72,7 @@
         </action>
 
         <action id="Radicle.Cone" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
-                text="Clone" description="Radicle clone" icon="/icons/rad_sync.svg">
+                text="Clone" description="Radicle clone" icon="/icons/rad_clone.svg">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
@@ -93,7 +93,7 @@
         </action>
 
         <action id="Radicle.Clone.cloneBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
-                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_pull.svg">
+                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_clone.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Pull.navBartoolbar"/>
         </action>
 
@@ -113,7 +113,7 @@
         </action>
 
         <action id="Radicle.Clone.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
-                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_pull.svg">
+                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_clone.svg">
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Pull.toolbar"/>
         </action>
 

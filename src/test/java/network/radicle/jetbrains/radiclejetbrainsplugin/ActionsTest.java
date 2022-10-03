@@ -10,9 +10,11 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
@@ -26,6 +28,7 @@ import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +57,21 @@ public class ActionsTest extends AbstractIT {
         radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.YES);
         notif.notify(super.getProject());
         assertPushAction();
+    }
+
+    @Test
+    public void cloneTest() throws InterruptedException {
+        var radUrl = "rad:git:123";
+        var clone = new RadClone(radUrl,"C:\\");
+        new BasicAction(clone,super.getProject(),new CountDownLatch(1)).perform();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        if (SystemInfo.isWindows) {
+            assertThat(cmd.getExePath()).isEqualTo(wsl);
+        } else {
+            assertThat(cmd.getExePath()).isEqualTo(radPath);
+        }
+        assertThat(cmd.getCommandLineString()).contains("clone " + radUrl);
     }
 
     @Test
