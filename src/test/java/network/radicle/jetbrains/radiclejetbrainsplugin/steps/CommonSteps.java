@@ -34,7 +34,7 @@ public class CommonSteps {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(10));
             welcomeFrame.importProjectLink().click();
 
-            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byTitle("Get from Version Control"), Duration.ofSeconds(20));
+            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byTitle("Get from Version Control"), Duration.ofSeconds(100));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
             final var keyboard = new Keyboard(remoteRobot);
