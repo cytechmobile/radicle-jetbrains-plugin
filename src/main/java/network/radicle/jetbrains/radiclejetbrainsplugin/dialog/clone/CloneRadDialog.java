@@ -346,6 +346,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
 
         private void filterProjectTable() {
             var filter = searchField.getText().toLowerCase();
+            searchSpinner.setVisible(true);
             projectModel.clear();
             for (var pr : loadedProjects) {
                 if (pr.description.toLowerCase().contains(filter) || pr.name.toLowerCase().contains(filter) ||
@@ -353,6 +354,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
                     projectModel.addElement(pr);
                 }
             }
+            searchSpinner.setVisible(false);
         }
 
         @Override
