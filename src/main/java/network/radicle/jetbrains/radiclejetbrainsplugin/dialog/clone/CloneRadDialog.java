@@ -69,6 +69,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     protected RadicleSeedNodeDecorator myDecorator;
     protected JButton loadMore;
     protected AsyncProcessIcon searchSpinner;
+    protected JBLabel infoLabel;
 
     private ProjectApi projectApi;
     private SeedNode selectedSeedNode;
@@ -202,7 +203,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         activeProfileLabel = new JBLabel("");
         activeProfileLabel.setFont(new Font(activeProfileLabel.getFont().getName(),
                 Font.BOLD,activeProfileLabel.getFont().getSize()));
-        activeProfileLabel.setForeground(JBColor.LIGHT_GRAY);
+        activeProfileLabel.setForeground(JBColor.BLACK);
         identityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         identityPanel.setBorder(JBUI.Borders.empty(2, 0));
         identityPanel.setBackground(JBColor.GRAY);
@@ -234,7 +235,13 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         projectPanel.setLayout(new BorderLayout());
         projectPanel.setBorder(JBUI.Borders.empty(5, 5,0,0));
 
-        projectPanel.add(searchField,BorderLayout.NORTH);
+        var panel = new JPanel();
+        panel.setLayout(new GridLayout(2,1));
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(new JBLabel(RadicleBundle.message("selectProject")));
+        panel.add(searchField);
+
+        projectPanel.add(panel,BorderLayout.NORTH);
         projectPanel.add(loadMore,BorderLayout.SOUTH);
         projectPanel.add(projectListPanel,BorderLayout.CENTER);
     }
@@ -248,8 +255,14 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
                 SelectionType.SEEDNODE));
 
         seedNodePanel = new JPanel();
-        seedNodePanel.setLayout(new BoxLayout(seedNodePanel,BoxLayout.Y_AXIS));
-        seedNodePanel.add(toolbarDecorator.createPanel());
+        seedNodePanel.setLayout(new BorderLayout());
+        var selectSeedNodeLabel = new JBLabel(RadicleBundle.message("selectSeedNode"));
+        selectSeedNodeLabel.setBorder(JBUI.Borders.empty(5, 0,10,0));
+        seedNodePanel.add(selectSeedNodeLabel, BorderLayout.NORTH);
+        seedNodePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+        infoLabel = new JBLabel(RadicleBundle.message("infoLabel"));
+        infoLabel.setBorder(JBUI.Borders.empty(5, 0));
+        seedNodePanel.add((infoLabel), BorderLayout.SOUTH);
         seedNodePanel.setPreferredSize(new Dimension(250,Integer.MAX_VALUE));
         seedNodePanel.setBorder(JBUI.Borders.emptyTop(5));
     }
@@ -387,6 +400,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
                 enableCloneButton();
             }
             if (!e.getValueIsAdjusting() && type == SelectionType.SEEDNODE) {
+                infoLabel.setVisible(false);
                 loadProjects();
             }
         }
