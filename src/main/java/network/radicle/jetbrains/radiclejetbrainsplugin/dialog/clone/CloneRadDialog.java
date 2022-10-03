@@ -163,7 +163,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     public List<ValidationInfo> doValidateAll() {
         var list = new ArrayList<ValidationInfo>();
         ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.getText(),
-                (JComponent) directoryField.getTextField()));
+                directoryField.getTextField()));
         return list;
     }
 

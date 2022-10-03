@@ -25,7 +25,7 @@ public class CloneRadDialogExtension implements VcsCloneDialogExtension {
     @NotNull
     @Override
     public VcsCloneDialogExtensionComponent createMainComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-        return VcsCloneDialogExtension.super.createMainComponent(project, modalityState);
+        return createMainComponent(project);
     }
 
     @NotNull
