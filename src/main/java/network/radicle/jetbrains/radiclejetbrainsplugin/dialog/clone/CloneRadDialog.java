@@ -100,6 +100,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     }
 
     private void setActiveProfile() {
+        if (!BasicAction.isCliPathConfigured(project)) {
+            return ;
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
             var output = new BasicAction(radSelf, null, new CountDownLatch(1)).perform();
@@ -111,6 +114,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
 
     @Override
     public void doClone(@NotNull CheckoutProvider.Listener listener) {
+        if (!BasicAction.isCliPathConfigured(project)) {
+            return ;
+        }
         var parent = Paths.get(directoryField.getText()).toAbsolutePath().getParent();
         var destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString());
         if (destinationValidation != null) {

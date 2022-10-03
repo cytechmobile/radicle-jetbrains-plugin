@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnit4.class)
 public class CloneDialogTest extends AbstractIT {
 
+    private RadicleSettingsHandler radicleSettingsHandler;
     private CloneRadDialog cloneDialog;
     private HttpClient httpClient;
     private HttpResponse httpResponse;
@@ -38,6 +39,8 @@ public class CloneDialogTest extends AbstractIT {
 
     @Before
     public void beforeTest() {
+        radicleSettingsHandler = new RadicleSettingsHandler();
+        radicleSettingsHandler.savePath("");
         httpClient = mock(HttpClient.class);
         httpResponse = mock(HttpResponse.class);
         statusLine = mock(StatusLine.class);
@@ -53,6 +56,11 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void testActiveProfile() throws InterruptedException {
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
+        radicleSettingsHandler.savePath(radPath);
+        cloneDialog = new CloneRadDialog(super.myProject,new ProjectApi(httpClient));
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
@@ -80,6 +88,7 @@ public class CloneDialogTest extends AbstractIT {
         var listener =  cloneDialog.new ListSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
         listener.loadProjects();
 
+        notificationsQueue.take();
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("httpRequestErrorTitle"));
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("httpRequestErrorDesc"));
@@ -109,12 +118,18 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void successCloneTest() throws InterruptedException {
+        radicleSettingsHandler.savePath("");
         var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy","testName","Test","rad:hnrk81ky87cii8h68nedkej991c5dspazi9xy");
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());
         /* remove self profile first */
         radStub.commands.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
+        radicleSettingsHandler.savePath(radPath);
+        cloneDialog.doClone(new CheckoutProvider());
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
