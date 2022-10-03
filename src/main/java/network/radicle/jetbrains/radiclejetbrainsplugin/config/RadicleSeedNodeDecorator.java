@@ -8,6 +8,7 @@ import com.intellij.ui.table.JBTable;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.AddSeedNodeDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.ConfirmationDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -33,10 +34,20 @@ public class RadicleSeedNodeDecorator {
         cpLoadedSeedNodes = new ArrayList<>(this.loadedSeedNodes);
     }
 
-    private void initializeData() {
+    public void initializeData() {
+        removeRows();
         var tableModel = (DefaultTableModel) table.getModel();
         for (var seedNode : loadedSeedNodes) {
             tableModel.addRow(new Object[]{seedNode.host,seedNode.port});
+        }
+    }
+
+    private void removeRows() {
+        var tableModel = (DefaultTableModel) table.getModel();
+        if (tableModel.getRowCount() > 0) {
+            for (int i = tableModel.getRowCount() - 1; i > -1; i--) {
+                tableModel.removeRow(i);
+            }
         }
     }
 
@@ -46,6 +57,10 @@ public class RadicleSeedNodeDecorator {
 
     public List<SeedNode> getCpLoadedSeedNodes() {
         return cpLoadedSeedNodes;
+    }
+
+    public JTable getTable() {
+        return table;
     }
 
     public ToolbarDecorator initDecorator() {

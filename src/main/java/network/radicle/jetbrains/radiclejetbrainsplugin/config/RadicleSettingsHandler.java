@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.ide.util.PropertiesComponent;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
 import java.util.List;
 import java.util.stream.Collectors;
