@@ -31,10 +31,10 @@ public class CommonSteps {
 
     public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
-            final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(10));
+            final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
             welcomeFrame.importProjectLink().click();
 
-            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"), Duration.ofSeconds(100));
+            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"), Duration.ofSeconds(50));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
             final var keyboard = new Keyboard(remoteRobot);

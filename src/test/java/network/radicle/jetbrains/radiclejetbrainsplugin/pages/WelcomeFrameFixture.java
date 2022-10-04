@@ -7,6 +7,8 @@ import com.intellij.remoterobot.data.RemoteComponent;
 import com.intellij.remoterobot.fixtures.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
+
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.utils.UtilsKt.hasAnyComponent;
 
@@ -28,11 +30,11 @@ public class WelcomeFrameFixture extends CommonContainerFixture {
 
     private ComponentFixture welcomeFrameLink(String text) {
         if (hasAnyComponent(this, byXpath("//div[@class='NewRecentProjectPanel']"))) {
-            return find(ComponentFixture.class, byXpath("//div[@class='JBOptionButton' and @text='" + text + "']"));
+            return find(ComponentFixture.class, byXpath("//div[@class='JBOptionButton' and @text='" + text + "']"), Duration.ofSeconds(50));
         }
         return find(
                 ComponentFixture.class,
-                byXpath("//div[@class='NonOpaquePanel'][./div[@text='" + text + "']]//div[@class='JButton']")
+                byXpath("//div[@class='NonOpaquePanel'][./div[@text='" + text + "']]//div[@class='JButton']"), Duration.ofSeconds(50)
         );
     }
 }
