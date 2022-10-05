@@ -85,7 +85,7 @@ public class CloneDialogTest extends AbstractIT {
         when(httpClient.execute(any())).thenReturn(httpResponse);
 
         cloneDialog.myDecorator.getTable().setRowSelectionInterval(0,0);
-        var listener =  cloneDialog.new ListSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
+        var listener =  cloneDialog.new TableSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
         listener.loadProjects();
 
         notificationsQueue.take();
@@ -107,7 +107,7 @@ public class CloneDialogTest extends AbstractIT {
         when(httpClient.execute(any())).thenReturn(httpResponse);
 
         cloneDialog.myDecorator.getTable().setRowSelectionInterval(0,0);
-        var listener =  cloneDialog.new ListSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
+        var listener =  cloneDialog.new TableSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
         listener.loadProjects();
 
         assertThat(cloneDialog.page).isEqualTo(0);

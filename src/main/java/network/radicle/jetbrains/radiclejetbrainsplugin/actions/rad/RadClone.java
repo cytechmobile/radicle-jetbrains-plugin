@@ -18,7 +18,6 @@ public class RadClone implements RadAction {
         this.directory = directory;
     }
 
-
     @Override
     public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);

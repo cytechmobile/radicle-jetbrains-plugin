@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -229,7 +230,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
 
         radProjectJBList = new JBList<>(projectModel);
         radProjectJBList.setCellRenderer(new CellRendered());
-        radProjectJBList.addListSelectionListener(new ListSelectionListener(SelectionType.PROJECT));
+        radProjectJBList.addListSelectionListener(new TableSelectionListener(SelectionType.PROJECT));
 
         var scrollPanel = new JPanel(new BorderLayout());
         scrollPanel.add(searchSpinner,BorderLayout.SOUTH);
@@ -257,7 +258,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         var toolbarDecorator = myDecorator.initDecorator();
         toolbarDecorator.addExtraAction(new RedirectButton());
         toolbarDecorator.disableRemoveAction().disableAddAction().setEditAction(null);
-        myDecorator.getTable().getSelectionModel().addListSelectionListener(new ListSelectionListener(
+        myDecorator.getTable().getSelectionModel().addListSelectionListener(new TableSelectionListener(
                 SelectionType.SEEDNODE));
 
         seedNodePanel = new JPanel();
@@ -323,7 +324,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         }
     }
 
-    private class CellRendered implements ListCellRenderer {
+    private static class CellRendered extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
@@ -375,10 +376,10 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         }
     }
 
-    protected class ListSelectionListener implements javax.swing.event.ListSelectionListener {
+    protected class TableSelectionListener implements ListSelectionListener {
         private final SelectionType type;
 
-        public ListSelectionListener(SelectionType type) {
+        public TableSelectionListener(SelectionType type) {
             this.type = type;
         }
 
