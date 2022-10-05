@@ -32,6 +32,7 @@ public class CommonSteps {
     public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
+            welcomeFrame.find(DialogFixture.class,byXpath("//div[@tooltiptext.key='group.WelcomeScreen.Options.text']")).click();
             welcomeFrame.importProjectLink().click();
 
             final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"), Duration.ofSeconds(50));
