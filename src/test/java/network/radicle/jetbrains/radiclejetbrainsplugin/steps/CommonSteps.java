@@ -32,9 +32,9 @@ public class CommonSteps {
     public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
-            final var winDialog =  welcomeFrame.importProjectLink();
-            winDialog.runJs("javax.swing.SwingUtilities.getWindowAncestor(component).requestFocus()");
-            winDialog.click();
+            welcomeFrame.find(DialogFixture.class,byXpath("//div[@tooltiptext.key='group.WelcomeScreen.Options.text']")).click();
+            welcomeFrame.importProjectLink().click();
+
             final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"), Duration.ofSeconds(50));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
