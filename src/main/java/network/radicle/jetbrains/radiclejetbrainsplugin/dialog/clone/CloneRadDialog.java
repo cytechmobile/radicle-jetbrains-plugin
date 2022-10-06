@@ -329,8 +329,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
             var radProject = (RadProject) value;
-            return new JLabel("<html>" + radProject.urn + "<br/> " + radProject.name + "<br/>" +
-                    radProject.description + "<br/></html>", SwingConstants.LEFT);
+            return  new JLabel("<html><b>Name: </b>" + radProject.name + "<br/>" +
+                     "<b>Urn: </b>" + radProject.urn + "<br/>" + "<br/>" + "</html>");
         }
     }
 
@@ -356,8 +356,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
             searchSpinner.setVisible(true);
             projectModel.clear();
             for (var pr : loadedProjects) {
-                if (pr.description.toLowerCase().contains(filter) || pr.name.toLowerCase().contains(filter) ||
-                        pr.urn.toLowerCase().contains(filter)) {
+                if (pr.name.toLowerCase().contains(filter) || pr.urn.toLowerCase().contains(filter)) {
                     projectModel.addElement(pr);
                 }
             }

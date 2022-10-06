@@ -41,7 +41,7 @@ dependencies {
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
-    testImplementation("org.mockito:mockito-core:3.4.0")
+    testImplementation("org.mockito:mockito-core:4.8.0")
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin

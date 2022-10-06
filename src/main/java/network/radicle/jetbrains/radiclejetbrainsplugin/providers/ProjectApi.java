@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class ProjectApi {
     private static final Logger logger = LoggerFactory.getLogger(ProjectApi.class);
     private static final int PER_PAGE = 10;
-    private HttpClient client;
+    private final HttpClient client;
 
     public ProjectApi() {
         this.client = HttpClientBuilder.create().build();
