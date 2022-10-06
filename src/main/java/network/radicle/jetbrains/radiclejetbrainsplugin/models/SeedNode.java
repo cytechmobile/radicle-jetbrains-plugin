@@ -1,4 +1,6 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.config;
+package network.radicle.jetbrains.radiclejetbrainsplugin.models;
+
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 
 import java.util.ArrayList;
 import java.util.List;

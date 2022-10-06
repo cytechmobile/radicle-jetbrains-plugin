@@ -1,5 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+
 import java.util.Arrays;
 import java.util.List;
 

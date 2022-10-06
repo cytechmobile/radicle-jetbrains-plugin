@@ -12,6 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class RadStub extends RadicleApplicationService {
+    public static final String activeProfile = "myProfile";
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
 
     @Override
@@ -22,6 +23,10 @@ public class RadStub extends RadicleApplicationService {
             stdout = "rad 0.6.0";
         } else if (cmdLine.getCommandLineString().contains("which")) {
             stdout = "/usr/bin/rad";
+        } else if (cmdLine.getCommandLineString().contains("self --profile")) {
+            stdout = activeProfile;
+        } else if (cmdLine.getCommandLineString().contains("clone rad:ooo")) {
+            return new ProcessOutput(-1);
         }
         var pr = new ProcessOutput(0);
         pr.appendStderr("stderr");

@@ -55,6 +55,10 @@ public class RadicleApplicationService {
         }
     }
 
+    public ProcessOutput clone(String urn,String directory) {
+        return executeCommand(directory,List.of("clone",urn),null);
+    }
+
     public ProcessOutput getVersion(String path) {
         if (Strings.isNullOrEmpty(path)) {
             return executeCommand(".", List.of("--version"), null);

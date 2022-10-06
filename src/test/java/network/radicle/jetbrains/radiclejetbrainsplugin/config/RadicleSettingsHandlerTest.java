@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

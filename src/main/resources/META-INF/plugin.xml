@@ -35,8 +35,7 @@
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView" />
 
-
-
+        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
     </extensions>
@@ -72,6 +71,12 @@
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
+        <action id="Radicle.Cone" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
+                text="Clone" description="Radicle clone" icon="/icons/rad_clone.svg">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first" />
+            <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
+        </action>
+
         <action id="Radicle.Sync.navBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction"
                 text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
@@ -87,6 +92,11 @@
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Push.navBartoolbar"/>
         </action>
 
+        <action id="Radicle.Clone.cloneBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
+                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_clone.svg">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Pull.navBartoolbar"/>
+        </action>
+
         <action id="Radicle.Sync.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction"
                 text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
@@ -100,6 +110,11 @@
         <action id="Radicle.Pull.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction"
                 text="Rad Pull" description="Radicle pull from toolbar" icon="/icons/rad_pull.svg">
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Push.toolbar"/>
+        </action>
+
+        <action id="Radicle.Clone.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
+                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_clone.svg">
+            <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Pull.toolbar"/>
         </action>
 
 

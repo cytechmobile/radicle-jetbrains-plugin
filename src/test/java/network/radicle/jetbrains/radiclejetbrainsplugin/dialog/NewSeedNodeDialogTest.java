@@ -2,8 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.SeedNode;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;

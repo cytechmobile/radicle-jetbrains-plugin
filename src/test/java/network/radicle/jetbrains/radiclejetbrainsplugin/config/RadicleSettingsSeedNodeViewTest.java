@@ -1,10 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

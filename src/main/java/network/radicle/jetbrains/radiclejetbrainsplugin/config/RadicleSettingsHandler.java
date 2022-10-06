@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.ide.util.PropertiesComponent;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,7 +19,7 @@ public class RadicleSettingsHandler {
     public static final String WILLOW_DOMAIN_NAME = "willow.radicle.garden";
     public static final String MAPLE_DOMAIN_NAME = "maple.radicle.garden";
 
-    static final List<SeedNode> DEFAULT_SEED_NODES = List.of(
+    public static final List<SeedNode> DEFAULT_SEED_NODES = List.of(
             new SeedNode(PINE_DOMAIN_NAME,DEFAULT_SEED_PORT),
             new SeedNode(WILLOW_DOMAIN_NAME,DEFAULT_SEED_PORT),
             new SeedNode(MAPLE_DOMAIN_NAME,DEFAULT_SEED_PORT)
