@@ -33,8 +33,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -48,8 +46,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
-    private static final Logger logger = LoggerFactory.getLogger(CloneRadDialog.class);
-
     protected TextFieldWithBrowseButton directoryField;
     protected JPanel mainPanel;
     protected JPanel identityPanel;

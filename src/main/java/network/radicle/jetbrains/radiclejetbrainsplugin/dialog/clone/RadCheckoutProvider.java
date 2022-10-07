@@ -46,7 +46,6 @@ public class RadCheckoutProvider implements CheckoutProvider {
         return RadicleBundle.message("radicle");
     }
 
-
     public class RadUrl implements VcsCloneComponent {
 
         protected JPanel mainPanel;
@@ -149,6 +148,10 @@ public class RadCheckoutProvider implements CheckoutProvider {
         private class TextFieldListener extends DocumentAdapter {
             @Override
             protected void textChanged(@NotNull DocumentEvent e) {
+                if (dialogListener == null) {
+                    return ;
+                }
+
                if (!Strings.isNullOrEmpty(directoryField.getText()) && !Strings.isNullOrEmpty(urlField.getText())) {
                    dialogListener.onOkActionEnabled(true);
                } else {
