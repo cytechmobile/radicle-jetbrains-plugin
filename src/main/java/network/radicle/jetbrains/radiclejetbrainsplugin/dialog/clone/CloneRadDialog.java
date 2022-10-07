@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.JBColor;
@@ -25,9 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSeedNodeDecorator;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView;
@@ -46,12 +43,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     private static final Logger logger = LoggerFactory.getLogger(CloneRadDialog.class);
@@ -118,51 +112,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         if (!BasicAction.isCliPathConfigured(project)) {
             return ;
         }
-        var parent = Paths.get(directoryField.getText()).toAbsolutePath().getParent();
-        var destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString());
-        if (destinationValidation != null) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
-                    RadicleBundle.message("directoryError"));
-            logger.error("Clone Failed. Unable to create destination directory");
-            return ;
-        }
-        var lfs = LocalFileSystem.getInstance();
-        var destinationParent = lfs.findFileByIoFile(parent.toFile());
-        if (destinationParent == null) {
-            destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile());
-        }
-        if (destinationParent == null) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
-                    RadicleBundle.message("destinationDoesntExist"));
-            logger.error("Clone Failed. Destination doesn't exist");
-            return ;
-        }
-        var directoryName = Paths.get(directoryField.getText()).getFileName().toString();
-        var parentDirectory = parent.toAbsolutePath().toString();
-        File directory = new File(parentDirectory, directoryName);
-
         var selectedProject = radProjectJBList.getSelectedValue();
-        var clone = new RadClone(selectedProject.radUrl,parentDirectory);
-        var countDownLatch = new CountDownLatch(1);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var pr = new BasicAction(clone,project,countDownLatch).perform();
-            if (pr.getExitCode() != 0) {
-                return ;
-            }
-            ApplicationManager.getApplication().invokeLater(() -> {
-                File oldDirectory = new File(parentDirectory,selectedProject.name);
-                var success = oldDirectory.renameTo(directory);
-                if (success) {
-                    listener.directoryCheckedOut(directory,null);
-                } else {
-                    listener.directoryCheckedOut(oldDirectory,null);
-                }
-                listener.checkoutCompleted();
-            });
-        });
-        var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("cloningProcess") +
-                selectedProject.urn, countDownLatch,  new AtomicBoolean(false));
-        new Thread(ubt::queue).start();
+        CloneUtil.doClone(listener,project, selectedProject.radUrl,selectedProject.name,
+                directoryField.getText());
     }
 
     @NotNull
