@@ -31,7 +31,6 @@ public class RepositoryTest extends AbstractIT {
     public void testClone() throws InterruptedException {
         var panel = (JPanel) radUrl.getView().getComponents()[0];
         var components = panel.getComponents();
-        var directoryComp = (TextFieldWithBrowseButton) components[3];
         var radUrlField = (JBTextField) components[1];
         radUrlField.setText("rad:git123");
         radUrl.doClone(new CheckoutProvider());

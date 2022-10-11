@@ -52,7 +52,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
         protected TextFieldWithBrowseButton directoryField;
         protected JBTextField urlField;
         private VcsCloneDialogComponentStateListener dialogListener;
-        private Project project;
+        private final Project project;
 
         public RadUrl(Project project) {
             this.project = project;
@@ -77,7 +77,14 @@ public class RadCheckoutProvider implements CheckoutProvider {
             var list = new ArrayList<ValidationInfo>();
             ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.getText(),
                     directoryField.getTextField()));
+            if (!isValidUrl(urlField.getText())) {
+                ContainerUtil.addIfNotNull(list,new ValidationInfo(RadicleBundle.message("invalidUrl"),urlField));
+            }
             return list;
+        }
+
+        private boolean isValidUrl(String url) {
+            return url.startsWith("rad://");
         }
 
         @NotNull
@@ -88,7 +95,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
             GridBagConstraints c = new GridBagConstraints();
             panel.setLayout(gridbag);
             c.fill = GridBagConstraints.HORIZONTAL;
-            var urlLabel = new JBLabel(RadicleBundle.message("urn"));
+            var urlLabel = new JBLabel(RadicleBundle.message("url"));
             c.gridx = 0;
             c.gridy = 0;
             gridbag.setConstraints(urlLabel, c);
@@ -99,14 +106,15 @@ public class RadCheckoutProvider implements CheckoutProvider {
             c.weightx = 1;
             gridbag.setConstraints(urlField, c);
             panel.add(urlField);
+
             var dirLabel = new JBLabel(RadicleBundle.message("directory"));
             c.gridx = 0;
-            c.gridy = 1;
+            c.gridy = 2;
             c.weightx = 0;
             gridbag.setConstraints(dirLabel, c);
             panel.add(dirLabel);
             c.gridx = 1;
-            c.gridy = 1;
+            c.gridy = 2;
             c.weightx = 1;
             gridbag.setConstraints(directoryField, c);
             panel.add(directoryField);
