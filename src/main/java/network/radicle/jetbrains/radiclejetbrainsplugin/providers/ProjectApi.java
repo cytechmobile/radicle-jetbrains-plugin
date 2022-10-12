@@ -49,11 +49,12 @@ public class ProjectApi {
         try {
             List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() {});
             return radProjects.stream().map(n -> {
-                var urnParts = ((String) n.get("urn")).split(":");
-                var urn = urnParts.length > 2 ? urnParts[2] : "";
+                var urn = ((String) n.get("urn"));
+                var urnParts = urn.split(":");
+                var projectId = urnParts.length > 2 ? urnParts[2] : "";
                 var name = (String) n.get("name");
                 var description = (String) n.get("description");
-                var radUrl = "rad://" + selectedNode.host + "/" + urn;
+                var radUrl = "rad://" + selectedNode.host + "/" + projectId;
                 return new RadProject(urn, name, description, radUrl);
             }).collect(Collectors.toList());
         } catch (Exception e) {

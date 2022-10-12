@@ -33,19 +33,24 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
+    private static final Logger logger = LoggerFactory.getLogger(CloneRadDialog.class);
     protected TextFieldWithBrowseButton directoryField;
     protected JPanel mainPanel;
     protected JPanel identityPanel;
@@ -62,7 +67,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     protected AsyncProcessIcon searchSpinner;
     protected JBLabel infoLabel;
 
-    private ProjectApi projectApi;
+    private final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
+    private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
@@ -179,11 +185,10 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         radProjectJBList = new JBList<>(projectModel);
         radProjectJBList.setCellRenderer(new CellRendered());
         radProjectJBList.addListSelectionListener(new TableSelectionListener(SelectionType.PROJECT));
-
+        radProjectJBList.addMouseListener(new ListButtonListener());
         var scrollPanel = new JPanel(new BorderLayout());
         scrollPanel.add(searchSpinner,BorderLayout.SOUTH);
         scrollPanel.add(radProjectJBList,BorderLayout.CENTER);
-
         projectListPanel = new JBScrollPane(scrollPanel);
         projectListPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         projectPanel = new JPanel();
@@ -191,10 +196,13 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         projectPanel.setBorder(JBUI.Borders.empty(5, 5,0,0));
 
         var panel = new JPanel();
-        panel.setLayout(new GridLayout(2,1));
+        panel.setLayout(new GridLayout(3,1));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(new JBLabel(RadicleBundle.message("selectProject")));
         panel.add(searchField);
+        var openInBrowserLabel = new JBLabel(RadicleBundle.message("openInBrowser"));
+        openInBrowserLabel.setForeground(JBColor.RED);
+        panel.add(openInBrowserLabel);
 
         projectPanel.add(panel,BorderLayout.NORTH);
         projectPanel.add(loadMore,BorderLayout.SOUTH);
@@ -255,6 +263,23 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         public void actionPerformed(ActionEvent e) {
             page++;
             fetchProjects();
+        }
+    }
+
+    private class ListButtonListener extends MouseAdapter {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2) {
+                var selectedProject = radProjectJBList.getSelectedValue();
+                var projectUrl = RAD_UI_URL + selectedSeedNode.host + "/" + selectedProject.urn;
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    try {
+                        Desktop.getDesktop().browse(new URI(projectUrl));
+                    } catch (IOException | URISyntaxException ex) {
+                        logger.warn("Unable to open rad url");
+                    }
+                }
+            }
         }
     }
 

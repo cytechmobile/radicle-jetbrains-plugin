@@ -116,7 +116,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
         table.setRowHeight(30);
 
         tableModel.addColumn(RadicleBundle.message("peerId"));
-        tableModel.addColumn(RadicleBundle.message("default"));
+        tableModel.addColumn(RadicleBundle.message("active"));
 
         var toolbarDecorator = ToolbarDecorator.createDecorator(table)
                 .disableUpDownActions()
@@ -205,7 +205,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     public class DefaultProfileButton extends AnActionButton {
 
         public DefaultProfileButton() {
-            super(RadicleBundle.message("default"),"", PlatformIcons.CHECK_ICON);
+            super(RadicleBundle.message("active"),"", PlatformIcons.CHECK_ICON);
         }
 
         public void setDefaultProfile(String profile) {
