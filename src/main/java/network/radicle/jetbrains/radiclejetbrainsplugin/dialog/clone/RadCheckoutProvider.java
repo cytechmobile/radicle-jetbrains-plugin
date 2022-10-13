@@ -4,14 +4,20 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
+import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.util.containers.ContainerUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.List;
 
 public class RadCheckoutProvider implements CheckoutProvider {
 
@@ -32,15 +38,51 @@ public class RadCheckoutProvider implements CheckoutProvider {
     }
 
     public static class VcsCloneComponentExt extends  DvcsCloneDialogComponent {
+
         private final Project project;
+        private TextFieldWithHistory urlField;
+
         public VcsCloneComponentExt(@NotNull Project project, @NotNull String vcsDirectoryName, @NotNull DvcsRememberedInputs rememberedInputs,
                                     @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
             super(project, vcsDirectoryName, rememberedInputs, dialogStateListener);
             this.project = project;
+            getFields();
         }
 
+        private void getFields() {
+            var mainPanel = getMainPanel();
+            var components = mainPanel.getComponents();
+            for (Component component : components) {
+                if (component.getClass().equals(TextFieldWithHistory.class)) {
+                    urlField = (TextFieldWithHistory) component;
+                }
+            }
+        }
+
+        @NotNull
         @Override
+        public List<ValidationInfo> doValidateAll() {
+            var list = super.doValidateAll();
+            if (urlField != null && !isValidUrl(urlField.getText())) {
+                ContainerUtil.addIfNotNull(list,new ValidationInfo(RadicleBundle.message("invalidUrl"), urlField));
+            }
+            return list;
+        }
+
+        private boolean isValidUrl(String url) {
+            return url.startsWith("rad://");
+        }
+
+        /* This do clone is for 2022 version */
         public void doClone(@NotNull CheckoutProvider.Listener listener) {
+            if (!BasicAction.isCliPathConfigured(project)) {
+                return ;
+            }
+            CloneUtil.doClone(listener,project, getUrl(),null, getDirectory());
+        }
+
+        /* This do clone is for 2020 / 2021 versions */
+        public void doClone(@NotNull Project pr, @NotNull CheckoutProvider.Listener listener) {
             if (!BasicAction.isCliPathConfigured(project)) {
                 return ;
             }
