@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RadCheckoutProvider implements CheckoutProvider {
 
@@ -37,7 +39,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
         return RadicleBundle.message("radicle");
     }
 
-    public static class VcsCloneComponentExt extends  DvcsCloneDialogComponent {
+    public static class VcsCloneComponentExt extends  DvcsCloneDialogComponent implements CloneProject {
 
         private final Project project;
         private TextFieldWithHistory urlField;
@@ -78,7 +80,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
             if (!BasicAction.isCliPathConfigured(project)) {
                 return ;
             }
-            CloneUtil.doClone(listener,project, getUrl(),null, getDirectory());
+            CloneUtil.doClone(listener,project,this);
         }
 
         /* This doClone is for 2020 / 2021 versions */
@@ -86,7 +88,30 @@ public class RadCheckoutProvider implements CheckoutProvider {
             if (!BasicAction.isCliPathConfigured(project)) {
                 return ;
             }
-            CloneUtil.doClone(listener,project, getUrl(),null, getDirectory());
+            CloneUtil.doClone(listener,project,this);
+        }
+
+        /* Try to find the name of the project from output */
+        @Override
+        public String projectName(List<String> outputLines) {
+            var lastLine = outputLines.get(outputLines.size() - 1);
+            String pattern = "[^./]*$";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(lastLine);
+            if (m.find()) {
+                return m.group(0);
+            }
+            return "";
+        }
+
+        @Override
+        public String url() {
+            return getUrl();
+        }
+
+        @Override
+        public String directory() {
+            return getDirectory();
         }
     }
 }

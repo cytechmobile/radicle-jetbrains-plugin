@@ -49,7 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
+public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements CloneProject {
     private static final Logger logger = LoggerFactory.getLogger(CloneRadDialog.class);
     protected TextFieldWithBrowseButton directoryField;
     protected JPanel mainPanel;
@@ -110,13 +110,28 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     }
 
     @Override
+    public String projectName(List<String> outputLines) {
+        var selectedProject = radProjectJBList.getSelectedValue();
+        return selectedProject.name;
+    }
+
+    @Override
+    public String url() {
+        var selectedProject = radProjectJBList.getSelectedValue();
+        return selectedProject.radUrl;
+    }
+
+    @Override
+    public String directory() {
+        return directoryField.getText();
+    }
+
+    @Override
     public void doClone(@NotNull CheckoutProvider.Listener listener) {
         if (!BasicAction.isCliPathConfigured(project)) {
             return ;
         }
-        var selectedProject = radProjectJBList.getSelectedValue();
-        CloneUtil.doClone(listener,project, selectedProject.radUrl,selectedProject.name,
-                directoryField.getText());
+        CloneUtil.doClone(listener,project,this);
     }
 
     @NotNull
