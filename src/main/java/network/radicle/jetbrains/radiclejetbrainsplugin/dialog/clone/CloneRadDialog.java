@@ -67,7 +67,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected AsyncProcessIcon searchSpinner;
     protected JBLabel infoLabel;
 
-    private final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
+    private static final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
     private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
