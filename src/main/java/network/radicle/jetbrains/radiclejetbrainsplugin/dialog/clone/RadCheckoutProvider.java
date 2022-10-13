@@ -73,7 +73,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
             return url.startsWith("rad://");
         }
 
-        /* This do clone is for 2022 version */
+        /* This doClone is for 2022 version */
         public void doClone(@NotNull CheckoutProvider.Listener listener) {
             if (!BasicAction.isCliPathConfigured(project)) {
                 return ;
@@ -81,7 +81,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
             CloneUtil.doClone(listener,project, getUrl(),null, getDirectory());
         }
 
-        /* This do clone is for 2020 / 2021 versions */
+        /* This doClone is for 2020 / 2021 versions */
         public void doClone(@NotNull Project pr, @NotNull CheckoutProvider.Listener listener) {
             if (!BasicAction.isCliPathConfigured(project)) {
                 return ;
