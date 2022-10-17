@@ -24,7 +24,7 @@ public class RadPush implements RadAction {
     private static final Logger logger = LoggerFactory.getLogger(RadPush.class);
     private final GitRepository repo;
     private final String seed;
-    private static final String RAD_UI = "https://app.radicle.network/seeds";
+    private static final String RAD_UI = "https://app.radicle.xyz/seeds";
 
     public RadPush(GitRepository repo, String seed) {
         this.repo = repo;

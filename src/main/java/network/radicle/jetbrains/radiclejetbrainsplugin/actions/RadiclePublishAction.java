@@ -18,10 +18,8 @@ public class RadiclePublishAction extends AnAction  {
     @Override
     public void update(@NotNull AnActionEvent e) {
         Presentation presentation = e.getPresentation();
-        if (nonConfiguredRepos != null) {
-            var showShareAction = !nonConfiguredRepos.isEmpty();
-            presentation.setEnabledAndVisible(showShareAction);
-            return ;
+        if (nonConfiguredRepos != null && nonConfiguredRepos.isEmpty()) {
+            presentation.setEnabledAndVisible(false);
         }
         var project = e.getProject();
         final var gitRepoManager = GitRepositoryManager.getInstance(project);
