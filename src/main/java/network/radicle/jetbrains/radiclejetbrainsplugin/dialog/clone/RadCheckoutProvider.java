@@ -91,19 +91,6 @@ public class RadCheckoutProvider implements CheckoutProvider {
             CloneUtil.doClone(listener,project,this);
         }
 
-        /* Try to find the name of the project from output */
-        @Override
-        public String projectName(List<String> outputLines) {
-            var lastLine = outputLines.get(outputLines.size() - 1);
-            String pattern = "[^./]*$";
-            Pattern r = Pattern.compile(pattern);
-            Matcher m = r.matcher(lastLine);
-            if (m.find()) {
-                return m.group(0);
-            }
-            return "";
-        }
-
         @Override
         public String url() {
             return getUrl();

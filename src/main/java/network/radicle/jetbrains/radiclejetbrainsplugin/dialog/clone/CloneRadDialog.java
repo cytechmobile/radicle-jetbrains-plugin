@@ -110,12 +110,6 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     @Override
-    public String projectName(List<String> outputLines) {
-        var selectedProject = radProjectJBList.getSelectedValue();
-        return selectedProject.name;
-    }
-
-    @Override
     public String url() {
         var selectedProject = radProjectJBList.getSelectedValue();
         return selectedProject.radUrl;

@@ -9,12 +9,15 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,7 +26,7 @@ public class CloneUtil {
 
     public static void doClone(@NotNull CheckoutProvider.Listener listener, @NotNull Project project, CloneProject clPr) {
 
-        var parent = Paths.get(clPr.directory()).toAbsolutePath().getParent();
+        var parent = Paths.get(clPr.directory());
         var destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString());
         if (destinationValidation != null) {
             BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
@@ -31,6 +34,7 @@ public class CloneUtil {
             logger.error("Clone Failed. Unable to create destination directory");
             return ;
         }
+
         var lfs = LocalFileSystem.getInstance();
         var destinationParent = lfs.findFileByIoFile(parent.toFile());
         if (destinationParent == null) {
@@ -42,26 +46,43 @@ public class CloneUtil {
             logger.error("Clone Failed. Destination doesn't exist");
             return ;
         }
-        var directoryName = Paths.get(clPr.directory()).getFileName().toString();
-        var parentDirectory = parent.toAbsolutePath().toString();
-        File directory = new File(parentDirectory, directoryName);
 
-        var clone = new RadClone(clPr.url(), parentDirectory);
+        String tmpFolderPath = "";
+        try {
+            var tmpFolder = Files.createTempDirectory("project" + UUID.randomUUID());
+            tmpFolderPath = tmpFolder.toAbsolutePath().toString();
+        } catch (Exception e) {
+            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
+                    RadicleBundle.message("tempDirError"));
+            logger.error("Unable to create temp directory");
+            return ;
+        }
+
+        var clone = new RadClone(clPr.url(), tmpFolderPath);
         var countDownLatch = new CountDownLatch(1);
+        String finalTmpFolderPath = tmpFolderPath;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var pr = new BasicAction(clone,project,countDownLatch).perform();
             if (pr.getExitCode() != 0) {
                 return ;
             }
             ApplicationManager.getApplication().invokeLater(() -> {
-                File oldDirectory = new File(parentDirectory, clPr.projectName(pr.getStdoutLines(true)));
-                var success = oldDirectory.renameTo(directory);
-                if (success) {
-                    listener.directoryCheckedOut(directory,null);
-                } else {
-                    listener.directoryCheckedOut(oldDirectory,null);
+                var tmpFiles = new File(finalTmpFolderPath);
+                var folders = tmpFiles.list();
+                if (folders != null && folders.length == 0) {
+                    return ;
                 }
-                listener.checkoutCompleted();
+                var projectName = folders[0];
+                var tmpDirectory = new File(finalTmpFolderPath, projectName);
+                var selectedDirectory = new File(parent.toAbsolutePath().toString());
+                try {
+                    FileUtils.copyDirectory(tmpDirectory, selectedDirectory);
+                    FileUtils.deleteDirectory(new File(finalTmpFolderPath));
+                    listener.directoryCheckedOut(selectedDirectory,null);
+                    listener.checkoutCompleted();
+                } catch (Exception e) {
+                    logger.warn("unable to copy / delete temp dir:",e);
+                }
             });
         });
         var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("cloningProcess") +
