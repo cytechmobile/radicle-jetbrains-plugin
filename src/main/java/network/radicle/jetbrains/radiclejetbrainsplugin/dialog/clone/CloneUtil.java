@@ -25,7 +25,7 @@ public class CloneUtil {
     private static final Logger logger = LoggerFactory.getLogger(CloneUtil.class);
 
     public static void doClone(@NotNull CheckoutProvider.Listener listener, @NotNull Project project, CloneProject clPr) {
-
+        String tmpFolderPath;
         var parent = Paths.get(clPr.directory());
         var destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString());
         if (destinationValidation != null) {
@@ -47,7 +47,6 @@ public class CloneUtil {
             return ;
         }
 
-        String tmpFolderPath = "";
         try {
             var tmpFolder = Files.createTempDirectory("project" + UUID.randomUUID());
             tmpFolderPath = tmpFolder.toAbsolutePath().toString();
@@ -69,7 +68,7 @@ public class CloneUtil {
             ApplicationManager.getApplication().invokeLater(() -> {
                 var tmpFiles = new File(finalTmpFolderPath);
                 var folders = tmpFiles.list();
-                if (folders != null && folders.length == 0) {
+                if (folders == null || folders.length == 0) {
                     return ;
                 }
                 var projectName = folders[0];

@@ -22,6 +22,9 @@ public class RadiclePublishAction extends AnAction  {
             presentation.setEnabledAndVisible(false);
         }
         var project = e.getProject();
+        if (project == null) {
+            return ;
+        }
         final var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
