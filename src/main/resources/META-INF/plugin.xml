@@ -35,6 +35,7 @@
                 id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView" />
 
+        <checkoutProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.RadCheckoutProvider" />
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>

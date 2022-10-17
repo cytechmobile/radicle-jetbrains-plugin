@@ -5,11 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class RadClone implements RadAction {
-    private static final Logger logger = LoggerFactory.getLogger(RadClone.class);
     private String radUrn;
     private String directory;
 
