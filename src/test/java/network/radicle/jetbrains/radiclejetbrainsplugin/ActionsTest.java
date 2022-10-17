@@ -261,7 +261,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void testSeeNodeErrorSync() throws InterruptedException {
-        removeSeedNodeFromConfig();
+        removeSeedNodeFromConfig(firstRepo);
 
         var rsa = new RadicleSyncAction();
         rsa.performAction(getProject());
@@ -272,7 +272,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void testSeeNodeErrorPull() throws InterruptedException {
-        removeSeedNodeFromConfig();
+        removeSeedNodeFromConfig(firstRepo);
         var rpa = new RadiclePullAction();
         rpa.performAction(getProject());
 
@@ -280,10 +280,9 @@ public class ActionsTest extends AbstractIT {
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
     }
 
-
     @Test
     public void testSeedNodeErrorPush() throws InterruptedException {
-        removeSeedNodeFromConfig();
+        removeSeedNodeFromConfig(firstRepo);
         var rps = new RadiclePushAction();
         var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
         rps.performAction(getProject(),actionEvent);
@@ -291,12 +290,12 @@ public class ActionsTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
 
-        addSeedNodeInConfig();
+        addSeedNodeInConfig(firstRepo);
     }
 
     @Test
     public void testRadInitError() throws InterruptedException {
-        removeRemoteRadUrl();
+        removeRemoteRadUrl(firstRepo);
         var rsa = new RadicleSyncAction();
         rsa.performAction(getProject());
 
@@ -316,7 +315,7 @@ public class ActionsTest extends AbstractIT {
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
 
-        initializeProject();
+        initializeProject(firstRepo);
     }
 
     public  void assertPushAction() throws InterruptedException {
@@ -346,7 +345,7 @@ public class ActionsTest extends AbstractIT {
 
         @Override
         public @NotNull Repository getRepository() {
-            return repository;
+            return firstRepo;
         }
 
         @Override

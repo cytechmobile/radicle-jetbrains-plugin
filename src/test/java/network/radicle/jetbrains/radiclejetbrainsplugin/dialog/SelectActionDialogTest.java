@@ -36,7 +36,7 @@ public class SelectActionDialogTest extends AbstractIT {
 
     @Test
     public void storeRadioSelectionTest() {
-        SelectActionDialog dialog = new SelectActionDialog(super.getProject(), List.of(repository));
+        SelectActionDialog dialog = new SelectActionDialog(super.getProject(), List.of(firstRepo));
         assertThat(dialog.getRememberCheckBox().isSelected()).isFalse();
         assertThat(dialog.getYesRadio().isSelected()).isFalse();
         assertThat(dialog.getNoRadio().isSelected()).isFalse();
@@ -47,7 +47,7 @@ public class SelectActionDialogTest extends AbstractIT {
         var settings = radicleSettingsHandler.loadSettings();
         assertThat(settings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.ASK.val);
 
-        dialog = new SelectActionDialog(super.getProject(),List.of(repository));
+        dialog = new SelectActionDialog(super.getProject(),List.of(firstRepo));
         dialog.getYesRadio().setSelected(true);
         dialog.getRememberCheckBox().setSelected(true);
         dialog.doOKAction();
@@ -55,7 +55,7 @@ public class SelectActionDialogTest extends AbstractIT {
         settings = radicleSettingsHandler.loadSettings();
         assertThat(settings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
 
-        dialog = new SelectActionDialog(super.getProject(),List.of(repository));
+        dialog = new SelectActionDialog(super.getProject(),List.of(firstRepo));
         dialog.getNoRadio().setSelected(true);
         dialog.getRememberCheckBox().setSelected(true);
         dialog.doOKAction();
@@ -67,7 +67,7 @@ public class SelectActionDialogTest extends AbstractIT {
     @Test
     public void checkRadSync() throws InterruptedException {
         radicleSettingsHandler.savePath("/usr/bin/rad");
-        SelectActionDialog dialog = new SelectActionDialog(super.getProject(),List.of(repository));
+        SelectActionDialog dialog = new SelectActionDialog(super.getProject(),List.of(firstRepo));
         assertThat(dialog.getRememberCheckBox().isSelected()).isFalse();
         assertThat(dialog.getYesRadio().isSelected()).isFalse();
         assertThat(dialog.getNoRadio().isSelected()).isFalse();

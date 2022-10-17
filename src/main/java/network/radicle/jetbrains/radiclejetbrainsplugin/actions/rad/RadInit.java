@@ -9,29 +9,33 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicat
 
 import java.util.List;
 
-public class RadClone implements RadAction {
-    private String radUrn;
-    private String directory;
+public class RadInit implements RadAction {
+    private final GitRepository repo;
+    private final String name;
+    private final String description;
+    private final String branch;
 
-    public RadClone(String radUrn, String directory) {
-        this.radUrn = radUrn;
-        this.directory = directory;
+    public RadInit (GitRepository repo, String name, String description, String branch) {
+        this.repo = repo;
+        this.name = name;
+        this.description = description;
+        this.branch = branch;
     }
 
     @Override
     public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.clone(radUrn,directory);
+        return rad.init(repo,name,description,branch);
     }
 
     @Override
     public String getErrorMessage() {
-        return RadicleBundle.message("errorInRadClone");
+        return RadicleBundle.message("initError");
     }
 
     @Override
     public String getSuccessMessage() {
-        return RadicleBundle.message("successInRadClone");
+        return RadicleBundle.message("initSuccess");
     }
 
     @Override
@@ -41,7 +45,7 @@ public class RadClone implements RadAction {
 
     @Override
     public GitRepository getRepo() {
-        return null;
+        return repo;
     }
 
     @Override

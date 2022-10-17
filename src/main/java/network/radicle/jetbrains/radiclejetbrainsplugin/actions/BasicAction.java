@@ -51,7 +51,7 @@ public class BasicAction {
         }
         logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
         if (!action.getNotificationSuccessMessage().isEmpty()) {
-            showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
+            showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, action.notificationActions());
         }
         return output;
     }
@@ -60,8 +60,8 @@ public class BasicAction {
         var initializedRepos = new ArrayList<GitRepository>();
         for (var repo : repos) {
             try {
-                var remote = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "remote.rad.url");
-                if (!Strings.isNullOrEmpty(remote) && isSeedNodeConfigured(repo)) {
+                var isProjectInitialized = isProjectRadInitialized(repo);
+                if (isProjectInitialized && isSeedNodeConfigured(repo,true)) {
                     initializedRepos.add(repo);
                 }
             } catch (Exception e) {
@@ -74,7 +74,32 @@ public class BasicAction {
         return initializedRepos;
     }
 
-    private static boolean isSeedNodeConfigured(GitRepository repo) {
+    public static boolean isProjectRadInitialized(GitRepository repo) {
+        try {
+            var remote = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "remote.rad.url");
+            return !Strings.isNullOrEmpty(remote);
+        } catch (Exception e) {
+            logger.warn("unable to read git config file", e);
+        }
+        return false;
+    }
+
+    public static List<GitRepository> getNonConfiguredRepos (List<GitRepository> repos) {
+        var nonConfiguredRepos = new ArrayList<GitRepository>();
+        for (var repo : repos) {
+            try {
+                var isConfigured = isSeedNodeConfigured(repo,false);
+                if (!isConfigured) {
+                    nonConfiguredRepos.add(repo);
+                }
+            } catch (Exception e) {
+                logger.warn("unable to read git config file", e);
+            }
+        }
+        return nonConfiguredRepos;
+    }
+
+    private static boolean isSeedNodeConfigured(GitRepository repo, boolean showNotification) {
         var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
         boolean hasSeedNode = false;
         try {
@@ -88,7 +113,7 @@ public class BasicAction {
         } catch (Exception e) {
             logger.warn("unable to read git config file", e);
         }
-        if (!hasSeedNode) {
+        if (!hasSeedNode && showNotification) {
             showErrorNotification(repo.getProject(), "radCliError", RadicleBundle.message("seedNodeMissing"));
         }
         return hasSeedNode;

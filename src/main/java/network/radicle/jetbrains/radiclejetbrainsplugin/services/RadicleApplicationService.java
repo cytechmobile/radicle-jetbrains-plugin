@@ -80,6 +80,11 @@ public class RadicleApplicationService {
         return new ProcessOutput(-1);
     }
 
+    public ProcessOutput init(GitRepository root,String name, String description, String branch) {
+        return executeCommand(root.getRoot().getPath(), List.of("init","--name",name,"--description",description,
+                "--default-branch",branch,"--no-confirm"),root);
+    }
+
     public ProcessOutput auth(String name,String passphrase,boolean setDefaultProfile) {
         var output = setEnvVar(RAD_PASSPHRASE,passphrase);
         if (output.getExitCode() != 0) {
@@ -94,8 +99,12 @@ public class RadicleApplicationService {
         }
     }
 
-    public ProcessOutput push(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("push"), root);
+    public ProcessOutput inspect(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("inspect"),root);
+    }
+
+    public ProcessOutput push(GitRepository root, String seed) {
+        return executeCommand(root.getRoot().getPath(), List.of("push","--seed", seed), root);
     }
 
     public ProcessOutput pull(GitRepository root) {

@@ -72,8 +72,14 @@
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
-        <action id="Radicle.Cone" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
+        <action id="Radicle.Clone" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
                 text="Clone" description="Radicle clone" icon="/icons/rad_clone.svg">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first" />
+            <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
+        </action>
+
+        <action id="Radicle.Publish" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePublishAction"
+                text="Share Project on Radicle" description="Radicle publish" icon="/icons/rad_clone.svg">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
