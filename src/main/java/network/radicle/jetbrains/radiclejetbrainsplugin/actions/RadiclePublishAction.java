@@ -8,10 +8,13 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PublishDialog;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class RadiclePublishAction extends AnAction  {
+    private static final Logger logger = LoggerFactory.getLogger(RadiclePublishAction.class);
 
     private List<GitRepository> nonConfiguredRepos = null;
 
@@ -39,6 +42,11 @@ public class RadiclePublishAction extends AnAction  {
         }
         var project = e.getProject();
         var publishDialog = new PublishDialog(nonConfiguredRepos, project);
-        publishDialog.showAndGet();
+        try {
+            publishDialog.isUiLoaded.await();
+            publishDialog.showAndGet();
+        } catch (InterruptedException ex) {
+            logger.warn("Unable to open publish dialog");
+        }
     }
 }

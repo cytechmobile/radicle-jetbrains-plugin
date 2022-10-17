@@ -12,5 +12,7 @@ public interface RadAction {
     String getSuccessMessage();
     String getNotificationSuccessMessage();
     GitRepository getRepo();
-    List<NotificationAction> notificationActions();
+    default List<NotificationAction> notificationActions() {
+        return null;
+    }
 }

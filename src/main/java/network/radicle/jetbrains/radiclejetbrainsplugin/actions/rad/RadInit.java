@@ -48,8 +48,4 @@ public class RadInit implements RadAction {
         return repo;
     }
 
-    @Override
-    public List<NotificationAction> notificationActions() {
-        return null;
-    }
 }

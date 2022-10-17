@@ -39,6 +39,7 @@ public class PublishDialog extends DialogWrapper {
     private final Project project;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean isSelectedRepoInitialized;
+    public CountDownLatch isUiLoaded =  new CountDownLatch(1);
 
     public PublishDialog(List<GitRepository> repos, Project project) {
         super(true);
@@ -114,6 +115,7 @@ public class PublishDialog extends DialogWrapper {
         var repo = (GitRepository) projectSelect.getSelectedItem();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var isInitialized = BasicAction.isProjectRadInitialized(repo);
+            isUiLoaded.countDown();
             isSelectedRepoInitialized = isInitialized;
             ApplicationManager.getApplication().invokeLater(() -> {
                 var showInitFields = !isInitialized;

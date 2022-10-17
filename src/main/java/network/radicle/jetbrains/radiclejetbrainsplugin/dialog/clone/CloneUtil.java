@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -69,6 +70,11 @@ public class CloneUtil {
                 var tmpFiles = new File(finalTmpFolderPath);
                 var folders = tmpFiles.list();
                 if (folders == null || folders.length == 0) {
+                    try {
+                        FileUtils.deleteDirectory(new File(finalTmpFolderPath));
+                    } catch (IOException e) {
+                        logger.warn("unable to delete temp dir:",e);
+                    }
                     return ;
                 }
                 var projectName = folders[0];
