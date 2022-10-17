@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.JBColor;
@@ -25,9 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSeedNodeDecorator;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView;
@@ -44,18 +41,16 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.nio.file.Paths;
+import java.awt.event.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
+public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements CloneProject {
     private static final Logger logger = LoggerFactory.getLogger(CloneRadDialog.class);
-
     protected TextFieldWithBrowseButton directoryField;
     protected JPanel mainPanel;
     protected JPanel identityPanel;
@@ -72,7 +67,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     protected AsyncProcessIcon searchSpinner;
     protected JBLabel infoLabel;
 
-    private ProjectApi projectApi;
+    private static final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
+    private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
@@ -114,55 +110,28 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
     }
 
     @Override
+    public String projectName(List<String> outputLines) {
+        var selectedProject = radProjectJBList.getSelectedValue();
+        return selectedProject.name;
+    }
+
+    @Override
+    public String url() {
+        var selectedProject = radProjectJBList.getSelectedValue();
+        return selectedProject.radUrl;
+    }
+
+    @Override
+    public String directory() {
+        return directoryField.getText();
+    }
+
+    @Override
     public void doClone(@NotNull CheckoutProvider.Listener listener) {
         if (!BasicAction.isCliPathConfigured(project)) {
             return ;
         }
-        var parent = Paths.get(directoryField.getText()).toAbsolutePath().getParent();
-        var destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString());
-        if (destinationValidation != null) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
-                    RadicleBundle.message("directoryError"));
-            logger.error("Clone Failed. Unable to create destination directory");
-            return ;
-        }
-        var lfs = LocalFileSystem.getInstance();
-        var destinationParent = lfs.findFileByIoFile(parent.toFile());
-        if (destinationParent == null) {
-            destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile());
-        }
-        if (destinationParent == null) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
-                    RadicleBundle.message("destinationDoesntExist"));
-            logger.error("Clone Failed. Destination doesn't exist");
-            return ;
-        }
-        var directoryName = Paths.get(directoryField.getText()).getFileName().toString();
-        var parentDirectory = parent.toAbsolutePath().toString();
-        File directory = new File(parentDirectory, directoryName);
-
-        var selectedProject = radProjectJBList.getSelectedValue();
-        var clone = new RadClone(selectedProject.radUrl,parentDirectory);
-        var countDownLatch = new CountDownLatch(1);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var pr = new BasicAction(clone,project,countDownLatch).perform();
-            if (pr.getExitCode() != 0) {
-                return ;
-            }
-            ApplicationManager.getApplication().invokeLater(() -> {
-                File oldDirectory = new File(parentDirectory,selectedProject.name);
-                var success = oldDirectory.renameTo(directory);
-                if (success) {
-                    listener.directoryCheckedOut(directory,null);
-                } else {
-                    listener.directoryCheckedOut(oldDirectory,null);
-                }
-                listener.checkoutCompleted();
-            });
-        });
-        var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("cloningProcess") +
-                selectedProject.urn, countDownLatch,  new AtomicBoolean(false));
-        new Thread(ubt::queue).start();
+        CloneUtil.doClone(listener,project,this);
     }
 
     @NotNull
@@ -231,11 +200,10 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         radProjectJBList = new JBList<>(projectModel);
         radProjectJBList.setCellRenderer(new CellRendered());
         radProjectJBList.addListSelectionListener(new TableSelectionListener(SelectionType.PROJECT));
-
+        radProjectJBList.addMouseListener(new ListButtonListener());
         var scrollPanel = new JPanel(new BorderLayout());
         scrollPanel.add(searchSpinner,BorderLayout.SOUTH);
         scrollPanel.add(radProjectJBList,BorderLayout.CENTER);
-
         projectListPanel = new JBScrollPane(scrollPanel);
         projectListPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         projectPanel = new JPanel();
@@ -243,10 +211,13 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         projectPanel.setBorder(JBUI.Borders.empty(5, 5,0,0));
 
         var panel = new JPanel();
-        panel.setLayout(new GridLayout(2,1));
+        panel.setLayout(new GridLayout(3,1));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.add(new JBLabel(RadicleBundle.message("selectProject")));
         panel.add(searchField);
+        var openInBrowserLabel = new JBLabel(RadicleBundle.message("openInBrowser"));
+        openInBrowserLabel.setForeground(JBColor.RED);
+        panel.add(openInBrowserLabel);
 
         projectPanel.add(panel,BorderLayout.NORTH);
         projectPanel.add(loadMore,BorderLayout.SOUTH);
@@ -307,6 +278,23 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent  {
         public void actionPerformed(ActionEvent e) {
             page++;
             fetchProjects();
+        }
+    }
+
+    private class ListButtonListener extends MouseAdapter {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (e.getClickCount() == 2) {
+                var selectedProject = radProjectJBList.getSelectedValue();
+                var projectUrl = RAD_UI_URL + selectedSeedNode.host + "/" + selectedProject.urn;
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    try {
+                        Desktop.getDesktop().browse(new URI(projectUrl));
+                    } catch (IOException | URISyntaxException ex) {
+                        logger.warn("Unable to open rad url");
+                    }
+                }
+            }
         }
     }
 
