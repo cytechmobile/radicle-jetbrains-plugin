@@ -86,7 +86,7 @@ public class PublishDialog extends DialogWrapper {
     protected void init() {
         super.init();
         setOKActionEnabled(false);
-        setTitle(RadicleBundle.message("publish"));
+        setTitle(RadicleBundle.message("shareProject"));
         var settings = radicleSettingsHandler.loadSettings();
         var seedNodes = settings.getSeedNodes();
         var textFieldListener = new TextFieldListener();
