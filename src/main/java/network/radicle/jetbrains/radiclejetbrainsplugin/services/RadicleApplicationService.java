@@ -9,22 +9,25 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadConfig;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
 
     private final RadicleSettingsHandler settingsHandler;
-    private static final String RAD_PASSPHRASE="RAD_PASSPHRASE";
-    private String radConfigPath = "";
+    private Map<String, String> radStoragePath = null;
 
     public RadicleApplicationService() {
         this(new RadicleSettingsHandler());
@@ -35,12 +38,19 @@ public class RadicleApplicationService {
         this.settingsHandler = radicleSettingsHandler;
     }
 
-    public void setRadConfigPath(String path) {
-        this.radConfigPath = path;
+    public void setRadConfigPaths(String gitStoragePath, String keysStoragePath) {
+        if (radStoragePath == null) {
+            radStoragePath = new HashMap<>();
+        }
+        radStoragePath.put("gitStoragePath", gitStoragePath);
+        radStoragePath.put("keysStoragePath", keysStoragePath);
     }
 
-    public String getRadConfigPath() {
-        return this.radConfigPath;
+    public RadConfig getRadStoragePath() {
+        if (radStoragePath == null) {
+            return null;
+        }
+        return new RadConfig(radStoragePath.get("gitStoragePath"), radStoragePath.get("keysStoragePath"));
     }
 
     public ProcessOutput getRadPath() {
@@ -67,35 +77,16 @@ public class RadicleApplicationService {
         }
     }
 
-    public ProcessOutput removeIdentity(String profile) {
-        return executeCommand(".",List.of("rm","--no-confirm","--no-passphrase",profile),null);
-    }
-
-    private ProcessOutput setEnvVar(String var,String value) {
-        var removeVarPr = executeCommand("",".",List.of("sed","-i","/RAD_PASSPHRASE/d","~/.bashrc"),null);
-        var addVarPr = executeCommand("",".",List.of("echo","export",var + "=" + value,">>","~/.bashrc"),null);
-        if (removeVarPr.getExitCode() == 0 && addVarPr.getExitCode() == 0) {
-            return new ProcessOutput(0);
-        }
-        return new ProcessOutput(-1);
-    }
-
     public ProcessOutput init(GitRepository root,String name, String description, String branch) {
         return executeCommand(root.getRoot().getPath(), List.of("init","--name",name,"--description",description,
                 "--default-branch",branch,"--no-confirm"),root);
     }
 
     public ProcessOutput auth(String name,String passphrase,boolean setDefaultProfile) {
-        var output = setEnvVar(RAD_PASSPHRASE,passphrase);
-        if (output.getExitCode() != 0) {
-            var newOutput = new ProcessOutput(-1);
-            newOutput.appendStderr("Unable to set RAD_PASSPHRASE in bashrc file");
-            return newOutput;
-        }
         if (setDefaultProfile) {
-            return executeCommand(".",List.of("auth","--stdin",name),null);
+            return executeCommand(".",List.of("auth",name),null);
         } else {
-            return executeCommand(".",List.of("auth","--init","--name",name),null);
+            return executeCommand(".",List.of("auth","--init","--name",name,"--passphrase",passphrase),null);
         }
     }
 
@@ -124,6 +115,7 @@ public class RadicleApplicationService {
 
     public ProcessOutput executeCommand(
             String radPath, String workDir, List<String> args, @Nullable GitRepository repo) {
+        ProcessOutput result ;
         final var cmdLine = new GeneralCommandLine();
         if (SystemInfo.isWindows) {
             //TODO remove wsl
@@ -142,8 +134,15 @@ public class RadicleApplicationService {
             if (console != null) {
                 console.showCommandLine("[" + workDir + "] " + cmdLine.getCommandLineString());
             }
-            var result = execAndGetOutput(cmdLine);
+            var params = cmdLine.getCommandLineString();
+            var setDefaultIdentityAction = params.contains("auth") && !params.contains("--init") &&
+                    !params.contains("--name") && !params.contains("--passphrase");
 
+            if (setDefaultIdentityAction) {
+                 result = execAndGetOutputWithStdin(cmdLine);
+            } else {
+                 result = execAndGetOutput(cmdLine);
+            }
             if (console != null) {
                 var stdout = result.getStdout();
                 if (!Strings.isNullOrEmpty(stdout)) {
@@ -159,6 +158,15 @@ public class RadicleApplicationService {
             logger.error("unable to execute rad command", ex);
             return new ProcessOutput(-1);
         }
+    }
+
+    public ProcessOutput execAndGetOutputWithStdin(GeneralCommandLine cmdLine) {
+        var output = ExecUtil.execAndGetOutput(cmdLine,"");
+        var exitCode = Strings.isNullOrEmpty(output) ? -1 : 0;
+        var msg = Strings.isNullOrEmpty(output) ? RadicleBundle.message("setDefaultIdentityError") : "";
+        var pr = new ProcessOutput(exitCode);
+        pr.appendStderr(msg);
+        return pr;
     }
 
     public ProcessOutput execAndGetOutput(GeneralCommandLine cmdLine) throws ExecutionException {
