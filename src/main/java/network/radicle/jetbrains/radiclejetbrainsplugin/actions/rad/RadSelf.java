@@ -46,7 +46,7 @@ public class RadSelf implements RadAction {
             return new ProcessOutput(-1);
         }
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.executeCommand("", ".", List.of("ls", storage.keysStoragePath), null);
+        return rad.executeCommand("", ".", List.of("ls", storage.keysStoragePath), null, false);
     }
 
     @Override

@@ -54,10 +54,10 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput getRadPath() {
-        return executeCommand(".", ".", List.of("which","rad"), null);
+        return executeCommand(".", ".", List.of("which","rad"), null, false);
     }
 
-    public ProcessOutput self(boolean activeProfile) {
+    public ProcessOutput self (boolean activeProfile) {
         if (activeProfile) {
             return executeCommand(".",List.of("self","--profile"),null);
         } else {
@@ -73,7 +73,7 @@ public class RadicleApplicationService {
         if (Strings.isNullOrEmpty(path)) {
             return executeCommand(".", List.of("--version"), null);
         } else {
-            return executeCommand(path,".", List.of("--version"), null);
+            return executeCommand(path,".", List.of("--version"), null, false);
         }
     }
 
@@ -84,7 +84,7 @@ public class RadicleApplicationService {
 
     public ProcessOutput auth(String name,String passphrase,boolean setDefaultProfile) {
         if (setDefaultProfile) {
-            return executeCommand(".",List.of("auth",name),null);
+            return executeCommandWithStdin(".",List.of("auth",name),null);
         } else {
             return executeCommand(".",List.of("auth","--init","--name",name,"--passphrase",passphrase),null);
         }
@@ -107,14 +107,20 @@ public class RadicleApplicationService {
                 Objects.requireNonNull(root.getCurrentBranchName())), root);
     }
 
+    public ProcessOutput executeCommandWithStdin(String workDir, List<String> args, @Nullable GitRepository repo) {
+        final var settings = settingsHandler.loadSettings();
+        final var radPath = settings.getPath();
+        return executeCommand(radPath, workDir, args, repo, true);
+    }
+
     public ProcessOutput executeCommand(String workDir, List<String> args, @Nullable GitRepository repo) {
         final var settings = settingsHandler.loadSettings();
         final var radPath = settings.getPath();
-        return executeCommand(radPath, workDir, args, repo);
+        return executeCommand(radPath, workDir, args, repo, false);
     }
 
     public ProcessOutput executeCommand(
-            String radPath, String workDir, List<String> args, @Nullable GitRepository repo) {
+            String radPath, String workDir, List<String> args, @Nullable GitRepository repo, boolean isDefaultIdentityAction) {
         ProcessOutput result ;
         final var cmdLine = new GeneralCommandLine();
         if (SystemInfo.isWindows) {
@@ -134,11 +140,8 @@ public class RadicleApplicationService {
             if (console != null) {
                 console.showCommandLine("[" + workDir + "] " + cmdLine.getCommandLineString());
             }
-            var params = cmdLine.getCommandLineString();
-            var setDefaultIdentityAction = params.contains("auth") && !params.contains("--init") &&
-                    !params.contains("--name") && !params.contains("--passphrase");
 
-            if (setDefaultIdentityAction) {
+            if (isDefaultIdentityAction) {
                  result = execAndGetOutputWithStdin(cmdLine);
             } else {
                  result = execAndGetOutput(cmdLine);

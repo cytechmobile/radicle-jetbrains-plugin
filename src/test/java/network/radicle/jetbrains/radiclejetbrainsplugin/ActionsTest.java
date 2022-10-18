@@ -120,8 +120,14 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd).isNotNull();
         var gitStoragePath = RadStub.gitStoragePath + "/" + identityToDelete;
         var keysStoragePath = RadStub.keysStoragePath + "/" + identityToDelete;
-        assertThat(cmd.getCommandLineString()).contains("rm -rf " + gitStoragePath + " " + keysStoragePath);
-
+        var params = cmd.getParametersList();
+        if (SystemInfo.isWindows) {
+            assertThat(params.get(2)).contains("rm -rf " + gitStoragePath + " " + keysStoragePath);
+        } else {
+            assertThat(params.get(0)).isEqualTo("rm -rf");
+            assertThat(params.get(1)).isEqualTo(gitStoragePath);
+            assertThat(params.get(2)).isEqualTo(keysStoragePath);
+        }
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("removeIdentitySuccess"));
