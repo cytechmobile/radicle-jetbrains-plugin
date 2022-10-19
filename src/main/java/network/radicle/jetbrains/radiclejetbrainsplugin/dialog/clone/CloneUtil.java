@@ -66,29 +66,27 @@ public class CloneUtil {
             if (pr.getExitCode() != 0) {
                 return ;
             }
-            ApplicationManager.getApplication().invokeLater(() -> {
-                var tmpFiles = new File(finalTmpFolderPath);
-                var folders = tmpFiles.list();
-                if (folders == null || folders.length == 0) {
-                    try {
-                        FileUtils.deleteDirectory(new File(finalTmpFolderPath));
-                    } catch (IOException e) {
-                        logger.warn("unable to delete temp dir:",e);
-                    }
-                    return ;
-                }
-                var projectName = folders[0];
-                var tmpDirectory = new File(finalTmpFolderPath, projectName);
-                var selectedDirectory = new File(parent.toAbsolutePath().toString());
+            var tmpFiles = new File(finalTmpFolderPath);
+            var folders = tmpFiles.list();
+            if (folders == null || folders.length == 0) {
                 try {
-                    FileUtils.copyDirectory(tmpDirectory, selectedDirectory);
                     FileUtils.deleteDirectory(new File(finalTmpFolderPath));
-                    listener.directoryCheckedOut(selectedDirectory,null);
-                    listener.checkoutCompleted();
-                } catch (Exception e) {
-                    logger.warn("unable to copy / delete temp dir:",e);
+                } catch (IOException e) {
+                    logger.warn("unable to delete temp dir:", e);
                 }
-            });
+                return;
+            }
+            var projectName = folders[0];
+            var tmpDirectory = new File(finalTmpFolderPath, projectName);
+            var selectedDirectory = new File(parent.toAbsolutePath().toString());
+            try {
+                FileUtils.copyDirectory(tmpDirectory, selectedDirectory);
+                FileUtils.deleteDirectory(new File(finalTmpFolderPath));
+                listener.directoryCheckedOut(selectedDirectory, null);
+                listener.checkoutCompleted();
+            } catch (Exception e) {
+                logger.warn("unable to copy / delete temp dir:", e);
+            }
         });
         var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("cloningProcess") +
                 clPr.url(), countDownLatch,  new AtomicBoolean(false));

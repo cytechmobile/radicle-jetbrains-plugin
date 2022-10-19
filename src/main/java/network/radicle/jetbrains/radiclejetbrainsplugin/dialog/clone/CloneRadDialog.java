@@ -210,7 +210,6 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         panel.add(new JBLabel(RadicleBundle.message("selectProject")));
         panel.add(searchField);
         var openInBrowserLabel = new JBLabel(RadicleBundle.message("openInBrowser"));
-        openInBrowserLabel.setForeground(JBColor.RED);
         panel.add(openInBrowserLabel);
 
         projectPanel.add(panel,BorderLayout.NORTH);

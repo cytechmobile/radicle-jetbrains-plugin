@@ -67,13 +67,11 @@ public class PublishDialog extends DialogWrapper {
             if (isSelectedRepoInitialized || output.getExitCode() == 0) {
                 var countDown = new CountDownLatch(1);
                 var executingFlag = new AtomicBoolean(false);
-                ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var push = new RadPush(repo,(String) seedNodeSelect.getSelectedItem());
-                    new BasicAction(push,project,countDown).perform();
-                });
                 UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("publishProgressBar"),
                         countDown, executingFlag);
-                new Thread(ubt::queue).start();
+                ApplicationManager.getApplication().executeOnPooledThread(ubt::queue);
+                var push = new RadPush(repo,(String) seedNodeSelect.getSelectedItem());
+                new BasicAction(push,project,countDown).perform();
             }
         });
     }
