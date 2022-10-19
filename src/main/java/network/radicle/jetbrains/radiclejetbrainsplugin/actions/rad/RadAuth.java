@@ -1,19 +1,23 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
+import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+
+import java.util.List;
 
 public class RadAuth implements RadAction {
 
     private String notificationSuccessMsg;
     private String errorMsg;
     private String successMsg;
-    private String name;
-    private String passphrase;
-    private RadAuthAction action;
+    private final String name;
+    private final String passphrase;
+    private final RadAuthAction action;
 
     public RadAuth (String name, String passphrase, RadAuthAction action) {
         this.name = name;
@@ -43,19 +47,19 @@ public class RadAuth implements RadAction {
     }
 
     public ProcessOutput removeIdentity() {
+        var storagePath = BasicAction.getStoragePath();
+        if (Strings.isNullOrEmpty(storagePath.keysStoragePath) || Strings.isNullOrEmpty(storagePath.gitStoragePath)) {
+            return new ProcessOutput(-1);
+        }
+        var gitStoragePath = storagePath.gitStoragePath + "/" + name;
+        var keysStoragePath = storagePath.keysStoragePath + "/" + name;
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.removeIdentity(name);
+        return rad.executeCommand("", ".", List.of("rm -rf", gitStoragePath,keysStoragePath), null, false);
     }
 
     public ProcessOutput setDefaultIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        var output =  rad.auth(name,passphrase,true);
-        var msg = output.getStderr();
-        if (msg.contains("Adding your radicle key to ssh-agent")) {
-             output.setExitCode(0);
-             return output;
-        }
-        return output;
+        return rad.auth(name,passphrase,true);
     }
 
     public  ProcessOutput createNewIdentity() {

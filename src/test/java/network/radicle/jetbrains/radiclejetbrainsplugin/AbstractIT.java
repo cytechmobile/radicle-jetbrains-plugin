@@ -29,10 +29,12 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public static final String radPath = "/usr/bin/rad";
     public static final String wsl = "wsl";
     protected static final String remoteName = "testRemote";
+    protected static final String remoteName1 = "testRemote1";
     protected RadicleSettingsHandler radicleSettingsHandler;
     protected String remoteRepoPath;
-    protected GitRepository repository;
-
+    protected String remoteRepoPath1;
+    protected GitRepository firstRepo;
+    protected GitRepository secondRepo;
 
     private MessageBusConnection mbc,applicationMbc;
     public RadStub radStub;
@@ -41,7 +43,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public void before() throws IOException {
         /* initialize a git repository */
         remoteRepoPath = Files.createTempDirectory(remoteName).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
-        repository = GitTestUtil.createGitRepository(super.getProject(),remoteRepoPath);
+        firstRepo = GitTestUtil.createGitRepository(super.getProject(),remoteRepoPath);
+
+        remoteRepoPath1 = Files.createTempDirectory(remoteName1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
 
         /* set rad path */
         radicleSettingsHandler = new RadicleSettingsHandler();
@@ -52,8 +56,8 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         radStub = RadStub.replaceRadicleApplicationService(this);
 
         /* add seed node in config */
-        addSeedNodeInConfig();
-        initializeProject();
+        initializeProject(firstRepo);
+        addSeedNodeInConfig(firstRepo);
         applicationMbc =  ApplicationManager.getApplication().getMessageBus().connect();
         mbc = getProject().getMessageBus().connect();
         mbc.setDefaultHandler(
@@ -83,7 +87,10 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             mbc.disconnect();
         }
         try {
-            repository.dispose();
+            firstRepo.dispose();
+            if (secondRepo != null) {
+                secondRepo.dispose();
+            }
         } catch (Exception e) {
             logger.warn("error disposing git repo");
         }
@@ -101,34 +108,34 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         }
     }
 
-    protected void removeRemoteRadUrl() {
+    protected void removeRemoteRadUrl(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repository.getRoot(), "remote.rad.url","");
+            GitConfigUtil.setValue(super.getProject(),repo.getRoot(), "remote.rad.url","");
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
     }
 
-    protected void initializeProject() {
+    protected void initializeProject(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repository.getRoot(),
+            GitConfigUtil.setValue(super.getProject(),repo.getRoot(),
                     "remote.rad.url","rad://hrrkbjxncopa15doj7qobxip8fotbcemjro4o.git");
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
     }
 
-    protected void removeSeedNodeFromConfig() {
+    protected void removeSeedNodeFromConfig(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repository.getRoot(), "rad.seed","");
+            GitConfigUtil.setValue(super.getProject(),repo.getRoot(), "rad.seed","");
         } catch (Exception e) {
             logger.warn("unable to remove seed node from config file");
         }
     }
 
-    protected void addSeedNodeInConfig() {
+    protected void addSeedNodeInConfig(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repository.getRoot(), "rad.seed",
+            GitConfigUtil.setValue(super.getProject(),repo.getRoot(), "rad.seed",
                     "https://maple.radicle.garden");
         } catch (Exception e) {
             logger.warn("unable to write seed node in config file");
