@@ -25,7 +25,7 @@ import java.util.Objects;
 
 public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
-
+    private static final int TIMEOUT = 10000;
     private final RadicleSettingsHandler settingsHandler;
     private Map<String, String> radStoragePath = null;
 
@@ -173,6 +173,6 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput execAndGetOutput(GeneralCommandLine cmdLine) throws ExecutionException {
-        return ExecUtil.execAndGetOutput(cmdLine);
+        return ExecUtil.execAndGetOutput(cmdLine,TIMEOUT);
     }
 }
