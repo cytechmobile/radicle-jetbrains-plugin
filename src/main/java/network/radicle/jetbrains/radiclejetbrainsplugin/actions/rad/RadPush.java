@@ -62,7 +62,7 @@ public class RadPush implements RadAction {
        return List.of(new PushNotificationAction(seed, repo, RadicleBundle.lazyMessage("Open")));
     }
 
-    public static class PushNotificationAction extends NotificationAction {
+    public class PushNotificationAction extends NotificationAction {
         private final GitRepository repo;
         private final String host;
 

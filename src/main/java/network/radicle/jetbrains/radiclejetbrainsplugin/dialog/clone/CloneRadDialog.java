@@ -2,31 +2,33 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 
 import com.google.common.base.Strings;
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSeedNodeDecorator;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
@@ -41,7 +43,10 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -54,7 +59,6 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected TextFieldWithBrowseButton directoryField;
     protected JPanel mainPanel;
     protected JPanel identityPanel;
-    protected JPanel seedNodePanel;
     protected JPanel projectPanel;
     protected JPanel directoryPanel;
     protected JBLabel activeProfileLabel;
@@ -62,21 +66,18 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected JBList<RadProject> radProjectJBList;
     protected SearchTextField searchField;
     protected DefaultListModel<RadProject> projectModel;
-    protected RadicleSeedNodeDecorator myDecorator;
     protected JButton loadMore;
     protected AsyncProcessIcon searchSpinner;
-    protected JBLabel infoLabel;
-
+    protected ComboBox<SeedNode> seedNodeComboBox;
+    private final RadicleSettingsHandler radicleSettingsHandler;
+    private RadicleSettings settings;
     private static final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
     private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
     protected int page;
-
-    public enum SelectionType {
-        SEEDNODE, PROJECT
-    }
+    private boolean triggerSeedNodeAction = true;
 
     public enum TextFieldType {
         SEARCH_FIELD,BROWSE_FIELD
@@ -86,9 +87,10 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         this.loadedProjects = new ArrayList<>();
         this.project = project;
         this.projectApi = api;
+        this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.settings = this.radicleSettingsHandler.loadSettings();
         initializeIdentityPanel();
         initializeProjectPanel();
-        initializeSeedNodePanel();
         initializeMainPanel();
     }
 
@@ -164,7 +166,6 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(JBUI.Borders.empty(4));
         mainPanel.add(identityPanel,BorderLayout.NORTH);
-        mainPanel.add(seedNodePanel, BorderLayout.WEST);
         mainPanel.add(projectPanel,BorderLayout.CENTER);
         mainPanel.add(directoryPanel,BorderLayout.SOUTH);
     }
@@ -193,7 +194,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
 
         radProjectJBList = new JBList<>(projectModel);
         radProjectJBList.setCellRenderer(new CellRendered());
-        radProjectJBList.addListSelectionListener(new TableSelectionListener(SelectionType.PROJECT));
+        radProjectJBList.addListSelectionListener(new TableSelectionListener());
         radProjectJBList.addMouseListener(new ListButtonListener());
         var scrollPanel = new JPanel(new BorderLayout());
         scrollPanel.add(searchSpinner,BorderLayout.SOUTH);
@@ -204,38 +205,31 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         projectPanel.setLayout(new BorderLayout());
         projectPanel.setBorder(JBUI.Borders.empty(5, 5,0,0));
 
-        var panel = new JPanel();
-        panel.setLayout(new GridLayout(3,1));
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(new JBLabel(RadicleBundle.message("selectProject")));
-        panel.add(searchField);
-        var openInBrowserLabel = new JBLabel(RadicleBundle.message("openInBrowser"));
-        panel.add(openInBrowserLabel);
+        var gridPanel = new JPanel();
+        gridPanel.setLayout(new GridLayout(4,1));
+        gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        var panel = new JPanel(new BorderLayout());
+        panel.add(new JBLabel(RadicleBundle.message("Select seed node to view projects")), BorderLayout.WEST);
+        Presentation presentation = new Presentation();
+        presentation.setIcon(AllIcons.General.Settings);
+        panel.add(new ActionButton(new SeedNodeViewAction(),presentation, ActionPlaces.UNKNOWN,
+                        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE),BorderLayout.EAST);
+        gridPanel.add(panel);
+        seedNodeComboBox = new ComboBox<>();
+        initializeSeedNodeCombobox();
+        seedNodeComboBox.setSelectedIndex(-1);
+        seedNodeComboBox.addActionListener(new SeedNodeListener());
+        seedNodeComboBox.setRenderer(new SeedNodeCellRenderer());
+        gridPanel.add(seedNodeComboBox);
+        gridPanel.add(new JBLabel(RadicleBundle.message("selectProject")));
+        gridPanel.add(searchField);
+        projectPanel.add(gridPanel,BorderLayout.NORTH);
 
-        projectPanel.add(panel,BorderLayout.NORTH);
-        projectPanel.add(loadMore,BorderLayout.SOUTH);
+        var bottomGrid = new JPanel( new GridLayout(2,1));
+        bottomGrid.add(loadMore);
+        bottomGrid.add( new JBLabel(RadicleBundle.message("openInBrowser")));
+        projectPanel.add(bottomGrid, BorderLayout.SOUTH);
         projectPanel.add(projectListPanel,BorderLayout.CENTER);
-    }
-
-    private void initializeSeedNodePanel() {
-        myDecorator = new RadicleSeedNodeDecorator();
-        var toolbarDecorator = myDecorator.initDecorator();
-        toolbarDecorator.addExtraAction(new RedirectButton());
-        toolbarDecorator.disableRemoveAction().disableAddAction().setEditAction(null);
-        myDecorator.getTable().getSelectionModel().addListSelectionListener(new TableSelectionListener(
-                SelectionType.SEEDNODE));
-
-        seedNodePanel = new JPanel();
-        seedNodePanel.setLayout(new BorderLayout());
-        var selectSeedNodeLabel = new JBLabel(RadicleBundle.message("selectSeedNode"));
-        selectSeedNodeLabel.setBorder(JBUI.Borders.empty(5, 0,10,0));
-        seedNodePanel.add(selectSeedNodeLabel, BorderLayout.NORTH);
-        seedNodePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-        infoLabel = new JBLabel(RadicleBundle.message("infoLabel"));
-        infoLabel.setBorder(JBUI.Borders.empty(5, 0));
-        seedNodePanel.add((infoLabel), BorderLayout.SOUTH);
-        seedNodePanel.setPreferredSize(new Dimension(250,Integer.MAX_VALUE));
-        seedNodePanel.setBorder(JBUI.Borders.emptyTop(5));
     }
 
     private void fetchProjects() {
@@ -274,11 +268,20 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         }
     }
 
+    private class SeedNodeListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (seedNodeComboBox.getSelectedItem() != null && triggerSeedNodeAction) {
+                loadProjects();
+            }
+        }
+    }
+
     private class ListButtonListener extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
-            if (e.getClickCount() == 2) {
-                var selectedProject = radProjectJBList.getSelectedValue();
+            var selectedProject = radProjectJBList.getSelectedValue();
+            if (e.getClickCount() == 2 && selectedSeedNode != null && selectedProject != null) {
                 var projectUrl = RAD_UI_URL + selectedSeedNode.host + "/" + selectedProject.urn;
                 if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                     try {
@@ -291,17 +294,35 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         }
     }
 
-    private class RedirectButton extends DumbAwareActionButton {
-        public RedirectButton() {
-            super(RadicleBundle.message("manageSeedNodes"), "", PlatformIcons.SHOW_SETTINGS_ICON);
+    private static class SeedNodeCellRenderer implements ListCellRenderer<SeedNode> {
+        @Override
+        public Component getListCellRendererComponent(JList<? extends SeedNode> list, SeedNode node, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            if (node == null) {
+                return new JLabel("");
+            }
+            return new JLabel(node.host + ":" + node.port);
         }
+    }
 
+    private void initializeSeedNodeCombobox() {
+        settings = radicleSettingsHandler.loadSettings();
+        var loadedSeedNodes = settings.getSeedNodes();
+        seedNodeComboBox.removeAllItems();
+        for (var node : loadedSeedNodes) {
+            seedNodeComboBox.addItem(node);
+        }
+    }
+
+    private class SeedNodeViewAction extends AnAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-            /* Change window and reload the settings */
+            triggerSeedNodeAction = false;
             ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsSeedNodeView.class);
-            myDecorator.loadSeedNodes();
-            myDecorator.initializeData();
+            var prevSelectedIndex = seedNodeComboBox.getSelectedIndex();
+            initializeSeedNodeCombobox();
+            seedNodeComboBox.setSelectedIndex(prevSelectedIndex);
+            triggerSeedNodeAction = true;
         }
     }
 
@@ -356,26 +377,14 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         }
     }
 
+    protected void loadProjects() {
+        page = 0;
+        projectModel.clear();
+        selectedSeedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
+        fetchProjects();
+    }
+
     protected class TableSelectionListener implements ListSelectionListener {
-        private final SelectionType type;
-
-        public TableSelectionListener(SelectionType type) {
-            this.type = type;
-        }
-
-        protected void loadProjects() {
-            var selectedRow = myDecorator.getTable().getSelectedRow();
-            if (selectedRow != -1) {
-                page = 0;
-                projectModel.clear();
-                var seedName = (String) myDecorator.getTable().getModel()
-                        .getValueAt(myDecorator.getTable().getSelectedRow(),0);
-                var port = (String) myDecorator.getTable().getModel()
-                        .getValueAt(myDecorator.getTable().getSelectedRow(),1);
-                selectedSeedNode = new SeedNode(seedName,port);
-                fetchProjects();
-            }
-        }
 
         private void enableCloneButton() {
             if (!Strings.isNullOrEmpty(directoryField.getText())) {
@@ -385,12 +394,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
 
         @Override
         public void valueChanged(ListSelectionEvent e) {
-            if (!e.getValueIsAdjusting() && type == SelectionType.PROJECT) {
+            if (!e.getValueIsAdjusting()) {
                 enableCloneButton();
-            }
-            if (!e.getValueIsAdjusting() && type == SelectionType.SEEDNODE) {
-                infoLabel.setVisible(false);
-                loadProjects();
             }
         }
     }

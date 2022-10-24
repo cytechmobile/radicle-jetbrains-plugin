@@ -18,7 +18,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.swing.table.DefaultTableModel;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -73,10 +72,12 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void testDefaultSeedNodes() {
-       var seedNodeModel = (DefaultTableModel) cloneDialog.myDecorator.getTable().getModel();
-       var loadedSeedNodes =  cloneDialog.myDecorator.getLoadedSeedNodes();
-       assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
-       assertThat(seedNodeModel.getRowCount()).isEqualTo(loadedSeedNodes.size());
+       var seedNodeModel = cloneDialog.seedNodeComboBox.getModel();
+       var settingsSeedNodes = radicleSettingsHandler.loadSettings().getSeedNodes();
+       for (var i=0; i<settingsSeedNodes.size(); i++) {
+           var seed = seedNodeModel.getElementAt(i);
+           assertThat(seed).usingRecursiveComparison().isEqualTo(settingsSeedNodes.get(i));
+       }
     }
 
     @Test
@@ -84,9 +85,8 @@ public class CloneDialogTest extends AbstractIT {
         when(statusLine.getStatusCode()).thenReturn(400);
         when(httpClient.execute(any())).thenReturn(httpResponse);
 
-        cloneDialog.myDecorator.getTable().setRowSelectionInterval(0,0);
-        var listener =  cloneDialog.new TableSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
-        listener.loadProjects();
+        cloneDialog.seedNodeComboBox.setSelectedIndex(1);
+        cloneDialog.loadProjects();
 
         notificationsQueue.take();
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
@@ -97,7 +97,7 @@ public class CloneDialogTest extends AbstractIT {
     }
 
     @Test
-    public void testSuccessRequest() throws IOException, InterruptedException {
+    public void testSuccessRequest() throws IOException {
 
         StringEntity se = new StringEntity("");
         se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
@@ -105,11 +105,8 @@ public class CloneDialogTest extends AbstractIT {
         when(httpResponse.getEntity()).thenReturn(se);
         when(statusLine.getStatusCode()).thenReturn(200);
         when(httpClient.execute(any())).thenReturn(httpResponse);
-
-        cloneDialog.myDecorator.getTable().setRowSelectionInterval(0,0);
-        var listener =  cloneDialog.new TableSelectionListener(CloneRadDialog.SelectionType.SEEDNODE);
-        listener.loadProjects();
-
+        cloneDialog.seedNodeComboBox.setSelectedIndex(1);
+        cloneDialog.loadProjects();
         assertThat(cloneDialog.page).isEqualTo(0);
         var loadMoreListener = cloneDialog.new LoadButtonListener();
         loadMoreListener.actionPerformed(null);
