@@ -301,7 +301,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             if (node == null) {
                 return new JLabel("");
             }
-            return new JLabel(node.host + ":" + node.port);
+            return new JLabel(node.host);
         }
     }
 
