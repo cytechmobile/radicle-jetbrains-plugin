@@ -209,7 +209,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         gridPanel.setLayout(new GridLayout(4,1));
         gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         var panel = new JPanel(new BorderLayout());
-        panel.add(new JBLabel(RadicleBundle.message("Select seed node to view projects")), BorderLayout.WEST);
+        panel.add(new JBLabel(RadicleBundle.message("selectSeedNode")), BorderLayout.WEST);
         Presentation presentation = new Presentation();
         presentation.setIcon(AllIcons.General.Settings);
         panel.add(new ActionButton(new SeedNodeViewAction(),presentation, ActionPlaces.UNKNOWN,
