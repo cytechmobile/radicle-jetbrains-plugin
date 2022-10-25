@@ -227,7 +227,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
         @Override
         public boolean isEnabled() {
-            return isActiveProfileRowSelected();
+            return super.isEnabled() && isActiveProfileRowSelected();
         }
     }
 }
