@@ -10,7 +10,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import git4idea.config.GitConfigUtil;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
@@ -114,7 +116,10 @@ public class BasicAction {
 
     public static boolean isProjectRadInitialized(GitRepository repo) {
         try {
-            var remote = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "remote.rad.url");
+            var handler = new GitLineHandler(repo.getProject(), repo.getRoot(), GitCommand.CONFIG);
+            handler.setSilent(true);
+            handler.addParameters("--null", "--local", "--get", "remote.rad.url");
+            var remote = Git.getInstance().runCommand(handler).getOutputOrThrow(1).trim();
             return !Strings.isNullOrEmpty(remote);
         } catch (Exception e) {
             logger.warn("unable to read git config file", e);
@@ -141,7 +146,10 @@ public class BasicAction {
         var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
         boolean hasSeedNode = false;
         try {
-            var seed = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "rad.seed");
+            var handler = new GitLineHandler(repo.getProject(), repo.getRoot(), GitCommand.CONFIG);
+            handler.setSilent(true);
+            handler.addParameters("--null", "--local", "--get", "rad.seed");
+            var seed = Git.getInstance().runCommand(handler).getOutputOrThrow(1).trim();
             if (!Strings.isNullOrEmpty(seed)) {
                 for (String node : seedNodes) {
                     hasSeedNode = seed.contains(node);
