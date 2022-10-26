@@ -54,7 +54,7 @@ public class RadAuth implements RadAction {
         var gitStoragePath = storagePath.gitStoragePath + "/" + name;
         var keysStoragePath = storagePath.keysStoragePath + "/" + name;
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.executeCommand("", ".", List.of("rm -rf", gitStoragePath,keysStoragePath), null, false);
+        return rad.executeCommand("rm", ".", List.of("-rf", gitStoragePath,keysStoragePath), null, false);
     }
 
     public ProcessOutput setDefaultIdentity() {

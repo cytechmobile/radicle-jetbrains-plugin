@@ -54,7 +54,7 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput getRadPath() {
-        return executeCommand(".", ".", List.of("which","rad"), null, false);
+        return executeCommand("which", ".", List.of("rad"), null, false);
     }
 
     public ProcessOutput self (boolean activeProfile) {
@@ -120,20 +120,20 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput executeCommand(
-            String radPath, String workDir, List<String> args, @Nullable GitRepository repo, boolean isDefaultIdentityAction) {
+            String exePath, String workDir, List<String> args, @Nullable GitRepository repo, boolean isDefaultIdentityAction) {
         ProcessOutput result ;
         final var cmdLine = new GeneralCommandLine();
         if (SystemInfo.isWindows) {
             //TODO remove wsl
-            cmdLine.withExePath("wsl").withParameters("bash","-ic").withParameters(radPath + " " + String.join(" ",args));
+            cmdLine.withExePath("wsl").withParameters("bash","-ic").withParameters(exePath + " " + String.join(" ",args));
         } else {
-            cmdLine.withExePath(radPath).withParameters(args);
+            cmdLine.withExePath(exePath).withParameters(args);
         }
         cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
                 // we need parent environment to be present to our rad execution
                 .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
                 // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
-                .withEnvironment("PATH", new File(radPath).getParent() + File.pathSeparator +
+                .withEnvironment("PATH", new File(exePath).getParent() + File.pathSeparator +
                         cmdLine.getParentEnvironment().get("PATH"));
         try {
             var console = repo == null ? null : GitVcsConsoleWriter.getInstance(repo.getProject());

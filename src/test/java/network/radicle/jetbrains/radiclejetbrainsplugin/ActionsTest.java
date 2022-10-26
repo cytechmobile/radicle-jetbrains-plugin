@@ -124,7 +124,8 @@ public class ActionsTest extends AbstractIT {
         if (SystemInfo.isWindows) {
             assertThat(params.get(2)).contains("rm -rf " + gitStoragePath + " " + keysStoragePath);
         } else {
-            assertThat(params.get(0)).isEqualTo("rm -rf");
+            assertThat(cmd.getExePath()).isEqualTo("rm");
+            assertThat(params.get(0)).isEqualTo("-rf");
             assertThat(params.get(1)).isEqualTo(gitStoragePath);
             assertThat(params.get(2)).isEqualTo(keysStoragePath);
         }

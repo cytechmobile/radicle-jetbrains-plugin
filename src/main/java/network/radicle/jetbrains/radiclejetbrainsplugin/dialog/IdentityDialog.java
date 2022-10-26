@@ -13,8 +13,6 @@ public class IdentityDialog extends DialogWrapper {
     private JPanel contentPane;
     public JTextField nameField;
     public JTextField passphraseField;
-    private JLabel nameLabel;
-
 
     public IdentityDialog() {
         super(true);
