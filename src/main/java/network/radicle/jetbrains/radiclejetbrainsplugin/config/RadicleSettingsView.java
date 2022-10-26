@@ -113,12 +113,13 @@ public class RadicleSettingsView implements SearchableConfigurable {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSync = (ComboItem) radSyncList.getSelectedItem();
             radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.from(radSync.key));
-            if (isValidPath()) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    radicleSettingsHandler.savePath(path);
-                    settings = this.radicleSettingsHandler.loadSettings();
-                }, ModalityState.any());
-            }
+            var isPathValid = isValidPath();
+            ApplicationManager.getApplication().invokeLater(() -> {
+               if (isPathValid) {
+                   radicleSettingsHandler.savePath(path);
+               }
+               settings = this.radicleSettingsHandler.loadSettings();
+            }, ModalityState.any());
         });
     }
 
