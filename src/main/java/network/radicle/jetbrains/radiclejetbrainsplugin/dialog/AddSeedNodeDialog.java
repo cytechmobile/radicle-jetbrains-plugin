@@ -1,24 +1,31 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.AsyncProcessIcon;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.util.List;
 
 public class AddSeedNodeDialog extends DialogWrapper {
     private JPanel contentPane;
     private JTextField nodeField;
-    private List<SeedNode> loadedSeedNodes;
+    private final List<SeedNode> loadedSeedNodes;
     private JTextField portField;
     private JLabel errorField;
+    private JLabel progressLabel;
+    private AsyncProcessIcon searchSpinner;
 
     public AddSeedNodeDialog(List<SeedNode> seedNodes) {
         super(true);
@@ -62,17 +69,50 @@ public class AddSeedNodeDialog extends DialogWrapper {
         return port.matches(regex);
     }
 
-    @Override
-    protected void doOKAction() {
+    private boolean isApiReachable() {
+        var projectApi = new ProjectApi();
+        var seedNode = new SeedNode(nodeField.getText(),portField.getText());
+        var radProjects = projectApi.fetchRadProjects(seedNode, 0);
+        return radProjects != null;
+    }
+
+    private boolean isFormValid() {
         if (!(isValidIp(nodeField.getText()) || isValidDomainName(nodeField.getText()))) {
             this.errorField.setText(RadicleBundle.message("invalidSeedNode"));
+            return false;
         } else if (!isValidPort(portField.getText())){
             this.errorField.setText(RadicleBundle.message("invalidPort"));
+            return false;
         } else if(nodeExists()) {
             this.errorField.setText(RadicleBundle.message("seedNodeExists"));
-        } else {
-            super.doOKAction();
+            return false;
         }
+        return true;
+    }
+
+    @Override
+    protected void doOKAction() {
+        this.errorField.setText("");
+        var isValid = isFormValid();
+        if (!isValid) {
+            return ;
+        }
+        setOKActionEnabled(false);
+        progressLabel.setVisible(true);
+        searchSpinner.setVisible(true);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var isReachable = isApiReachable();
+            ApplicationManager.getApplication().invokeLater(() -> {
+                progressLabel.setVisible(false);
+                searchSpinner.setVisible(false);
+                setOKActionEnabled(true);
+                if (!isReachable) {
+                    this.errorField.setText(RadicleBundle.message("notReachable"));
+                } else {
+                    super.doOKAction();
+                }
+            }, ModalityState.any());
+        });
     }
 
     @Override
@@ -85,6 +125,8 @@ public class AddSeedNodeDialog extends DialogWrapper {
         super.init();
         setOKActionEnabled(false);
         errorField.setForeground(JBColor.RED);
+        progressLabel.setVisible(false);
+        searchSpinner.setVisible(false);
         var textFieldListener = new TextFieldListener();
         nodeField.getDocument().addDocumentListener(textFieldListener);
         portField.getDocument().addDocumentListener(textFieldListener);
@@ -92,17 +134,21 @@ public class AddSeedNodeDialog extends DialogWrapper {
 
     @Override
     protected @Nullable JComponent createCenterPanel() {
-        return contentPane;
+        var borderPanel = new JPanel(new BorderLayout());
+        progressLabel = new JLabel(RadicleBundle.message("reachableMsg"));
+        searchSpinner = new AsyncProcessIcon(RadicleBundle.message("reachableMsg"));
+        borderPanel.add(contentPane,BorderLayout.CENTER);
+        var myPanel = new JPanel();
+        myPanel.add(progressLabel);
+        myPanel.add(searchSpinner);
+        borderPanel.add(myPanel,BorderLayout.SOUTH);
+        return borderPanel;
     }
 
     public class TextFieldListener extends DocumentAdapter {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-            if (nodeField.getText().isEmpty() || portField.getText().isEmpty()) {
-                setOKActionEnabled(false);
-            } else {
-                setOKActionEnabled(true);
-            }
+            setOKActionEnabled(!nodeField.getText().isEmpty() && !portField.getText().isEmpty());
         }
     }
 
