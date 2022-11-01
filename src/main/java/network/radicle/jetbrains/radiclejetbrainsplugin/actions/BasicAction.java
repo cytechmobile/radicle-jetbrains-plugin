@@ -7,14 +7,18 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import git4idea.config.GitConfigUtil;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadConfig;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -24,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BasicAction {
     private static final Logger logger = LoggerFactory.getLogger(BasicAction.class);
@@ -51,17 +57,51 @@ public class BasicAction {
         }
         logger.info(action.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
         if (!action.getNotificationSuccessMessage().isEmpty()) {
-            showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, null);
+            showNotification(project, "", action.getNotificationSuccessMessage(), NotificationType.INFORMATION, action.notificationActions());
         }
         return output;
+    }
+
+    public static RadConfig getStoragePath() {
+        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var cacheConfigPath = rad.getRadStoragePath();
+        if (cacheConfigPath != null) {
+            return cacheConfigPath;
+        }
+        var output = rad.self(false);
+        if (output.getExitCode() == 0) {
+            List<String> list = output.getStdoutLines(true);
+            var gitStorage = list.stream().filter(el -> el.contains("Storage (git)")).findFirst();
+            var keysStorage = list.stream().filter(el -> el.contains("Storage (keys)")).findFirst();
+            var gitStoragePath = gitStorage.isPresent() ? extractPath(gitStorage.get()) : "";
+            var gitKeysPath = keysStorage.isPresent() ? extractPath(keysStorage.get()) : "";
+            rad.setRadConfigPaths(gitStoragePath, gitKeysPath);
+            return new RadConfig(gitStoragePath, gitKeysPath);
+        }
+        return new RadConfig("","");
+    }
+
+    private static String extractPath (String path) {
+        try {
+            String pattern = "[*/](.*?)radicle-link";
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(path);
+            if (m.find()) {
+                return m.group();
+            }
+            return "";
+        } catch (Exception e) {
+            logger.warn("Unable to get radicle path");
+        }
+        return "";
     }
 
     public static List<GitRepository> getInitializedReposWithNodeConfigured(List<GitRepository> repos, boolean showNotification) {
         var initializedRepos = new ArrayList<GitRepository>();
         for (var repo : repos) {
             try {
-                var remote = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "remote.rad.url");
-                if (!Strings.isNullOrEmpty(remote) && isSeedNodeConfigured(repo)) {
+                var isProjectInitialized = isProjectRadInitialized(repo);
+                if (isProjectInitialized && isSeedNodeConfigured(repo,true)) {
                     initializedRepos.add(repo);
                 }
             } catch (Exception e) {
@@ -74,11 +114,42 @@ public class BasicAction {
         return initializedRepos;
     }
 
-    private static boolean isSeedNodeConfigured(GitRepository repo) {
+    public static boolean isProjectRadInitialized(GitRepository repo) {
+        try {
+            var handler = new GitLineHandler(repo.getProject(), repo.getRoot(), GitCommand.CONFIG);
+            handler.setSilent(true);
+            handler.addParameters("--null", "--local", "--get", "remote.rad.url");
+            var remote = Git.getInstance().runCommand(handler).getOutputOrThrow(1).trim();
+            return !Strings.isNullOrEmpty(remote);
+        } catch (Exception e) {
+            logger.warn("unable to read git config file", e);
+        }
+        return false;
+    }
+
+    public static List<GitRepository> getNonConfiguredRepos (List<GitRepository> repos) {
+        var nonConfiguredRepos = new ArrayList<GitRepository>();
+        for (var repo : repos) {
+            try {
+                var isConfigured = isSeedNodeConfigured(repo,false);
+                if (!isConfigured) {
+                    nonConfiguredRepos.add(repo);
+                }
+            } catch (Exception e) {
+                logger.warn("unable to read git config file", e);
+            }
+        }
+        return nonConfiguredRepos;
+    }
+
+    private static boolean isSeedNodeConfigured(GitRepository repo, boolean showNotification) {
         var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
         boolean hasSeedNode = false;
         try {
-            var seed = GitConfigUtil.getValue(repo.getProject(), repo.getRoot(), "rad.seed");
+            var handler = new GitLineHandler(repo.getProject(), repo.getRoot(), GitCommand.CONFIG);
+            handler.setSilent(true);
+            handler.addParameters("--null", "--local", "--get", "rad.seed");
+            var seed = Git.getInstance().runCommand(handler).getOutputOrThrow(1).trim();
             if (!Strings.isNullOrEmpty(seed)) {
                 for (String node : seedNodes) {
                     hasSeedNode = seed.contains(node);
@@ -88,7 +159,7 @@ public class BasicAction {
         } catch (Exception e) {
             logger.warn("unable to read git config file", e);
         }
-        if (!hasSeedNode) {
+        if (!hasSeedNode && showNotification) {
             showErrorNotification(repo.getProject(), "radCliError", RadicleBundle.message("seedNodeMissing"));
         }
         return hasSeedNode;

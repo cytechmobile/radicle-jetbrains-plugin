@@ -1,16 +1,16 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
+import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class RadSelf implements RadAction {
@@ -40,39 +40,13 @@ public class RadSelf implements RadAction {
         return rad.self(true);
     }
 
-    private String getConfigPath() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        var cacheConfigPath = rad.getRadConfigPath();
-        if (!cacheConfigPath.isEmpty()) {
-            return cacheConfigPath;
-        }
-        try {
-            var output = rad.self(false);
-            if (output.getExitCode() == 0) {
-                List<String> list = output.getStdoutLines(true);
-                var path = list.get(list.size() - 1);
-                String pattern = "[*/](.*?)radicle-link";
-                Pattern r = Pattern.compile(pattern);
-                Matcher m = r.matcher(path);
-                if (m.find()) {
-                    var configPath = m.group();
-                    rad.setRadConfigPath(configPath);
-                    return configPath;
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("Unable to get radicle config path");
-        }
-        return "";
-    }
-
     private ProcessOutput getProfiles() {
-        var configPath = getConfigPath();
-        if (configPath.isEmpty()) {
+        var storage = BasicAction.getStoragePath();
+        if (storage == null || Strings.isNullOrEmpty(storage.keysStoragePath)) {
             return new ProcessOutput(-1);
         }
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.executeCommand("", ".", List.of("ls", getConfigPath()), null);
+        return rad.executeCommand("ls", ".", List.of(storage.keysStoragePath), null, false);
     }
 
     @Override

@@ -103,6 +103,7 @@ public class RadicleMenusJavaTest {
             actionMenuItem(remoteRobot, "Push").isShowing();
             actionMenuItem(remoteRobot, "Synchronize").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
+            actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
         });
 
         step("Ensure Radicle toolbar actions show", () -> {
