@@ -105,7 +105,4 @@ jobs:
           gh release create v${{ needs.buildPluginArtifact.outputs.version }} \
             --draft \
             --title "v${{ needs.buildPluginArtifact.outputs.version }}" \
-            --notes "$(cat << 'EOM'
-          ${{ needs.buildPluginArtifact.outputs.changelog }}
-          EOM
-          )"
+            --generate-notes
