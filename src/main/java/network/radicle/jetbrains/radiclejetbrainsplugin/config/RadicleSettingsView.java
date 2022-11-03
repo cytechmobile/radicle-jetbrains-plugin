@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,12 +11,14 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
@@ -32,18 +35,16 @@ public class RadicleSettingsView implements SearchableConfigurable {
     private JButton testButton;
     private JLabel radVersionLabel;
     private JComboBox radSyncList;
+    private JLabel enforceVersionLabel;
     private RadicleSettings settings;
     private final RadicleSettingsHandler radicleSettingsHandler;
+    private final static String SUPPORTED_CLI_VERSION = "0.6.1";
 
     public RadicleSettingsView() {
         super();
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.settings = this.radicleSettingsHandler.loadSettings();
         initComponents();
-    }
-
-    private boolean isValidPath() {
-        return !Strings.isNullOrEmpty(getRadVersion());
     }
 
     protected String getRadVersion() {
@@ -76,10 +77,13 @@ public class RadicleSettingsView implements SearchableConfigurable {
             var msg = RadicleBundle.message("radNotInstalled");
             var version = getRadVersion();
             if (!Strings.isNullOrEmpty(version)) {
-                msg = RadicleBundle.message("radVersion") + version;
+                msg = RadicleBundle.message("radVersion") + " " + version;
             }
             String finalMsg = msg;
-            ApplicationManager.getApplication().invokeLater(() -> radVersionLabel.setText(finalMsg), ModalityState.any());
+            ApplicationManager.getApplication().invokeLater(() -> {
+                radVersionLabel.setText(finalMsg);
+                showHideEnforceLabel(version,false);
+            }, ModalityState.any());
         });
     }
 
@@ -107,18 +111,21 @@ public class RadicleSettingsView implements SearchableConfigurable {
                 !radSync.key.equals(this.settings.getRadSync());
     }
 
+
     @Override
     public void apply() {
         var path = getSelectedPath();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSync = (ComboItem) radSyncList.getSelectedItem();
             radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.from(radSync.key));
-            var isPathValid = isValidPath();
+            var version = getRadVersion();
+            var isPathValid = !Strings.isNullOrEmpty(version);
             ApplicationManager.getApplication().invokeLater(() -> {
                if (isPathValid) {
                    radicleSettingsHandler.savePath(path);
                }
                settings = this.radicleSettingsHandler.loadSettings();
+               showHideEnforceLabel(version,true);
             }, ModalityState.any());
         });
     }
@@ -182,6 +189,10 @@ public class RadicleSettingsView implements SearchableConfigurable {
         var yesItem = new ComboItem(RadicleSettings.RadSyncType.YES.val, RadicleSettings.RadSyncType.YES.name);
         var noItem = new ComboItem(RadicleSettings.RadSyncType.NO.val, RadicleSettings.RadSyncType.NO.name);
 
+        enforceVersionLabel.setVisible(false);
+        enforceVersionLabel.setText(RadicleBundle.message("unSupportedCliVer"));
+        enforceVersionLabel.setFont(enforceVersionLabel.getFont().deriveFont(Font.BOLD));
+
         radSyncList.addItem(askItem);
         radSyncList.addItem(yesItem);
         radSyncList.addItem(noItem);
@@ -193,6 +204,27 @@ public class RadicleSettingsView implements SearchableConfigurable {
             updateTextFieldPlaceholder();
         }
 
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var version = getRadVersion();
+            ApplicationManager.getApplication().invokeLater(() -> {
+                showHideEnforceLabel(version,false);
+            },ModalityState.any());
+        });
+    }
+
+    private void showHideEnforceLabel(String radVersion, boolean isApply) {
+        if (Strings.isNullOrEmpty(radVersion)) {
+            return ;
+        }
+        enforceVersionLabel.setVisible(false);
+        var isCompatibleVersion = radVersion.replace("\n","").trim().equals(SUPPORTED_CLI_VERSION);
+        if (!isCompatibleVersion) {
+            enforceVersionLabel.setVisible(true);
+            if (isApply) {
+                BasicAction.showNotification(null, "radCliWarning", "unSupportedCliVer", NotificationType.WARNING,
+                        List.of(new BasicAction.ConfigureRadCliNotificationAction(null, RadicleBundle.lazyMessage("configure"))));
+            }
+        }
     }
 
     public JComboBox getComboBox() {
