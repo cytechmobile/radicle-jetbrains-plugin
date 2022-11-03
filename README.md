@@ -5,13 +5,15 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/19664.svg)](https://plugins.jetbrains.com/plugin/19664)
 
 <!-- Plugin description -->
-Integration of [Radicle](https://radicle.network) with Jetbrains IDEs.
+This plugin allows you to start using [Radicle](https://radicle.xyz) (the decentralized Code Collaboration protocol) directly from your Jetbrains IDE.
 
-Radicle enables developers to securely collaborate on software over a peer-to-peer network built on Git.
+Radicle enables developers to securely collaborate on software over a peer-to-peer network, built on top of Git,
+that provides GitHub/GitLab-like functionality (think Pull/Merge Requests, Issues, etc.).
 
-This plugin provides integration with Radicle directly within Jetbrains IDEs. 
+This plugin requires **version 0.6.1** of the `rad` Command Line Interface (CLI) tool to be installed.
+Installation instructions for `rad` are available here: [https://radicle.xyz/get-started](https://radicle.xyz/get-started)
 
-It requires the Git plugin, as well as [radicle cli](https://radicle.network/get-started.html) to be installed.
+This plugin is available under [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 <!-- Plugin description end -->
 
 ## Installation
