@@ -32,12 +32,12 @@ This plugin is available under [Apache License, Version 2.0](https://www.apache.
 
 ### Prerequisites
 
-* The `rad` Command Line Interface (CLI) tool installed, at least v0.6.0. Please check [here](https://radicle.xyz/get-started) for installation details. 
+* The `rad` Command Line Interface (CLI) tool installed, at least v0.6.1. Please check [here](https://radicle.xyz/get-started) for installation details. 
 
   In your terminal, enter the command `rad --version`. The output should be similar to:
 ```bash
 $ rad --version
-rad 0.6.0
+rad 0.6.1
 ```
 * A configured Radicle identity, with `rad auth`. Follow the [Radicle CLI quick start guide](https://radicle.network/get-started.html) for more info.
 * A Radicle-initialised Git repo
