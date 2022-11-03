@@ -11,19 +11,6 @@
     <!-- Declare the default resource location for localizing menu strings -->
     <resource-bundle>messages.RadicleBundle</resource-bundle>
 
-    <description><![CDATA[
-            This plugin allows you to start using <a href="https://radicle.xyz">Radicle</a> (the decentralized Code
-            Collaboration protocol) directly from your Jetbrains IDE.
-
-            Radicle enables developers to securely collaborate on software over a peer-to-peer network, built on top of Git,
-            that provides GitHub/GitLab-like functionality (think Pull/Merge Requests, Issues, etc.).
-
-            This plugin requires <strong>version 0.6.1</strong> the `rad` Command Line Interface (CLI) tool to be installed.
-            Installation instructions for `rad` are available here: https://radicle.xyz/get-started
-
-            This plugin is available under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>
-    ]]></description>
-
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
