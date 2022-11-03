@@ -4,6 +4,14 @@
 
 ## Unreleased
 
+## 0.2.1 - 2022-11-03
+
+### Changed
+- Release workflow improvements by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/119
+- Show unsupported version warning if the rad cli version is not 0.6.1 by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/120
+
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.2.0...v0.2.1
+
 ## 0.2.0 - 2022-11-02
 
 ### Added
