@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
     public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
-    public static final String radVersion = "0.6.0";
+    public static final String radVersion = "0.6.1";
     public static final String radPath = "/usr/bin/rad";
     public static final String wsl = "wsl";
     protected static final String remoteName = "testRemote";

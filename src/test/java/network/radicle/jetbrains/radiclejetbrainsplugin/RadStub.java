@@ -1,10 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
-import com.google.common.base.Strings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -36,7 +34,7 @@ public class RadStub extends RadicleApplicationService {
         var pr = new ProcessOutput(0);
         var stdout = "stdout";
         if (cmdLine.getCommandLineString().contains("--version")) {
-            stdout = "rad 0.6.0";
+            stdout = "rad 0.6.1";
         } else if (cmdLine.getCommandLineString().contains("which")) {
             stdout = "/usr/bin/rad";
         } else if (cmdLine.getCommandLineString().contains("self --profile")) {
