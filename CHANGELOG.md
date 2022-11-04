@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+## 0.2.2 - 2022-11-04
+
+- Fix changelog update during release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/122
+
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.2.1...v0.2.2
 ## 0.2.1 - 2022-11-03
 
 ### Changed
