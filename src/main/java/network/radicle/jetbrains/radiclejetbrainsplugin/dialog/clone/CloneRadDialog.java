@@ -294,7 +294,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         }
     }
 
-    private static class SeedNodeCellRenderer implements ListCellRenderer<SeedNode> {
+    public static class SeedNodeCellRenderer implements ListCellRenderer<SeedNode> {
         @Override
         public Component getListCellRendererComponent(JList<? extends SeedNode> list, SeedNode node, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
