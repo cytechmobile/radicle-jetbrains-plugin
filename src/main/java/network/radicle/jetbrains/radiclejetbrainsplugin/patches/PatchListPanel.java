@@ -1,7 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.intellij.dvcs.repo.VcsRepositoryManager;
-import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -18,6 +16,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -25,7 +24,6 @@ import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -41,29 +39,32 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 public class PatchListPanel {
-    private Project project;
+    private final Project project;
     private ComboBox<SeedNode> seedNodeComboBox;
-    protected DefaultListModel<RadPatch> seedModel;
-    private AsyncProcessIcon searchSpinner;
-
+    private final DefaultListModel<RadPatch> seedModel;
+    private final AsyncProcessIcon searchSpinner;
+    private final RadicleSettingsHandler radicleSettingsHandler;
+    private boolean triggerSeedNodeAction = true;
     public PatchListPanel(Project project) {
         this.project = project;
         this.searchSpinner = new AsyncProcessIcon(RadicleBundle.message("loadingProjects"));
         this.seedModel = new DefaultListModel<>();
+        this.radicleSettingsHandler = new RadicleSettingsHandler();
         registerVcsChangeListener(project);
     }
 
     private void initializeSeedNodeCombobox() {
-        RadicleSettings settings = new RadicleSettingsHandler().loadSettings();
-        seedNodeComboBox = new ComboBox<>();
-        seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
-        seedNodeComboBox.setSelectedIndex(-1);
-        for (var node : settings.getSeedNodes()) {
+        var settings = radicleSettingsHandler.loadSettings();
+        var loadedSeedNodes = settings.getSeedNodes();
+        seedNodeComboBox.removeAllItems();
+        for (var node : loadedSeedNodes) {
             seedNodeComboBox.addItem(node);
         }
     }
 
     public JComponent create() {
+        this.seedNodeComboBox = new ComboBox<>();
+        seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
         initializeSeedNodeCombobox();
         var mainPanel = JBUI.Panels.simplePanel();
         seedNodeComboBox.addActionListener(new SeedNodeChangeListener());
@@ -96,7 +97,6 @@ public class PatchListPanel {
         searchSpinner.setVisible(false);
         mainPanel.addToCenter(scrollPane);
         mainPanel.addToTop(borderPanel);
-        registerVcsChangeListener(project);
         return mainPanel;
     }
 
@@ -112,7 +112,7 @@ public class PatchListPanel {
             ProcessOutput output = new BasicAction(pull, repo.getProject(), updateCountDown).perform();
             if (output.getExitCode() == 0) {
                 var radPatch = parsePatchProposals(repo, output);
-                if (radPatch != null) {
+                if (!radPatch.isEmpty()) {
                     outputs.addAll(radPatch);
                 }
             }
@@ -133,19 +133,21 @@ public class PatchListPanel {
     }
 
     private void registerVcsChangeListener(final Project project) {
-        VcsRepositoryMappingListener vcsListener = this::updateListPanel;
-        project.getMessageBus().connect().subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED, vcsListener);
+        project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE,
+                (GitRepositoryChangeListener) repository -> updateListPanel());
     }
 
     private void updateListPanel() {
+        var selectedSeedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
+        if (selectedSeedNode == null) {
+            return ;
+        }
+        var url = "http://" + selectedSeedNode.host;
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
-        var selectedSeedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
-        var url = "http://" + selectedSeedNode.host;
-
-        seedModel.clear();
-        searchSpinner.setVisible(true);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            seedModel.clear();
+            searchSpinner.setVisible(true);
             var patchProposals = getPatchProposals(repos, url);
             ApplicationManager.getApplication().invokeLater(() -> {
                 seedModel.addAll(patchProposals);
@@ -157,7 +159,7 @@ public class PatchListPanel {
     private class SeedNodeChangeListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (seedNodeComboBox.getSelectedItem() != null) {
+            if (seedNodeComboBox.getSelectedItem() != null && triggerSeedNodeAction) {
                 updateListPanel();
             }
         }
@@ -166,7 +168,11 @@ public class PatchListPanel {
     private class RefreshSeedNodeAction extends AnAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-            // initializeSeedNodeCombobox();
+            triggerSeedNodeAction = false;
+            var prevSelectedIndex = seedNodeComboBox.getSelectedIndex();
+            initializeSeedNodeCombobox();
+            seedNodeComboBox.setSelectedIndex(prevSelectedIndex);
+            triggerSeedNodeAction = true;
             updateListPanel();
         }
     }
