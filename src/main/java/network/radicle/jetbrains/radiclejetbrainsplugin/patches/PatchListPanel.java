@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDia
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,6 +39,8 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 
 public class PatchListPanel {
     private final Project project;
@@ -96,7 +100,35 @@ public class PatchListPanel {
 
         searchSpinner.setVisible(false);
         mainPanel.addToCenter(scrollPane);
-        mainPanel.addToTop(borderPanel);
+        var scope = MainScope();
+        var history = new ReviewListSearchHistoryModel<PatchListSearchValue>() {
+            @NotNull
+            @Override
+            public List<PatchListSearchValue> getHistory() {
+                return List.of();
+            }
+
+            @Override
+            public void add(@NotNull PatchListSearchValue patchListSearchValue) {
+                System.out.println("add");
+            }
+
+            @Override
+            public void setLastFilter(@Nullable PatchListSearchValue patchListSearchValue) {
+                System.out.println("setLastFilter");
+            }
+
+            @Nullable
+            @Override
+            public PatchListSearchValue getLastFilter() {
+                System.out.println("getLastFilter");
+                return null;
+            }
+        };
+        var emptySearch = new PatchListSearchValue();
+        var searchVm = new PatchSearchPanelViewModel(scope,history,emptySearch,new PatchSearchPanelViewModel.PatchListQuickFilter());
+        var searchPanel = new PatchSearchPanel(searchVm).create(scope);
+        mainPanel.addToTop(searchPanel);
         return mainPanel;
     }
 
