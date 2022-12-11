@@ -5,9 +5,19 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import org.jetbrains.annotations.Nullable;
 
 public class PatchListSearchValue implements ReviewListSearchValue {
+
+
     public String state;
     public String author;
     public String searchQuery;
+
+    public String getAuthor() {
+        System.out.println("myauthr: " + author);
+        return author;
+    }
+
+    PatchListSearchValue() {
+    }
 
     @Override
     public int getFilterCount() {
@@ -29,4 +39,5 @@ public class PatchListSearchValue implements ReviewListSearchValue {
     public String getSearchQuery() {
         return searchQuery;
     }
+
 }

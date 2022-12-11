@@ -125,8 +125,7 @@ public class PatchListPanel {
                 return null;
             }
         };
-        var emptySearch = new PatchListSearchValue();
-        var searchVm = new PatchSearchPanelViewModel(scope,history,emptySearch,new PatchSearchPanelViewModel.PatchListQuickFilter());
+        var searchVm = new PatchSearchPanelViewModel(scope,history);
         var searchPanel = new PatchSearchPanel(searchVm).create(scope);
         mainPanel.addToTop(searchPanel);
         return mainPanel;

@@ -16,45 +16,19 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         PatchSearchPanelViewModel.PatchListQuickFilter> {
 
     public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
-                                     @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, @NotNull
-                                     PatchListSearchValue emptySearch, @NotNull PatchSearchPanelViewModel.PatchListQuickFilter defaultQuickFilter) {
-        super(scope, historyModel, emptySearch, defaultQuickFilter);
+                                     @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel) {
+        super(scope, historyModel, new PatchListSearchValue(), new PatchListQuickFilter());
     }
 
-    /*
-    public MutableStateFlow<Object> test() {
+    public MutableStateFlow<String> test1() {
         var searchState = getSearchState();
-        var k = partialState(searchState, new Function1<PatchListSearchValue, Object>() {
-            @Override
-            public Object invoke(PatchListSearchValue patchListSearchValue) {
-                System.out.println("invoke");
-                return null;
-            }
-        }, new Function2<PatchListSearchValue, Object, PatchListSearchValue>() {
+        var k = partialState(searchState, PatchListSearchValue::getAuthor, new Function2<PatchListSearchValue, Object, PatchListSearchValue>() {
             @Override
             public PatchListSearchValue invoke(PatchListSearchValue patchListSearchValue, Object o) {
-                System.out.println("getter:" + (String) o);
-                patchListSearchValue.state = (String) o;
-                return patchListSearchValue;
-            }
-        });
-        return k;
-    } */
-
-    public MutableStateFlow<Object> test1() {
-        var searchState = getSearchState();
-        var k = partialState(searchState, new Function1<PatchListSearchValue, Object>() {
-            @Override
-            public Object invoke(PatchListSearchValue patchListSearchValue) {
-                System.out.println("invoke1");
-                return null;
-            }
-        }, new Function2<PatchListSearchValue, Object, PatchListSearchValue>() {
-            @Override
-            public PatchListSearchValue invoke(PatchListSearchValue patchListSearchValue, Object o) {
-                patchListSearchValue.author = (String) o;
+                var k = new PatchListSearchValue();
+                k.author = (String) o;
                 System.out.println("getter1:" + (String) o);
-                return patchListSearchValue;
+                return k;
             }
         });
         return k;
@@ -80,9 +54,8 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         @NotNull
         @Override
         public PatchListSearchValue getFilter() {
-            var p = new PatchListSearchValue();
-            p.author = "stelios";
-            return p;
+            System.out.println("get Filter");
+            return  new PatchListSearchValue();
         }
     }
 }
