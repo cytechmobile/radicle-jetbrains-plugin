@@ -1,22 +1,24 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class PatchListSearchValue implements ReviewListSearchValue {
-
-
     public String state;
     public String author;
     public String searchQuery;
 
     public String getAuthor() {
-        System.out.println("myauthr: " + author);
         return author;
     }
 
-    PatchListSearchValue() {
+    public String getState() {
+        return state;
+    }
+
+    public PatchListSearchValue() {
     }
 
     @Override
@@ -38,6 +40,17 @@ public class PatchListSearchValue implements ReviewListSearchValue {
     @Override
     public String getSearchQuery() {
         return searchQuery;
+    }
+
+    public enum State {
+        OPEN("Open"),
+        CLOSED("Closed"),
+        MERGED("Merged");
+
+        public String name;
+        State(String name) {
+            this.name = name;
+        }
     }
 
 }

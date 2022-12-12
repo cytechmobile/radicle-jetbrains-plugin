@@ -16,7 +16,7 @@ public class PatchTabController {
         viewPatches();
     }
 
-    public Unit viewPatches() {
+    public Unit viewPatches()  {
         tab.setDisplayName(RadicleBundle.message("patchTabName"));
         var mainPanel = tab.getComponent();
         var patchPanel = new PatchListPanel(project).create();

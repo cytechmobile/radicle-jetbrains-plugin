@@ -49,6 +49,8 @@ public class PatchListPanel {
     private final AsyncProcessIcon searchSpinner;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean triggerSeedNodeAction = true;
+
+    private CountDownLatch isLoaded;
     public PatchListPanel(Project project) {
         this.project = project;
         this.searchSpinner = new AsyncProcessIcon(RadicleBundle.message("loadingProjects"));
@@ -89,7 +91,6 @@ public class PatchListPanel {
         ListUiUtil.Selection.INSTANCE.installSelectionOnFocus(list);
         ListUiUtil.Selection.INSTANCE.installSelectionOnRightClick(list);
 
-
         var pane = new JPanel(new BorderLayout());
         var scrollPane = ScrollPaneFactory.createScrollPane(pane, true);
         scrollPane.setOpaque(false);
@@ -101,31 +102,8 @@ public class PatchListPanel {
         searchSpinner.setVisible(false);
         mainPanel.addToCenter(scrollPane);
         var scope = MainScope();
-        var history = new ReviewListSearchHistoryModel<PatchListSearchValue>() {
-            @NotNull
-            @Override
-            public List<PatchListSearchValue> getHistory() {
-                return List.of();
-            }
-
-            @Override
-            public void add(@NotNull PatchListSearchValue patchListSearchValue) {
-                System.out.println("add");
-            }
-
-            @Override
-            public void setLastFilter(@Nullable PatchListSearchValue patchListSearchValue) {
-                System.out.println("setLastFilter");
-            }
-
-            @Nullable
-            @Override
-            public PatchListSearchValue getLastFilter() {
-                System.out.println("getLastFilter");
-                return null;
-            }
-        };
-        var searchVm = new PatchSearchPanelViewModel(scope,history);
+        var history = new PatchSearchHistoryModel();
+        var searchVm = new PatchSearchPanelViewModel(scope,history,project);
         var searchPanel = new PatchSearchPanel(searchVm).create(scope);
         mainPanel.addToTop(searchPanel);
         return mainPanel;
@@ -212,8 +190,8 @@ public class PatchListPanel {
         private final JLabel title = new JLabel();
         private final JPanel patchPanel;
         public PatchListCellRenderer() {
-            patchPanel = new JPanel();
             var gapAfter = JBUI.scale(5);
+            patchPanel = new JPanel();
             patchPanel.setOpaque(false);
             patchPanel.setBorder(JBUI.Borders.empty(10, 8));
             patchPanel.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0")

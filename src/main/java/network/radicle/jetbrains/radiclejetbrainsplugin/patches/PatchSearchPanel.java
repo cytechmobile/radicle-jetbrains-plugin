@@ -1,16 +1,22 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.intellij.collaboration.ui.codereview.list.search.*;
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil;
+import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory;
+import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory;
 import kotlin.jvm.functions.Function1;
+
 import kotlinx.coroutines.CoroutineScope;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PatchSearchPanel extends ReviewListSearchPanelFactory<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter,PatchSearchPanelViewModel> {
-
-    private PatchSearchPanelViewModel viewModel;
+    private final PatchSearchPanelViewModel viewModel;
     public PatchSearchPanel(@NotNull PatchSearchPanelViewModel patchSearchPanelViewModel) {
         super(patchSearchPanelViewModel);
         this.viewModel = patchSearchPanelViewModel;
@@ -19,28 +25,21 @@ public class PatchSearchPanel extends ReviewListSearchPanelFactory<PatchListSear
     @NotNull
     @Override
     protected List<JComponent> createFilters(@NotNull CoroutineScope coroutineScope) {
-        var states = List.of("Open","Closed");
-       // var stateFilter = new DropDownComponentFactory
-       //         (this.viewModel.test()).create(coroutineScope, "State", states, o -> o);
-
-
-        var authors = List.of("stelios","jchirst");
-        var authorFilter = new DropDownComponentFactory
-                (this.viewModel.test1()).create(coroutineScope, "Authors", authors, o -> o);
-        return List.of(authorFilter);
+        var stateFilter = new DropDownComponentFactory<>
+                (this.viewModel.stateFilterState()).create(coroutineScope, RadicleBundle.message("state"),
+                Arrays.stream(PatchListSearchValue.State.values()).map(e -> e.name).collect(Collectors.toList()), o -> o);
+        return List.of(stateFilter);
     }
 
     @NotNull
     @Override
     protected String getQuickFilterTitle(@NotNull PatchSearchPanelViewModel.PatchListQuickFilter patchListQuickFilter) {
-        System.out.println("getQuickFilterTitle");
-        return "getQuickFilterTitle";
+        return "";
     }
 
     @NotNull
     @Override
     protected String getShortText(@NotNull PatchListSearchValue patchListSearchValue) {
-        System.out.println("shortText");
-        return "shortText";
+        return "";
     }
 }
