@@ -99,7 +99,7 @@ public class ActionsTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("setDefaultIdentitySuccess"));
+        assertThat(not.getContent()).contains(RadicleBundle.message("radNotification_AuthSetDefaultIdentity"));
     }
 
     @Test
@@ -129,7 +129,7 @@ public class ActionsTest extends AbstractIT {
         }
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("removeIdentitySuccess"));
+        assertThat(not.getContent()).contains(RadicleBundle.message("radNotification_AuthRemoveIdentity"));
     }
 
     @Test
@@ -145,7 +145,7 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("auth --init --name test --passphrase test");
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("createIdentitySuccess"));
+        assertThat(not.getContent()).contains(RadicleBundle.message("The new identity was created successfully"));
     }
 
     @Test
