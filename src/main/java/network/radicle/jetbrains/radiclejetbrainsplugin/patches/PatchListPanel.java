@@ -46,18 +46,19 @@ import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 
 public class PatchListPanel {
     private final Project project;
-    private ComboBox<SeedNode> seedNodeComboBox;
+    private final ComboBox<SeedNode> seedNodeComboBox;
     private final DefaultListModel<RadPatch> seedModel;
     private final AsyncProcessIcon searchSpinner;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean triggerSeedNodeAction = true;
 
-    private CountDownLatch isLoaded;
     public PatchListPanel(Project project) {
         this.project = project;
         this.searchSpinner = new AsyncProcessIcon(RadicleBundle.message("loadingProjects"));
         this.seedModel = new DefaultListModel<>();
         this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.seedNodeComboBox = new ComboBox<>();
+        seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
         registerVcsChangeListener(project);
     }
 
@@ -71,18 +72,16 @@ public class PatchListPanel {
     }
 
     public JComponent create() {
-        this.seedNodeComboBox = new ComboBox<>();
-        seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
         initializeSeedNodeCombobox();
-        var mainPanel = JBUI.Panels.simplePanel();
+
         seedNodeComboBox.addActionListener(new SeedNodeChangeListener());
         var borderPanel = new JPanel(new BorderLayout(5, 5));
-        borderPanel.add(new JBLabel(RadicleBundle.message("selectSeedNode")), BorderLayout.NORTH);
         Presentation presentation = new Presentation();
         presentation.setIcon(AllIcons.Actions.BuildAutoReloadChanges);
         borderPanel.add(new ActionButton(new RefreshSeedNodeAction(),
                 presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), BorderLayout.EAST);
         borderPanel.add(seedNodeComboBox, BorderLayout.CENTER);
+
         var list = new JBList<>(seedModel);
         list.setCellRenderer(new PatchListCellRenderer());
         list.setExpandableItemsEnabled(false);
@@ -100,14 +99,15 @@ public class PatchListPanel {
         scrollPane.getVerticalScrollBar().setOpaque(true);
         pane.add(list, BorderLayout.NORTH);
         pane.add(searchSpinner, BorderLayout.CENTER);
-
         searchSpinner.setVisible(false);
+        var mainPanel = JBUI.Panels.simplePanel();
         mainPanel.addToCenter(scrollPane);
         var scope = MainScope();
         var history = new PatchSearchHistoryModel();
         var searchVm = new PatchSearchPanelViewModel(scope,history,project);
         var searchPanel = new PatchSearchPanel(searchVm).create(scope);
-        mainPanel.addToTop(searchPanel);
+        borderPanel.add(searchPanel, BorderLayout.NORTH);
+        mainPanel.addToTop(borderPanel);
         return mainPanel;
     }
 
