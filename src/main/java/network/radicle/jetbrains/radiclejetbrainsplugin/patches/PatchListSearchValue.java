@@ -7,15 +7,16 @@ import java.util.List;
 
 public class PatchListSearchValue implements ReviewListSearchValue {
     public String state;
-    public String author;
-    public String searchQuery;
 
-    public String getAuthor() {
-        return author;
-    }
+    public String project;
+    public String searchQuery;
 
     public String getState() {
         return state;
+    }
+
+    public String getProject() {
+        return project;
     }
 
     public PatchListSearchValue() {
@@ -27,7 +28,7 @@ public class PatchListSearchValue implements ReviewListSearchValue {
         if (state != null) {
             count++;
         }
-        if (author != null) {
+        if (project != null) {
             count++;
         }
         if (searchQuery != null) {

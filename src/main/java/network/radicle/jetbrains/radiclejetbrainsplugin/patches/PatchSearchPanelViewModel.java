@@ -3,23 +3,31 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
-import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBase<PatchListSearchValue,
         PatchSearchPanelViewModel.PatchListQuickFilter> {
 
+    private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
+
     private Project project;
+    private List<String> projectNames = List.of();
 
     public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
                                      @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel,Project project) {
@@ -33,8 +41,36 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
             var newPatchSearchValue = new PatchListSearchValue();
             newPatchSearchValue.state = (String) newState;
             newPatchSearchValue.searchQuery = patchListSearchValue.searchQuery;
+            newPatchSearchValue.project = patchListSearchValue.project;
             return newPatchSearchValue;
         });
+    }
+
+    public MutableStateFlow<String> projectFilterState() {
+        return partialState(getSearchState(), PatchListSearchValue::getProject,
+                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, projectName) -> {
+                    var newPatchSearchValue = new PatchListSearchValue();
+                    newPatchSearchValue.state = patchListSearchValue.state;
+                    newPatchSearchValue.searchQuery = patchListSearchValue.searchQuery;
+                    newPatchSearchValue.project = (String) projectName;
+                    return newPatchSearchValue;
+                });
+    }
+
+    public List<String> getProjectNames()  {
+        var isFinished = new CountDownLatch(1);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var gitRepoManager = GitRepositoryManager.getInstance(project);
+            projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
+                    .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
+            isFinished.countDown();
+        });
+        try {
+            isFinished.await();
+        } catch (Exception e) {
+            logger.warn("Unable to get project names");
+        }
+        return projectNames;
     }
 
     @NotNull
@@ -45,10 +81,11 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
 
     @NotNull
     @Override
-    protected PatchListSearchValue withQuery(@NotNull PatchListSearchValue patchListSearchValue, @Nullable String s1) {
+    protected PatchListSearchValue withQuery(@NotNull PatchListSearchValue patchListSearchValue, @Nullable String searchStr) {
         var newPatchSearchValue = new PatchListSearchValue();
-        newPatchSearchValue.searchQuery = s1;
+        newPatchSearchValue.searchQuery = searchStr;
         newPatchSearchValue.state = patchListSearchValue.state;
+        newPatchSearchValue.project = patchListSearchValue.project;
         return newPatchSearchValue;
     }
 
