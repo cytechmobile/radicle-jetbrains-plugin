@@ -6,39 +6,22 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
-public class RadTrack implements RadAction {
-
-    private String url;
-    private GitRepository repo;
+public class RadTrack extends RadAction {
+    protected String url;
 
     public RadTrack(GitRepository repo, String url) {
-        this.repo = repo;
+        super(repo);
         this.url = url;
+    }
+
+    @Override
+    public String getActionName() {
+        return "Track";
     }
 
     @Override
     public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.track(repo,url);
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return RadicleBundle.message("errorInRadTrack");
-    }
-
-    @Override
-    public String getSuccessMessage() {
-        return RadicleBundle.message("successInRadTrack");
-    }
-
-    @Override
-    public String getNotificationSuccessMessage() {
-        return "";
-    }
-
-    @Override
-    public GitRepository getRepo() {
-        return repo;
     }
 }

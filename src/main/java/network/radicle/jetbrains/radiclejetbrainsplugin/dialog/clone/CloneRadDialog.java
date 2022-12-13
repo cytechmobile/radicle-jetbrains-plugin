@@ -3,7 +3,11 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 import com.google.common.base.Strings;
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -25,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -52,7 +56,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements CloneProject {
     private static final Logger logger = LoggerFactory.getLogger(CloneRadDialog.class);
@@ -99,12 +102,12 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     private void setActiveProfile() {
-        if (!BasicAction.isCliPathConfigured(project)) {
+        if (!RadAction.isCliPathConfigured(project)) {
             return ;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
-            var output = new BasicAction(radSelf, null, new CountDownLatch(1)).perform();
+            var output = radSelf.perform();
             var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n","") : "";
             ApplicationManager.getApplication().invokeLater(() ->
                     activeProfileLabel.setText(RadicleBundle.message("activeIdentity") + activeProfile), ModalityState.any());
@@ -124,7 +127,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
 
     @Override
     public void doClone(@NotNull CheckoutProvider.Listener listener) {
-        if (!BasicAction.isCliPathConfigured(project)) {
+        if (!RadAction.isCliPathConfigured(project)) {
             return ;
         }
         CloneUtil.doClone(listener,project,this);
@@ -243,7 +246,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radProjects = projectApi.fetchRadProjects(selectedSeedNode, page);
             if (radProjects == null) {
-                BasicAction.showErrorNotification(project, RadicleBundle.message("httpRequestErrorTitle"),
+                RadAction.showErrorNotification(project, RadicleBundle.message("httpRequestErrorTitle"),
                         RadicleBundle.message("httpRequestErrorDesc"));
             }
             ApplicationManager.getApplication().invokeLater(() -> {

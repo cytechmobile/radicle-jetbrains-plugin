@@ -6,7 +6,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
-public class RadClone implements RadAction {
+public class RadClone extends RadAction {
     private String radUrn;
     private String directory;
 
@@ -16,28 +16,13 @@ public class RadClone implements RadAction {
     }
 
     @Override
+    public String getActionName() {
+        return "Clone";
+    }
+
+    @Override
     public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.clone(radUrn,directory);
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return RadicleBundle.message("errorInRadClone");
-    }
-
-    @Override
-    public String getSuccessMessage() {
-        return RadicleBundle.message("successInRadClone");
-    }
-
-    @Override
-    public String getNotificationSuccessMessage() {
-        return "";
-    }
-
-    @Override
-    public GitRepository getRepo() {
-        return null;
     }
 }

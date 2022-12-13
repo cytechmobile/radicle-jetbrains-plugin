@@ -20,41 +20,26 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class RadPush implements RadAction {
+public class RadPush extends RadAction {
     private static final Logger logger = LoggerFactory.getLogger(RadPush.class);
-    private final GitRepository repo;
-    private final String seed;
     private static final String RAD_UI = "https://app.radicle.xyz/seeds";
 
+    private final String seed;
+
     public RadPush(GitRepository repo, String seed) {
-        this.repo = repo;
+        super(repo);
         this.seed = seed;
+    }
+
+    @Override
+    public String getActionName() {
+        return "Push";
     }
 
     @Override
     public ProcessOutput run () {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.push(repo,seed);
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return RadicleBundle.message("errorInRadPush");
-    }
-
-    @Override
-    public String getSuccessMessage() {
-        return RadicleBundle.message("successInRadPush");
-    }
-
-    @Override
-    public String getNotificationSuccessMessage() {
-        return RadicleBundle.message("radPushNotification");
-    }
-
-    @Override
-    public GitRepository getRepo() {
-        return repo;
     }
 
     @Override

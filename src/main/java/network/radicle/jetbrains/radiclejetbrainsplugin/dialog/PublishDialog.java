@@ -9,7 +9,7 @@ import com.intellij.ui.DocumentAdapter;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPush;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -21,7 +21,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PublishDialog extends DialogWrapper {
     private JPanel contentPane;
@@ -62,16 +61,15 @@ public class PublishDialog extends DialogWrapper {
             ProcessOutput output = null;
             if (!isSelectedRepoInitialized) {
                 var init = new RadInit(repo, nameField.getText(), descriptionField.getText(), branchField.getText());
-                output = new BasicAction(init, project, new CountDownLatch(1)).perform();
+                output = init.perform();
             }
             if (isSelectedRepoInitialized || output.getExitCode() == 0) {
-                var countDown = new CountDownLatch(1);
-                var executingFlag = new AtomicBoolean(false);
+                final var countDown = new CountDownLatch(1);
                 UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("publishProgressBar"),
-                        countDown, executingFlag);
+                        countDown);
                 ApplicationManager.getApplication().executeOnPooledThread(ubt::queue);
                 var push = new RadPush(repo,(String) seedNodeSelect.getSelectedItem());
-                new BasicAction(push,project,countDown).perform();
+                push.perform(countDown);
             }
         });
     }
@@ -112,7 +110,7 @@ public class PublishDialog extends DialogWrapper {
     private void updateLayout() {
         var repo = (GitRepository) projectSelect.getSelectedItem();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var isInitialized = BasicAction.isProjectRadInitialized(repo);
+            var isInitialized = RadAction.isProjectRadInitialized(repo);
             isUiLoaded.countDown();
             isSelectedRepoInitialized = isInitialized;
             ApplicationManager.getApplication().invokeLater(() -> {

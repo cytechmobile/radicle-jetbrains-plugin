@@ -6,12 +6,16 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
-public class RadPull implements RadAction {
+import java.util.concurrent.CountDownLatch;
 
-    private GitRepository repo;
-
+public class RadPull extends RadAction {
     public RadPull(GitRepository repo) {
-        this.repo = repo;
+        super(repo);
+    }
+
+    @Override
+    public String getActionName() {
+        return "Pull";
     }
 
     @Override
@@ -19,25 +23,4 @@ public class RadPull implements RadAction {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.pull(repo);
     }
-
-    @Override
-    public GitRepository getRepo() {
-        return repo;
-    }
-
-    @Override
-    public String getErrorMessage() {
-        return RadicleBundle.message("errorInRadPull");
-    }
-
-    @Override
-    public String getSuccessMessage() {
-        return RadicleBundle.message("successInRadPull");
-    }
-
-    @Override
-    public String getNotificationSuccessMessage() {
-        return RadicleBundle.message("radPullNotification");
-    }
-
 }

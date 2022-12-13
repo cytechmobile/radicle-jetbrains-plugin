@@ -1,9 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -23,14 +26,13 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -111,14 +113,14 @@ public class PatchListPanel {
 
     private List<RadPatch> getPatchProposals(List<GitRepository> repos, String url) {
         var outputs = new ArrayList<RadPatch>();
-        var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+        var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);
         if (radInitializedRepos.isEmpty()) {
             return List.of();
         }
-        var updateCountDown = new CountDownLatch(radInitializedRepos.size());
+        final var updateCountDown = new CountDownLatch(radInitializedRepos.size());
         for (GitRepository repo : radInitializedRepos) {
             var pull = new RadTrack(repo, url);
-            ProcessOutput output = new BasicAction(pull, repo.getProject(), updateCountDown).perform();
+            ProcessOutput output = pull.perform(updateCountDown);
             if (output.getExitCode() == 0) {
                 var radPatch = parsePatchProposals(repo, output);
                 if (!radPatch.isEmpty()) {
