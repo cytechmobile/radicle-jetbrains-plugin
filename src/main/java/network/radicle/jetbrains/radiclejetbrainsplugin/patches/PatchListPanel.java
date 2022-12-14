@@ -212,7 +212,7 @@ public class PatchListPanel {
                                                       RadPatch value, int index, boolean isSelected, boolean cellHasFocus) {
             setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
             var primaryTextColor = ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus());
-            title.setText(value.peerId);
+            title.setText(value.repo.getRoot().getName() + " - " + value.peerId);
             title.setForeground(primaryTextColor);
             patchPanel.add(title);
             add(patchPanel, new CC().minWidth("0").gapAfter("push"));
