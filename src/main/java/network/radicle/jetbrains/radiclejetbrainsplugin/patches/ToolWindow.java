@@ -5,6 +5,8 @@ import com.intellij.openapi.vcs.changes.ui.VcsToolWindowFactory;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
+import git4idea.repo.GitRepositoryManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,6 +22,8 @@ public class ToolWindow extends VcsToolWindowFactory {
         contentManager.addContent(patchContent);
         contentManager.addContent(issueContent);
         var controller = new PatchTabController(patchContent, project);
+
+        controller.createPatchesPanel();
     }
 
     @Override

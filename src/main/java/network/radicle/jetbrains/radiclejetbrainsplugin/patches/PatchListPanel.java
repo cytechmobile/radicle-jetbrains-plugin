@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
@@ -51,6 +52,7 @@ public class PatchListPanel {
     private final AsyncProcessIcon searchSpinner;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean triggerSeedNodeAction = true;
+    protected BorderLayoutPanel mainPanel;
 
     public PatchListPanel(Project project) {
         this.project = project;
@@ -100,7 +102,7 @@ public class PatchListPanel {
         pane.add(list, BorderLayout.NORTH);
         pane.add(searchSpinner, BorderLayout.CENTER);
         searchSpinner.setVisible(false);
-        var mainPanel = JBUI.Panels.simplePanel();
+        mainPanel = JBUI.Panels.simplePanel();
         mainPanel.addToCenter(scrollPane);
         var scope = MainScope();
         var history = new PatchSearchHistoryModel();

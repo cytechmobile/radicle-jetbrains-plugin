@@ -9,27 +9,23 @@ import java.awt.*;
 public class PatchTabController {
     private Project project;
     private Content tab;
+    private PatchListPanel panel;
 
     public PatchTabController(Content tab, Project project) {
         this.tab = tab;
         this.project = project;
-        viewPatches();
+        this.panel = new PatchListPanel(project);
     }
 
-    public Unit viewPatches()  {
+    public void createPatchesPanel()  {
         tab.setDisplayName(RadicleBundle.message("patchTabName"));
         var mainPanel = tab.getComponent();
-        var patchPanel = new PatchListPanel(project).create();
+        var createdPanel = panel.create();
 
-        mainPanel.setLayout(new BorderLayout(5,10));
+        mainPanel.setLayout(new BorderLayout(5, 10));
         mainPanel.removeAll();
-        mainPanel.add(patchPanel, BorderLayout.CENTER);
+        mainPanel.add(createdPanel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
-
-        return Unit.INSTANCE;
     }
-
-
-
 }
