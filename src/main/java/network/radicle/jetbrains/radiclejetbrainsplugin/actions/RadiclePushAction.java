@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.repo.GitRepositoryManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PushDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +30,13 @@ public class RadiclePushAction extends AnAction {
     }
 
     public void performAction(Project project, @Nullable AnActionEvent e) {
-        if (!BasicAction.isCliPathConfigured(project)) {
+        if (!RadAction.isCliPathConfigured(project)) {
             return ;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var gitRepoManager = GitRepositoryManager.getInstance(project);
             var repos = gitRepoManager.getRepositories();
-            var radInitializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, true);
+            var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);
             if (radInitializedRepos.isEmpty()) {
                 return;
             }
@@ -58,8 +59,8 @@ public class RadiclePushAction extends AnAction {
     }
 
     @NotNull
-    private static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager,
-                                                              VirtualFile @Nullable [] files) {
+    public static Collection<Repository> collectRepositories(
+            @NotNull VcsRepositoryManager vcsRepositoryManager, VirtualFile @Nullable [] files) {
         if (files == null) return Collections.emptyList();
         Collection<Repository> repositories = new HashSet<>();
         for (VirtualFile file : files) {

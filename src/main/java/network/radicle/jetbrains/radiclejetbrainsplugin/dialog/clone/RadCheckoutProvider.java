@@ -11,15 +11,13 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.containers.ContainerUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RadCheckoutProvider implements CheckoutProvider {
 
@@ -77,7 +75,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
 
         /* This doClone is for 2022 version */
         public void doClone(@NotNull CheckoutProvider.Listener listener) {
-            if (!BasicAction.isCliPathConfigured(project)) {
+            if (!RadAction.isCliPathConfigured(project)) {
                 return ;
             }
             CloneUtil.doClone(listener,project,this);
@@ -85,7 +83,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
 
         /* This doClone is for 2020 / 2021 versions */
         public void doClone(@NotNull Project pr, @NotNull CheckoutProvider.Listener listener) {
-            if (!BasicAction.isCliPathConfigured(project)) {
+            if (!RadAction.isCliPathConfigured(project)) {
                 return ;
             }
             CloneUtil.doClone(listener,project,this);

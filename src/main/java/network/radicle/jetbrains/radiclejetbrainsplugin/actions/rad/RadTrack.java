@@ -6,23 +6,22 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
-public class RadClone extends RadAction {
-    private String radUrn;
-    private String directory;
+public class RadTrack extends RadAction {
+    protected String url;
 
-    public RadClone(String radUrn, String directory) {
-        this.radUrn = radUrn;
-        this.directory = directory;
+    public RadTrack(GitRepository repo, String url) {
+        super(repo);
+        this.url = url;
     }
 
     @Override
     public String getActionName() {
-        return "Clone";
+        return "Track";
     }
 
     @Override
     public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.clone(radUrn,directory);
+        return rad.track(repo,url);
     }
 }

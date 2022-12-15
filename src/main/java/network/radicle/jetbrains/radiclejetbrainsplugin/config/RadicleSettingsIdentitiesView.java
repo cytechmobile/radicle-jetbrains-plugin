@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -14,7 +13,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAuth;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.ConfirmationDialog;
@@ -29,7 +27,6 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     public static final String ID = RadicleBundle.message("radicle");
@@ -49,14 +46,14 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
     public String getActiveProfile() {
         var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
-        var output = new BasicAction(radSelf, null, new CountDownLatch(1)).perform();
+        var output = radSelf.perform();
         var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n","") : "";
         return activeProfile;
     }
 
     public List<String> getProfiles() {
         var radSelf = new RadSelf(RadSelf.RadSelfAction.GET_PROFILES);
-        var output = new BasicAction(radSelf,null, new CountDownLatch(1)).perform();
+        var output = radSelf.perform();
         var loadedProfiles = output.getExitCode() == 0 ? Arrays.asList(output.getStdout().split(",")) : List.<String>of();
         return loadedProfiles;
     }
@@ -162,7 +159,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
         public void removeProfile(String profile) {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var auth = new RadAuth(profile,"", RadAuth.RadAuthAction.REMOVE_IDENTITY);
-                new BasicAction(auth,null,new CountDownLatch(1)).perform();
+                auth.perform();
                 initializeData();
             });
         }
@@ -185,9 +182,8 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
         public void addProfile(String name, String passphrase) {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var auth = new RadAuth(name, passphrase,
-                        RadAuth.RadAuthAction.CREATE_IDENTITY);
-                new BasicAction(auth, null, new CountDownLatch(1)).perform();
+                var auth = new RadAuth(name, passphrase, RadAuth.RadAuthAction.CREATE_IDENTITY);
+                auth.perform();
                 initializeData();
             });
         }
@@ -210,9 +206,8 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
         public void setDefaultProfile(String profile) {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var auth = new RadAuth(profile, "",
-                        RadAuth.RadAuthAction.SET_DEFAULT_IDENTITY);
-                new BasicAction(auth, null, new CountDownLatch(1)).perform();
+                var auth = new RadAuth(profile, "", RadAuth.RadAuthAction.SET_DEFAULT_IDENTITY);
+                auth.perform();
                 initializeData();
             });
         }

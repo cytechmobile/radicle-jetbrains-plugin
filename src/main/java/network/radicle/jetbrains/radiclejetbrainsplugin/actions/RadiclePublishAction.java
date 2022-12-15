@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PublishDialog;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -31,13 +32,13 @@ public class RadiclePublishAction extends AnAction  {
         final var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            nonConfiguredRepos = BasicAction.getNonConfiguredRepos(repos);
+            nonConfiguredRepos = RadAction.getNonConfiguredRepos(repos);
         });
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!BasicAction.isCliPathConfigured(e.getProject())) {
+        if (!RadAction.isCliPathConfigured(e.getProject())) {
             return ;
         }
         var project = e.getProject();

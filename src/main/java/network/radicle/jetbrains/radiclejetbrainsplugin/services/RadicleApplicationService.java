@@ -77,6 +77,10 @@ public class RadicleApplicationService {
         }
     }
 
+    public ProcessOutput track(GitRepository root, String url) {
+        return executeCommand(root.getRoot().getPath(), List.of("track","--seed",url,"--remote"),root);
+    }
+
     public ProcessOutput init(GitRepository root,String name, String description, String branch) {
         return executeCommand(root.getRoot().getPath(), List.of("init","--name",name,"--description",description,
                 "--default-branch",branch,"--no-confirm"),root);

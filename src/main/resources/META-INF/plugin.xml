@@ -38,6 +38,7 @@
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
+        <toolWindow icon="/icons/radicle.svg" factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.patches.ToolWindow" id="Radicle"/>
     </extensions>
 
     <applicationListeners>

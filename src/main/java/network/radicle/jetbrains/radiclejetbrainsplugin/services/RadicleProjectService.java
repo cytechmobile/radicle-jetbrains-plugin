@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.SelectActionDialog;
@@ -69,7 +69,7 @@ public class RadicleProjectService {
                     /* Check if user has configured plugin to run automatically sync action */
                 } else if (radSync == RadicleSettings.RadSyncType.ASK.val) {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var initializedRepos = BasicAction.getInitializedReposWithNodeConfigured(repos, false);
+                        var initializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, false);
                         if (initializedRepos.isEmpty()) {
                             return;
                         }

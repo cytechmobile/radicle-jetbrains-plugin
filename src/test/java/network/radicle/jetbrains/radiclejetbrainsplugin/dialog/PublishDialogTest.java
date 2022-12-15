@@ -43,7 +43,7 @@ public class PublishDialogTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radPushNotification"));
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Push"));
         removeRemoteRadUrl(secondRepo);
     }
 
@@ -91,7 +91,7 @@ public class PublishDialogTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radPushNotification"));
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Push"));
     }
 
 }
