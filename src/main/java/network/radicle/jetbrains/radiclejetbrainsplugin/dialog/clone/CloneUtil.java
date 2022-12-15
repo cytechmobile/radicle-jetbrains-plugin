@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CloneUtil {
     private static final Logger logger = LoggerFactory.getLogger(CloneUtil.class);
@@ -30,7 +29,7 @@ public class CloneUtil {
         var parent = Paths.get(clPr.directory());
         var destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString());
         if (destinationValidation != null) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
+            RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("directoryError"));
             logger.error("Clone Failed. Unable to create destination directory");
             return ;
@@ -42,7 +41,7 @@ public class CloneUtil {
             destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile());
         }
         if (destinationParent == null) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
+            RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("destinationDoesntExist"));
             logger.error("Clone Failed. Destination doesn't exist");
             return ;
@@ -52,17 +51,17 @@ public class CloneUtil {
             var tmpFolder = Files.createTempDirectory("project" + UUID.randomUUID());
             tmpFolderPath = tmpFolder.toAbsolutePath().toString();
         } catch (Exception e) {
-            BasicAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
+            RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("tempDirError"));
             logger.error("Unable to create temp directory");
             return ;
         }
 
-        var clone = new RadClone(clPr.url(), tmpFolderPath);
-        var countDownLatch = new CountDownLatch(1);
+        final var countDownLatch = new CountDownLatch(1);
         String finalTmpFolderPath = tmpFolderPath;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var pr = new BasicAction(clone,project,countDownLatch).perform();
+            final var clone = new RadClone(clPr.url(), tmpFolderPath);
+            var pr = clone.perform(countDownLatch);
             if (pr.getExitCode() != 0) {
                 return ;
             }
@@ -89,7 +88,7 @@ public class CloneUtil {
             }
         });
         var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("cloningProcess") +
-                clPr.url(), countDownLatch,  new AtomicBoolean(false));
-        new Thread(ubt::queue).start();
+                clPr.url(), countDownLatch);
+        ubt.startInThread();
     }
 }

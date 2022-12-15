@@ -11,7 +11,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -221,8 +221,8 @@ public class RadicleSettingsView implements SearchableConfigurable {
         if (!isCompatibleVersion) {
             enforceVersionLabel.setVisible(true);
             if (isApply) {
-                BasicAction.showNotification(null, "radCliWarning", "unSupportedCliVer", NotificationType.WARNING,
-                        List.of(new BasicAction.ConfigureRadCliNotificationAction(null, RadicleBundle.lazyMessage("configure"))));
+                RadAction.showNotification(null, "radCliWarning", "unSupportedCliVer", NotificationType.WARNING,
+                        List.of(new RadAction.ConfigureRadCliNotificationAction(null, RadicleBundle.lazyMessage("configure"))));
             }
         }
     }

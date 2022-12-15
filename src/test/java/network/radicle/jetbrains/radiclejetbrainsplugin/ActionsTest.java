@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
@@ -28,7 +27,6 @@ import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,7 +45,7 @@ public class ActionsTest extends AbstractIT {
         var notif = NotificationGroupManager.getInstance()
                 .getNotificationGroup("Vcs Notifications")
                 .createNotification(
-                        RadicleBundle.message("test") ,"Pushed 1 commit", NotificationType.INFORMATION,null);
+                        RadicleBundle.message("test") ,"Pushed 1 commit", NotificationType.INFORMATION);
 
         notif.notify(super.getProject());
 
@@ -63,7 +61,7 @@ public class ActionsTest extends AbstractIT {
     public void cloneTest() throws InterruptedException {
         var radUrl = "rad:git:123";
         var clone = new RadClone(radUrl,"C:\\");
-        new BasicAction(clone,super.getProject(),new CountDownLatch(1)).perform();
+        clone.perform();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
@@ -101,7 +99,7 @@ public class ActionsTest extends AbstractIT {
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("setDefaultIdentitySuccess"));
+        assertThat(not.getContent()).contains(RadicleBundle.message("radNotification_AuthSetDefaultIdentity"));
     }
 
     @Test
@@ -131,7 +129,7 @@ public class ActionsTest extends AbstractIT {
         }
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("removeIdentitySuccess"));
+        assertThat(not.getContent()).contains(RadicleBundle.message("radNotification_AuthRemoveIdentity"));
     }
 
     @Test
@@ -147,7 +145,7 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("auth --init --name test --passphrase test");
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("createIdentitySuccess"));
+        assertThat(not.getContent()).contains(RadicleBundle.message("The new identity was created successfully"));
     }
 
     @Test

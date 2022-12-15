@@ -9,17 +9,21 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicat
 
 import java.util.List;
 
-public class RadInit implements RadAction {
-    private final GitRepository repo;
+public class RadInit extends RadAction {
     private final String name;
     private final String description;
     private final String branch;
 
     public RadInit (GitRepository repo, String name, String description, String branch) {
-        this.repo = repo;
+        super(repo);
         this.name = name;
         this.description = description;
         this.branch = branch;
+    }
+
+    @Override
+    public String getActionName() {
+        return "Init";
     }
 
     @Override
@@ -27,25 +31,4 @@ public class RadInit implements RadAction {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
         return rad.init(repo,name,description,branch);
     }
-
-    @Override
-    public String getErrorMessage() {
-        return RadicleBundle.message("initError");
-    }
-
-    @Override
-    public String getSuccessMessage() {
-        return RadicleBundle.message("initSuccess");
-    }
-
-    @Override
-    public String getNotificationSuccessMessage() {
-        return "";
-    }
-
-    @Override
-    public GitRepository getRepo() {
-        return repo;
-    }
-
 }

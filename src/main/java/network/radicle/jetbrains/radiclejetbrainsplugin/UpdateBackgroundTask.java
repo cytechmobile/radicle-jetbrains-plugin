@@ -14,14 +14,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class UpdateBackgroundTask extends Task.Backgroundable {
     private static final Logger logger = Logger.getInstance(UpdateBackgroundTask.class);
     protected CountDownLatch updateCountDownLatch;
-    protected AtomicBoolean executingFlag;
 
-    public UpdateBackgroundTask(
-            Project project, String title,
-            CountDownLatch updatingLatch, AtomicBoolean executing) {
+    public UpdateBackgroundTask(Project project, String title, CountDownLatch updatingLatch) {
         super(project, title, false, PerformInBackgroundOption.ALWAYS_BACKGROUND);
         this.updateCountDownLatch = updatingLatch;
-        this.executingFlag = executing;
     }
 
     @Override
@@ -31,6 +27,9 @@ public class UpdateBackgroundTask extends Task.Backgroundable {
         } catch (Exception e) {
             logger.warn("error awaiting update latch!", e);
         }
-        executingFlag.set(false);
+    }
+
+    public void startInThread() {
+        new Thread(this::queue).start();
     }
 }

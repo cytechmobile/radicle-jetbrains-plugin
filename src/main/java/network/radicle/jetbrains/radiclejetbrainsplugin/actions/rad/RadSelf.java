@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.BasicAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,26 +12,21 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RadSelf implements RadAction {
-    private static final Logger logger = LoggerFactory.getLogger(RadSelf.class);
-    private RadSelf.RadSelfAction action;
-    private String errorMsg = "";
-
-    public enum RadSelfAction {
-        ACTIVE_PROFILE, GET_PROFILES
-    }
+public class RadSelf extends RadAction {
+    private RadSelfAction action;
 
     public RadSelf(RadSelfAction action) {
         this.action = action;
-        setMessages();
     }
 
-    private void setMessages() {
+    @Override
+    public String getActionName() {
         if (action == RadSelfAction.ACTIVE_PROFILE) {
-            errorMsg = RadicleBundle.message("activeProfileError");
+            return "SelfActiveProfile";
         } else if (action == RadSelfAction.GET_PROFILES) {
-            errorMsg = RadicleBundle.message("profilesError");
+            return "SelfGetProfiles";
         }
+        return "";
     }
 
     public ProcessOutput activeProfile() {
@@ -41,7 +35,7 @@ public class RadSelf implements RadAction {
     }
 
     private ProcessOutput getProfiles() {
-        var storage = BasicAction.getStoragePath();
+        var storage = getStoragePath();
         if (storage == null || Strings.isNullOrEmpty(storage.keysStoragePath)) {
             return new ProcessOutput(-1);
         }
@@ -68,23 +62,7 @@ public class RadSelf implements RadAction {
         }
     }
 
-    @Override
-    public String getErrorMessage() {
-        return errorMsg;
-    }
-
-    @Override
-    public String getSuccessMessage() {
-        return "";
-    }
-
-    @Override
-    public String getNotificationSuccessMessage() {
-        return "";
-    }
-
-    @Override
-    public GitRepository getRepo() {
-        return null;
+    public enum RadSelfAction {
+        ACTIVE_PROFILE, GET_PROFILES
     }
 }
