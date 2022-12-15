@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
@@ -35,17 +34,23 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 
 public class PatchListPanel {
+    private final PatchTabController controller;
     private final Project project;
     private final ComboBox<SeedNode> seedNodeComboBox;
     private final DefaultListModel<RadPatch> seedModel;
@@ -54,7 +59,8 @@ public class PatchListPanel {
     private boolean triggerSeedNodeAction = true;
     protected BorderLayoutPanel mainPanel;
 
-    public PatchListPanel(Project project) {
+    public PatchListPanel(PatchTabController ctrl, Project project) {
+        this.controller = ctrl;
         this.project = project;
         this.searchSpinner = new AsyncProcessIcon(RadicleBundle.message("loadingProjects"));
         this.seedModel = new DefaultListModel<>();
@@ -84,8 +90,18 @@ public class PatchListPanel {
                 presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), BorderLayout.EAST);
         borderPanel.add(seedNodeComboBox, BorderLayout.CENTER);
 
-        var list = new JBList<>(seedModel);
+        final var list = new JBList<>(seedModel);
         list.setCellRenderer(new PatchListCellRenderer());
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() != 1 || e.getClickCount() != 2) {
+                    return;
+                }
+                var selectedPatch = list.getSelectedValue();
+                controller.createPatchProposalPanel(selectedPatch);
+            }
+        });
         list.setExpandableItemsEnabled(false);
         list.getEmptyText().clear();
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -190,34 +206,58 @@ public class PatchListPanel {
         }
     }
 
-    private static class PatchListCellRenderer extends JPanel implements ListCellRenderer<RadPatch> {
-        private final JLabel title = new JLabel();
-        private final JPanel patchPanel;
-        public PatchListCellRenderer() {
-            var gapAfter = JBUI.scale(5);
-            patchPanel = new JPanel();
-            patchPanel.setOpaque(false);
-            patchPanel.setBorder(JBUI.Borders.empty(10, 8));
-            patchPanel.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0")
-                    .insets("0", "0", "0", "0")
-                    .fillX()));
+    private static class PatchListCellRenderer implements ListCellRenderer<RadPatch> {
+        private Map<Integer, Cell> cells;
 
-            this.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0").noGrid()
-                    .insets("0", "0", "0", "0")
-                    .fillX()));
+        public PatchListCellRenderer() {
+            cells = new HashMap<>();
         }
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends RadPatch> list,
-                                                      RadPatch value, int index, boolean isSelected, boolean cellHasFocus) {
-            setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
-            var primaryTextColor = ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus());
-            title.setText(value.repo.getRoot().getName() + " - " + value.peerId);
-            title.setForeground(primaryTextColor);
-            patchPanel.add(title);
-            add(patchPanel, new CC().minWidth("0").gapAfter("push"));
-            return this;
+        public Component getListCellRendererComponent(
+                JList<? extends RadPatch> list, RadPatch value, int index, boolean isSelected, boolean cellHasFocus) {
+            if (!cells.containsKey(index)) {
+                var cell = new Cell(index, value);
+                cells.put(index, cell);
+            }
+            var cell = cells.get(index);
+            cell.setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
+            cell.text.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
+            return cell;
+        }
+
+        public static class Cell extends JPanel {
+            public final int index;
+            public final JLabel text;
+            public final RadPatch patch;
+
+            public Cell(int index, RadPatch patch) {
+                this.index = index;
+                this.patch = patch;
+
+                var gapAfter = JBUI.scale(5);
+                var patchPanel = new JPanel();
+                patchPanel.setOpaque(false);
+                patchPanel.setBorder(JBUI.Borders.empty(10, 8));
+                patchPanel.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0")
+                        .insets("0", "0", "0", "0")
+                        .fillX()));
+
+                setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0").noGrid()
+                        .insets("0", "0", "0", "0")
+                        .fillX()));
+
+                text = new JLabel(patch.repo.getRoot().getName() + " - " + patch.peerId);
+                patchPanel.add(text);
+                add(patchPanel, new CC().minWidth("0").gapAfter("push"));
+            }
+
+            @Override
+            public AccessibleContext getAccessibleContext() {
+                var ac = super.getAccessibleContext();
+                ac.setAccessibleName(patch.repo.getRoot().getName() + " - " + patch.peerId);
+                return ac;
+            }
         }
     }
-
 }
