@@ -2,11 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -14,14 +10,12 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -61,7 +55,6 @@ public class PatchListPanel {
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.seedNodeComboBox = new ComboBox<>();
         seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
-        registerVcsChangeListener(project);
     }
 
     private void initializeSeedNodeCombobox() {
@@ -110,6 +103,7 @@ public class PatchListPanel {
         var searchPanel = new PatchSearchPanel(searchVm).create(scope);
         borderPanel.add(searchPanel, BorderLayout.NORTH);
         mainPanel.addToTop(borderPanel);
+        updateListPanel();
         return mainPanel;
     }
 
@@ -143,11 +137,6 @@ public class PatchListPanel {
             }
         }
         return radPatches;
-    }
-
-    private void registerVcsChangeListener(final Project project) {
-        project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE,
-                (GitRepositoryChangeListener) repository -> updateListPanel());
     }
 
     private void updateListPanel() {
