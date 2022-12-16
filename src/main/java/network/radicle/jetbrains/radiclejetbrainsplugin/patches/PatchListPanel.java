@@ -42,6 +42,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,13 +150,42 @@ public class PatchListPanel {
         return outputs;
     }
 
+    /*
+     * We need to parse output similar to the following into a list of available patches
+     *
+     * myradicleprj rad:git:hnrkm8s6xyxej7g198ycg5dd747wi5fddj8bo (pine.radicle.garden)
+     * ├── hyymyxa6wa1kx9sfhfqxe7jkqmhwmgzcyaik6o6rj9y7dqfuzxq9uk       <-- peer ID
+     * │   ├── main 7247e2b49d8cb17209cdae618740b37d05b0d5c0            <-- branch name and commit hash
+     * │   └── test 02d9bb0cb16cc047c9566ad42213fdd48f103be3            <-- other branch and commit hash
+     * │
+     * ├── hybookffmi5m3rxbowq3rdoomufpxxddw48hb6b5zdpno7na44fhsc  you  <-- another peer ID (self)
+     * │   └── main 7247e2b49d8cb17209cdae618740b37d05b0d5c0            <-- other branch and hash
+     * │
+     * └── hydk6tka3w8kkfamr1bzq6schmd43frjqiu3mw5eiwo31cci4s6qf6
+     *     ├── main 7247e2b49d8cb17209cdae618740b37d05b0d5c0
+     *     └── test 9411197feb2b47d0cf0f706e3aeff2a0b635fbcc
+     */
     private List<RadPatch> parsePatchProposals(GitRepository repo, ProcessOutput output) {
         var infos = output.getStdoutLines(true);
         var radPatches = new ArrayList<RadPatch>();
-        for (String info : infos) {
-            var parts = info.split(" ");
-            if (parts.length == 2 || info.contains("you")) {
-                radPatches.add(new RadPatch(parts[1], repo));
+        var currentUser = "";
+        var self = false;
+        for (var info : infos) {
+            if (!info.contains("──")) {
+                continue; // it's neither a line specifying a new user, nor a line specifying a branch, so skip it
+            }
+            if (info.startsWith("├") || info.startsWith("└")) {
+                // a new user will be displayed in the "tree"
+                var parts = info.split(" ");
+                currentUser = parts[1];
+                self = info.trim().endsWith("you");
+            } else {
+                // this is a line specifying a branch
+                // skip first character which may be either space of | and then trim it (there are many spaces expected)
+                var parts = info.substring(1).trim().split(" ");
+                var branch = parts[1];
+                var commit = parts[2];
+                radPatches.add(new RadPatch(repo, currentUser, self, branch, commit));
             }
         }
         return radPatches;
