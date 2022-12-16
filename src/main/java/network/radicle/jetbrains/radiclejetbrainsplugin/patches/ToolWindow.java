@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.intellij.collaboration.async.CoroutineUtilKt.DisposingMainScope;
+
 public class ToolWindow extends VcsToolWindowFactory {
 
     @Override
@@ -22,15 +24,14 @@ public class ToolWindow extends VcsToolWindowFactory {
         var issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), "Issues", true);
         var patchContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), null, false);
 
-
-
         project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
             @Override
             public void toolWindowShown(com.intellij.openapi.wm.@NotNull ToolWindow shownToolWindow) {
                 if (toolWindow == shownToolWindow && toolWindow.isVisible() && contentManager.isEmpty()) {
                     contentManager.addContent(patchContent);
                     contentManager.addContent(issueContent);
-                    var controller = new PatchTabController(patchContent, project);
+                    var scope = DisposingMainScope(patchContent);
+                    var controller = new PatchTabController(patchContent, project, scope);
                     controller.createPatchesPanel();
                 }
             }

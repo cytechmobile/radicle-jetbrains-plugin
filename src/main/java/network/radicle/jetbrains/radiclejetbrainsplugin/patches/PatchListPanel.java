@@ -17,6 +17,7 @@ import com.intellij.util.ui.ListUiUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import kotlinx.coroutines.CoroutineScope;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -37,8 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
-
 public class PatchListPanel {
     private final Project project;
     private final ComboBox<SeedNode> seedNodeComboBox;
@@ -47,14 +46,16 @@ public class PatchListPanel {
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean triggerSeedNodeAction = true;
     protected BorderLayoutPanel mainPanel;
+    private CoroutineScope scope;
 
-    public PatchListPanel(Project project) {
+    public PatchListPanel(Project project, CoroutineScope scope) {
         this.project = project;
         this.searchSpinner = new AsyncProcessIcon(RadicleBundle.message("loadingProjects"));
         this.seedModel = new DefaultListModel<>();
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.seedNodeComboBox = new ComboBox<>();
         seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
+        this.scope = scope;
     }
 
     private void initializeSeedNodeCombobox() {
@@ -97,7 +98,6 @@ public class PatchListPanel {
         searchSpinner.setVisible(false);
         mainPanel = JBUI.Panels.simplePanel();
         mainPanel.addToCenter(scrollPane);
-        var scope = MainScope();
         var history = new PatchSearchHistoryModel();
         var searchVm = new PatchSearchPanelViewModel(scope,history,project);
         var searchPanel = new PatchSearchPanel(searchVm).create(scope);
