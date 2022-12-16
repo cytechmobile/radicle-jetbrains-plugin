@@ -4,30 +4,20 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.Pop
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil;
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupState;
-import git4idea.repo.GitRepository;
-import kotlin.coroutines.Continuation;
-import kotlin.coroutines.CoroutineContext;
-import kotlin.jvm.functions.Function1;
 
-import kotlin.jvm.functions.Function2;
-import kotlin.jvm.functions.Function3;
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class PatchSearchPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
+public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
         PatchSearchPanelViewModel.PatchListQuickFilter,PatchSearchPanelViewModel> {
     private final PatchSearchPanelViewModel viewModel;
-    public PatchSearchPanel(@NotNull PatchSearchPanelViewModel patchSearchPanelViewModel) {
+    public PatchFilterPanel(@NotNull PatchSearchPanelViewModel patchSearchPanelViewModel) {
         super(patchSearchPanelViewModel);
         this.viewModel = patchSearchPanelViewModel;
     }

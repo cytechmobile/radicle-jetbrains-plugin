@@ -5,35 +5,37 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -41,21 +43,22 @@ import java.util.concurrent.CountDownLatch;
 public class PatchListPanel {
     private final Project project;
     private final ComboBox<SeedNode> seedNodeComboBox;
-    private final DefaultListModel<RadPatch> seedModel;
-    private final AsyncProcessIcon searchSpinner;
+    private final DefaultListModel<RadPatch> patchModel;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean triggerSeedNodeAction = true;
-    protected BorderLayoutPanel mainPanel;
-    private CoroutineScope scope;
+    private final CoroutineScope scope;
+    private List<RadPatch> loadedRadPatches;
+    private ProgressStripe progressStripe;
+    private final PatchSearchPanelViewModel searchVm;
 
+    private JBList patchesList;
     public PatchListPanel(Project project, CoroutineScope scope) {
         this.project = project;
-        this.searchSpinner = new AsyncProcessIcon(RadicleBundle.message("loadingProjects"));
-        this.seedModel = new DefaultListModel<>();
+        this.patchModel = new DefaultListModel<>();
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.seedNodeComboBox = new ComboBox<>();
-        seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
         this.scope = scope;
+        searchVm = new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
     }
 
     private void initializeSeedNodeCombobox() {
@@ -69,49 +72,95 @@ public class PatchListPanel {
 
     public JComponent create() {
         initializeSeedNodeCombobox();
+        var filterPanel = new PatchFilterPanel(searchVm).create(scope);
+        var seedNodePanel = createSeedNodePanel();
+        var verticalPanel = new JPanel(new VerticalLayout(5));
+        verticalPanel.add(filterPanel);
+        verticalPanel.add(seedNodePanel);
+        var mainPanel = JBUI.Panels.simplePanel();
+        var listPanel = createListPanel();
+        mainPanel.addToTop(verticalPanel);
+        mainPanel.addToCenter(listPanel);
 
-        seedNodeComboBox.addActionListener(new SeedNodeChangeListener());
+
+       searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
+           filterList(patchListSearchValue);
+           return null;
+       }, new Continuation<Object>() {
+           @Override
+           public void resumeWith(@NotNull Object o) {
+
+           }
+
+           @NotNull
+           @Override
+           public CoroutineContext getContext() {
+               return scope.getCoroutineContext();
+           }
+       });
+        updateListPanel();
+        return mainPanel;
+    }
+
+    private void updateListEmptyText(PatchListSearchValue patchListSearchValue) {
+        patchesList.getEmptyText().clear();
+        if (loadedRadPatches.isEmpty() || patchModel.isEmpty()) {
+            patchesList.getEmptyText().setText("Nothing found");
+        }
+        if (patchListSearchValue.getFilterCount() > 0) {
+            patchesList.getEmptyText().appendSecondaryText("Clear filters", SimpleTextAttributes.LINK_ATTRIBUTES,
+                    e -> searchVm.getSearchState().setValue(new PatchListSearchValue()));
+        }
+    }
+
+    private JPanel createSeedNodePanel() {
         var borderPanel = new JPanel(new BorderLayout(5, 5));
         Presentation presentation = new Presentation();
         presentation.setIcon(AllIcons.Actions.BuildAutoReloadChanges);
-        borderPanel.add(new ActionButton(new RefreshSeedNodeAction(),
-                presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), BorderLayout.EAST);
+        borderPanel.add(new ActionButton(new RefreshSeedNodeAction(), presentation,
+                ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), BorderLayout.EAST);
+        seedNodeComboBox.setRenderer(new CloneRadDialog.SeedNodeCellRenderer());
+        seedNodeComboBox.addActionListener(e -> {
+            if (seedNodeComboBox.getSelectedItem() != null && triggerSeedNodeAction) {
+                updateListPanel();
+            }
+        });
         borderPanel.add(seedNodeComboBox, BorderLayout.CENTER);
+        return borderPanel;
+    }
 
-        var list = new JBList<>(seedModel);
-        list.setCellRenderer(new PatchListCellRenderer());
-        list.setExpandableItemsEnabled(false);
-        list.getEmptyText().clear();
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ScrollingUtil.installActions(list);
-        ListUtil.installAutoSelectOnMouseMove(list);
-        ListUiUtil.Selection.INSTANCE.installSelectionOnFocus(list);
-        ListUiUtil.Selection.INSTANCE.installSelectionOnRightClick(list);
+    private JPanel createListPanel() {
+        patchesList = new JBList<>(patchModel);
+        patchesList.setCellRenderer(new PatchListCellRenderer());
+        patchesList.setExpandableItemsEnabled(false);
+        patchesList.getEmptyText().clear();
+        patchesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ScrollingUtil.installActions(patchesList);
+        ListUtil.installAutoSelectOnMouseMove(patchesList);
+        ListUiUtil.Selection.INSTANCE.installSelectionOnFocus(patchesList);
+        ListUiUtil.Selection.INSTANCE.installSelectionOnRightClick(patchesList);
 
-        var pane = new JPanel(new BorderLayout());
-        var scrollPane = ScrollPaneFactory.createScrollPane(pane, true);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.getVerticalScrollBar().setOpaque(true);
-        pane.add(list, BorderLayout.NORTH);
-        pane.add(searchSpinner, BorderLayout.CENTER);
-        searchSpinner.setVisible(false);
-        mainPanel = JBUI.Panels.simplePanel();
-        mainPanel.addToCenter(scrollPane);
-        var history = new PatchSearchHistoryModel();
-        var searchVm = new PatchSearchPanelViewModel(scope,history,project);
-        var searchPanel = new PatchSearchPanel(searchVm).create(scope);
-        borderPanel.add(searchPanel, BorderLayout.NORTH);
-        mainPanel.addToTop(borderPanel);
-        updateListPanel();
-        return mainPanel;
+        var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);
+        progressStripe = new ProgressStripe(scrollPane, Disposer.newDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+        return progressStripe;
+    }
+
+    private void filterList(PatchListSearchValue patchListSearchValue) {
+        patchModel.clear();
+        if (loadedRadPatches == null) {
+            return ;
+        }
+        if (patchListSearchValue.getFilterCount() == 0) {
+            patchModel.addAll(loadedRadPatches);
+        }
+        updateListEmptyText(patchListSearchValue);
     }
 
     private List<RadPatch> getPatchProposals(List<GitRepository> repos, String url) {
         var outputs = new ArrayList<RadPatch>();
         var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);
         if (radInitializedRepos.isEmpty()) {
-            return List.of();
+        return List.of();
         }
         final var updateCountDown = new CountDownLatch(radInitializedRepos.size());
         for (GitRepository repo : radInitializedRepos) {
@@ -148,23 +197,16 @@ public class PatchListPanel {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            seedModel.clear();
-            searchSpinner.setVisible(true);
+            patchModel.clear();
+            progressStripe.startLoading();
             var patchProposals = getPatchProposals(repos, url);
+            loadedRadPatches = patchProposals;
             ApplicationManager.getApplication().invokeLater(() -> {
-                seedModel.addAll(patchProposals);
-                searchSpinner.setVisible(false);
+                patchModel.addAll(patchProposals);
+                progressStripe.stopLoading();
+                updateListEmptyText(searchVm.getSearchState().getValue());
             });
         });
-    }
-
-    private class SeedNodeChangeListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (seedNodeComboBox.getSelectedItem() != null && triggerSeedNodeAction) {
-                updateListPanel();
-            }
-        }
     }
 
     private class RefreshSeedNodeAction extends AnAction {
