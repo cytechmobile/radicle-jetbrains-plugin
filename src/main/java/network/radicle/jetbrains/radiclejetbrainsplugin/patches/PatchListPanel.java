@@ -277,8 +277,13 @@ public class PatchListPanel {
                         .insets("0", "0", "0", "0")
                         .fillX()));
 
-                text = new JLabel(patch.repo.getRoot().getName() + " - " + patch.peerId);
-                patchPanel.add(text);
+                var innerPanel = new JPanel();
+                innerPanel.setLayout(new BorderLayout());
+                text = new JLabel(patch.repo.getRoot().getName() + " - " + patch.commitHash);
+                patchPanel.add(text, BorderLayout.NORTH);
+                var comment = new JLabel("Created by: " + (patch.self ? "You " : "") + patch.peerId);
+                comment.setForeground(Color.GRAY);
+                patchPanel.add(comment, BorderLayout.SOUTH);
                 add(patchPanel, new CC().minWidth("0").gapAfter("push"));
             }
 
