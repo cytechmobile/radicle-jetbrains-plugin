@@ -197,7 +197,7 @@ public class PatchListPanel {
         for (String info : infos) {
             var parts = info.split(" ");
             if (parts.length == 2 || info.contains("you")) {
-                radPatches.add(new RadPatch(parts[1], repo));
+                radPatches.add(new RadPatch(parts[1] ,"",repo));
             }
         }
         return radPatches;

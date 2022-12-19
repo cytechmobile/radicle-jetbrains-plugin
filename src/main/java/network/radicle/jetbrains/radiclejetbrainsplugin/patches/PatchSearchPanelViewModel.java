@@ -36,13 +36,26 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
 
     public MutableStateFlow<String> stateFilterState() {
        return partialState(getSearchState(), PatchListSearchValue::getState,
-               (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, newState) -> {
+               (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, state) -> {
             var newPatchSearchValue = new PatchListSearchValue();
-            newPatchSearchValue.state = (String) newState;
+            newPatchSearchValue.state = (String) state;
             newPatchSearchValue.searchQuery = patchListSearchValue.searchQuery;
             newPatchSearchValue.project = patchListSearchValue.project;
+            newPatchSearchValue.author = patchListSearchValue.author;
             return newPatchSearchValue;
         });
+    }
+
+    public MutableStateFlow<String> authorFilterState() {
+        return partialState(getSearchState(), PatchListSearchValue::getAuthor,
+                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, authorName) -> {
+                    var newPatchSearchValue = new PatchListSearchValue();
+                    newPatchSearchValue.author = (String) authorName;
+                    newPatchSearchValue.state = patchListSearchValue.state ;
+                    newPatchSearchValue.searchQuery = patchListSearchValue.searchQuery;
+                    newPatchSearchValue.project = patchListSearchValue.project;
+                    return newPatchSearchValue;
+                });
     }
 
     public MutableStateFlow<String> projectFilterState() {
@@ -51,6 +64,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
                     var newPatchSearchValue = new PatchListSearchValue();
                     newPatchSearchValue.state = patchListSearchValue.state;
                     newPatchSearchValue.searchQuery = patchListSearchValue.searchQuery;
+                    newPatchSearchValue.author = patchListSearchValue.author;
                     newPatchSearchValue.project = (String) projectName;
                     return newPatchSearchValue;
                 });
@@ -72,6 +86,11 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         return projectNames;
     }
 
+    public List<String> getAuthorNames() {
+        //TODO implement this
+        return List.of("test");
+    }
+
     @NotNull
     @Override
     protected PatchListSearchValue withQuery(@NotNull PatchListSearchValue patchListSearchValue, @Nullable String searchStr) {
@@ -79,6 +98,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         newPatchSearchValue.searchQuery = searchStr;
         newPatchSearchValue.state = patchListSearchValue.state;
         newPatchSearchValue.project = patchListSearchValue.project;
+        newPatchSearchValue.author = patchListSearchValue.author;
         return newPatchSearchValue;
     }
 

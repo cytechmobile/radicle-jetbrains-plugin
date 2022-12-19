@@ -5,11 +5,6 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil;
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation;
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.PopupState;
-import kotlin.coroutines.Continuation;
-import kotlin.jvm.functions.Function3;
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +34,14 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
                 (relativePoint, jbPopupPopupState, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint, jbPopupPopupState,
                         continuation1 -> this.viewModel.getProjectNames(), projectName ->
                                 new PopupItemPresentation.Simple((String) projectName,null,null),continuation));
-        return List.of(stateFilter,projectFilter);
+
+        var authorFilter = new DropDownComponentFactory<>
+                (this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("author"), o -> o,
+                (relativePoint, jbPopupPopupState, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint, jbPopupPopupState,
+                        continuation1 -> this.viewModel.getAuthorNames(), projectName ->
+                                new PopupItemPresentation.Simple((String) projectName,null,null),continuation));
+
+        return List.of(stateFilter,projectFilter,authorFilter);
     }
 
 

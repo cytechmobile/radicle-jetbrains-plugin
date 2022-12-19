@@ -10,6 +10,7 @@ public class PatchListSearchValue implements ReviewListSearchValue {
 
     public String project;
     public String searchQuery;
+    public String author;
 
     public String getState() {
         return state;
@@ -17,6 +18,9 @@ public class PatchListSearchValue implements ReviewListSearchValue {
 
     public String getProject() {
         return project;
+    }
+    public String getAuthor() {
+        return author;
     }
 
     public PatchListSearchValue() {
@@ -32,6 +36,9 @@ public class PatchListSearchValue implements ReviewListSearchValue {
             count++;
         }
         if (searchQuery != null) {
+            count++;
+        }
+        if (author != null) {
             count++;
         }
         return count;

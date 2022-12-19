@@ -4,10 +4,12 @@ import git4idea.repo.GitRepository;
 
 public class RadPatch {
     public String peerId;
+    public String author;
     public GitRepository repo;
 
-    public RadPatch(String peerId, GitRepository repo) {
+    public RadPatch(String peerId,String author, GitRepository repo) {
         this.peerId = peerId;
         this.repo = repo;
+        this.author = author;
     }
 }
