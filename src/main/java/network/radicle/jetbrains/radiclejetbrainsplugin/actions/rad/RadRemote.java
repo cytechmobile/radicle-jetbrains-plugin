@@ -33,7 +33,7 @@ public class RadRemote extends RadAction {
         for (var line : lines) {
             var firstSpaceIdx = line.indexOf(' ');
             var name = line.substring(0, firstSpaceIdx);
-            var id = line.substring(firstSpaceIdx +  1);
+            var id = line.substring(firstSpaceIdx +  1).split(" ")[0].trim();
             peers.add(new Peer(name.trim(), id.trim()));
         }
         return peers;
