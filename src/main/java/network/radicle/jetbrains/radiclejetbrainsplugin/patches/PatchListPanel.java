@@ -40,6 +40,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 public class PatchListPanel {
     private final Project project;
@@ -107,7 +108,7 @@ public class PatchListPanel {
         if (loadedRadPatches.isEmpty() || patchModel.isEmpty()) {
             patchesList.getEmptyText().setText(RadicleBundle.message("nothingFound"));
         }
-        if (patchListSearchValue.getFilterCount() > 0) {
+        if (patchListSearchValue.getFilterCount() > 0 && (loadedRadPatches.isEmpty() || patchModel.isEmpty())) {
             patchesList.getEmptyText().appendSecondaryText(RadicleBundle.message("clearFilters"), SimpleTextAttributes.LINK_ATTRIBUTES,
                     e -> resetFilters());
         }
@@ -156,6 +157,16 @@ public class PatchListPanel {
         }
         if (patchListSearchValue.getFilterCount() == 0) {
             patchModel.addAll(loadedRadPatches);
+        } else {
+            var stateFilter = patchListSearchValue.state;
+            var projectFilter = patchListSearchValue.project;
+            var searchFilter = patchListSearchValue.searchQuery;
+            List<RadPatch> filteredPatches = loadedRadPatches.stream()
+                    .filter(p -> searchFilter == null || p.peerId.contains(searchFilter))
+                    .filter(p-> projectFilter == null || p.repo.getProject().getName().equals(projectFilter))
+                    .filter(p-> stateFilter == null)
+                    .collect(Collectors.toList());
+            patchModel.addAll(filteredPatches);
         }
         updateListEmptyText(patchListSearchValue);
     }

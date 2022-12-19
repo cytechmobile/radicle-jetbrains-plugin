@@ -2,16 +2,15 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
+import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -22,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBase<PatchListSearchValue,
-        PatchSearchPanelViewModel.PatchListQuickFilter> {
+        PatchSearchPanelViewModel.PatchListQuickFilterr> implements ReviewListSearchPanelViewModel<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilterr> {
 
     private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
 
@@ -58,17 +57,21 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
     }
 
     public List<String> getProjectNames()  {
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
-                .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
+        var isFinished = new CountDownLatch(1);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var gitRepoManager = GitRepositoryManager.getInstance(project);
+            projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
+                    .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
+            isFinished.countDown();
+        });
+        try {
+            isFinished.await();
+        } catch (Exception e) {
+            logger.warn("Unable to get project names");
+        }
         return projectNames;
     }
 
-    @NotNull
-    @Override
-    public List<PatchListQuickFilter> getQuickFilters() {
-        return List.of();
-    }
 
     @NotNull
     @Override
@@ -80,12 +83,29 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         return newPatchSearchValue;
     }
 
-    public static class PatchListQuickFilter implements ReviewListQuickFilter<PatchListSearchValue> {
+    @Override
+    public List<PatchListQuickFilterr> getQuickFilters() {
+        var o = new PatchListQuickFilterr();
 
+        return List.of(o);
+    }
+
+    public static class PatchListQuickFilterr implements ReviewListQuickFilter<PatchListSearchValue> {
         @NotNull
         @Override
         public PatchListSearchValue getFilter() {
-            return new PatchListSearchValue();
+            var p = new PatchListSearchValue();
+            p.state = PatchListSearchValue.State.OPEN.name;
+            return p;
+        }
+    }
+
+    public static class PatchListQuickFilter extends PatchListQuickFilterr implements ReviewListQuickFilter<PatchListSearchValue> {
+        @NotNull
+        @Override
+        public PatchListSearchValue getFilter() {
+            var p = new PatchListSearchValue();
+            return p;
         }
     }
 }
