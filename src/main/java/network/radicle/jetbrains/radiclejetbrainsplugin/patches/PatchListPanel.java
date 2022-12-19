@@ -19,6 +19,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import git4idea.changes.GitChangeUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
@@ -99,7 +100,9 @@ public class PatchListPanel {
                 if (e.getButton() != 1 || e.getClickCount() != 2) {
                     return;
                 }
-                var selectedPatch = list.getSelectedValue();
+                final var selectedPatch = list.getSelectedValue();
+                seedModel.clear();
+                searchSpinner.setVisible(true);
                 controller.createPatchProposalPanel(selectedPatch);
             }
         });
@@ -137,8 +140,9 @@ public class PatchListPanel {
             return List.of();
         }
         final var updateCountDown = new CountDownLatch(radInitializedRepos.size());
+        final var node = new RadTrack.SeedNode(url);
         for (GitRepository repo : radInitializedRepos) {
-            var pull = new RadTrack(repo, url);
+            var pull = new RadTrack(repo, node);
             ProcessOutput output = pull.perform(updateCountDown);
             if (output.getExitCode() == 0) {
                 var radPatch = parsePatchProposals(repo, output);
