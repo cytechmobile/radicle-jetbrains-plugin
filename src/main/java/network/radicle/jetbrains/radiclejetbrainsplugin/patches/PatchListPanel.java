@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
@@ -82,7 +83,6 @@ public class PatchListPanel {
         mainPanel.addToTop(verticalPanel);
         mainPanel.addToCenter(listPanel);
 
-
        searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
            filterList(patchListSearchValue);
            return null;
@@ -105,12 +105,16 @@ public class PatchListPanel {
     private void updateListEmptyText(PatchListSearchValue patchListSearchValue) {
         patchesList.getEmptyText().clear();
         if (loadedRadPatches.isEmpty() || patchModel.isEmpty()) {
-            patchesList.getEmptyText().setText("Nothing found");
+            patchesList.getEmptyText().setText(RadicleBundle.message("nothingFound"));
         }
         if (patchListSearchValue.getFilterCount() > 0) {
-            patchesList.getEmptyText().appendSecondaryText("Clear filters", SimpleTextAttributes.LINK_ATTRIBUTES,
-                    e -> searchVm.getSearchState().setValue(new PatchListSearchValue()));
+            patchesList.getEmptyText().appendSecondaryText(RadicleBundle.message("clearFilters"), SimpleTextAttributes.LINK_ATTRIBUTES,
+                    e -> resetFilters());
         }
+    }
+
+    private void resetFilters() {
+        searchVm.getSearchState().setValue(new PatchListSearchValue());
     }
 
     private JPanel createSeedNodePanel() {
@@ -212,6 +216,8 @@ public class PatchListPanel {
     private class RefreshSeedNodeAction extends AnAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+            loadedRadPatches = null;
+            resetFilters();
             triggerSeedNodeAction = false;
             var prevSelectedIndex = seedNodeComboBox.getSelectedIndex();
             initializeSeedNodeCombobox();

@@ -58,18 +58,9 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
     }
 
     public List<String> getProjectNames()  {
-        var isFinished = new CountDownLatch(1);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var gitRepoManager = GitRepositoryManager.getInstance(project);
-            projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
-                    .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
-            isFinished.countDown();
-        });
-        try {
-            isFinished.await();
-        } catch (Exception e) {
-            logger.warn("Unable to get project names");
-        }
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
+                .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
         return projectNames;
     }
 
