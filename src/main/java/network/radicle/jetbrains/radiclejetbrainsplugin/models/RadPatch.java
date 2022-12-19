@@ -1,6 +1,10 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
+import com.intellij.openapi.vcs.changes.Change;
 import git4idea.repo.GitRepository;
+
+import java.util.Collection;
+import java.util.List;
 
 public class RadPatch {
     public GitRepository repo;
@@ -8,6 +12,8 @@ public class RadPatch {
     public boolean self;
     public String branchName;
     public String commitHash;
+
+    public List<Change> changes;
 
     public RadPatch(GitRepository repo, String peerId, boolean self, String branchName, String commitHash) {
         this.repo = repo;
