@@ -1,10 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
@@ -70,14 +69,10 @@ public class PatchProposalChangesTree {
             }
         });
         tree.setDoubleClickHandler(mouseEvent -> {
-            System.out.println("dblclick: " + mouseEvent);
-            var sel = tree.getSelectionRows();
-            if (sel != null && sel.length > 0) {
-                var selectedIdx = sel[0];
-                var selected = changesModel.getValue().get(selectedIdx);
-                System.out.println("selected change is: " + selected);
-            }
-            return true;
+            var dataContext = DataManager.getInstance().getDataContext(tree);
+            var event = AnActionEvent.createFromAnAction(showDiffAction, mouseEvent, ActionPlaces.CHANGES_VIEW_TOOLBAR, dataContext);
+            ActionUtil.performActionDumbAwareWithCallbacks(showDiffAction, event);
+            return false;
         });
         changesModel.addAndInvokeListener(changes -> {
             tree.rebuildTree();
