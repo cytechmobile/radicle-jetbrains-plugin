@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBase<PatchListSearchValue,
-        PatchSearchPanelViewModel.PatchListQuickFilterr> implements ReviewListSearchPanelViewModel<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilterr> {
+        PatchSearchPanelViewModel.PatchListQuickFilter> implements ReviewListSearchPanelViewModel<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter> {
 
     private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
 
@@ -72,7 +72,6 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         return projectNames;
     }
 
-
     @NotNull
     @Override
     protected PatchListSearchValue withQuery(@NotNull PatchListSearchValue patchListSearchValue, @Nullable String searchStr) {
@@ -84,28 +83,31 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
     }
 
     @Override
-    public List<PatchListQuickFilterr> getQuickFilters() {
-        var o = new PatchListQuickFilterr();
-
-        return List.of(o);
+    public List<PatchListQuickFilter> getQuickFilters() {
+        var stateQuickFilter = new PatchListQuickFilter().openStateQuickFilter();
+        return List.of(stateQuickFilter);
     }
 
-    public static class PatchListQuickFilterr implements ReviewListQuickFilter<PatchListSearchValue> {
+
+    public static class PatchListQuickFilter implements ReviewListQuickFilter<PatchListSearchValue> {
+
+        private PatchListSearchValue patchListSearchValue;
+
+        public PatchListQuickFilter() {
+            patchListSearchValue = new PatchListSearchValue();
+        }
+
+        public PatchListQuickFilter openStateQuickFilter() {
+            patchListSearchValue = new PatchListSearchValue();
+            patchListSearchValue.state = PatchListSearchValue.State.OPEN.name;
+            return this;
+        }
+
         @NotNull
         @Override
         public PatchListSearchValue getFilter() {
-            var p = new PatchListSearchValue();
-            p.state = PatchListSearchValue.State.OPEN.name;
-            return p;
+            return patchListSearchValue;
         }
     }
 
-    public static class PatchListQuickFilter extends PatchListQuickFilterr implements ReviewListQuickFilter<PatchListSearchValue> {
-        @NotNull
-        @Override
-        public PatchListSearchValue getFilter() {
-            var p = new PatchListSearchValue();
-            return p;
-        }
-    }
 }

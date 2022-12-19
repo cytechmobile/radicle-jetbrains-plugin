@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
-        PatchSearchPanelViewModel.PatchListQuickFilterr,PatchSearchPanelViewModel> {
+        PatchSearchPanelViewModel.PatchListQuickFilter,PatchSearchPanelViewModel> {
     private final PatchSearchPanelViewModel viewModel;
     public PatchFilterPanel(@NotNull PatchSearchPanelViewModel patchSearchPanelViewModel) {
         super(patchSearchPanelViewModel);
@@ -51,9 +51,9 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
 
     @NotNull
     @Override
-    protected String getQuickFilterTitle(@NotNull PatchSearchPanelViewModel.PatchListQuickFilterr patchListQuickFilterr) {
-        if (!Strings.isNullOrEmpty(patchListQuickFilterr.getFilter().state)) {
-            return patchListQuickFilterr.getFilter().state;
+    protected String getQuickFilterTitle(@NotNull PatchSearchPanelViewModel.PatchListQuickFilter patchListQuickFilter) {
+        if (!Strings.isNullOrEmpty(patchListQuickFilter.getFilter().state)) {
+            return patchListQuickFilter.getFilter().state;
         }
         return "";
     }
