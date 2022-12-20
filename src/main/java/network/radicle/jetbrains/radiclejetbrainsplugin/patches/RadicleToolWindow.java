@@ -2,7 +2,9 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VcsToolWindowFactory;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import git4idea.repo.GitRepository;
@@ -13,12 +15,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+public class RadicleToolWindow extends VcsToolWindowFactory {
 import static com.intellij.collaboration.async.CoroutineUtilKt.DisposingMainScope;
 
 public class ToolWindow extends VcsToolWindowFactory {
 
     @Override
-    public void createToolWindowContent(@NotNull Project project, @NotNull com.intellij.openapi.wm.ToolWindow toolWindow) {
+    public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
         var contentManager = toolWindow.getContentManager();
         var issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), "Issues", true);
@@ -26,7 +29,7 @@ public class ToolWindow extends VcsToolWindowFactory {
 
         project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
             @Override
-            public void toolWindowShown(com.intellij.openapi.wm.@NotNull ToolWindow shownToolWindow) {
+            public void toolWindowShown(@NotNull ToolWindow shownToolWindow) {
                 if (toolWindow == shownToolWindow && toolWindow.isVisible() && contentManager.isEmpty()) {
                     contentManager.addContent(patchContent);
                     contentManager.addContent(issueContent);
