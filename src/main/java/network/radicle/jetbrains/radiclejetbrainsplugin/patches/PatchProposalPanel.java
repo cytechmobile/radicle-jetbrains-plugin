@@ -158,7 +158,7 @@ public class PatchProposalPanel {
             var current = patch.repo.getCurrentRevision();
             try {
                 final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
-                        patch.commitHash + ".." + current);
+                        patch.commitHash + "..." + current);
                 logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.commitHash, current, history);
                 ApplicationManager.getApplication().invokeLater(() -> patchCommits.setValue(history));
             } catch (Exception e) {
