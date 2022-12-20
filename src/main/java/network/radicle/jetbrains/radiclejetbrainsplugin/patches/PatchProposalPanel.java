@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
@@ -18,18 +17,19 @@ import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import git4idea.GitCommit;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import kotlin.Unit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadRemote;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -38,13 +38,23 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PatchProposalPanel {
+    private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
+
     protected RadPatch patch;
+    protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
+    protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
 
     public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch patch) {
         this.patch = patch;
+        this.patchChanges.setValue(List.of());
+        this.patchCommits.setValue(List.of());
+
+        calculatePatchChanges();
+        calculatePatchCommits();
+
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
         var infoComponent = new JPanel();
-        infoComponent.add(new JLabel("INFO COMPONENT\nTODO: IMPLEMENT"));
+        infoComponent.add(new JLabel("<html>INFO COMPONENT<br>TODO: IMPLEMENT</html>"));
         var tabInfo = new TabInfo(infoComponent);
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent(controller));
@@ -55,7 +65,6 @@ public class PatchProposalPanel {
         filesInfo.setSideComponent(createReturnToListSideComponent(controller));
 
         var commitComponent = createCommitComponent();
-        commitComponent.add(new JLabel("Commit Component"));
         var commitInfo = new TabInfo(commitComponent);
         commitInfo.setText(RadicleBundle.message("commits"));
         commitInfo.setSideComponent(createReturnToListSideComponent(controller));
@@ -74,38 +83,29 @@ public class PatchProposalPanel {
 
     protected JComponent createCommitComponent() {
         final var project = patch.repo.getProject();
-        final var model = new SingleValueModel<List<GitCommit>>(Collections.emptyList());
-
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var current = patch.repo.getCurrentRevision();
-            try {
-                final var history = GitHistoryUtils.history(project, patch.repo.getRoot(),
-                        current + ".." + patch.commitHash);
-                ApplicationManager.getApplication().invokeLater(() -> model.setValue(history));
-            } catch (Exception e) {
-                System.err.println("error!!!!");
-                e.printStackTrace();
-            }
-        });
 
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
         var actionManager = ActionManager.getInstance();
         // todo: fix. I need to set this to something "listenable" for changes, such as singlevaluemodel
-        final AtomicReference<GitCommit> selectedCommit = new AtomicReference<>();
-        var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) model)
+        final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
+        var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) patchCommits)
                 .installPopupActions(new DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
                 .setEmptyCommitListText(RadicleBundle.message("pull.request.does.not.contain.commits"))
-                .onCommitSelected(c -> {selectedCommit.set((GitCommit) c); return Unit.INSTANCE;})
+                .onCommitSelected(c -> {
+                    if (c == null || ! (c instanceof GitCommit gc)) {
+                        selectedCommitChanges.setValue(List.of());
+                    } else {
+                        selectedCommitChanges.setValue(new ArrayList<>(gc.getChanges()));
+                    }
+                    return Unit.INSTANCE;
+                })
                 .create();
 
-        var commitChangesPanel = JBUI.Panels.simplePanel(
-                new JLabel("commit changes here")
-                //createChangesTree(parent, createCommitChangesModel(model, commitSelectionListener),
-                        //GithubBundle.message("pull.request.commit.does.not.contain.changes")))
-                )
-                .andTransparent();
+        var commitChangesTree = new PatchProposalChangesTree(patch.repo.getProject(), selectedCommitChanges)
+                .create(RadicleBundle.message("emptyChanges"));
+        var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent();
         commitChangesPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
         ///val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
@@ -121,7 +121,8 @@ public class PatchProposalPanel {
 
     protected JComponent createFilesComponent() {
         var panel = new BorderLayoutPanel().withBackground(UIUtil.getListBackground());
-        var changes = createChangesTree();
+        var changes = new PatchProposalChangesTree(patch.repo.getProject(), patchChanges)
+                .create(RadicleBundle.message("emptyChanges"));
         var actionManager = ActionManager.getInstance();
         var changesToolbarActionGroup = new DefaultActionGroup() {
             @Override
@@ -137,30 +138,35 @@ public class PatchProposalPanel {
         return panel.addToTop(actionsToolbarPanel).addToCenter(ScrollPaneFactory.createScrollPane(changes, false));
     }
 
-    protected ChangesTree createChangesTree() {
-        final var model = new SingleValueModel<>(patch.changes == null ? Collections.<Change>emptyList() : patch.changes);
-        calculatePatchChanges(patch, model);
-        return new PatchProposalChangesTree(patch.repo.getProject(), model)
-                .create(RadicleBundle.message("emptyChanges"));
-    }
-
-    protected void calculatePatchChanges(RadPatch patch, SingleValueModel<List<Change>> model) {
-        if (patch.changes != null) {
-            return;
-        }
+    protected void calculatePatchChanges() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             //first make sure that the peer is tracked
             boolean ok = checkAndTrackPeerIfNeeded(patch);
             if (!ok) {
-                patch.changes = null;
                 return;
             }
-            var computedChanges = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.commitHash,
-                    true);
-            patch.changes = computedChanges == null ? Collections.emptyList() : new ArrayList<>(computedChanges);
+            var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.commitHash, true);
+            final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
             ApplicationManager.getApplication().invokeLater(() -> {
-                model.setValue(patch.changes);
+                patchChanges.setValue(changes);
             });
+        });
+    }
+
+    protected void calculatePatchCommits() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var current = patch.repo.getCurrentRevision();
+            try {
+                final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
+                        patch.commitHash + ".." + current);
+                logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.commitHash, current, history);
+                ApplicationManager.getApplication().invokeLater(() -> patchCommits.setValue(history));
+            } catch (Exception e) {
+                logger.warn("error calculating patch commits for patch: {}", patch, e);
+                RadAction.showErrorNotification(patch.repo.getProject(),
+                        RadicleBundle.message("radCliError" ),
+                        RadicleBundle.message("errorCalculatingPatchProposalCommits"));
+            }
         });
     }
 
