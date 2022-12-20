@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
@@ -36,19 +37,7 @@ public class PatchTabController {
 
     public void createPatchProposalPanel(RadPatch patch) {
         if (patch.changes == null) {
-            patch.changes = new ArrayList<>();
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                //first make sure that the peer is tracked
-                boolean error = checkAndTrackPeerIfNeeded(patch);
-                if (error) {
-                    createPatchesPanel();
-                    return;
-                }
-                var computedChanges = GitChangeUtils.getDiff(patch.repo, patch.commitHash, patch.repo.getCurrentRevision(), true);
-                System.out.println("Calculated changes for patch: " + patch + " : " + computedChanges);
-                patch.changes = computedChanges == null ? Collections.emptyList() : new ArrayList<>(computedChanges);
-                ApplicationManager.getApplication().invokeLater(() -> this.createPatchProposalPanel(patch));
-            });
+            calculatePatchChanges(patch);
             return;
         }
         tab.setDisplayName("Patch Proposal from: " + patch.peerId);
@@ -61,23 +50,40 @@ public class PatchTabController {
         mainPanel.repaint();
     }
 
+    public Disposable getDisposer() {
+        return tab.getDisposer();
+    }
+
+    protected void calculatePatchChanges(RadPatch patch) {
+        patch.changes = new ArrayList<>();
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            //first make sure that the peer is tracked
+            boolean ok = checkAndTrackPeerIfNeeded(patch);
+            if (!ok) {
+                createPatchesPanel();
+                return;
+            }
+            var computedChanges = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.commitHash,
+                    true);
+            patch.changes = computedChanges == null ? Collections.emptyList() : new ArrayList<>(computedChanges);
+            ApplicationManager.getApplication().invokeLater(() -> this.createPatchProposalPanel(patch));
+        });
+    }
+
     protected boolean checkAndTrackPeerIfNeeded(RadPatch patch) {
         if (patch.self) {
-            return false;
+            return true;
         }
         final var trackedPeers = new RadRemote(patch.repo).findTrackedPeers();
         if (trackedPeers != null && !trackedPeers.isEmpty()) {
             var tracked = trackedPeers.stream().filter(p -> p.id().equals(patch.peerId)).findAny().orElse(null);
             if (tracked != null) {
-                return false;
+                return true;
             }
         }
 
         var trackPeer = new RadTrack(patch.repo, new RadTrack.Peer(patch.peerId));
         var out = trackPeer.perform();
-        if (!RadTrack.isSuccess(out)) {
-            return true;
-        }
-        return false;
+        return RadTrack.isSuccess(out);
     }
 }
