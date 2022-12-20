@@ -1,14 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.intellij.collaboration.async.CoroutineUtilKt;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +9,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
@@ -24,15 +18,12 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
-import com.intellij.util.ui.components.BorderLayoutPanel;
-import git4idea.changes.GitChangeUtils;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.CoroutineScopeKt;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -49,12 +40,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,8 +60,9 @@ public class PatchListPanel {
     private List<RadPatch> loadedRadPatches;
     private ProgressStripe progressStripe;
     private final PatchSearchPanelViewModel searchVm;
+    private JBList patchesList;
 
-    public PatchListPanel(PatchTabController ctrl, Project project) {
+    public PatchListPanel(PatchTabController ctrl, Project project, CoroutineScope scope) {
         this.controller = ctrl;
         this.project = project;
         this.patchModel = new DefaultListModel<>();
@@ -170,10 +159,9 @@ public class PatchListPanel {
                 if (e.getButton() != 1 || e.getClickCount() != 2) {
                     return;
                 }
-                final var selectedPatch = list.getSelectedValue();
-                seedModel.clear();
-                searchSpinner.setVisible(true);
-                controller.createPatchProposalPanel(selectedPatch);
+                final var selectedPatch = patchesList.getSelectedValue();
+                patchModel.clear();
+                controller.createPatchProposalPanel((RadPatch) selectedPatch);
             }
         });
         var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);
@@ -238,6 +226,7 @@ public class PatchListPanel {
      *     ├── main 7247e2b49d8cb17209cdae618740b37d05b0d5c0
      *     └── test 9411197feb2b47d0cf0f706e3aeff2a0b635fbcc
      */
+
     private List<RadPatch> parsePatchProposals(GitRepository repo, ProcessOutput output) {
         var infos = output.getStdoutLines(true);
         var radPatches = new ArrayList<RadPatch>();
@@ -258,7 +247,7 @@ public class PatchListPanel {
                 var parts = info.substring(1).trim().split(" ");
                 var branch = parts[1];
                 var commit = parts[2];
-                radPatches.add(new RadPatch(repo, currentUser, self, branch, commit));
+                radPatches.add(new RadPatch(repo,"", currentUser, self, branch, commit));
             }
         }
         return radPatches;

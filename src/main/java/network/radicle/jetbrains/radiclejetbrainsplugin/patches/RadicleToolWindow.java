@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.VcsToolWindowFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -15,10 +14,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class RadicleToolWindow extends VcsToolWindowFactory {
 import static com.intellij.collaboration.async.CoroutineUtilKt.DisposingMainScope;
 
-public class ToolWindow extends VcsToolWindowFactory {
+public class RadicleToolWindow extends VcsToolWindowFactory {
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {

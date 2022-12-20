@@ -20,17 +20,18 @@ import java.util.Collections;
 public class PatchTabController {
     private Project project;
     private Content tab;
+    private CoroutineScope scope;
 
     public PatchTabController(Content tab, Project project, CoroutineScope scope) {
         this.tab = tab;
         this.project = project;
-        this.panel = new PatchListPanel(project,scope);
+        this.scope = scope;
     }
 
     public void createPatchesPanel()  {
         tab.setDisplayName(RadicleBundle.message("patchTabName"));
         var mainPanel = tab.getComponent();
-        var panel = new PatchListPanel(this, project);
+        var panel = new PatchListPanel(this, project, scope);
         var createdPanel = panel.create();
         mainPanel.setLayout(new BorderLayout(5, 10));
         mainPanel.removeAll();
