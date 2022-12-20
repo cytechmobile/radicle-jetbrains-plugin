@@ -1,7 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.collaboration.async.CoroutineUtilKt;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
@@ -23,6 +26,8 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -124,12 +129,18 @@ public class PatchListPanel {
         searchSpinner.setVisible(false);
         mainPanel = JBUI.Panels.simplePanel();
         mainPanel.addToCenter(scrollPane);
+
         var scope = MainScope();
+        Disposer.register(controller.getDisposer(), () -> CoroutineScopeKt.cancel(scope, null));
         var history = new PatchSearchHistoryModel();
         var searchVm = new PatchSearchPanelViewModel(scope,history,project);
         var searchPanel = new PatchSearchPanel(searchVm).create(scope);
         borderPanel.add(searchPanel, BorderLayout.NORTH);
         mainPanel.addToTop(borderPanel);
+
+        //initial load of patches for pre-selected seed node
+        updateListPanel();
+
         return mainPanel;
     }
 

@@ -24,7 +24,7 @@ public class PatchProposalPanel {
 
     public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch patch) {
         this.patch = patch;
-        var uiDisposable = Disposer.newDisposable();
+        var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
         var infoComponent = new JPanel();
         infoComponent.add(new JLabel("INFO COMPONENT\nTODO: IMPLEMENT"));
         var tabInfo = new TabInfo(infoComponent);
@@ -42,7 +42,7 @@ public class PatchProposalPanel {
         commitInfo.setText(RadicleBundle.message("commits"));
         commitInfo.setSideComponent(createReturnToListSideComponent(controller));
 
-        var tabs = new SingleHeightTabs(null,uiDisposable);
+        var tabs = new SingleHeightTabs(null, uiDisposable);
         tabs.addTab(tabInfo);
         tabs.addTab(commitInfo);
         tabs.addTab(filesInfo);
