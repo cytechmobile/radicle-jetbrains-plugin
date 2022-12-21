@@ -87,11 +87,9 @@ public class PatchProposalPanel {
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
-        var actionManager = ActionManager.getInstance();
         final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
         var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) patchCommits)
-                .installPopupActions(new DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
-                .setEmptyCommitListText(RadicleBundle.message("pull.request.does.not.contain.commits"))
+                .setEmptyCommitListText(RadicleBundle.message("patchProposalNoCommits"))
                 .onCommitSelected(c -> {
                     if (c == null || ! (c instanceof GitCommit gc)) {
                         selectedCommitChanges.setValue(List.of());
@@ -104,8 +102,8 @@ public class PatchProposalPanel {
 
         var commitChangesTree = new PatchProposalChangesTree(patch.repo.getProject(), selectedCommitChanges)
                 .create(RadicleBundle.message("emptyChanges"));
-        var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent();
-        commitChangesPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent()
+                .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
         var toolbar = createChangesTreeActionToolbar(commitChangesTree);
         var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
@@ -177,17 +175,11 @@ public class PatchProposalPanel {
 
     protected JPanel createChangesTreeActionToolbar(ChangesTree tree) {
         final var actionManager = ActionManager.getInstance();
-        var changesToolbarActionGroup = new DefaultActionGroup() {
-            @Override
-            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-                // these can be found in plugin.xml of github plugin, under the Github.PullRequest.Changes.Toolbar group
-                final var showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
-                final var groupAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
-                return new AnAction[]{showDiffAction, groupAction};
-            }
-        };
-        var changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true);
-        var treeActionsGroup = new DefaultActionGroup(TreeActionsToolbarPanel.createTreeActions(tree));
-        return new TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, tree);
+        var changesToolbarActionGroup = new DefaultActionGroup(
+                actionManager.getAction(IdeActions.ACTION_SHOW_DIFF_COMMON),
+                actionManager.getAction("Diff.ShowStandaloneDiff"),
+                actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+        var changesToolbar = actionManager.createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, changesToolbarActionGroup, true);
+        return new TreeActionsToolbarPanel(changesToolbar, tree);
     }
 }

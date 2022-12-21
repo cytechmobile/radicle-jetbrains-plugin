@@ -10,9 +10,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SelectionSaver;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -47,18 +45,13 @@ public class PatchProposalChangesTree {
                 return VcsTreeModelData.getData(project, this, dataId);
             }
         };
+        var pag = new DefaultActionGroup(
+                ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON),
+                ActionManager.getInstance().getAction("Diff.ShowStandaloneDiff"));
+        tree.installPopupHandler(pag);
 
-        final var actionGroup = new DefaultActionGroup();
-        final var showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
-        showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), tree);
-        actionGroup.add(showDiffAction);
-
-        var toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, actionGroup, false);
-        toolbar.setTargetComponent(tree);
-
-        PopupHandler.installPopupMenu(tree, actionGroup, ActionPlaces.CHANGES_VIEW_POPUP);
         tree.getEmptyText().setText(emptyText);
-        UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
+        tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
         SelectionSaver.installOn(tree);
         tree.addFocusListener(new FocusAdapter() {
             @Override
@@ -70,6 +63,7 @@ public class PatchProposalChangesTree {
         });
         tree.setDoubleClickHandler(mouseEvent -> {
             var dataContext = DataManager.getInstance().getDataContext(tree);
+            var showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
             var event = AnActionEvent.createFromAnAction(showDiffAction, mouseEvent, ActionPlaces.CHANGES_VIEW_TOOLBAR, dataContext);
             ActionUtil.performActionDumbAwareWithCallbacks(showDiffAction, event);
             return false;
@@ -80,5 +74,4 @@ public class PatchProposalChangesTree {
         });
         return tree;
     }
-
 }
