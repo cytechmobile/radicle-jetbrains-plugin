@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
@@ -18,12 +17,11 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
-import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -49,6 +47,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
+import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
+
 public class PatchListPanel {
     private final PatchTabController controller;
     private final Project project;
@@ -56,20 +56,17 @@ public class PatchListPanel {
     private final DefaultListModel<RadPatch> patchModel;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean triggerSeedNodeAction = true;
-    private final CoroutineScope scope;
     private List<RadPatch> loadedRadPatches;
     private ProgressStripe progressStripe;
-    private final PatchSearchPanelViewModel searchVm;
+    private PatchSearchPanelViewModel searchVm;
     private JBList patchesList;
 
-    public PatchListPanel(PatchTabController ctrl, Project project, CoroutineScope scope) {
+    public PatchListPanel(PatchTabController ctrl, Project project) {
         this.controller = ctrl;
         this.project = project;
         this.patchModel = new DefaultListModel<>();
         this.radicleSettingsHandler = new RadicleSettingsHandler();
         this.seedNodeComboBox = new ComboBox<>();
-        this.scope = scope;
-        searchVm = new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
     }
 
     private void initializeSeedNodeCombobox() {
@@ -83,6 +80,9 @@ public class PatchListPanel {
 
     public JComponent create() {
         initializeSeedNodeCombobox();
+        var scope = MainScope();
+        Disposer.register(controller.getDisposer(), () -> CoroutineScopeKt.cancel(scope, null));
+        searchVm = new PatchSearchPanelViewModel(scope,new PatchSearchHistoryModel(), project);
         var filterPanel = new PatchFilterPanel(searchVm).create(scope);
         var seedNodePanel = createSeedNodePanel();
         var verticalPanel = new JPanel(new VerticalLayout(5));
@@ -165,7 +165,7 @@ public class PatchListPanel {
             }
         });
         var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);
-        progressStripe = new ProgressStripe(scrollPane, Disposer.newDisposable(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+        progressStripe = new ProgressStripe(scrollPane, controller.getDisposer(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
         return progressStripe;
     }
 
