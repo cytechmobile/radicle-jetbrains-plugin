@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
@@ -106,10 +107,9 @@ public class PatchProposalPanel {
         var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent();
         commitChangesPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
-        ///val toolbar = GHPRChangesTreeFactory.createTreeToolbar(actionManager, changesLoadingPanel)
-        var changesBrowser = new BorderLayoutPanel().andTransparent()
-                //.addToTop(toolbar)
-                .addToCenter(commitChangesPanel);
+        var toolbar = createChangesTreeActionToolbar(commitChangesTree);
+        var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
+                .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, false));
 
         splitter.setFirstComponent(commitBrowser);
         splitter.setSecondComponent(changesBrowser);
@@ -121,17 +121,7 @@ public class PatchProposalPanel {
         var panel = new BorderLayoutPanel().withBackground(UIUtil.getListBackground());
         var changes = new PatchProposalChangesTree(patch.repo.getProject(), patchChanges)
                 .create(RadicleBundle.message("emptyChanges"));
-        var actionManager = ActionManager.getInstance();
-        var changesToolbarActionGroup = new DefaultActionGroup() {
-            @Override
-            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-                final var showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
-                return new AnAction[]{showDiffAction};
-            }
-        };
-        var changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true);
-        var treeActionsGroup = new DefaultActionGroup(TreeActionsToolbarPanel.createTreeActions(changes));
-        var actionsToolbarPanel = new TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, changes);
+        var actionsToolbarPanel = createChangesTreeActionToolbar(changes);
 
         return panel.addToTop(actionsToolbarPanel).addToCenter(ScrollPaneFactory.createScrollPane(changes, false));
     }
@@ -183,5 +173,21 @@ public class PatchProposalPanel {
         var trackPeer = new RadTrack(patch.repo, new RadTrack.Peer(patch.peerId));
         var out = trackPeer.perform();
         return RadTrack.isSuccess(out);
+    }
+
+    protected JPanel createChangesTreeActionToolbar(ChangesTree tree) {
+        final var actionManager = ActionManager.getInstance();
+        var changesToolbarActionGroup = new DefaultActionGroup() {
+            @Override
+            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+                // these can be found in plugin.xml of github plugin, under the Github.PullRequest.Changes.Toolbar group
+                final var showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
+                final var groupAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
+                return new AnAction[]{showDiffAction, groupAction};
+            }
+        };
+        var changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true);
+        var treeActionsGroup = new DefaultActionGroup(TreeActionsToolbarPanel.createTreeActions(tree));
+        return new TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, tree);
     }
 }
