@@ -8,13 +8,16 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserDialogPanel;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
+import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
@@ -70,7 +73,7 @@ public class PatchProposalPanel {
         filesInfo.setText(RadicleBundle.message("files"));
         filesInfo.setSideComponent(createReturnToListSideComponent(controller));
 
-        var commitComponent = createCommitComponent();
+        var commitComponent = createCommitComponent(controller);
         var commitInfo = new TabInfo(commitComponent);
         commitInfo.setText(RadicleBundle.message("commits"));
         commitInfo.setSideComponent(createReturnToListSideComponent(controller));
@@ -87,9 +90,11 @@ public class PatchProposalPanel {
                 () -> {controller.createPatchesPanel(); return Unit.INSTANCE;});
     }
 
-    protected JComponent createCommitComponent() {
+    protected JComponent createCommitComponent(PatchTabController controller) {
         final var project = patch.repo.getProject();
         var simpleChangesTree = new SimpleChangesBrowser(patch.repo.getProject(),List.of());
+        DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, simpleChangesTree, controller.getDisposer());
+        simpleChangesTree.setShowDiffActionPreview(diffPreview);
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
@@ -106,25 +111,8 @@ public class PatchProposalPanel {
                     return Unit.INSTANCE;
                 })
                 .create();
-
-        //  var commitChangesTree = new PatchProposalChangesTree(patch.repo.getProject(), selectedCommitChanges)
-        //          .create(RadicleBundle.message("emptyChanges"));
-
-        //  var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent()
-        //          .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-
-        // var toolbar = createChangesTreeActionToolbar(commitChangesTree);
-
-
-        //   var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
-        //          .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, true));
-
-        //  CommittedChangesBrowser myChangesBrowser = new CommittedChangesBrowser(patch.repo.getProject());
-        // myChangesBrowser.setChangesToDisplay(selectedCommitChanges.getValue());
-
         splitter.setFirstComponent(commitBrowser);
         splitter.setSecondComponent(simpleChangesTree);
-
         return splitter;
     }
 
