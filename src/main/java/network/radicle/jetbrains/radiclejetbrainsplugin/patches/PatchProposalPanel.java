@@ -35,7 +35,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class PatchProposalPanel {
     private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
@@ -88,7 +87,6 @@ public class PatchProposalPanel {
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
         var actionManager = ActionManager.getInstance();
-        // todo: fix. I need to set this to something "listenable" for changes, such as singlevaluemodel
         final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
         var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) patchCommits)
                 .installPopupActions(new DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
