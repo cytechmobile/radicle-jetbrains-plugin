@@ -294,7 +294,7 @@ public class PatchListPanel {
 
                 var innerPanel = new JPanel();
                 innerPanel.setLayout(new BorderLayout());
-                text = new JLabel(patch.repo.getRoot().getName() + " - " + patch.commitHash);
+                text = new JLabel(patch.repo.getRoot().getName() + " - " + patch.branchName + " - " + patch.commitHash);
                 patchPanel.add(text, BorderLayout.NORTH);
                 var comment = new JLabel("Created by: " + (patch.self ? "You " : "") + patch.peerId);
                 comment.setForeground(Color.GRAY);
