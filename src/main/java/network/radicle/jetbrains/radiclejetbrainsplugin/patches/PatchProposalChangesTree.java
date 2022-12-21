@@ -42,7 +42,8 @@ public class PatchProposalChangesTree {
 
             @Override
             public @Nullable Object getData(@NotNull String dataId) {
-                return VcsTreeModelData.getData(project, this, dataId);
+                var data = super.getData(dataId);
+                return data != null ? data : VcsTreeModelData.getData(project, this, dataId);
             }
         };
         var pag = new DefaultActionGroup(
