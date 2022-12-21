@@ -50,6 +50,19 @@ public class PatchProposalChangesTree {
                 ActionManager.getInstance().getAction("Diff.ShowStandaloneDiff"));
         tree.installPopupHandler(pag);
 
+        /*
+        // TODO: this needs to be correctly implemented and setup for diff preview to work as expected
+        val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
+                                                          dataContext.filesManager)
+        DataManager.registerDataProvider(parentPanel) { dataId ->
+          when {
+            EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewController.activePreview
+            tree.isShowing -> tree.getCustomData(dataId) ?: tree.getData(dataId)
+            else -> null
+          }
+        }
+        */
+
         tree.getEmptyText().setText(emptyText);
         tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
         SelectionSaver.installOn(tree);
