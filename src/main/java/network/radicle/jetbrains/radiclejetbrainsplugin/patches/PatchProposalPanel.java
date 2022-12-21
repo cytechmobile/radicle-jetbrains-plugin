@@ -3,14 +3,19 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
+import com.intellij.dvcs.ui.CompareBranchesDiffPanel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowser;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserDialogPanel;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -35,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class PatchProposalPanel {
@@ -83,7 +89,7 @@ public class PatchProposalPanel {
 
     protected JComponent createCommitComponent() {
         final var project = patch.repo.getProject();
-
+        var simpleChangesTree = new SimpleChangesBrowser(patch.repo.getProject(),List.of());
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
@@ -96,21 +102,28 @@ public class PatchProposalPanel {
                     } else {
                         selectedCommitChanges.setValue(new ArrayList<>(gc.getChanges()));
                     }
+                    simpleChangesTree.setChangesToDisplay(selectedCommitChanges.getValue());
                     return Unit.INSTANCE;
                 })
                 .create();
 
-        var commitChangesTree = new PatchProposalChangesTree(patch.repo.getProject(), selectedCommitChanges)
-                .create(RadicleBundle.message("emptyChanges"));
-        var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent()
-                .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        //  var commitChangesTree = new PatchProposalChangesTree(patch.repo.getProject(), selectedCommitChanges)
+        //          .create(RadicleBundle.message("emptyChanges"));
 
-        var toolbar = createChangesTreeActionToolbar(commitChangesTree);
-        var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
-                .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, true));
+        //  var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent()
+        //          .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+
+        // var toolbar = createChangesTreeActionToolbar(commitChangesTree);
+
+
+        //   var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
+        //          .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, true));
+
+        //  CommittedChangesBrowser myChangesBrowser = new CommittedChangesBrowser(patch.repo.getProject());
+        // myChangesBrowser.setChangesToDisplay(selectedCommitChanges.getValue());
 
         splitter.setFirstComponent(commitBrowser);
-        splitter.setSecondComponent(changesBrowser);
+        splitter.setSecondComponent(simpleChangesTree);
 
         return splitter;
     }
