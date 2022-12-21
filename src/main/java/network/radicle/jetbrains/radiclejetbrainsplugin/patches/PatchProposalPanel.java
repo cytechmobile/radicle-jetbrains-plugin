@@ -3,7 +3,9 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
@@ -27,8 +29,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadRemote;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,7 +107,7 @@ public class PatchProposalPanel {
 
         var toolbar = createChangesTreeActionToolbar(commitChangesTree);
         var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
-                .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, false));
+                .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, true));
 
         splitter.setFirstComponent(commitBrowser);
         splitter.setSecondComponent(changesBrowser);
@@ -121,7 +121,7 @@ public class PatchProposalPanel {
                 .create(RadicleBundle.message("emptyChanges"));
         var actionsToolbarPanel = createChangesTreeActionToolbar(changes);
 
-        return panel.addToTop(actionsToolbarPanel).addToCenter(ScrollPaneFactory.createScrollPane(changes, false));
+        return panel.addToTop(actionsToolbarPanel).addToCenter(ScrollPaneFactory.createScrollPane(changes, true));
     }
 
     protected void calculatePatchChanges() {
@@ -179,7 +179,7 @@ public class PatchProposalPanel {
                 actionManager.getAction(IdeActions.ACTION_SHOW_DIFF_COMMON),
                 actionManager.getAction("Diff.ShowStandaloneDiff"),
                 actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
-        var changesToolbar = actionManager.createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, changesToolbarActionGroup, true);
+        var changesToolbar = actionManager.createActionToolbar("RadicleChangesBrowser", changesToolbarActionGroup, true);
         return new TreeActionsToolbarPanel(changesToolbar, tree);
     }
 }
