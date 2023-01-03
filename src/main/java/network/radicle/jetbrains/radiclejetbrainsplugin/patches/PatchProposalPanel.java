@@ -51,8 +51,7 @@ public class PatchProposalPanel {
         calculatePatchCommits();
 
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
-        var infoComponent = new JPanel();
-        infoComponent.add(new JLabel("<html>INFO COMPONENT<br>TODO: IMPLEMENT</html>"));
+        var infoComponent = createInfoComponent();
         var tabInfo = new TabInfo(infoComponent);
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent(controller));
@@ -101,6 +100,10 @@ public class PatchProposalPanel {
         splitter.setFirstComponent(commitBrowser);
         splitter.setSecondComponent(simpleChangesTree);
         return splitter;
+    }
+
+    protected JComponent createInfoComponent() {
+        return new JLabel("Info component");
     }
 
     protected JComponent createFilesComponent(PatchTabController controller) {
