@@ -31,7 +31,7 @@ public class PatchTabController {
 
     public void createPatchProposalPanel(RadPatch patch) {
         tab.setDisplayName("Patch Proposal from: " + patch.peerId);
-        var patchProposalViewPanel = new PatchProposalPanel().createViewPatchProposalPanel(this, patch);
+        var patchProposalViewPanel = new PatchProposalPanel().createViewPatchProposalPanel(this, patch, project);
         var mainPanel = tab.getComponent();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.removeAll();

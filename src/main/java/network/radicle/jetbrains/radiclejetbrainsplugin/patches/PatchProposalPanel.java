@@ -1,28 +1,39 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.SingleValueModel;
+import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
-import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
+import git4idea.repo.GitRepositoryManager;
+import icons.CollaborationToolsIcons;
 import kotlin.Unit;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
+import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadRemote;
@@ -32,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +55,7 @@ public class PatchProposalPanel {
     protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
     protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
 
-    public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch patch) {
+    public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch patch, Project project) {
         this.patch = patch;
         this.patchChanges.setValue(List.of());
         this.patchCommits.setValue(List.of());
@@ -51,7 +63,7 @@ public class PatchProposalPanel {
         calculatePatchCommits();
 
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
-        var infoComponent = createInfoComponent();
+        var infoComponent = createInfoComponent(project);
         var tabInfo = new TabInfo(infoComponent);
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent(controller));
@@ -102,8 +114,77 @@ public class PatchProposalPanel {
         return splitter;
     }
 
-    protected JComponent createInfoComponent() {
-        return new JLabel("Info component");
+    protected JComponent createInfoComponent(Project project) {
+        var branchPanel = branchComponent(project);
+        var titlePanel = titleComponent();
+        var descriptionPanel = descriptionComponent();
+
+        var detailsSection = new JPanel(new MigLayout(new LC()
+                .insets("0", "0", "0", "0").gridGap("0", "0").fill().flowY()));
+        detailsSection.setOpaque(false);
+        detailsSection.setBorder(JBUI.Borders.empty(8));
+
+        detailsSection.add(branchPanel, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        detailsSection.add(titlePanel, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        detailsSection.add(descriptionPanel, new CC().gapBottom(String.valueOf(UI.scale(8))));
+
+        var borderPanel = new JPanel(new BorderLayout());
+        borderPanel.add(detailsSection, BorderLayout.NORTH);
+
+        return borderPanel;
+    }
+
+    private JComponent descriptionComponent() {
+        var titlePane = new BaseHtmlEditorPane();
+        titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
+        titlePane.setBody("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s," +
+                " when an unknown printer took a galley of type and scrambled it to make a type specimen book.");
+        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        nonOpaquePanel.add(titlePane, new CC());
+        return nonOpaquePanel;
+    }
+
+    private JComponent titleComponent() {
+        var icon = new JLabel();
+        icon.setIcon(CollaborationToolsIcons.PullRequestOpen);
+        var titlePane = new BaseHtmlEditorPane();
+        titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
+        titlePane.setBody(patch.branchName + " - " + patch.commitHash);
+        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        nonOpaquePanel.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+        nonOpaquePanel.add(titlePane, new CC());
+        return nonOpaquePanel;
+    }
+
+    private JComponent branchComponent(Project project) {
+        var branchPanel = new NonOpaquePanel();
+        branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0","0").insets("0","0","0","0")));;
+        var currentBranch = "";
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        if (gitRepoManager.getRepositories().size() > 0) {
+            currentBranch = gitRepoManager.getRepositories().get(0).getCurrentBranch().getName();
+        }
+        var to = createLabel(currentBranch);
+        var from = createLabel(patch.branchName + " - " + patch.commitHash);
+        branchPanel.add(to, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
+        var arrowLabel = new JLabel(UIUtil.leftArrow());
+        arrowLabel.setForeground(CurrentBranchComponent.TEXT_COLOR);
+        arrowLabel.setBorder(JBUI.Borders.empty(0,5));
+        branchPanel.add(arrowLabel);
+        branchPanel.add(from, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
+        return branchPanel;
+    }
+
+    private JBLabel createLabel(String branchName) {
+        var label = new JBLabel(CollaborationToolsIcons.Review.Branch);
+        CollaborationToolsUIUtil.INSTANCE.overrideUIDependentProperty(label, jbLabel -> {
+            jbLabel.setForeground(CurrentBranchComponent.TEXT_COLOR);
+            jbLabel.setBackground(CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground()));
+            jbLabel.andOpaque();
+            return null;
+        });
+        label.setText(branchName);
+        return label;
     }
 
     protected JComponent createFilesComponent(PatchTabController controller) {
