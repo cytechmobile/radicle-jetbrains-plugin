@@ -3,19 +3,20 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
+import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
@@ -27,8 +28,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadRemote;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +35,10 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class PatchProposalPanel {
     private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
-
     protected RadPatch patch;
     protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
     protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
@@ -49,22 +48,20 @@ public class PatchProposalPanel {
         this.patchChanges.setValue(List.of());
         this.patchCommits.setValue(List.of());
 
-        calculatePatchChanges();
         calculatePatchCommits();
 
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
-        var infoComponent = new JPanel();
-        infoComponent.add(new JLabel("<html>INFO COMPONENT<br>TODO: IMPLEMENT</html>"));
+        var infoComponent = createInfoComponent();
         var tabInfo = new TabInfo(infoComponent);
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent(controller));
 
-        var filesComponent = createFilesComponent();
+        var filesComponent = createFilesComponent(controller);
         var filesInfo = new TabInfo(filesComponent);
         filesInfo.setText(RadicleBundle.message("files"));
         filesInfo.setSideComponent(createReturnToListSideComponent(controller));
 
-        var commitComponent = createCommitComponent();
+        var commitComponent = createCommitComponent(controller);
         var commitInfo = new TabInfo(commitComponent);
         commitInfo.setText(RadicleBundle.message("commits"));
         commitInfo.setSideComponent(createReturnToListSideComponent(controller));
@@ -81,52 +78,60 @@ public class PatchProposalPanel {
                 () -> {controller.createPatchesPanel(); return Unit.INSTANCE;});
     }
 
-    protected JComponent createCommitComponent() {
+    protected JComponent createCommitComponent(PatchTabController controller) {
         final var project = patch.repo.getProject();
-
+        var simpleChangesTree = getChangesBrowser(patch.repo.getProject(), controller);
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
-        var actionManager = ActionManager.getInstance();
         final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
         var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) patchCommits)
-                .installPopupActions(new DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
-                .setEmptyCommitListText(RadicleBundle.message("pull.request.does.not.contain.commits"))
+                .setEmptyCommitListText(RadicleBundle.message("patchProposalNoCommits"))
                 .onCommitSelected(c -> {
                     if (c == null || ! (c instanceof GitCommit gc)) {
                         selectedCommitChanges.setValue(List.of());
                     } else {
                         selectedCommitChanges.setValue(new ArrayList<>(gc.getChanges()));
                     }
+                    simpleChangesTree.setChangesToDisplay(selectedCommitChanges.getValue());
                     return Unit.INSTANCE;
                 })
                 .create();
-
-        var commitChangesTree = new PatchProposalChangesTree(patch.repo.getProject(), selectedCommitChanges)
-                .create(RadicleBundle.message("emptyChanges"));
-        var commitChangesPanel = JBUI.Panels.simplePanel(commitChangesTree).andTransparent();
-        commitChangesPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-
-        var toolbar = createChangesTreeActionToolbar(commitChangesTree);
-        var changesBrowser = new BorderLayoutPanel().andTransparent().addToTop(toolbar)
-                .addToCenter(ScrollPaneFactory.createScrollPane(commitChangesPanel, false));
-
         splitter.setFirstComponent(commitBrowser);
-        splitter.setSecondComponent(changesBrowser);
-
+        splitter.setSecondComponent(simpleChangesTree);
         return splitter;
     }
 
-    protected JComponent createFilesComponent() {
-        var panel = new BorderLayoutPanel().withBackground(UIUtil.getListBackground());
-        var changes = new PatchProposalChangesTree(patch.repo.getProject(), patchChanges)
-                .create(RadicleBundle.message("emptyChanges"));
-        var actionsToolbarPanel = createChangesTreeActionToolbar(changes);
-
-        return panel.addToTop(actionsToolbarPanel).addToCenter(ScrollPaneFactory.createScrollPane(changes, false));
+    protected JComponent createInfoComponent() {
+        return new JLabel("Info component");
     }
 
-    protected void calculatePatchChanges() {
+    protected JComponent createFilesComponent(PatchTabController controller) {
+        var simpleChangesTree = getChangesBrowser(patch.repo.getProject(), controller);
+        var radLoadingChangePanel = new LoadingChangesPanel(simpleChangesTree, simpleChangesTree.getViewer().getEmptyText(), controller.getDisposer());
+        radLoadingChangePanel.loadChangesInBackground(() -> {
+            var countDown = new CountDownLatch(1);
+            calculatePatchChanges(countDown);
+            try {
+                countDown.await();
+            } catch (Exception e) {
+                logger.warn("Unable to calculate patch changes");
+                return false;
+            }
+            return true;
+        }, success -> simpleChangesTree.setChangesToDisplay(Boolean.TRUE.equals(success) ? patchChanges.getValue() : List.of()));
+        var panel = new BorderLayoutPanel().withBackground(UIUtil.getListBackground());
+        return panel.addToCenter(ScrollPaneFactory.createScrollPane(radLoadingChangePanel, true));
+    }
+
+    protected SimpleChangesBrowser getChangesBrowser(Project project, PatchTabController controller) {
+        var simpleChangesTree = new SimpleChangesBrowser(patch.repo.getProject(),List.of());
+        DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, simpleChangesTree, controller.getDisposer());
+        simpleChangesTree.setShowDiffActionPreview(diffPreview);
+        return simpleChangesTree;
+    }
+
+    protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             //first make sure that the peer is tracked
             boolean ok = checkAndTrackPeerIfNeeded(patch);
@@ -137,6 +142,7 @@ public class PatchProposalPanel {
             final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
             ApplicationManager.getApplication().invokeLater(() -> {
                 patchChanges.setValue(changes);
+                latch.countDown();
             });
         });
     }
@@ -173,21 +179,5 @@ public class PatchProposalPanel {
         var trackPeer = new RadTrack(patch.repo, new RadTrack.Peer(patch.peerId));
         var out = trackPeer.perform();
         return RadTrack.isSuccess(out);
-    }
-
-    protected JPanel createChangesTreeActionToolbar(ChangesTree tree) {
-        final var actionManager = ActionManager.getInstance();
-        var changesToolbarActionGroup = new DefaultActionGroup() {
-            @Override
-            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-                // these can be found in plugin.xml of github plugin, under the Github.PullRequest.Changes.Toolbar group
-                final var showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
-                final var groupAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
-                return new AnAction[]{showDiffAction, groupAction};
-            }
-        };
-        var changesToolbar = actionManager.createActionToolbar("ChangesBrowser", changesToolbarActionGroup, true);
-        var treeActionsGroup = new DefaultActionGroup(TreeActionsToolbarPanel.createTreeActions(tree));
-        return new TreeActionsToolbarPanel(changesToolbar, treeActionsGroup, tree);
     }
 }
