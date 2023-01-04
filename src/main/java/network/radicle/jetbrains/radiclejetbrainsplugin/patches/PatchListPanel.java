@@ -180,9 +180,11 @@ public class PatchListPanel {
             var stateFilter = patchListSearchValue.state;
             var projectFilter = patchListSearchValue.project;
             var searchFilter = patchListSearchValue.searchQuery;
+            var peerIdFilter = patchListSearchValue.peerId;
             List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                    .filter(p -> searchFilter == null || p.peerId.contains(searchFilter))
-                    .filter(p-> projectFilter == null || p.repo.getProject().getName().equals(projectFilter))
+                    .filter(p -> searchFilter == null  || p.peerId.contains(searchFilter) || p.branchName.contains(searchFilter))
+                    .filter(p->  projectFilter == null || p.repo.getProject().getName().equals(projectFilter))
+                    .filter(p -> peerIdFilter == null  || p.peerId.contains(peerIdFilter))
                     .filter(p-> stateFilter == null)
                     .collect(Collectors.toList());
             patchModel.addAll(filteredPatches);
@@ -254,6 +256,8 @@ public class PatchListPanel {
     }
 
     private void updateListPanel() {
+        var radPatchesCountDown = new CountDownLatch(1);
+        searchVm.setRadPatchesCountDown(radPatchesCountDown);
         var selectedSeedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
         if (selectedSeedNode == null) {
             return ;
@@ -266,6 +270,8 @@ public class PatchListPanel {
             progressStripe.startLoading();
             var patchProposals = getPatchProposals(repos, url);
             loadedRadPatches = patchProposals;
+            searchVm.setRadPatches(loadedRadPatches);
+            radPatchesCountDown.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 patchModel.addAll(patchProposals);
                 progressStripe.stopLoading();
@@ -298,11 +304,19 @@ public class PatchListPanel {
         @Override
         public Component getListCellRendererComponent(
                 JList<? extends RadPatch> list, RadPatch value, int index, boolean isSelected, boolean cellHasFocus) {
+
+            /*
+
+            This code introduce a bug in filtering
+
             if (!cells.containsKey(index)) {
                 var cell = new Cell(index, value);
                 cells.put(index, cell);
             }
-            var cell = cells.get(index);
+
+            */
+
+            var cell = new Cell(index, value);
             cell.setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
             cell.text.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
             return cell;

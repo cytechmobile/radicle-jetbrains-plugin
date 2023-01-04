@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.repo.GitRepository;
 
-import java.util.Collection;
 import java.util.List;
 
 public class RadPatch {

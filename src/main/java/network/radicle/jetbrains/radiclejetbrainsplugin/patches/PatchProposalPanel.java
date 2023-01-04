@@ -137,7 +137,8 @@ public class PatchProposalPanel {
     private JComponent descriptionComponent() {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s," +
+        titlePane.setBody("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has " +
+                "been the industry's standard dummy text ever since the 1500s," +
                 " when an unknown printer took a galley of type and scrambled it to make a type specimen book.");
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC());
