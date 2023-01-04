@@ -31,6 +31,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                 if (toolWindow == shownToolWindow && toolWindow.isVisible() && contentManager.isEmpty()) {
                     contentManager.addContent(patchContent);
                     contentManager.addContent(issueContent);
+                    contentManager.setSelectedContent(patchContent,true);
                     var controller = new PatchTabController(patchContent, project);
                     controller.createPatchesPanel();
                 }

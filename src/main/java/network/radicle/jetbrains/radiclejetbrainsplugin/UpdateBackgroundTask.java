@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UpdateBackgroundTask extends Task.Backgroundable {
     private static final Logger logger = Logger.getInstance(UpdateBackgroundTask.class);
@@ -29,7 +28,4 @@ public class UpdateBackgroundTask extends Task.Backgroundable {
         }
     }
 
-    public void startInThread() {
-        new Thread(this::queue).start();
-    }
 }
