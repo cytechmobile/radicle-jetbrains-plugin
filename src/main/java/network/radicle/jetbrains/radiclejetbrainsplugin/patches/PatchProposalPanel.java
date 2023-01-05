@@ -14,8 +14,10 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -54,6 +56,8 @@ public class PatchProposalPanel {
     protected RadPatch patch;
     protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
     protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
+    protected TabInfo commitTab ;
+    protected TabInfo filesTab ;
 
     public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch patch, Project project) {
         this.patch = patch;
@@ -70,11 +74,13 @@ public class PatchProposalPanel {
 
         var filesComponent = createFilesComponent(controller);
         var filesInfo = new TabInfo(filesComponent);
+        filesTab = filesInfo;
         filesInfo.setText(RadicleBundle.message("files"));
         filesInfo.setSideComponent(createReturnToListSideComponent(controller));
 
         var commitComponent = createCommitComponent(controller);
         var commitInfo = new TabInfo(commitComponent);
+        commitTab = commitInfo;
         commitInfo.setText(RadicleBundle.message("commits"));
         commitInfo.setSideComponent(createReturnToListSideComponent(controller));
 
@@ -224,6 +230,7 @@ public class PatchProposalPanel {
             final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
             ApplicationManager.getApplication().invokeLater(() -> {
                 patchChanges.setValue(changes);
+                filesTab.append(" " + changes.size(),new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 latch.countDown();
             });
         });
@@ -236,7 +243,10 @@ public class PatchProposalPanel {
                 final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
                         patch.commitHash + "..." + current);
                 logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.commitHash, current, history);
-                ApplicationManager.getApplication().invokeLater(() -> patchCommits.setValue(history));
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    patchCommits.setValue(history);
+                    commitTab.append(" " + patchCommits.getValue().size(),new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+                });
             } catch (Exception e) {
                 logger.warn("error calculating patch commits for patch: {}", patch, e);
                 RadAction.showErrorNotification(patch.repo.getProject(),
