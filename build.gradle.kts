@@ -38,7 +38,7 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.1")
 
-    testImplementation("org.assertj:assertj-core:3.23.1")
+    testImplementation("org.assertj:assertj-core:3.24.0")
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
