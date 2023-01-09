@@ -38,11 +38,11 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.1")
 
-    testImplementation("org.assertj:assertj-core:3.23.1")
+    testImplementation("org.assertj:assertj-core:3.24.1")
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
-    testImplementation("org.mockito:mockito-core:4.10.0")
+    testImplementation("org.mockito:mockito-core:4.11.0")
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
