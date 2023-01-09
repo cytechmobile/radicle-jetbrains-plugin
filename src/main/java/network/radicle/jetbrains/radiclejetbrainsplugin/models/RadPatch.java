@@ -1,13 +1,37 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
+import com.intellij.openapi.vcs.changes.Change;
 import git4idea.repo.GitRepository;
 
-public class RadPatch {
-    public String peerId;
-    public GitRepository repo;
+import java.util.List;
 
-    public RadPatch(String peerId, GitRepository repo) {
-        this.peerId = peerId;
+public class RadPatch {
+    public GitRepository repo;
+    public String peerId;
+    public String author;
+    public boolean self;
+    public String branchName;
+    public String commitHash;
+
+    public List<Change> changes;
+
+    public RadPatch(GitRepository repo,String author, String peerId, boolean self, String branchName, String commitHash) {
         this.repo = repo;
+        this.peerId = peerId;
+        this.self = self;
+        this.branchName = branchName;
+        this.commitHash = commitHash;
+        this.author = author;
+    }
+
+    @Override
+    public String toString() {
+        return "RadPatch{" +
+                "repo=" + repo +
+                ", peerId='" + peerId + '\'' +
+                ", self=" + self +
+                ", branchName='" + branchName + '\'' +
+                ", commitHash='" + commitHash + '\'' +
+                '}';
     }
 }
