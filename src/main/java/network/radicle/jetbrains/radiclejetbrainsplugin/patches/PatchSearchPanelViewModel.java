@@ -78,7 +78,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var gitRepoManager = GitRepositoryManager.getInstance(project);
             projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
-                    .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
+                    .stream().map(e -> e.getRoot().getName()).collect(Collectors.toList());
             isFinished.countDown();
         });
         try {
@@ -90,6 +90,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
     }
 
     public List<String> getPeerIds() {
+        var selectedProjectFilter = this.getSearchState().getValue().project;
         List<String> peersIds = new ArrayList<>();
         try {
             radPatchesCountDown.await();
@@ -98,6 +99,9 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
             return peersIds;
         }
         for (var p : radPatches) {
+            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                continue;
+            }
             if (!peersIds.contains(p.peerId)) {
                 peersIds.add(p.peerId);
             }

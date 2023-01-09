@@ -224,6 +224,7 @@ public class PatchProposalPanel {
             //first make sure that the peer is tracked
             boolean ok = checkAndTrackPeerIfNeeded(patch);
             if (!ok) {
+                latch.countDown();
                 return;
             }
             var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.commitHash, true);
