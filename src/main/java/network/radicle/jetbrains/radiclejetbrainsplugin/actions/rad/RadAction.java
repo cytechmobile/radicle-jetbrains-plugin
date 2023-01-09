@@ -234,6 +234,10 @@ public abstract class RadAction {
         notif.notify(project);
     }
 
+    public static boolean isSuccess(ProcessOutput out) {
+        return !out.isTimeout() && !out.isCancelled() && out.getExitCode() == 0;
+    }
+
     public static class ConfigureRadCliNotificationAction extends NotificationAction {
         final Project project;
 
