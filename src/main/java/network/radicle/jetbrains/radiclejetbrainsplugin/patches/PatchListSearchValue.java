@@ -3,13 +3,11 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class PatchListSearchValue implements ReviewListSearchValue {
     public String state;
-
     public String project;
     public String searchQuery;
+    public String peerId;
 
     public String getState() {
         return state;
@@ -18,8 +16,18 @@ public class PatchListSearchValue implements ReviewListSearchValue {
     public String getProject() {
         return project;
     }
+    public String getPeerId() {
+        return peerId;
+    }
 
     public PatchListSearchValue() {
+    }
+
+    public PatchListSearchValue(PatchListSearchValue searchValue) {
+        this.state = searchValue.state;
+        this.project = searchValue.project;
+        this.searchQuery = searchValue.searchQuery;
+        this.peerId = searchValue.peerId;
     }
 
     @Override
@@ -32,6 +40,9 @@ public class PatchListSearchValue implements ReviewListSearchValue {
             count++;
         }
         if (searchQuery != null) {
+            count++;
+        }
+        if (peerId != null) {
             count++;
         }
         return count;

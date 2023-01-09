@@ -1,12 +1,13 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import org.apache.commons.io.FileUtils;
@@ -59,36 +60,36 @@ public class CloneUtil {
 
         final var countDownLatch = new CountDownLatch(1);
         String finalTmpFolderPath = tmpFolderPath;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            final var clone = new RadClone(clPr.url(), tmpFolderPath);
-            var pr = clone.perform(countDownLatch);
-            if (pr.getExitCode() != 0) {
-                return ;
-            }
-            var tmpFiles = new File(finalTmpFolderPath);
-            var folders = tmpFiles.list();
-            if (folders == null || folders.length == 0) {
-                try {
-                    FileUtils.deleteDirectory(new File(finalTmpFolderPath));
-                } catch (IOException e) {
-                    logger.warn("unable to delete temp dir:", e);
+        ProgressManager.getInstance().run(new Task.Backgroundable(project,RadicleBundle.message("cloningProcess") + clPr.url()) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+                final var clone = new RadClone(clPr.url(), tmpFolderPath);
+                var pr = clone.perform(countDownLatch);
+                if (pr.getExitCode() != 0) {
+                    return ;
                 }
-                return;
-            }
-            var projectName = folders[0];
-            var tmpDirectory = new File(finalTmpFolderPath, projectName);
-            var selectedDirectory = new File(parent.toAbsolutePath().toString());
-            try {
-                FileUtils.copyDirectory(tmpDirectory, selectedDirectory);
-                FileUtils.deleteDirectory(new File(finalTmpFolderPath));
-                listener.directoryCheckedOut(selectedDirectory, null);
-                listener.checkoutCompleted();
-            } catch (Exception e) {
-                logger.warn("unable to copy / delete temp dir:", e);
+                var tmpFiles = new File(finalTmpFolderPath);
+                var folders = tmpFiles.list();
+                if (folders == null || folders.length == 0) {
+                    try {
+                        FileUtils.deleteDirectory(new File(finalTmpFolderPath));
+                    } catch (IOException e) {
+                        logger.warn("unable to delete temp dir:", e);
+                    }
+                    return;
+                }
+                var projectName = folders[0];
+                var tmpDirectory = new File(finalTmpFolderPath, projectName);
+                var selectedDirectory = new File(parent.toAbsolutePath().toString());
+                try {
+                    FileUtils.copyDirectory(tmpDirectory, selectedDirectory);
+                    FileUtils.deleteDirectory(new File(finalTmpFolderPath));
+                    listener.directoryCheckedOut(selectedDirectory, null);
+                    listener.checkoutCompleted();
+                } catch (Exception e) {
+                    logger.warn("unable to copy / delete temp dir:", e);
+                }
             }
         });
-        var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("cloningProcess") +
-                clPr.url(), countDownLatch);
-        ubt.startInThread();
     }
 }

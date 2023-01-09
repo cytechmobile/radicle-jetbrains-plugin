@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ import java.util.Objects;
 
 public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
-    private static final int TIMEOUT = 10000;
+    private static final int TIMEOUT = 60_000;
     private final RadicleSettingsHandler settingsHandler;
     private Map<String, String> radStoragePath = null;
 
@@ -77,20 +78,28 @@ public class RadicleApplicationService {
         }
     }
 
-    public ProcessOutput track(GitRepository root, String url) {
-        return executeCommand(root.getRoot().getPath(), List.of("track","--seed",url,"--remote"),root);
+    public ProcessOutput track(GitRepository root, String reference, String nodeUrl) {
+        List<String> args = new ArrayList<>();
+        args.add("track");
+        if (!Strings.isNullOrEmpty(reference)) {
+            args.add(reference);
+        }
+        if (!Strings.isNullOrEmpty(nodeUrl)) {
+            args.addAll(List.of("--seed", nodeUrl, "--remote"));
+        }
+        return executeCommand(root.getRoot().getPath(), args, root);
     }
 
     public ProcessOutput init(GitRepository root,String name, String description, String branch) {
-        return executeCommand(root.getRoot().getPath(), List.of("init","--name",name,"--description",description,
-                "--default-branch",branch,"--no-confirm"),root);
+        return executeCommand(root.getRoot().getPath(), List.of("init", "--name", name, "--description", description,
+                "--default-branch", branch, "--no-confirm"), root);
     }
 
     public ProcessOutput auth(String name,String passphrase,boolean setDefaultProfile) {
         if (setDefaultProfile) {
-            return executeCommandWithStdin(".",List.of("auth",name),null);
+            return executeCommandWithStdin(".", List.of("auth", name), null);
         } else {
-            return executeCommand(".",List.of("auth","--init","--name",name,"--passphrase",passphrase),null);
+            return executeCommand(".", List.of("auth", "--init", "--name", name, "--passphrase", passphrase), null);
         }
     }
 
@@ -99,11 +108,15 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput push(GitRepository root, String seed) {
-        return executeCommand(root.getRoot().getPath(), List.of("push","--seed", seed), root);
+        return executeCommand(root.getRoot().getPath(), List.of("push", "--seed", seed), root);
     }
 
     public ProcessOutput pull(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("pull"), root);
+    }
+
+    public ProcessOutput remoteList(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("remote", "ls"), root);
     }
 
     public ProcessOutput sync(GitRepository root) {
