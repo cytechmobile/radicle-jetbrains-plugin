@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class PatchListSearchValue implements ReviewListSearchValue {
     public String state;
-
     public String project;
     public String searchQuery;
     public String peerId;
