@@ -38,7 +38,7 @@
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <prePushHandler implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadiclePrePushListener"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
-        <toolWindow icon="/icons/radicle.svg" factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.patches.ToolWindow" id="Radicle"/>
+        <toolWindow icon="/icons/radicle.svg" factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.patches.RadicleToolWindow" id="Radicle"/>
     </extensions>
 
     <applicationListeners>
@@ -47,6 +47,28 @@
     </applicationListeners>
 
     <actions>
+        <!-- New Ui -->
+        <action id="Radicle.Sync.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction"
+                text="Rad Sync" description="Radicle sync from toolbar" icon="/icons/rad_sync.svg">
+            <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" relative-to-action="Vcs.Push" anchor="after" />
+        </action>
+
+        <action id="Radicle.Push.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePushAction"
+                text="Rad Push" description="Radicle push from toolbar" icon="/icons/rad_push.svg">
+            <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" anchor="after" relative-to-action="Radicle.Sync.New.Ui"/>
+        </action>
+
+        <action id="Radicle.Pull.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction"
+                text="Rad Pull" description="Radicle pull from toolbar" icon="/icons/rad_pull.svg">
+            <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" anchor="after" relative-to-action="Radicle.Push.New.Ui"/>
+        </action>
+
+        <action id="Radicle.Clone.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
+                text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_clone.svg">
+            <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" anchor="after" relative-to-action="Radicle.Pull.New.Ui"/>
+        </action>
+
+
         <!-- Radicle Group, under Git -->
         <group
             id="Radicle.MainMenu" compact="true"
@@ -123,6 +145,7 @@
                 text="Rad Clone" description="Radicle clone from toolbar" icon="/icons/rad_clone.svg">
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Pull.toolbar"/>
         </action>
+
 
 
     </actions>

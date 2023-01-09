@@ -7,11 +7,21 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
 public class RadTrack extends RadAction {
-    protected String url;
+    protected Peer peer;
+    protected SeedNode node;
 
-    public RadTrack(GitRepository repo, String url) {
+    public RadTrack(GitRepository repo, Peer peer) {
+        this(repo, peer, null);
+    }
+
+    public RadTrack(GitRepository repo, SeedNode node) {
+        this(repo, null, node);
+    }
+
+    public RadTrack(GitRepository repo, Peer peer, SeedNode node) {
         super(repo);
-        this.url = url;
+        this.peer = peer;
+        this.node = node;
     }
 
     @Override
@@ -22,6 +32,9 @@ public class RadTrack extends RadAction {
     @Override
     public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.track(repo,url);
+        return rad.track(repo, peer == null ? null : peer.id, node == null ? null : node.url);
     }
+
+    public record Peer(String id) {}
+    public record SeedNode(String url) {}
 }
