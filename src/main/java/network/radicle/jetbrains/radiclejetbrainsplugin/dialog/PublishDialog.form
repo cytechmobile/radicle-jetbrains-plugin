@@ -60,7 +60,7 @@
               <text value="Description :"/>
             </properties>
           </component>
-          <component id="3be15" class="javax.swing.JTextArea" binding="descriptionField">
+          <component id="3be15" class="com.intellij.ui.components.JBTextArea" binding="descriptionField">
             <constraints>
               <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="200" height="50"/>

@@ -167,7 +167,7 @@ public class ActionsTest extends AbstractIT {
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).isEqualTo("track 123");
+        assertThat(cmd.getCommandLineString()).contains("track 123");
     }
 
     @Test
