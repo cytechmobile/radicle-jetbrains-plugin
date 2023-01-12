@@ -36,7 +36,7 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
                                 new PopupItemPresentation.Simple((String) projectName,null,null),continuation));
 
         var authorFilter = new DropDownComponentFactory<>
-                (this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("peerIds"), o -> o,
+                (this.viewModel.peerIdFilterState()).create(coroutineScope, RadicleBundle.message("peerIds"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint, jbPopupPopupState,
                         continuation1 -> this.viewModel.getPeerIds(), projectName ->
                                 new PopupItemPresentation.Simple((String) projectName,null,null),continuation));

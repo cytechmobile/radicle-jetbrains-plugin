@@ -55,7 +55,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         });
     }
 
-    public MutableStateFlow<String> authorFilterState() {
+    public MutableStateFlow<String> peerIdFilterState() {
         return partialState(getSearchState(), PatchListSearchValue::getPeerId,
                 (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, authorName) -> {
                     var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
