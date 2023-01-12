@@ -10,7 +10,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.AddSeedNodeDialog
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.ConfirmationDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class RadicleSeedNodeDecorator {
         removeRows();
         var tableModel = (DefaultTableModel) table.getModel();
         for (var seedNode : loadedSeedNodes) {
-            tableModel.addRow(new Object[]{seedNode.host,seedNode.port});
+            tableModel.addRow(new Object[]{seedNode.host, seedNode.port});
         }
     }
 
@@ -69,7 +70,7 @@ public class RadicleSeedNodeDecorator {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
         table.setRowSelectionAllowed(true);
-        table.setDefaultEditor(Object.class,null);
+        table.setDefaultEditor(Object.class, null);
         table.setRowHeight(20);
         tableModel.addColumn(RadicleBundle.message("seedNode"));
         tableModel.addColumn(RadicleBundle.message("port"));
@@ -87,9 +88,9 @@ public class RadicleSeedNodeDecorator {
     public class AddSeedNode implements AnActionButtonRunnable {
 
         public void addNode(String seedNode, String port) {
-            cpLoadedSeedNodes.add(new SeedNode(seedNode,port));
+            cpLoadedSeedNodes.add(new SeedNode(seedNode, port));
             var tableModel = (DefaultTableModel) table.getModel();
-            tableModel.addRow(new Object[]{seedNode,port});
+            tableModel.addRow(new Object[]{seedNode, port});
         }
 
         @Override
@@ -99,7 +100,7 @@ public class RadicleSeedNodeDecorator {
             if (okButton) {
                 var seedNode = addSeedNodeDialog.getNodeField().getText();
                 var port = addSeedNodeDialog.getPortField().getText();
-                addNode(seedNode,port);
+                addNode(seedNode, port);
             }
         }
     }
@@ -107,7 +108,7 @@ public class RadicleSeedNodeDecorator {
     public class RemoveSeedNode implements AnActionButtonRunnable {
 
         public void removeNode(String seedNode, String port, int selectedRow) {
-            var node = new SeedNode(seedNode,port);
+            var node = new SeedNode(seedNode, port);
             cpLoadedSeedNodes.removeIf(n -> n.toString().equals(node.toString()));
             var tableModel = (DefaultTableModel) table.getModel();
             tableModel.removeRow(selectedRow);
@@ -119,11 +120,11 @@ public class RadicleSeedNodeDecorator {
                     RadicleBundle.message("removeSeedNode"));
             var okButton = confirmationDialog.showAndGet();
             if (okButton) {
-                var selectedRow =  table.getSelectedRow();
+                var selectedRow = table.getSelectedRow();
                 var tableModel = (DefaultTableModel) table.getModel();
-                var seedNode = (String) tableModel.getValueAt(selectedRow,0);
-                var port = (String) tableModel.getValueAt(selectedRow,1);
-                removeNode(seedNode,port,selectedRow);
+                var seedNode = (String) tableModel.getValueAt(selectedRow, 0);
+                var port = (String) tableModel.getValueAt(selectedRow, 1);
+                removeNode(seedNode, port, selectedRow);
             }
         }
     }
@@ -132,26 +133,26 @@ public class RadicleSeedNodeDecorator {
 
         public void editNode(String newSeedNode, String newPort, String oldSeedNode, String oldPort, int selectedRow) {
             var tableModel = (DefaultTableModel) table.getModel();
-            tableModel.setValueAt(newSeedNode,selectedRow,0);
-            tableModel.setValueAt(newPort,selectedRow,1);
-            var index = cpLoadedSeedNodes.indexOf(new SeedNode(oldSeedNode,oldPort));
+            tableModel.setValueAt(newSeedNode, selectedRow, 0);
+            tableModel.setValueAt(newPort, selectedRow, 1);
+            var index = cpLoadedSeedNodes.indexOf(new SeedNode(oldSeedNode, oldPort));
             if (index > -1) {
-                cpLoadedSeedNodes.set(index, new SeedNode(newSeedNode,newPort));
+                cpLoadedSeedNodes.set(index, new SeedNode(newSeedNode, newPort));
             }
         }
 
         @Override
         public void run(AnActionButton anActionButton) {
-            var selectedRow =  table.getSelectedRow();
+            var selectedRow = table.getSelectedRow();
             var tableModel = (DefaultTableModel) table.getModel();
-            var oldSeedNode = (String) tableModel.getValueAt(selectedRow,0);
-            var oldPort = (String) tableModel.getValueAt(selectedRow,1);
-            var addSeedNodeDialog = new AddSeedNodeDialog(oldSeedNode,oldPort,cpLoadedSeedNodes);
+            var oldSeedNode = (String) tableModel.getValueAt(selectedRow, 0);
+            var oldPort = (String) tableModel.getValueAt(selectedRow, 1);
+            var addSeedNodeDialog = new AddSeedNodeDialog(oldSeedNode, oldPort, cpLoadedSeedNodes);
             var okButton = addSeedNodeDialog.showAndGet();
             if (okButton) {
                 var newSeedNode = addSeedNodeDialog.getNodeField().getText();
                 var newPort = addSeedNodeDialog.getPortField().getText();
-                editNode(newSeedNode,newPort, oldSeedNode,oldPort,selectedRow);
+                editNode(newSeedNode, newPort, oldSeedNode, oldPort, selectedRow);
             }
         }
     }

@@ -12,7 +12,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RadiclePullAction extends AnAction {
     @Override
@@ -25,20 +24,19 @@ public class RadiclePullAction extends AnAction {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         if (!RadAction.isCliPathConfigured(project)) {
-            return ;
+            return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);
             if (radInitializedRepos.isEmpty()) {
-                return ;
+                return;
             }
             final var updateCountDown = new CountDownLatch(radInitializedRepos.size());
             radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 var pull = new RadPull(repo);
                 pull.perform(updateCountDown);
             }));
-            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radPullProgressTitle"),
-                    updateCountDown);
+            var ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radPullProgressTitle"), updateCountDown);
             new Thread(ubt::queue).start();
         });
     }

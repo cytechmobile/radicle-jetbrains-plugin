@@ -2,7 +2,11 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
@@ -36,8 +40,16 @@ import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -82,7 +94,7 @@ public class PatchListPanel {
         initializeSeedNodeCombobox();
         var scope = MainScope();
         Disposer.register(controller.getDisposer(), () -> CoroutineScopeKt.cancel(scope, null));
-        searchVm = new PatchSearchPanelViewModel(scope,new PatchSearchHistoryModel(), project);
+        searchVm = new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
         var filterPanel = new PatchFilterPanel(searchVm).create(scope);
         var seedNodePanel = createSeedNodePanel();
         var verticalPanel = new JPanel(new VerticalLayout(5));
@@ -93,21 +105,21 @@ public class PatchListPanel {
         mainPanel.addToTop(verticalPanel);
         mainPanel.addToCenter(listPanel);
 
-       searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
-           filterList(patchListSearchValue);
-           return null;
-       }, new Continuation<Object>() {
-           @Override
-           public void resumeWith(@NotNull Object o) {
+        searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
+            filterList(patchListSearchValue);
+            return null;
+        }, new Continuation<Object>() {
+            @Override
+            public void resumeWith(@NotNull Object o) {
 
-           }
+            }
 
-           @NotNull
-           @Override
-           public CoroutineContext getContext() {
-               return scope.getCoroutineContext();
-           }
-       });
+            @NotNull
+            @Override
+            public CoroutineContext getContext() {
+                return scope.getCoroutineContext();
+            }
+        });
         updateListPanel();
         return mainPanel;
     }
@@ -172,7 +184,7 @@ public class PatchListPanel {
     private void filterList(PatchListSearchValue patchListSearchValue) {
         patchModel.clear();
         if (loadedRadPatches == null) {
-            return ;
+            return;
         }
         if (patchListSearchValue.getFilterCount() == 0) {
             patchModel.addAll(loadedRadPatches);
@@ -182,10 +194,10 @@ public class PatchListPanel {
             var searchFilter = patchListSearchValue.searchQuery;
             var peerIdFilter = patchListSearchValue.peerId;
             List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                    .filter(p -> searchFilter == null  || p.peerId.contains(searchFilter) || p.branchName.contains(searchFilter))
-                    .filter(p->  projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> peerIdFilter == null  || p.peerId.contains(peerIdFilter))
-                    .filter(p-> stateFilter == null)
+                    .filter(p -> searchFilter == null || p.peerId.contains(searchFilter) || p.branchName.contains(searchFilter))
+                    .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
+                    .filter(p -> peerIdFilter == null || p.peerId.contains(peerIdFilter))
+                    .filter(p -> stateFilter == null)
                     .collect(Collectors.toList());
             patchModel.addAll(filteredPatches);
         }
@@ -196,7 +208,7 @@ public class PatchListPanel {
         var outputs = new ArrayList<RadPatch>();
         var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);
         if (radInitializedRepos.isEmpty()) {
-        return List.of();
+            return List.of();
         }
         final var updateCountDown = new CountDownLatch(radInitializedRepos.size());
         final var node = new RadTrack.SeedNode(url);
@@ -249,7 +261,7 @@ public class PatchListPanel {
                 var parts = info.substring(1).trim().split(" ");
                 var branch = parts[1];
                 var commit = parts[2];
-                radPatches.add(new RadPatch(repo,"", currentUser, self, branch, commit));
+                radPatches.add(new RadPatch(repo, "", currentUser, self, branch, commit));
             }
         }
         return radPatches;
@@ -260,7 +272,7 @@ public class PatchListPanel {
         searchVm.setRadPatchesCountDown(radPatchesCountDown);
         var selectedSeedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
         if (selectedSeedNode == null) {
-            return ;
+            return;
         }
         var url = "http://" + selectedSeedNode.host;
         var gitRepoManager = GitRepositoryManager.getInstance(project);

@@ -15,7 +15,7 @@ public class RadPatch {
 
     public List<Change> changes;
 
-    public RadPatch(GitRepository repo,String author, String peerId, boolean self, String branchName, String commitHash) {
+    public RadPatch(GitRepository repo, String author, String peerId, boolean self, String branchName, String commitHash) {
         this.repo = repo;
         this.peerId = peerId;
         this.self = self;

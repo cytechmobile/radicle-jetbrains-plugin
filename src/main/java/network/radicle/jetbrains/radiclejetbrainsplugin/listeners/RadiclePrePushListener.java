@@ -22,7 +22,7 @@ public class RadiclePrePushListener implements PrePushHandler {
 
     @Override
     public @NotNull Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator) {
-        Map<Project , List<PushInfo>> map = new HashMap<>();
+        Map<Project, List<PushInfo>> map = new HashMap<>();
         for (var pi : pushDetails) {
             var p = pi.getRepository().getProject();
             map.computeIfAbsent(p, prj -> new ArrayList<>()).add(pi);

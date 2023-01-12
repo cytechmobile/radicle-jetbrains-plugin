@@ -17,9 +17,16 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHa
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -39,7 +46,7 @@ public class PublishDialog extends DialogWrapper {
     private final Project project;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private boolean isSelectedRepoInitialized;
-    public CountDownLatch isUiLoaded =  new CountDownLatch(1);
+    public CountDownLatch isUiLoaded = new CountDownLatch(1);
 
     public PublishDialog(List<GitRepository> repos, Project project) {
         super(true);
@@ -69,7 +76,7 @@ public class PublishDialog extends DialogWrapper {
                 UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("publishProgressBar"),
                         countDown);
                 ApplicationManager.getApplication().executeOnPooledThread(ubt::queue);
-                var push = new RadPush(repo,(String) seedNodeSelect.getSelectedItem());
+                var push = new RadPush(repo, (String) seedNodeSelect.getSelectedItem());
                 push.perform(countDown);
             }
         });
@@ -125,7 +132,7 @@ public class PublishDialog extends DialogWrapper {
                 nameLabel.setVisible(showInitFields);
 
                 if (isInitialized || (!nameField.getText().isEmpty() && !branchField.getText().isEmpty() &&
-                        !descriptionField.getText().isEmpty() && seedNodeSelect.getSelectedItem() != null)){
+                        !descriptionField.getText().isEmpty() && seedNodeSelect.getSelectedItem() != null)) {
                     setOKActionEnabled(true);
                 } else {
                     setOKActionEnabled(false);
@@ -175,7 +182,9 @@ public class PublishDialog extends DialogWrapper {
         return seedNodeSelect;
     }
 
-    public JLabel getSeedNodeLabel() {return seedNodeLabel;}
+    public JLabel getSeedNodeLabel() {
+        return seedNodeLabel;
+    }
 
     public JComboBox<GitRepository> getProjectSelect() {
         return projectSelect;
@@ -184,6 +193,4 @@ public class PublishDialog extends DialogWrapper {
     public JLabel getProjectNameLabel() {
         return projectNameLabel;
     }
-
-
 }

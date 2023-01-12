@@ -11,7 +11,7 @@ public class RadicleSettings {
     private List<SeedNode> seedNodes;
 
     public enum RadSyncType {
-        ASK(0,"Ask"), YES(1,"Yes"), NO(2,"No");
+        ASK(0, "Ask"), YES(1, "Yes"), NO(2, "No");
         public final int val;
         public final String name;
 
@@ -25,7 +25,7 @@ public class RadicleSettings {
         }
     }
 
-    public RadicleSettings(String path,Integer radSync, List<SeedNode> seedNodes) {
+    public RadicleSettings(String path, Integer radSync, List<SeedNode> seedNodes) {
         this.path = path;
         this.radSync = radSync;
         this.seedNodes = seedNodes;

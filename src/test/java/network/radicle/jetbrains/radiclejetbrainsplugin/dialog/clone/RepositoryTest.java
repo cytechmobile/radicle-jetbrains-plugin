@@ -26,7 +26,7 @@ public class RepositoryTest extends AbstractIT {
     @Before
     public void beforeTest() {
         radCheckoutComponent = new RadCheckoutProvider.VcsCloneComponentExt(super.myProject, "",
-                new DvcsRememberedInputs(),new MyListener());
+                new DvcsRememberedInputs(), new MyListener());
     }
 
     @Test
@@ -38,23 +38,22 @@ public class RepositoryTest extends AbstractIT {
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            assertThat(cmd.getExePath()).isEqualTo(WSL);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(radPath);
+            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
         }
         assertThat(cmd.getCommandLineString()).contains("clone rad:git123");
     }
 
     public class MyListener implements VcsCloneDialogComponentStateListener {
+        @Override
+        public void onListItemChanged() { }
 
         @Override
-        public void onListItemChanged() {}
+        public void onOkActionEnabled(boolean b) { }
 
         @Override
-        public void onOkActionEnabled(boolean b) {}
-
-        @Override
-        public void onOkActionNameChanged(@Nls @NotNull String s) {}
+        public void onOkActionNameChanged(@Nls @NotNull String s) { }
     }
 
 }

@@ -12,7 +12,7 @@ public class RadAuth extends RadAction {
     private final String passphrase;
     private final RadAuthAction action;
 
-    public RadAuth (String name, String passphrase, RadAuthAction action) {
+    public RadAuth(String name, String passphrase, RadAuthAction action) {
         this.name = name;
         this.passphrase = passphrase;
         this.action = action;
@@ -52,17 +52,17 @@ public class RadAuth extends RadAction {
         var gitStoragePath = storagePath.gitStoragePath + "/" + name;
         var keysStoragePath = storagePath.keysStoragePath + "/" + name;
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.executeCommand("rm", ".", List.of("-rf", gitStoragePath,keysStoragePath), null, false);
+        return rad.executeCommand("rm", ".", List.of("-rf", gitStoragePath, keysStoragePath), null, false);
     }
 
     public ProcessOutput setDefaultIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.auth(name,passphrase,true);
+        return rad.auth(name, passphrase, true);
     }
 
-    public  ProcessOutput createNewIdentity() {
+    public ProcessOutput createNewIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.auth(name,passphrase,false);
+        return rad.auth(name, passphrase, false);
     }
 
     public enum RadAuthAction {

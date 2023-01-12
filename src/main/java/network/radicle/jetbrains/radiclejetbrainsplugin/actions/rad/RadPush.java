@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,14 +37,14 @@ public class RadPush extends RadAction {
     }
 
     @Override
-    public ProcessOutput run () {
+    public ProcessOutput run() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.push(repo,seed);
+        return rad.push(repo, seed);
     }
 
     @Override
     public List<NotificationAction> notificationActions() {
-       return List.of(new PushNotificationAction(seed, repo, RadicleBundle.lazyMessage("Open")));
+        return List.of(new PushNotificationAction(seed, repo, RadicleBundle.lazyMessage("Open")));
     }
 
     public static class PushNotificationAction extends NotificationAction {
@@ -64,13 +64,13 @@ public class RadPush extends RadAction {
                 var output = rad.inspect(repo);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     if (output.getExitCode() == 0) {
-                        var projectIdentity = (output.getStdout()).replace("\n","");
+                        var projectIdentity = (output.getStdout()).replace("\n", "");
                         var url = RAD_UI + "/" + host + "/" + projectIdentity;
                         if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                             try {
                                 Desktop.getDesktop().browse(new URI(url));
                             } catch (IOException | URISyntaxException ex) {
-                                logger.warn("unable to open browser",ex);
+                                logger.warn("unable to open browser", ex);
                             }
                         }
                     }

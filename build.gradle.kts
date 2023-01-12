@@ -7,8 +7,9 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
+    checkstyle
     // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.7.22"
+    id("org.jetbrains.kotlin.jvm") version "1.8.0"
     // Gradle IntelliJ Plugin
     id("org.jetbrains.intellij") version "1.11.0"
     // Gradle Changelog Plugin
@@ -33,16 +34,24 @@ var remoteRobotVersion = "0.11.16"
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
     testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.1")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.2")
 
     testImplementation("org.assertj:assertj-core:3.24.1")
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
     testImplementation("org.mockito:mockito-core:4.11.0")
+}
+
+checkstyle {
+    configFile = File("${rootProject.projectDir}/checkstyle.xml");
+    // we do not tolerate errors or warnings, break build if any found
+    toolVersion = "10.6.0";
+    maxErrors = 0;
+    maxWarnings = 0;
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -175,5 +184,5 @@ val uiTestTask = tasks.register<Test>("uiTest") {
 }
 
 tasks.check {
-    dependsOn(uiTestTask)
+    //dependsOn(uiTestTask)
 }

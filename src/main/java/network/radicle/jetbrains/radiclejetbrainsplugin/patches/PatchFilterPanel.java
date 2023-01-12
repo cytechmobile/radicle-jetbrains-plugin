@@ -9,14 +9,15 @@ import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
-        PatchSearchPanelViewModel.PatchListQuickFilter,PatchSearchPanelViewModel> {
+        PatchSearchPanelViewModel.PatchListQuickFilter, PatchSearchPanelViewModel> {
     private final PatchSearchPanelViewModel viewModel;
+
     public PatchFilterPanel(@NotNull PatchSearchPanelViewModel patchSearchPanelViewModel) {
         super(patchSearchPanelViewModel);
         this.viewModel = patchSearchPanelViewModel;
@@ -25,23 +26,20 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
     @NotNull
     @Override
     protected List<JComponent> createFilters(@NotNull CoroutineScope coroutineScope) {
-        var stateFilter = new DropDownComponentFactory<>
-                (this.viewModel.stateFilterState()).create(coroutineScope, RadicleBundle.message("state"),
+        var stateFilter = new DropDownComponentFactory<>(this.viewModel.stateFilterState()).create(coroutineScope, RadicleBundle.message("state"),
                 Arrays.stream(PatchListSearchValue.State.values()).map(e -> e.name).collect(Collectors.toList()), o -> o);
 
-        var projectFilter = new DropDownComponentFactory<>
-                (this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
+        var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint, jbPopupPopupState,
                         continuation1 -> this.viewModel.getProjectNames(), projectName ->
-                                new PopupItemPresentation.Simple((String) projectName,null,null),continuation));
+                                new PopupItemPresentation.Simple((String) projectName, null, null), continuation));
 
-        var authorFilter = new DropDownComponentFactory<>
-                (this.viewModel.peerIdFilterState()).create(coroutineScope, RadicleBundle.message("peerIds"), o -> o,
+        var authorFilter = new DropDownComponentFactory<>(this.viewModel.peerIdFilterState()).create(coroutineScope, RadicleBundle.message("peerIds"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint, jbPopupPopupState,
                         continuation1 -> this.viewModel.getPeerIds(), projectName ->
-                                new PopupItemPresentation.Simple((String) projectName,null,null),continuation));
+                                new PopupItemPresentation.Simple((String) projectName, null, null), continuation));
 
-        return List.of(stateFilter,projectFilter,authorFilter);
+        return List.of(stateFilter, projectFilter, authorFilter);
     }
 
 

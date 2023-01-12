@@ -89,7 +89,7 @@ public class RadicleProjectService {
                     notification.getType().equals(NotificationType.INFORMATION) && !notification.getContent().contains("Everything is up") &&
                     notification.getContent().contains("Pushed");
         } catch (Exception e) {
-            logger.warn("Unable to get displayId value",e);
+            logger.warn("Unable to get displayId value", e);
             return false;
         }
     }

@@ -10,7 +10,12 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHa
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Action;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import java.util.List;
 
 public class SelectActionDialog extends DialogWrapper {
@@ -40,8 +45,7 @@ public class SelectActionDialog extends DialogWrapper {
         }
 
         if (remember.isSelected()) {
-            var radType = yesRadio.isSelected() ? RadicleSettings.RadSyncType.YES :
-                    RadicleSettings.RadSyncType.NO;
+            var radType = yesRadio.isSelected() ? RadicleSettings.RadSyncType.YES : RadicleSettings.RadSyncType.NO;
             radicleSettingsHandler.saveRadSync(radType);
         }
     }
@@ -55,7 +59,7 @@ public class SelectActionDialog extends DialogWrapper {
     @Override
     protected Action[] createActions() {
         super.createDefaultActions();
-        return new Action[] {remember.getAction(),getOKAction(),getCancelAction()};
+        return new Action[]{remember.getAction(), getOKAction(), getCancelAction()};
     }
 
     @Override

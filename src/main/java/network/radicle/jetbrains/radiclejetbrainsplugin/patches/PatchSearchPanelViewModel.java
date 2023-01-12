@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBase<PatchListSearchValue,
-        PatchSearchPanelViewModel.PatchListQuickFilter> implements ReviewListSearchPanelViewModel<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter> {
+public class PatchSearchPanelViewModel
+        extends ReviewListSearchPanelViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter>
+        implements ReviewListSearchPanelViewModel<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter> {
 
     private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
 
@@ -33,7 +34,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
     private CountDownLatch radPatchesCountDown;
 
     public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
-                                     @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel,Project project) {
+                                     @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, Project project) {
         super(scope, historyModel, new PatchListSearchValue(), new PatchListQuickFilter());
         this.project = project;
     }
@@ -42,17 +43,17 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         this.radPatches = patches;
     }
 
-    public void setRadPatchesCountDown(CountDownLatch radPatchesCountDown) {
-        this.radPatchesCountDown = radPatchesCountDown;
+    public void setRadPatchesCountDown(CountDownLatch countdown) {
+        this.radPatchesCountDown = countdown;
     }
 
     public MutableStateFlow<String> stateFilterState() {
-       return partialState(getSearchState(), PatchListSearchValue::getState,
-               (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, state) -> {
-            var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
-            copyPatchSearchValue.state = (String) state;
-            return copyPatchSearchValue;
-        });
+        return partialState(getSearchState(), PatchListSearchValue::getState,
+                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, state) -> {
+                    var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
+                    copyPatchSearchValue.state = (String) state;
+                    return copyPatchSearchValue;
+                });
     }
 
     public MutableStateFlow<String> peerIdFilterState() {
@@ -73,7 +74,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
                 });
     }
 
-    public List<String> getProjectNames()  {
+    public List<String> getProjectNames() {
         var isFinished = new CountDownLatch(1);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var gitRepoManager = GitRepositoryManager.getInstance(project);
@@ -84,7 +85,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         try {
             isFinished.await();
         } catch (Exception e) {
-            logger.warn("Unable to get project names",e);
+            logger.warn("Unable to get project names", e);
         }
         return projectNames;
     }
@@ -95,7 +96,7 @@ public class PatchSearchPanelViewModel extends ReviewListSearchPanelViewModelBas
         try {
             radPatchesCountDown.await();
         } catch (Exception e) {
-            logger.warn("Unable to get rad patches",e);
+            logger.warn("Unable to get rad patches", e);
             return peersIds;
         }
         for (var p : radPatches) {

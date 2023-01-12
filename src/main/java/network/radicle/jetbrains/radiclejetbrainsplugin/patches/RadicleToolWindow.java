@@ -13,7 +13,7 @@ import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JPanel;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
 
@@ -31,7 +31,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                 if (toolWindow == shownToolWindow && toolWindow.isVisible() && contentManager.isEmpty()) {
                     contentManager.addContent(patchContent);
                     contentManager.addContent(issueContent);
-                    contentManager.setSelectedContent(patchContent,true);
+                    contentManager.setSelectedContent(patchContent, true);
                     var controller = new PatchTabController(patchContent, project);
                     controller.createPatchesPanel();
                 }
@@ -43,13 +43,13 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                     var repos = gitRepoManager.getRepositories();
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
                         var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, false);
-                        ApplicationManager.getApplication().invokeLater(() ->{
+                        ApplicationManager.getApplication().invokeLater(() -> {
                             if (!radInitializedRepos.isEmpty()) {
                                 toolWindow.setAvailable(true);
                             }
                         });
                     });
-        });
+                });
     }
 
     @Override

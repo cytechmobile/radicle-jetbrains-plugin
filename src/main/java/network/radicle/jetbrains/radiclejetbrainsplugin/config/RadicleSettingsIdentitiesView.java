@@ -22,9 +22,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,7 +35,6 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     public static final String ID = RadicleBundle.message("radicle");
     protected JPanel mainPanel;
     protected JBTable table;
-    private Icon checkIcon = RadicleIcons.CheckIcon;
 
     @Override
     public @NotNull @NonNls String getId() {
@@ -47,7 +49,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     public String getActiveProfile() {
         var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
         var output = radSelf.perform();
-        var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n","") : "";
+        var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n", "") : "";
         return activeProfile;
     }
 
@@ -60,7 +62,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
     private void initializeData() {
         if (table == null) {
-            return ;
+            return;
         }
         removeRows();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -71,7 +73,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
                     var tableModel = (DefaultTableModel) table.getModel();
                     for (var profile : loadedProfiles) {
                         if (profile.equals(activeProfile)) {
-                            tableModel.addRow(new Object[]{profile,checkIcon});
+                            tableModel.addRow(new Object[]{profile, RadicleIcons.CHECK_ICON});
                         } else {
                             tableModel.addRow(new Object[]{profile});
                         }
@@ -95,7 +97,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     }
 
     private void initTable() {
-        var tableModel = new DefaultTableModel(){
+        var tableModel = new DefaultTableModel() {
             @Override
             public Class<?> getColumnClass(int columnIndex) {
                 if (columnIndex == 1) {
@@ -109,7 +111,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.getTableHeader().setReorderingAllowed(false);
         table.setRowSelectionAllowed(true);
-        table.setDefaultEditor(Object.class,null);
+        table.setDefaultEditor(Object.class, null);
         table.setRowHeight(30);
 
         tableModel.addColumn(RadicleBundle.message("peerId"));
@@ -124,7 +126,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
                 .setRemoveActionUpdater(e -> isActiveProfileRowSelected());
 
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(toolbarDecorator.createPanel(),BorderLayout.CENTER);
+        mainPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
         mainPanel.setBorder(JBUI.Borders.empty(4));
 
         table.getColumnModel().getColumn(0).setPreferredWidth(500);
@@ -151,14 +153,14 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
     private boolean isActiveProfileRowSelected() {
         var tableModel = (DefaultTableModel) table.getModel();
-        return table.getSelectedRow() != -1 && tableModel.getValueAt(table.getSelectedRow(),1) == null;
+        return table.getSelectedRow() != -1 && tableModel.getValueAt(table.getSelectedRow(), 1) == null;
     }
 
     public class RemoveProfileButton implements AnActionButtonRunnable {
 
         public void removeProfile(String profile) {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var auth = new RadAuth(profile,"", RadAuth.RadAuthAction.REMOVE_IDENTITY);
+                var auth = new RadAuth(profile, "", RadAuth.RadAuthAction.REMOVE_IDENTITY);
                 auth.perform();
                 initializeData();
             });
@@ -168,9 +170,9 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
         public void run(AnActionButton anActionButton) {
             var confirmDialog = new ConfirmationDialog(RadicleBundle.message("removeIdentityConfirm"),
                     RadicleBundle.message("removeIdentity"));
-            var selectedRow =  table.getSelectedRow();
+            var selectedRow = table.getSelectedRow();
             var tableModel = (DefaultTableModel) table.getModel();
-            var profile = (String) tableModel.getValueAt(selectedRow,0);
+            var profile = (String) tableModel.getValueAt(selectedRow, 0);
             var okButton = confirmDialog.showAndGet();
             if (okButton) {
                 removeProfile(profile);
@@ -201,7 +203,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
     public class DefaultProfileButton extends AnActionButton {
 
         public DefaultProfileButton() {
-            super(RadicleBundle.message("active"),"", PlatformIcons.CHECK_ICON);
+            super(RadicleBundle.message("active"), "", PlatformIcons.CHECK_ICON);
         }
 
         public void setDefaultProfile(String profile) {
@@ -214,7 +216,7 @@ public class RadicleSettingsIdentitiesView implements SearchableConfigurable {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-            var selectedRow =  table.getSelectedRow();
+            var selectedRow = table.getSelectedRow();
             var tableModel = (DefaultTableModel) table.getModel();
             var profile = (String) tableModel.getValueAt(selectedRow, 0);
             setDefaultProfile(profile);

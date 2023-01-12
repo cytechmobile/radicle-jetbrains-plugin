@@ -43,7 +43,7 @@ public class CloneDialogTest extends AbstractIT {
         httpClient = mock(HttpClient.class);
         httpResponse = mock(HttpResponse.class);
         statusLine = mock(StatusLine.class);
-        cloneDialog = new CloneRadDialog(super.myProject,new ProjectApi(httpClient));
+        cloneDialog = new CloneRadDialog(super.myProject, new ProjectApi(httpClient));
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
     }
 
@@ -58,26 +58,26 @@ public class CloneDialogTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
-        radicleSettingsHandler.savePath(radPath);
-        cloneDialog = new CloneRadDialog(super.myProject,new ProjectApi(httpClient));
+        radicleSettingsHandler.savePath(RAD_PATH);
+        cloneDialog = new CloneRadDialog(super.myProject, new ProjectApi(httpClient));
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            assertThat(cmd.getExePath()).isEqualTo(WSL);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(radPath);
+            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
         }
         assertThat(cmd.getCommandLineString()).contains("self --profile");
     }
 
     @Test
     public void testDefaultSeedNodes() {
-       var seedNodeModel = cloneDialog.seedNodeComboBox.getModel();
-       var settingsSeedNodes = radicleSettingsHandler.loadSettings().getSeedNodes();
-       for (var i=0; i<settingsSeedNodes.size(); i++) {
-           var seed = seedNodeModel.getElementAt(i);
-           assertThat(seed).usingRecursiveComparison().isEqualTo(settingsSeedNodes.get(i));
-       }
+        var seedNodeModel = cloneDialog.seedNodeComboBox.getModel();
+        var settingsSeedNodes = radicleSettingsHandler.loadSettings().getSeedNodes();
+        for (var i = 0; i < settingsSeedNodes.size(); i++) {
+            var seed = seedNodeModel.getElementAt(i);
+            assertThat(seed).usingRecursiveComparison().isEqualTo(settingsSeedNodes.get(i));
+        }
     }
 
     @Test
@@ -116,7 +116,7 @@ public class CloneDialogTest extends AbstractIT {
     @Test
     public void successCloneTest() throws InterruptedException {
         radicleSettingsHandler.savePath("");
-        var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy","testName","Test","rad:hnrk81ky87cii8h68nedkej991c5dspazi9xy");
+        var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy", "testName", "Test", "rad:hnrk81ky87cii8h68nedkej991c5dspazi9xy");
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());
@@ -125,14 +125,14 @@ public class CloneDialogTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
-        radicleSettingsHandler.savePath(radPath);
+        radicleSettingsHandler.savePath(RAD_PATH);
         cloneDialog.doClone(new CheckoutProvider());
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            assertThat(cmd.getExePath()).isEqualTo(WSL);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(radPath);
+            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
         }
         assertThat(cmd.getCommandLineString()).contains("clone " + radProject.radUrl);
         cloneDialog.radProjectJBList.remove(0);
@@ -140,7 +140,7 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void errorCloneTest() throws InterruptedException {
-        var radProject = new RadProject("hnr","testName","Test","rad:ooo");
+        var radProject = new RadProject("hnr", "testName", "Test", "rad:ooo");
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());
@@ -152,10 +152,10 @@ public class CloneDialogTest extends AbstractIT {
     private class CheckoutProvider implements com.intellij.openapi.vcs.CheckoutProvider.Listener {
         @Override
         public void directoryCheckedOut(File directory, VcsKey vcs) {
-           assertThat(directory.getName()).contains("testName");
+            assertThat(directory.getName()).contains("testName");
         }
 
         @Override
-        public void checkoutCompleted() {}
+        public void checkoutCompleted() { }
     }
 }
