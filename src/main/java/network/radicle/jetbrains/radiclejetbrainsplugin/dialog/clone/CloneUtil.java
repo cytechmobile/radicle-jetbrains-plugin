@@ -33,7 +33,7 @@ public class CloneUtil {
             RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("directoryError"));
             logger.error("Clone Failed. Unable to create destination directory");
-            return ;
+            return;
         }
 
         var lfs = LocalFileSystem.getInstance();
@@ -45,7 +45,7 @@ public class CloneUtil {
             RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("destinationDoesntExist"));
             logger.error("Clone Failed. Destination doesn't exist");
-            return ;
+            return;
         }
 
         try {
@@ -55,18 +55,18 @@ public class CloneUtil {
             RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("tempDirError"));
             logger.error("Unable to create temp directory");
-            return ;
+            return;
         }
 
         final var countDownLatch = new CountDownLatch(1);
         String finalTmpFolderPath = tmpFolderPath;
-        ProgressManager.getInstance().run(new Task.Backgroundable(project,RadicleBundle.message("cloningProcess") + clPr.url()) {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project, RadicleBundle.message("cloningProcess") + clPr.url()) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
                 final var clone = new RadClone(clPr.url(), tmpFolderPath);
                 var pr = clone.perform(countDownLatch);
                 if (pr.getExitCode() != 0) {
-                    return ;
+                    return;
                 }
                 var tmpFiles = new File(finalTmpFolderPath);
                 var folders = tmpFiles.list();

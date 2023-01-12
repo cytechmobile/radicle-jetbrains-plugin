@@ -32,10 +32,11 @@ public class CommonSteps {
     public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
-            welcomeFrame.find(DialogFixture.class,byXpath("//div[@tooltiptext.key='group.WelcomeScreen.Options.text']")).click();
+            welcomeFrame.find(DialogFixture.class, byXpath("//div[@tooltiptext.key='group.WelcomeScreen.Options.text']")).click();
             welcomeFrame.importProjectLink().click();
 
-            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"), Duration.ofSeconds(50));
+            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"),
+                    Duration.ofSeconds(50));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
             final var keyboard = new Keyboard(remoteRobot);
@@ -54,7 +55,8 @@ public class CommonSteps {
 
     public void closeTipOfTheDay() {
         step("Close Tip of the Day if it appears", () -> {
-            waitFor(Duration.ofSeconds(20), () -> remoteRobot.findAll(DialogFixture.class, byXpath("//div[@class='MyDialog'][.//div[@text='Running startup activities...']]")).size() == 0);
+            waitFor(Duration.ofSeconds(20), () -> remoteRobot.findAll(DialogFixture.class,
+                    byXpath("//div[@class='MyDialog'][.//div[@text='Running startup activities...']]")).size() == 0);
             final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
             idea.dumbAware(() -> {
                 try {

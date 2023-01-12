@@ -1,4 +1,5 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin;/*
+package network.radicle.jetbrains.radiclejetbrainsplugin;
+/*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,10 +35,11 @@ public class GitExecutor {
     public static class ExecutionException extends RuntimeException {
 
         private final int myExitCode;
-        @NotNull private final String myOutput;
+        @NotNull
+        private final String myOutput;
 
         ExecutionException(int exitCode, @NotNull String output) {
-            super("Failed with exit code " + exitCode+". Output: "+output);
+            super("Failed with exit code " + exitCode + ". Output: " + output);
             myExitCode = exitCode;
             myOutput = output;
         }
@@ -117,9 +119,7 @@ public class GitExecutor {
     }
 
     @NotNull
-    protected static String run(@NotNull File workingDir, @NotNull List<String> params, boolean ignoreNonZeroExitCode)
-            throws ExecutionException
-    {
+    protected static String run(@NotNull File workingDir, @NotNull List<String> params, boolean ignoreNonZeroExitCode) throws ExecutionException {
         final ProcessBuilder builder = new ProcessBuilder().command(params);
         builder.directory(workingDir);
         builder.redirectErrorStream(true);
@@ -217,17 +217,18 @@ public class GitExecutor {
 
     //using inner class to avoid extra work during class loading of unrelated tests
     public static class PathHolder {
-        private static String GIT_EXECUTABLE = null;
+        private static String gitExecutable = null;
+
         public static String getGitExecutable() {
-            if (GIT_EXECUTABLE != null) {
-                return GIT_EXECUTABLE;
+            if (gitExecutable != null) {
+                return gitExecutable;
             }
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-                GIT_EXECUTABLE = "git.exe";
+                gitExecutable = "git.exe";
             } else {
-                GIT_EXECUTABLE = "git";
+                gitExecutable = "git";
             }
-            return GIT_EXECUTABLE;
+            return gitExecutable;
         }
     }
 

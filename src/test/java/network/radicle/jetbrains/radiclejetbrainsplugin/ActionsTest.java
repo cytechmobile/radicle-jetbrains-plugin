@@ -45,7 +45,7 @@ public class ActionsTest extends AbstractIT {
         var notif = NotificationGroupManager.getInstance()
                 .getNotificationGroup("Vcs Notifications")
                 .createNotification(
-                        RadicleBundle.message("test") ,"Pushed 1 commit", NotificationType.INFORMATION);
+                        RadicleBundle.message("test"), "Pushed 1 commit", NotificationType.INFORMATION);
 
         notif.notify(super.getProject());
 
@@ -60,14 +60,14 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void cloneTest() throws InterruptedException {
         var radUrl = "rad:git:123";
-        var clone = new RadClone(radUrl,"C:\\");
+        var clone = new RadClone(radUrl, "C:\\");
         clone.perform();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            assertThat(cmd.getExePath()).isEqualTo(WSL);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(radPath);
+            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
         }
         assertThat(cmd.getCommandLineString()).contains("clone " + radUrl);
     }
@@ -79,9 +79,9 @@ public class ActionsTest extends AbstractIT {
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            assertThat(cmd.getExePath()).isEqualTo(WSL);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(radPath);
+            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
         }
         assertThat(cmd.getCommandLineString()).contains("self --profile");
     }
@@ -116,8 +116,8 @@ public class ActionsTest extends AbstractIT {
 
         cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
-        var gitStoragePath = RadStub.gitStoragePath + "/" + identityToDelete;
-        var keysStoragePath = RadStub.keysStoragePath + "/" + identityToDelete;
+        var gitStoragePath = RadStub.GIT_STORAGE_PATH + "/" + identityToDelete;
+        var keysStoragePath = RadStub.KEYS_STORAGE_PATH + "/" + identityToDelete;
         var params = cmd.getParametersList();
         if (SystemInfo.isWindows) {
             assertThat(params.get(2)).contains("rm -rf " + gitStoragePath + " " + keysStoragePath);
@@ -137,7 +137,7 @@ public class ActionsTest extends AbstractIT {
 
         var identitiesView = new RadicleSettingsIdentitiesView();
         RadicleSettingsIdentitiesView.AddProfileButton createNewIdentity = identitiesView.new AddProfileButton();
-        createNewIdentity.addProfile("test","test");
+        createNewIdentity.addProfile("test", "test");
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
@@ -170,7 +170,7 @@ public class ActionsTest extends AbstractIT {
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("sync");
-        var not = notificationsQueue.poll(10,TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
     }
@@ -185,7 +185,7 @@ public class ActionsTest extends AbstractIT {
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
 
-        radicleSettingsHandler.savePath(radPath);
+        radicleSettingsHandler.savePath(RAD_PATH);
         rm.projectOpened(getProject());
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNull();
@@ -210,12 +210,12 @@ public class ActionsTest extends AbstractIT {
 
         var rps = new RadiclePushAction();
         var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
-        rps.performAction(getProject(),actionEvent);
+        rps.performAction(getProject(), actionEvent);
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
 
-        radicleSettingsHandler.savePath(radPath);
+        radicleSettingsHandler.savePath(RAD_PATH);
     }
 
     @Test
@@ -244,7 +244,7 @@ public class ActionsTest extends AbstractIT {
         removeSeedNodeFromConfig(firstRepo);
         var rps = new RadiclePushAction();
         var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
-        rps.performAction(getProject(),actionEvent);
+        rps.performAction(getProject(), actionEvent);
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("seedNodeMissing"));
@@ -269,7 +269,7 @@ public class ActionsTest extends AbstractIT {
 
         var rps = new RadiclePushAction();
         var actionEvent = AnActionEvent.createFromAnAction(rps, null, "somewhere", dataId -> "test");
-        rps.performAction(getProject(),actionEvent);
+        rps.performAction(getProject(), actionEvent);
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
@@ -277,7 +277,7 @@ public class ActionsTest extends AbstractIT {
         initializeProject(firstRepo);
     }
 
-    public  void assertPushAction() throws InterruptedException {
+    public void assertPushAction() throws InterruptedException {
         var srv = super.getProject().getService(RadicleProjectService.class);
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
@@ -297,7 +297,6 @@ public class ActionsTest extends AbstractIT {
         assertThat(hasSuccessSyncNotification).isTrue();
         assertThat(srv.forceRadPush).isFalse();
     }
-
 
 
     private class PushDetails implements PushInfo {

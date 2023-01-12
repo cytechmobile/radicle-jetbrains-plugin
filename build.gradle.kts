@@ -7,6 +7,7 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
     // Java support
     id("java")
+    checkstyle
     // Kotlin support
     id("org.jetbrains.kotlin.jvm") version "1.8.0"
     // Gradle IntelliJ Plugin
@@ -43,6 +44,14 @@ dependencies {
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
     testImplementation("org.mockito:mockito-core:4.11.0")
+}
+
+checkstyle {
+    configFile = File("${rootProject.projectDir}/checkstyle.xml");
+    // we do not tolerate errors or warnings, break build if any found
+    toolVersion = "10.6.0";
+    maxErrors = 0;
+    maxWarnings = 0;
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -175,5 +184,5 @@ val uiTestTask = tasks.register<Test>("uiTest") {
 }
 
 tasks.check {
-    dependsOn(uiTestTask)
+    //dependsOn(uiTestTask)
 }

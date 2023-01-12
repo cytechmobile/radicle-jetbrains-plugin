@@ -58,23 +58,23 @@ public class RadicleApplicationService {
         return executeCommand("which", ".", List.of("rad"), null, false);
     }
 
-    public ProcessOutput self (boolean activeProfile) {
+    public ProcessOutput self(boolean activeProfile) {
         if (activeProfile) {
-            return executeCommand(".",List.of("self","--profile"),null);
+            return executeCommand(".", List.of("self", "--profile"), null);
         } else {
-            return executeCommand(".",List.of("self"),null);
+            return executeCommand(".", List.of("self"), null);
         }
     }
 
-    public ProcessOutput clone(String urn,String directory) {
-        return executeCommand(directory,List.of("clone",urn,"--no-confirm"),null);
+    public ProcessOutput clone(String urn, String directory) {
+        return executeCommand(directory, List.of("clone", urn, "--no-confirm"), null);
     }
 
     public ProcessOutput getVersion(String path) {
         if (Strings.isNullOrEmpty(path)) {
             return executeCommand(".", List.of("--version"), null);
         } else {
-            return executeCommand(path,".", List.of("--version"), null, false);
+            return executeCommand(path, ".", List.of("--version"), null, false);
         }
     }
 
@@ -90,12 +90,12 @@ public class RadicleApplicationService {
         return executeCommand(root.getRoot().getPath(), args, root);
     }
 
-    public ProcessOutput init(GitRepository root,String name, String description, String branch) {
+    public ProcessOutput init(GitRepository root, String name, String description, String branch) {
         return executeCommand(root.getRoot().getPath(), List.of("init", "--name", name, "--description", description,
                 "--default-branch", branch, "--no-confirm"), root);
     }
 
-    public ProcessOutput auth(String name,String passphrase,boolean setDefaultProfile) {
+    public ProcessOutput auth(String name, String passphrase, boolean setDefaultProfile) {
         if (setDefaultProfile) {
             return executeCommandWithStdin(".", List.of("auth", name), null);
         } else {
@@ -104,7 +104,7 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput inspect(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("inspect"),root);
+        return executeCommand(root.getRoot().getPath(), List.of("inspect"), root);
     }
 
     public ProcessOutput push(GitRepository root, String seed) {
@@ -138,11 +138,11 @@ public class RadicleApplicationService {
 
     public ProcessOutput executeCommand(
             String exePath, String workDir, List<String> args, @Nullable GitRepository repo, boolean isDefaultIdentityAction) {
-        ProcessOutput result ;
+        ProcessOutput result;
         final var cmdLine = new GeneralCommandLine();
         if (SystemInfo.isWindows) {
             //TODO remove wsl
-            cmdLine.withExePath("wsl").withParameters("bash","-ic").withParameters(exePath + " " + String.join(" ",args));
+            cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(exePath + " " + String.join(" ", args));
         } else {
             cmdLine.withExePath(exePath).withParameters(args);
         }
@@ -159,9 +159,9 @@ public class RadicleApplicationService {
             }
 
             if (isDefaultIdentityAction) {
-                 result = execAndGetOutputWithStdin(cmdLine);
+                result = execAndGetOutputWithStdin(cmdLine);
             } else {
-                 result = execAndGetOutput(cmdLine);
+                result = execAndGetOutput(cmdLine);
             }
             if (console != null) {
                 var stdout = result.getStdout();
@@ -181,7 +181,7 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput execAndGetOutputWithStdin(GeneralCommandLine cmdLine) {
-        var output = ExecUtil.execAndGetOutput(cmdLine,"");
+        var output = ExecUtil.execAndGetOutput(cmdLine, "");
         var exitCode = Strings.isNullOrEmpty(output) ? -1 : 0;
         var msg = Strings.isNullOrEmpty(output) ? RadicleBundle.message("setDefaultIdentityError") : "";
         var pr = new ProcessOutput(exitCode);
@@ -190,6 +190,6 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput execAndGetOutput(GeneralCommandLine cmdLine) throws ExecutionException {
-        return ExecUtil.execAndGetOutput(cmdLine,TIMEOUT);
+        return ExecUtil.execAndGetOutput(cmdLine, TIMEOUT);
     }
 }

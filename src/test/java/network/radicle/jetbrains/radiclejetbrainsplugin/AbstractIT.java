@@ -25,32 +25,33 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
     public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
-    public static final String radVersion = "0.6.1";
-    public static final String radPath = "/usr/bin/rad";
-    public static final String wsl = "wsl";
-    protected static final String remoteName = "testRemote";
-    protected static final String remoteName1 = "testRemote1";
+    public static final String RAD_VERSION = "0.6.1";
+    public static final String RAD_PATH = "/usr/bin/rad";
+    public static final String WSL = "wsl";
+    protected static final String REMOTE_NAME = "testRemote";
+    protected static final String REMOTE_NAME_1 = "testRemote1";
     protected RadicleSettingsHandler radicleSettingsHandler;
     protected String remoteRepoPath;
     protected String remoteRepoPath1;
     protected GitRepository firstRepo;
     protected GitRepository secondRepo;
 
-    private MessageBusConnection mbc,applicationMbc;
+    private MessageBusConnection mbc;
+    private MessageBusConnection applicationMbc;
     public RadStub radStub;
 
     @Before
     public void before() throws IOException {
         /* initialize a git repository */
-        remoteRepoPath = Files.createTempDirectory(remoteName).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
-        firstRepo = GitTestUtil.createGitRepository(super.getProject(),remoteRepoPath);
+        remoteRepoPath = Files.createTempDirectory(REMOTE_NAME).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
+        firstRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath);
 
-        remoteRepoPath1 = Files.createTempDirectory(remoteName1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
+        remoteRepoPath1 = Files.createTempDirectory(REMOTE_NAME_1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
 
         /* set rad path */
         radicleSettingsHandler = new RadicleSettingsHandler();
         radicleSettingsHandler.loadSettings();
-        radicleSettingsHandler.savePath(radPath);
+        radicleSettingsHandler.savePath(RAD_PATH);
 
         /* initialize rad stub service */
         radStub = RadStub.replaceRadicleApplicationService(this);
@@ -58,24 +59,22 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         /* add seed node in config */
         initializeProject(firstRepo);
         addSeedNodeInConfig(firstRepo);
-        applicationMbc =  ApplicationManager.getApplication().getMessageBus().connect();
+        applicationMbc = ApplicationManager.getApplication().getMessageBus().connect();
         mbc = getProject().getMessageBus().connect();
-        mbc.setDefaultHandler(
-                (event1, params) -> {
-                    assertThat(params).hasSize(1);
-                    assertThat(params[0]).isInstanceOf(Notification.class);
-                    Notification n = (Notification) params[0];
-                    logger.warn("captured notification: " + n);
-                    notificationsQueue.add(n);
-                });
-        applicationMbc.setDefaultHandler(
-                (event1, params) -> {
-                    assertThat(params).hasSize(1);
-                    assertThat(params[0]).isInstanceOf(Notification.class);
-                    Notification n = (Notification) params[0];
-                    logger.warn("captured notification: " + n);
-                    notificationsQueue.add(n);
-                });
+        mbc.setDefaultHandler((event1, params) -> {
+            assertThat(params).hasSize(1);
+            assertThat(params[0]).isInstanceOf(Notification.class);
+            Notification n = (Notification) params[0];
+            logger.warn("captured notification: " + n);
+            notificationsQueue.add(n);
+        });
+        applicationMbc.setDefaultHandler((event1, params) -> {
+            assertThat(params).hasSize(1);
+            assertThat(params[0]).isInstanceOf(Notification.class);
+            Notification n = (Notification) params[0];
+            logger.warn("captured notification: " + n);
+            notificationsQueue.add(n);
+        });
         applicationMbc.subscribe(Notifications.TOPIC);
         mbc.subscribe(Notifications.TOPIC);
         logger.warn("created message bus connection and subscribed to notifications: {}" + mbc);
@@ -83,7 +82,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     @After
     public final void after() {
-        if(mbc != null) {
+        if (mbc != null) {
             mbc.disconnect();
         }
         try {
@@ -99,18 +98,18 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public static void assertCmd(GeneralCommandLine cmd) {
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(wsl);
+            assertThat(cmd.getExePath()).isEqualTo(WSL);
             assertThat("bash").isEqualTo(cmd.getParametersList().get(0));
             assertThat("-ic").isEqualTo(cmd.getParametersList().get(1));
-            assertThat(cmd.getParametersList().get(2)).contains(radPath);
+            assertThat(cmd.getParametersList().get(2)).contains(RAD_PATH);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(radPath);
+            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
         }
     }
 
     protected void removeRemoteRadUrl(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repo.getRoot(), "remote.rad.url","");
+            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "");
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
@@ -118,8 +117,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     protected void initializeProject(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repo.getRoot(),
-                    "remote.rad.url","rad://hrrkbjxncopa15doj7qobxip8fotbcemjro4o.git");
+            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "rad://hrrkbjxncopa15doj7qobxip8fotbcemjro4o.git");
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
@@ -127,7 +125,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     protected void removeSeedNodeFromConfig(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repo.getRoot(), "rad.seed","");
+            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "");
         } catch (Exception e) {
             logger.warn("unable to remove seed node from config file");
         }
@@ -135,8 +133,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     protected void addSeedNodeInConfig(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(),repo.getRoot(), "rad.seed",
-                    "https://maple.radicle.garden");
+            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "https://maple.radicle.garden");
         } catch (Exception e) {
             logger.warn("unable to write seed node in config file");
         }

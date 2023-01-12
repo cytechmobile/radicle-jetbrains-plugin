@@ -55,6 +55,7 @@ public abstract class RadAction {
     }
 
     public abstract ProcessOutput run();
+
     public abstract String getActionName();
 
     public ProcessOutput perform() {
@@ -113,10 +114,10 @@ public abstract class RadAction {
             rad.setRadConfigPaths(gitStoragePath, gitKeysPath);
             return new RadConfig(gitStoragePath, gitKeysPath);
         }
-        return new RadConfig("","");
+        return new RadConfig("", "");
     }
 
-    private static String extractPath (String path) {
+    private static String extractPath(String path) {
         try {
             String pattern = "[*/](.*?)radicle-link";
             Pattern r = Pattern.compile(pattern);
@@ -136,7 +137,7 @@ public abstract class RadAction {
         for (var repo : repos) {
             try {
                 var isProjectInitialized = isProjectRadInitialized(repo);
-                if (isProjectInitialized && isSeedNodeConfigured(repo,true)) {
+                if (isProjectInitialized && isSeedNodeConfigured(repo, true)) {
                     initializedRepos.add(repo);
                 }
             } catch (Exception e) {
@@ -162,11 +163,11 @@ public abstract class RadAction {
         return false;
     }
 
-    public static List<GitRepository> getNonConfiguredRepos (List<GitRepository> repos) {
+    public static List<GitRepository> getNonConfiguredRepos(List<GitRepository> repos) {
         var nonConfiguredRepos = new ArrayList<GitRepository>();
         for (var repo : repos) {
             try {
-                var isConfigured = isSeedNodeConfigured(repo,false);
+                var isConfigured = isSeedNodeConfigured(repo, false);
                 if (!isConfigured) {
                     nonConfiguredRepos.add(repo);
                 }
@@ -188,7 +189,9 @@ public abstract class RadAction {
             if (!Strings.isNullOrEmpty(seed)) {
                 for (String node : seedNodes) {
                     hasSeedNode = seed.contains(node);
-                    if (hasSeedNode) break;
+                    if (hasSeedNode) {
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -222,9 +225,7 @@ public abstract class RadAction {
             Project project, String title, String content, NotificationType type,
             List<NotificationAction> actions) {
         type = type != null ? type : NotificationType.ERROR;
-        var notif = NotificationGroupManager.getInstance()
-                .getNotificationGroup(NOTIFICATION_GROUP)
-                .createNotification(RadicleBundle.message(content),type);
+        var notif = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP).createNotification(RadicleBundle.message(content), type);
         notif.setTitle(Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title));
         if (actions != null && !actions.isEmpty()) {
             for (var action : actions) {

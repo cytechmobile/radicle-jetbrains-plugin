@@ -21,7 +21,7 @@ public class PublishDialogTest extends AbstractIT {
 
     @Test
     public void testDialogWithRadInitializedPr() throws InterruptedException {
-        secondRepo = GitTestUtil.createGitRepository(super.getProject(),remoteRepoPath1);
+        secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         initializeProject(secondRepo);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
         assertThat(publishDialog.getProjectSelect().isVisible()).isFalse();
@@ -49,7 +49,7 @@ public class PublishDialogTest extends AbstractIT {
 
     @Test
     public void testDialogWithMultipleRepositories() {
-        secondRepo = GitTestUtil.createGitRepository(super.getProject(),remoteRepoPath1);
+        secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         initializeProject(firstRepo);
         removeRemoteRadUrl(secondRepo);
 
@@ -62,7 +62,7 @@ public class PublishDialogTest extends AbstractIT {
 
     @Test
     public void testDialogWithoutRadInitializedPr() throws InterruptedException {
-        secondRepo = GitTestUtil.createGitRepository(super.getProject(),remoteRepoPath1);
+        secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         removeRemoteRadUrl(secondRepo);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
 

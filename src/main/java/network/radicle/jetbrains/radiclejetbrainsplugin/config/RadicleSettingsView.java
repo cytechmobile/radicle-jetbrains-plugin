@@ -17,18 +17,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
 
 public class RadicleSettingsView implements SearchableConfigurable {
-
     private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
+    private static final String SUPPORTED_CLI_VERSION = "0.6.1";
 
     public static final String ID = RadicleBundle.message("radicle");
-    public static final String browseFolderTitle = RadicleBundle.message("selectExecutable");
 
     protected TextFieldWithBrowseButton radPathField;
     protected JPanel mainPanel;
@@ -38,7 +41,6 @@ public class RadicleSettingsView implements SearchableConfigurable {
     private JLabel enforceVersionLabel;
     private RadicleSettings settings;
     private final RadicleSettingsHandler radicleSettingsHandler;
-    private final static String SUPPORTED_CLI_VERSION = "0.6.1";
 
     public RadicleSettingsView() {
         super();
@@ -82,12 +84,14 @@ public class RadicleSettingsView implements SearchableConfigurable {
             String finalMsg = msg;
             ApplicationManager.getApplication().invokeLater(() -> {
                 radVersionLabel.setText(finalMsg);
-                showHideEnforceLabel(version,false);
+                showHideEnforceLabel(version, false);
             }, ModalityState.any());
         });
     }
 
-    @Override @NotNull @NonNls
+    @Override
+    @NotNull
+    @NonNls
     public String getId() {
         return ID;
     }
@@ -97,7 +101,8 @@ public class RadicleSettingsView implements SearchableConfigurable {
         return ID;
     }
 
-    @Override @Nullable
+    @Override
+    @Nullable
     public JComponent createComponent() {
         reset();
         return mainPanel;
@@ -121,11 +126,11 @@ public class RadicleSettingsView implements SearchableConfigurable {
             var version = getRadVersion();
             var isPathValid = !Strings.isNullOrEmpty(version);
             ApplicationManager.getApplication().invokeLater(() -> {
-               if (isPathValid) {
-                   radicleSettingsHandler.savePath(path);
-               }
-               settings = this.radicleSettingsHandler.loadSettings();
-               showHideEnforceLabel(version,true);
+                if (isPathValid) {
+                    radicleSettingsHandler.savePath(path);
+                }
+                settings = this.radicleSettingsHandler.loadSettings();
+                showHideEnforceLabel(version, true);
             }, ModalityState.any());
         });
     }
@@ -182,7 +187,7 @@ public class RadicleSettingsView implements SearchableConfigurable {
 
     private void initComponents() {
         radPathField.setText(this.settings.getPath());
-        radPathField.addBrowseFolderListener(browseFolderTitle, "", null,
+        radPathField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
 
         var askItem = new ComboItem(RadicleSettings.RadSyncType.ASK.val, RadicleSettings.RadSyncType.ASK.name);
@@ -207,17 +212,17 @@ public class RadicleSettingsView implements SearchableConfigurable {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
             ApplicationManager.getApplication().invokeLater(() -> {
-                showHideEnforceLabel(version,false);
-            },ModalityState.any());
+                showHideEnforceLabel(version, false);
+            }, ModalityState.any());
         });
     }
 
     private void showHideEnforceLabel(String radVersion, boolean isApply) {
         if (Strings.isNullOrEmpty(radVersion)) {
-            return ;
+            return;
         }
         enforceVersionLabel.setVisible(false);
-        var isCompatibleVersion = radVersion.replace("\n","").trim().equals(SUPPORTED_CLI_VERSION);
+        var isCompatibleVersion = radVersion.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
         if (!isCompatibleVersion) {
             enforceVersionLabel.setVisible(true);
             if (isApply) {
@@ -251,15 +256,13 @@ public class RadicleSettingsView implements SearchableConfigurable {
         private Integer key;
         private String value;
 
-        public ComboItem(Integer key, String value)
-        {
+        public ComboItem(Integer key, String value) {
             this.key = key;
             this.value = value;
         }
 
         @Override
-        public String toString()
-        {
+        public String toString() {
             return value;
         }
     }

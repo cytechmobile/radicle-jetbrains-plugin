@@ -19,7 +19,7 @@ public class SeedNode {
         for (var n : nodes) {
             var name = n.split("\\" + RadicleSettingsHandler.RAD_SEED_SEPERATOR)[0];
             var port = n.split("\\" + RadicleSettingsHandler.RAD_SEED_SEPERATOR)[1];
-            seedNodes.add(new SeedNode(name,port));
+            seedNodes.add(new SeedNode(name, port));
         }
         return seedNodes;
     }
@@ -34,9 +34,12 @@ public class SeedNode {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        if(toString().equals(obj.toString())) {
-            return true;
-        }
-        return false;
+
+        return toString().equals(obj.toString());
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
     }
 }

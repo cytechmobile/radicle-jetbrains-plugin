@@ -30,15 +30,15 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
     @Test
     public void loadSettings() {
         var settings = radicleSettingsHandler.loadSettings();
-        var newSeedNodes = List.of(new SeedNode("192.168.1.1","8080"));
+        var newSeedNodes = List.of(new SeedNode("192.168.1.1", "8080"));
         assertThat(settings.getPath()).isEmpty();
         assertThat(settings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.ASK.val);
         assertThat(settings.getSeedNodes()).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
-        radicleSettingsHandler.savePath(AbstractIT.radPath);
+        radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
         radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.YES);
         radicleSettingsHandler.saveSeedNodes(newSeedNodes);
         var newSettings = radicleSettingsHandler.loadSettings();
-        assertThat(newSettings.getPath()).isEqualTo(AbstractIT.radPath);
+        assertThat(newSettings.getPath()).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(newSettings.getRadSync()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
         assertThat(newSettings.getSeedNodes()).usingRecursiveComparison().isEqualTo(newSeedNodes);
         radicleSettingsHandler.saveRadSync(RadicleSettings.RadSyncType.NO);

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import java.awt.Component;
 import java.util.List;
 
 public class RadCheckoutProvider implements CheckoutProvider {
@@ -27,7 +27,6 @@ public class RadCheckoutProvider implements CheckoutProvider {
         return new VcsCloneComponentExt(project, "", new DvcsRememberedInputs(), dialogStateListener);
     }
 
-    @Override
     public void doCheckout(@NotNull Project project, @Nullable Listener listener) {
 
     }
@@ -37,7 +36,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
         return RadicleBundle.message("radicle");
     }
 
-    public static class VcsCloneComponentExt extends  DvcsCloneDialogComponent implements CloneProject {
+    public static class VcsCloneComponentExt extends DvcsCloneDialogComponent implements CloneProject {
 
         private final Project project;
         private TextFieldWithHistory urlField;
@@ -64,7 +63,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
         public List<ValidationInfo> doValidateAll() {
             var list = super.doValidateAll();
             if (urlField != null && !isValidUrl(urlField.getText())) {
-                ContainerUtil.addIfNotNull(list,new ValidationInfo(RadicleBundle.message("invalidUrl"), urlField));
+                ContainerUtil.addIfNotNull(list, new ValidationInfo(RadicleBundle.message("invalidUrl"), urlField));
             }
             return list;
         }
@@ -76,17 +75,17 @@ public class RadCheckoutProvider implements CheckoutProvider {
         /* This doClone is for 2022 version */
         public void doClone(@NotNull CheckoutProvider.Listener listener) {
             if (!RadAction.isCliPathConfigured(project)) {
-                return ;
+                return;
             }
-            CloneUtil.doClone(listener,project,this);
+            CloneUtil.doClone(listener, project, this);
         }
 
         /* This doClone is for 2020 / 2021 versions */
         public void doClone(@NotNull Project pr, @NotNull CheckoutProvider.Listener listener) {
             if (!RadAction.isCliPathConfigured(project)) {
-                return ;
+                return;
             }
-            CloneUtil.doClone(listener,project,this);
+            CloneUtil.doClone(listener, project, this);
         }
 
         @Override
