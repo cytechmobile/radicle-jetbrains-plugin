@@ -12,12 +12,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class RadStub extends RadicleApplicationService {
-    public static final String activeProfile = "myProfile";
+    public static final String ACTIVE_PROFILE = "myProfile";
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
-    public static final String gitStorage = "Storage (git) /home/test/.local/xyz.radicle-link";
-    public static final String keysStorage = "Storage (keys) /home/test/.config/xyz.radicle-link";
-    public static final String gitStoragePath = "/home/test/.local/xyz.radicle-link";
-    public static final String keysStoragePath = "/home/test/.config/xyz.radicle-link";
+    public static final String GIT_STORAGE = "Storage (git) /home/test/.local/xyz.radicle-link";
+    public static final String KEYS_STORAGE = "Storage (keys) /home/test/.config/xyz.radicle-link";
+    public static final String GIT_STORAGE_PATH = "/home/test/.local/xyz.radicle-link";
+    public static final String KEYS_STORAGE_PATH = "/home/test/.config/xyz.radicle-link";
 
     @Override
     public ProcessOutput execAndGetOutputWithStdin(GeneralCommandLine cmdLine) {
@@ -38,11 +38,11 @@ public class RadStub extends RadicleApplicationService {
         } else if (cmdLine.getCommandLineString().contains("which")) {
             stdout = "/usr/bin/rad";
         } else if (cmdLine.getCommandLineString().contains("self --profile")) {
-            stdout = activeProfile;
+            stdout = ACTIVE_PROFILE;
         } else if (cmdLine.getCommandLineString().contains("clone rad:ooo")) {
             return new ProcessOutput(-1);
         } else if (cmdLine.getCommandLineString().contains("self")) {
-            stdout = gitStorage + "\n" + keysStorage;
+            stdout = GIT_STORAGE + "\n" + KEYS_STORAGE;
         }
 
         pr.appendStderr("stderr");

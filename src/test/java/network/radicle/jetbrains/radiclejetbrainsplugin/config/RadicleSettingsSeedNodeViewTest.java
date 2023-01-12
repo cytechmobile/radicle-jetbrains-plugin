@@ -43,9 +43,9 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
         //Add seed node
         var seedNode = "192.168.1.1";
         var port = "8080";
-        var newSeedNode = new SeedNode(seedNode,port);
+        var newSeedNode = new SeedNode(seedNode, port);
         var addSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator();
-        addSeedNode.new AddSeedNode().addNode(seedNode,port);
+        addSeedNode.new AddSeedNode().addNode(seedNode, port);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
@@ -58,18 +58,18 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
         var editSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator().new EditSeedNode();
         var domain = "pine.radicle.garden";
         var newPort = "8085";
-        editSeedNode.editNode(domain,newPort,seedNode,port,tableIndex);
+        editSeedNode.editNode(domain, newPort, seedNode, port, tableIndex);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
         loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
-        assertThat(loadedSeedNodes).contains(new SeedNode(domain,newPort));
+        assertThat(loadedSeedNodes).contains(new SeedNode(domain, newPort));
         assertThat(loadedSeedNodes.size()).isEqualTo(4);
 
         //Remove seed node
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
         radicleSeetingsSeedNodeView.createComponent();
         var removeSeedNode = radicleSeetingsSeedNodeView.getSeedNodeDecorator().new RemoveSeedNode();
-        removeSeedNode.removeNode(domain,newPort,tableIndex);
+        removeSeedNode.removeNode(domain, newPort, tableIndex);
         assertThat(radicleSeetingsSeedNodeView.isModified()).isTrue();
         radicleSeetingsSeedNodeView.apply();
 

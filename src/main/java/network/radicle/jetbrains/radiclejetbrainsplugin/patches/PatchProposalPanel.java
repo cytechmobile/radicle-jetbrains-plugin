@@ -44,8 +44,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,11 +58,11 @@ public class PatchProposalPanel {
     protected RadPatch patch;
     protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
     protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
-    protected TabInfo commitTab ;
-    protected TabInfo filesTab ;
+    protected TabInfo commitTab;
+    protected TabInfo filesTab;
 
-    public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch patch, Project project) {
-        this.patch = patch;
+    public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch radPatch, Project project) {
+        this.patch = radPatch;
         this.patchChanges.setValue(List.of());
         this.patchCommits.setValue(List.of());
 
@@ -93,7 +95,10 @@ public class PatchProposalPanel {
 
     protected JComponent createReturnToListSideComponent(PatchTabController controller) {
         return ReturnToListComponent.INSTANCE.createReturnToListSideComponent(RadicleBundle.message("backToList"),
-                () -> {controller.createPatchesPanel(); return Unit.INSTANCE;});
+                () -> {
+                    controller.createPatchesPanel();
+                    return Unit.INSTANCE;
+                });
     }
 
     protected JComponent createCommitComponent(PatchTabController controller) {
@@ -106,7 +111,7 @@ public class PatchProposalPanel {
         var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) patchCommits)
                 .setEmptyCommitListText(RadicleBundle.message("patchProposalNoCommits"))
                 .onCommitSelected(c -> {
-                    if (c == null || ! (c instanceof GitCommit gc)) {
+                    if (c == null || !(c instanceof GitCommit gc)) {
                         selectedCommitChanges.setValue(List.of());
                     } else {
                         selectedCommitChanges.setValue(new ArrayList<>(gc.getChanges()));
@@ -165,7 +170,7 @@ public class PatchProposalPanel {
 
     private JComponent branchComponent(Project project) {
         var branchPanel = new NonOpaquePanel();
-        branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0","0").insets("0","0","0","0")));;
+        branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         var currentBranch = "";
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         if (gitRepoManager.getRepositories().size() > 0) {
@@ -176,7 +181,7 @@ public class PatchProposalPanel {
         branchPanel.add(to, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
         var arrowLabel = new JLabel(UIUtil.leftArrow());
         arrowLabel.setForeground(CurrentBranchComponent.TEXT_COLOR);
-        arrowLabel.setBorder(JBUI.Borders.empty(0,5));
+        arrowLabel.setBorder(JBUI.Borders.empty(0, 5));
         branchPanel.add(arrowLabel);
         branchPanel.add(from, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
         return branchPanel;
@@ -213,7 +218,7 @@ public class PatchProposalPanel {
     }
 
     protected SimpleChangesBrowser getChangesBrowser(Project project, PatchTabController controller) {
-        var simpleChangesTree = new SimpleChangesBrowser(patch.repo.getProject(),List.of());
+        var simpleChangesTree = new SimpleChangesBrowser(patch.repo.getProject(), List.of());
         DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, simpleChangesTree, controller.getDisposer());
         simpleChangesTree.setShowDiffActionPreview(diffPreview);
         return simpleChangesTree;
@@ -222,7 +227,7 @@ public class PatchProposalPanel {
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             //first make sure that the peer is tracked
-            boolean ok = checkAndTrackPeerIfNeeded(patch);
+            boolean ok = checkAndTrackPeerIfNeeded();
             if (!ok) {
                 return;
             }
@@ -230,7 +235,7 @@ public class PatchProposalPanel {
             final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
             ApplicationManager.getApplication().invokeLater(() -> {
                 patchChanges.setValue(changes);
-                filesTab.append(" " + changes.size(),new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+                filesTab.append(" " + changes.size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 latch.countDown();
             });
         });
@@ -245,18 +250,18 @@ public class PatchProposalPanel {
                 logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.commitHash, current, history);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     patchCommits.setValue(history);
-                    commitTab.append(" " + patchCommits.getValue().size(),new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+                    commitTab.append(" " + patchCommits.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 });
             } catch (Exception e) {
                 logger.warn("error calculating patch commits for patch: {}", patch, e);
                 RadAction.showErrorNotification(patch.repo.getProject(),
-                        RadicleBundle.message("radCliError" ),
+                        RadicleBundle.message("radCliError"),
                         RadicleBundle.message("errorCalculatingPatchProposalCommits"));
             }
         });
     }
 
-    protected boolean checkAndTrackPeerIfNeeded(RadPatch patch) {
+    protected boolean checkAndTrackPeerIfNeeded() {
         if (patch.self) {
             return true;
         }

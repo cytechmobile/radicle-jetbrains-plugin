@@ -33,7 +33,7 @@ public class RadicleSyncAction extends AnAction {
 
     public void performAction(@NotNull Project project, @NotNull List<GitRepository> repos) {
         if (!RadAction.isCliPathConfigured(project)) {
-            return ;
+            return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);

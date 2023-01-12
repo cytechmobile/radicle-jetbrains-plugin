@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
 public class RadTrack extends RadAction {
@@ -35,6 +34,9 @@ public class RadTrack extends RadAction {
         return rad.track(repo, peer == null ? null : peer.id, node == null ? null : node.url);
     }
 
-    public record Peer(String id) {}
-    public record SeedNode(String url) {}
+    public record Peer(String id) {
+    }
+
+    public record SeedNode(String url) {
+    }
 }

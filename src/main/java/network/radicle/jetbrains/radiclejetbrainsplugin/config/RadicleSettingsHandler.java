@@ -20,9 +20,9 @@ public class RadicleSettingsHandler {
     public static final String MAPLE_DOMAIN_NAME = "maple.radicle.garden";
 
     public static final List<SeedNode> DEFAULT_SEED_NODES = List.of(
-            new SeedNode(PINE_DOMAIN_NAME,DEFAULT_SEED_PORT),
-            new SeedNode(WILLOW_DOMAIN_NAME,DEFAULT_SEED_PORT),
-            new SeedNode(MAPLE_DOMAIN_NAME,DEFAULT_SEED_PORT)
+            new SeedNode(PINE_DOMAIN_NAME, DEFAULT_SEED_PORT),
+            new SeedNode(WILLOW_DOMAIN_NAME, DEFAULT_SEED_PORT),
+            new SeedNode(MAPLE_DOMAIN_NAME, DEFAULT_SEED_PORT)
     );
 
     public RadicleSettingsHandler() {
@@ -30,7 +30,7 @@ public class RadicleSettingsHandler {
     }
 
     public RadicleSettings loadSettings() {
-        return new RadicleSettings(getPath(),getRadSync(),getSeedNodes());
+        return new RadicleSettings(getPath(), getRadSync(), getSeedNodes());
     }
 
     public void savePath(String path) {
@@ -38,21 +38,21 @@ public class RadicleSettingsHandler {
     }
 
     public void saveRadSync(RadicleSettings.RadSyncType type) {
-        getApplicationProperties().setValue(RAD_SYNC_KEY,type.val,RadicleSettings.RadSyncType.ASK.val);
+        getApplicationProperties().setValue(RAD_SYNC_KEY, type.val, RadicleSettings.RadSyncType.ASK.val);
     }
 
     private String getPath() {
-        return getApplicationProperties().getValue(PATH_KEY,"");
+        return getApplicationProperties().getValue(PATH_KEY, "");
     }
 
     private Integer getRadSync() {
-        return getApplicationProperties().getInt(RAD_SYNC_KEY,RadicleSettings.RadSyncType.ASK.val);
+        return getApplicationProperties().getInt(RAD_SYNC_KEY, RadicleSettings.RadSyncType.ASK.val);
     }
 
     public void saveSeedNodes(List<SeedNode> seedNodes) {
         String seedListToString = null;
         if (seedNodes != null) {
-             seedListToString = seedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
+            seedListToString = seedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
         }
         getApplicationProperties().setValue(RAD_SEED_KEY, seedListToString);
     }

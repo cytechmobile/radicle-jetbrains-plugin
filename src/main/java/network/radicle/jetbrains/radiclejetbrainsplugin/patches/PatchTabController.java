@@ -6,7 +6,7 @@ import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 
-import java.awt.*;
+import java.awt.BorderLayout;
 
 public class PatchTabController {
     private Project project;
@@ -17,7 +17,7 @@ public class PatchTabController {
         this.project = project;
     }
 
-    public void createPatchesPanel()  {
+    public void createPatchesPanel() {
         tab.setDisplayName(RadicleBundle.message("patchTabName"));
         var mainPanel = tab.getComponent();
         var panel = new PatchListPanel(this, project);
@@ -35,7 +35,7 @@ public class PatchTabController {
         var mainPanel = tab.getComponent();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.removeAll();
-        mainPanel.add(patchProposalViewPanel,BorderLayout.CENTER);
+        mainPanel.add(patchProposalViewPanel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
     }

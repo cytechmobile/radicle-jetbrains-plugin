@@ -3,11 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
-import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,7 +50,7 @@ public class RadSelf extends RadAction {
                     var profiles = output.getStdoutLines(true).stream().filter(p -> p.contains("-"))
                             .collect(Collectors.toList());
                     output = new ProcessOutput(0);
-                    output.appendStdout(String.join(",",profiles));
+                    output.appendStdout(String.join(",", profiles));
                 }
                 return output;
             default:

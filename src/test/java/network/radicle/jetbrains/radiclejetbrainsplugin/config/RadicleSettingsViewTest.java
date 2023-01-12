@@ -73,10 +73,10 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     public void getRadPathTest() throws InterruptedException {
         var path = radicleSettingsView.getRadPath();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(path).isEqualTo(AbstractIT.radPath);
+        assertThat(path).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(cmd).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(AbstractIT.wsl);
+            assertThat(cmd.getExePath()).isEqualTo(AbstractIT.WSL);
             assertThat(cmd.getParametersList().get(0)).isEqualTo("bash");
             assertThat(cmd.getParametersList().get(1)).isEqualTo("-ic");
         } else {
@@ -87,15 +87,15 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void getRadVersion() throws InterruptedException {
-        radicleSettingsHandler.savePath(AbstractIT.radPath);
+        radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
         /* pop previous command from queue ( placeholder triggers it ) */
         radStub.commands.poll(10, TimeUnit.SECONDS);
         radicleSettingsView = new RadicleSettingsView();
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         AbstractIT.assertCmd(cmd);
-        assertThat(version).isEqualTo(AbstractIT.radVersion);
-        assertThat(cmd.getCommandLineString()).contains(AbstractIT.radPath + " --version");
+        assertThat(version).isEqualTo(AbstractIT.RAD_VERSION);
+        assertThat(cmd.getCommandLineString()).contains(AbstractIT.RAD_PATH + " --version");
     }
 
 }

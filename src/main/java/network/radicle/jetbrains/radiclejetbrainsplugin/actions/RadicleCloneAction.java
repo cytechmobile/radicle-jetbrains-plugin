@@ -15,7 +15,7 @@ public class RadicleCloneAction extends AnAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
         var project = e.getProject();
         if (project == null) {
-            return ;
+            return;
         }
         CheckoutProvider.Listener checkoutListener = ProjectLevelVcsManager.getInstance(project).getCompositeCheckoutListener();
         VcsCloneDialog dialog = new VcsCloneDialog.Builder(Objects.requireNonNull(e.getProject())).forVcs(RadCheckoutProvider.class);

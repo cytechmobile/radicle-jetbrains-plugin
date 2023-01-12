@@ -28,7 +28,7 @@ public class ProjectApi {
         this.client = client;
     }
 
-    public  List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
+    public List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
         var url = "https://" + selectedNode.host + ":" + selectedNode.port + "/v1/projects?per-page=" + PER_PAGE +
                 "&page=" + page;
         try {
@@ -47,7 +47,7 @@ public class ProjectApi {
     private List<RadProject> convertJsonToObject(String json, SeedNode selectedNode) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() {});
+            List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() { });
             return radProjects.stream().map(n -> {
                 var urn = ((String) n.get("urn"));
                 var urnParts = urn.split(":");

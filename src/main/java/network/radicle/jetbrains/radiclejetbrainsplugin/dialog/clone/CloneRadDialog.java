@@ -42,11 +42,25 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Desktop;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -83,10 +97,10 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     private boolean triggerSeedNodeAction = true;
 
     public enum TextFieldType {
-        SEARCH_FIELD,BROWSE_FIELD
+        SEARCH_FIELD, BROWSE_FIELD
     }
 
-    public CloneRadDialog(@NotNull Project project,ProjectApi api) {
+    public CloneRadDialog(@NotNull Project project, ProjectApi api) {
         this.loadedProjects = new ArrayList<>();
         this.project = project;
         this.projectApi = api;
@@ -98,17 +112,17 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     public CloneRadDialog(@NotNull Project project) {
-        this(project,new ProjectApi());
+        this(project, new ProjectApi());
     }
 
     private void setActiveProfile() {
         if (!RadAction.isCliPathConfigured(project)) {
-            return ;
+            return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
             var output = radSelf.perform();
-            var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n","") : "";
+            var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n", "") : "";
             ApplicationManager.getApplication().invokeLater(() ->
                     activeProfileLabel.setText(RadicleBundle.message("activeIdentity") + activeProfile), ModalityState.any());
         });
@@ -128,9 +142,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     @Override
     public void doClone(@NotNull CheckoutProvider.Listener listener) {
         if (!RadAction.isCliPathConfigured(project)) {
-            return ;
+            return;
         }
-        CloneUtil.doClone(listener,project,this);
+        CloneUtil.doClone(listener, project, this);
     }
 
     @NotNull
@@ -161,22 +175,22 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     private void initializeMainPanel() {
         directoryPanel = new JPanel(new BorderLayout());
         directoryField = new TextFieldWithBrowseButton();
-        directoryPanel.add(new JLabel(RadicleBundle.message("directory")),BorderLayout.WEST);
-        directoryPanel.add(directoryField,BorderLayout.CENTER);
+        directoryPanel.add(new JLabel(RadicleBundle.message("directory")), BorderLayout.WEST);
+        directoryPanel.add(directoryField, BorderLayout.CENTER);
         directoryField.getTextField().getDocument().addDocumentListener(new TextFieldListener(TextFieldType.BROWSE_FIELD));
         directoryField.addBrowseFolderListener(RadicleBundle.message("selectDirectory"), "", null,
                 FileChooserDescriptorFactory.createSingleFolderDescriptor());
         mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBorder(JBUI.Borders.empty(4));
-        mainPanel.add(identityPanel,BorderLayout.NORTH);
-        mainPanel.add(projectPanel,BorderLayout.CENTER);
-        mainPanel.add(directoryPanel,BorderLayout.SOUTH);
+        mainPanel.add(identityPanel, BorderLayout.NORTH);
+        mainPanel.add(projectPanel, BorderLayout.CENTER);
+        mainPanel.add(directoryPanel, BorderLayout.SOUTH);
     }
 
     private void initializeIdentityPanel() {
         activeProfileLabel = new JBLabel("");
         activeProfileLabel.setFont(new Font(activeProfileLabel.getFont().getName(),
-                Font.BOLD,activeProfileLabel.getFont().getSize()));
+                Font.BOLD, activeProfileLabel.getFont().getSize()));
         activeProfileLabel.setForeground(JBColor.BLACK);
         identityPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         identityPanel.setBorder(JBUI.Borders.empty(2, 0));
@@ -200,23 +214,23 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         radProjectJBList.addListSelectionListener(new TableSelectionListener());
         radProjectJBList.addMouseListener(new ListButtonListener());
         var scrollPanel = new JPanel(new BorderLayout());
-        scrollPanel.add(searchSpinner,BorderLayout.SOUTH);
-        scrollPanel.add(radProjectJBList,BorderLayout.CENTER);
+        scrollPanel.add(searchSpinner, BorderLayout.SOUTH);
+        scrollPanel.add(radProjectJBList, BorderLayout.CENTER);
         projectListPanel = new JBScrollPane(scrollPanel);
         projectListPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         projectPanel = new JPanel();
         projectPanel.setLayout(new BorderLayout());
-        projectPanel.setBorder(JBUI.Borders.empty(5, 5,0,0));
+        projectPanel.setBorder(JBUI.Borders.empty(5, 5, 0, 0));
 
         var gridPanel = new JPanel();
-        gridPanel.setLayout(new GridLayout(4,1));
+        gridPanel.setLayout(new GridLayout(4, 1));
         gridPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         var panel = new JPanel(new BorderLayout());
         panel.add(new JBLabel(RadicleBundle.message("selectSeedNode")), BorderLayout.WEST);
         Presentation presentation = new Presentation();
         presentation.setIcon(AllIcons.General.Settings);
-        panel.add(new ActionButton(new SeedNodeViewAction(),presentation, ActionPlaces.UNKNOWN,
-                        ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE),BorderLayout.EAST);
+        panel.add(new ActionButton(new SeedNodeViewAction(), presentation, ActionPlaces.UNKNOWN,
+                ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE), BorderLayout.EAST);
         gridPanel.add(panel);
         seedNodeComboBox = new ComboBox<>();
         initializeSeedNodeCombobox();
@@ -226,13 +240,13 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         gridPanel.add(seedNodeComboBox);
         gridPanel.add(new JBLabel(RadicleBundle.message("selectProject")));
         gridPanel.add(searchField);
-        projectPanel.add(gridPanel,BorderLayout.NORTH);
+        projectPanel.add(gridPanel, BorderLayout.NORTH);
 
-        var bottomGrid = new JPanel( new GridLayout(2,1));
+        var bottomGrid = new JPanel(new GridLayout(2, 1));
         bottomGrid.add(loadMore);
-        bottomGrid.add( new JBLabel(RadicleBundle.message("openInBrowser")));
+        bottomGrid.add(new JBLabel(RadicleBundle.message("openInBrowser")));
         projectPanel.add(bottomGrid, BorderLayout.SOUTH);
-        projectPanel.add(projectListPanel,BorderLayout.CENTER);
+        projectPanel.add(projectListPanel, BorderLayout.CENTER);
     }
 
     private void fetchProjects() {
@@ -334,16 +348,16 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
             var radProject = (RadProject) value;
-            return  new JLabel("<html><b>Name: </b>" + radProject.name + "<br/>" +
-                     "<b>Urn: </b>" + radProject.urn + "<br/>" + "<br/>" + "</html>");
+            return new JLabel("<html><b>Name: </b>" + radProject.name + "<br/>" +
+                    "<b>Urn: </b>" + radProject.urn + "<br/>" + "<br/>" + "</html>");
         }
     }
 
     private class TextFieldListener extends DocumentAdapter {
         private final TextFieldType type;
 
-        public TextFieldListener(TextFieldType type) {
-            this.type = type;
+        public TextFieldListener(TextFieldType tft) {
+            this.type = tft;
         }
 
         private void enableDisableCloneButton() {

@@ -10,8 +10,12 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.steps.CommonSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
-import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +28,10 @@ import java.util.Comparator;
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
-import static java.awt.event.KeyEvent.*;
+import static java.awt.event.KeyEvent.VK_A;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_META;
+import static java.awt.event.KeyEvent.VK_SHIFT;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
@@ -113,7 +120,6 @@ public class RadicleMenusJavaTest {
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");
         });
-
 
 
 //        step("Check console output", () -> {

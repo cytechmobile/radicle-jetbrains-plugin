@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class RadiclePublishAction extends AnAction  {
+public class RadiclePublishAction extends AnAction {
     private static final Logger logger = LoggerFactory.getLogger(RadiclePublishAction.class);
 
     private List<GitRepository> nonConfiguredRepos = null;
@@ -27,7 +27,7 @@ public class RadiclePublishAction extends AnAction  {
         }
         var project = e.getProject();
         if (project == null) {
-            return ;
+            return;
         }
         final var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
@@ -39,7 +39,7 @@ public class RadiclePublishAction extends AnAction  {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         if (!RadAction.isCliPathConfigured(e.getProject())) {
-            return ;
+            return;
         }
         var project = e.getProject();
         var publishDialog = new PublishDialog(nonConfiguredRepos, project);

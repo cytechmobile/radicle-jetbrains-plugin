@@ -6,9 +6,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class RadRemote extends RadAction {
     public RadRemote(GitRepository repo) {
@@ -33,11 +31,11 @@ public class RadRemote extends RadAction {
         for (var line : lines) {
             var firstSpaceIdx = line.indexOf(' ');
             var name = line.substring(0, firstSpaceIdx);
-            var id = line.substring(firstSpaceIdx +  1).split(" ")[0].trim();
+            var id = line.substring(firstSpaceIdx + 1).split(" ")[0].trim();
             peers.add(new Peer(name.trim(), id.trim()));
         }
         return peers;
     }
 
-    public record Peer (String name, String id) {}
+    public record Peer(String name, String id) { }
 }

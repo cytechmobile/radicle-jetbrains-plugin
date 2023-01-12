@@ -13,7 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.*;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.cd;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.git;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.tac;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GitTestUtil {
@@ -32,7 +34,7 @@ public class GitTestUtil {
 
     @NotNull
     public static GitRepository registerRepo(Project project, String root) {
-        ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
+        ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
         vcsManager.setDirectoryMapping(root, GitVcs.NAME);
         VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
         assertThat(vcsManager.getAllVcsRoots().length).isNotZero();

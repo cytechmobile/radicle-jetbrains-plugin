@@ -31,7 +31,7 @@ public class RadiclePushAction extends AnAction {
 
     public void performAction(Project project, @Nullable AnActionEvent e) {
         if (!RadAction.isCliPathConfigured(project)) {
-            return ;
+            return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var gitRepoManager = GitRepositoryManager.getInstance(project);
@@ -48,7 +48,7 @@ public class RadiclePushAction extends AnAction {
         });
     }
 
-    private void openGitPushDialog(@NotNull Project project , @Nullable AnActionEvent e) {
+    private void openGitPushDialog(@NotNull Project project, @Nullable AnActionEvent e) {
         VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
         final Collection<Repository> repositories = e == null || e.getData(CommonDataKeys.EDITOR) != null ?
                 ContainerUtil.emptyList() :
@@ -59,9 +59,10 @@ public class RadiclePushAction extends AnAction {
     }
 
     @NotNull
-    public static Collection<Repository> collectRepositories(
-            @NotNull VcsRepositoryManager vcsRepositoryManager, VirtualFile @Nullable [] files) {
-        if (files == null) return Collections.emptyList();
+    public static Collection<Repository> collectRepositories(@NotNull VcsRepositoryManager vcsRepositoryManager, VirtualFile @Nullable [] files) {
+        if (files == null) {
+            return Collections.emptyList();
+        }
         Collection<Repository> repositories = new HashSet<>();
         for (VirtualFile file : files) {
             Repository repo = vcsRepositoryManager.getRepositoryForFileQuick(file);
