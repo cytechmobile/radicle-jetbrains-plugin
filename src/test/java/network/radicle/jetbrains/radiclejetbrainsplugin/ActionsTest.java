@@ -16,6 +16,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncActio
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsIdentitiesView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
@@ -146,6 +147,27 @@ public class ActionsTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("The new identity was created successfully"));
+    }
+
+    @Test
+    public void radTrackAction() throws InterruptedException {
+        final var node = new RadTrack.SeedNode("http://pine.radicle.com");
+        var track = new RadTrack(firstRepo, node);
+        track.run();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("track --seed " + node.url() + " --remote");
+    }
+
+    @Test
+    public void radTrackPeerAction() throws InterruptedException {
+        var trackPeer = new RadTrack(firstRepo, new RadTrack.Peer("123"));
+        trackPeer.perform();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd).isNotNull();
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("track 123");
     }
 
     @Test

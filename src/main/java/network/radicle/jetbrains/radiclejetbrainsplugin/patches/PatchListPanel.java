@@ -195,7 +195,7 @@ public class PatchListPanel {
             var peerIdFilter = patchListSearchValue.peerId;
             List<RadPatch> filteredPatches = loadedRadPatches.stream()
                     .filter(p -> searchFilter == null || p.peerId.contains(searchFilter) || p.branchName.contains(searchFilter))
-                    .filter(p -> projectFilter == null || p.repo.getProject().getName().equals(projectFilter))
+                    .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
                     .filter(p -> peerIdFilter == null || p.peerId.contains(peerIdFilter))
                     .filter(p -> stateFilter == null)
                     .collect(Collectors.toList());
