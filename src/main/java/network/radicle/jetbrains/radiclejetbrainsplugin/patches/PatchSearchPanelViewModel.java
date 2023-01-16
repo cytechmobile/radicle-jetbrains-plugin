@@ -56,7 +56,7 @@ public class PatchSearchPanelViewModel
                 });
     }
 
-    public MutableStateFlow<String> authorFilterState() {
+    public MutableStateFlow<String> peerIdFilterState() {
         return partialState(getSearchState(), PatchListSearchValue::getPeerId,
                 (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, authorName) -> {
                     var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
@@ -91,6 +91,7 @@ public class PatchSearchPanelViewModel
     }
 
     public List<String> getPeerIds() {
+        var selectedProjectFilter = this.getSearchState().getValue().project;
         List<String> peersIds = new ArrayList<>();
         try {
             radPatchesCountDown.await();
@@ -99,6 +100,9 @@ public class PatchSearchPanelViewModel
             return peersIds;
         }
         for (var p : radPatches) {
+            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                continue;
+            }
             if (!peersIds.contains(p.peerId)) {
                 peersIds.add(p.peerId);
             }

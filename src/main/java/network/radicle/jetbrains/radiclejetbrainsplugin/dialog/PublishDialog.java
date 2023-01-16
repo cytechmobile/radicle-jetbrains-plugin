@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBTextArea;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
@@ -33,7 +34,7 @@ public class PublishDialog extends DialogWrapper {
     private JPanel contentPane;
     private JTextField branchField;
     private JTextField nameField;
-    private JTextArea descriptionField;
+    private JBTextArea descriptionField;
     private JComboBox<String> seedNodeSelect;
     private JComboBox<GitRepository> projectSelect;
     private JLabel projectNameLabel;
@@ -96,6 +97,7 @@ public class PublishDialog extends DialogWrapper {
         nameField.getDocument().addDocumentListener(textFieldListener);
         branchField.getDocument().addDocumentListener(textFieldListener);
         branchField.setText("master");
+        descriptionField.setBorder(branchField.getBorder());
         descriptionField.setLineWrap(true);
         descriptionField.getDocument().addDocumentListener(textFieldListener);
         projectSelect.addItemListener(e -> updateLayout());
