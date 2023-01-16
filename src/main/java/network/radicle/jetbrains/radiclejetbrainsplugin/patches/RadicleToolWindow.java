@@ -26,7 +26,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
         var issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), "Issues", true);
         var patchContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), null, false);
         patchContent.setDisposer(Disposer.newDisposable(toolWindow.getDisposable(), "RadiclePatchProposalsContent"));
-        toolWindowManagerListener = new ToolWindowManagerListener(){
+        toolWindowManagerListener = new ToolWindowManagerListener() {
             @Override
             public void toolWindowShown(@NotNull ToolWindow shownToolWindow) {
                 if (toolWindow == shownToolWindow && toolWindow.isVisible() && contentManager.isEmpty()) {
