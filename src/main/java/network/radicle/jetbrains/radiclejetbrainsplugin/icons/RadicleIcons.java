@@ -1,13 +1,39 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.icons;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.Icon;
 
-public interface RadicleIcons {
-    Icon RADICLE = IconLoader.getIcon("/icons/radicle.svg", RadicleIcons.class);
-    Icon RADICLE_PUSH = IconLoader.getIcon("/icons/rad_push.svg", RadicleIcons.class);
-    Icon RADICLE_PULL = IconLoader.getIcon("/icons/rad_pull.svg", RadicleIcons.class);
-    Icon RADICLE_SYNC = IconLoader.getIcon("/icons/rad_sync.svg", RadicleIcons.class);
-    Icon CHECK_ICON = IconLoader.getIcon("/icons/check.svg", RadicleIcons.class);
+public class  RadicleIcons {
+    private static final String ICON_PATH = "/icons/";
+
+    public static final Icon RADICLE = getIcon("radicle", false);
+
+    public static final Icon RADICLE_TOOL_WINDOW = getIcon("rad_tool_window", true);
+
+    public static final Icon RADICLE_PUSH = getIcon("rad_push", true);
+
+    public static final Icon RADICLE_PULL = getIcon("rad_pull", true);
+
+    public static final Icon RADICLE_SYNC = getIcon("rad_sync", true);
+
+    public static final Icon RADICLE_CLONE = getIcon("rad_clone", true);
+
+    public static final Icon RADICLE_SHARE = getIcon("rad_share", true);
+
+    public static final Icon CHECK_ICON = getIcon("check", false);
+
+    private static boolean isNewUiEnabled() {
+        return Registry.get("ide.experimental.ui").asBoolean();
+    }
+
+    private static Icon getIcon(String iconName, boolean existInNewUi) {
+        if (isNewUiEnabled() && existInNewUi) {
+            iconName = iconName + "_new_ui";
+        }
+        iconName = iconName + "." + "svg";
+        return IconLoader.getIcon(ICON_PATH + iconName, RadicleIcons.class);
+    }
+
 }
