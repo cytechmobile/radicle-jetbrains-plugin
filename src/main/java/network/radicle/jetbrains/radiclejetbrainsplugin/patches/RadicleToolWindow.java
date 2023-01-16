@@ -17,6 +17,8 @@ import javax.swing.JPanel;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
 
+    protected ToolWindowManagerListener toolWindowManagerListener;
+    protected PatchTabController patchTabController;
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -24,19 +26,20 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
         var issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), "Issues", true);
         var patchContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), null, false);
         patchContent.setDisposer(Disposer.newDisposable(toolWindow.getDisposable(), "RadiclePatchProposalsContent"));
-
-        project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
+        toolWindowManagerListener = new ToolWindowManagerListener(){
             @Override
             public void toolWindowShown(@NotNull ToolWindow shownToolWindow) {
                 if (toolWindow == shownToolWindow && toolWindow.isVisible() && contentManager.isEmpty()) {
                     contentManager.addContent(patchContent);
                     contentManager.addContent(issueContent);
                     contentManager.setSelectedContent(patchContent, true);
-                    var controller = new PatchTabController(patchContent, project);
-                    controller.createPatchesPanel();
+                    patchTabController = new PatchTabController(patchContent, project);
+                    patchTabController.createPatchesPanel();
                 }
             }
-        });
+        };
+
+        project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, toolWindowManagerListener);
         project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE,
                 (GitRepositoryChangeListener) repository -> {
                     var gitRepoManager = GitRepositoryManager.getInstance(project);

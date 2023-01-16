@@ -79,7 +79,7 @@ public class PatchSearchPanelViewModel
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var gitRepoManager = GitRepositoryManager.getInstance(project);
             projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
-                    .stream().map(e -> e.getProject().getName()).collect(Collectors.toList());
+                    .stream().map(e -> e.getRoot().getName()).collect(Collectors.toList());
             isFinished.countDown();
         });
         try {

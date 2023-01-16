@@ -181,7 +181,7 @@ public class PatchListPanel {
         return progressStripe;
     }
 
-    private void filterList(PatchListSearchValue patchListSearchValue) {
+    public void filterList(PatchListSearchValue patchListSearchValue) {
         patchModel.clear();
         if (loadedRadPatches == null) {
             return;
@@ -195,7 +195,7 @@ public class PatchListPanel {
             var peerIdFilter = patchListSearchValue.peerId;
             List<RadPatch> filteredPatches = loadedRadPatches.stream()
                     .filter(p -> searchFilter == null || p.peerId.contains(searchFilter) || p.branchName.contains(searchFilter))
-                    .filter(p -> projectFilter == null || p.repo.getProject().getName().equals(projectFilter))
+                    .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
                     .filter(p -> peerIdFilter == null || p.peerId.contains(peerIdFilter))
                     .filter(p -> stateFilter == null)
                     .collect(Collectors.toList());
@@ -292,9 +292,8 @@ public class PatchListPanel {
         });
     }
 
-    private class RefreshSeedNodeAction extends AnAction {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
+    public class RefreshSeedNodeAction extends AnAction {
+        public void refreshSeedNodesAndProposals() {
             loadedRadPatches = null;
             resetFilters();
             triggerSeedNodeAction = false;
@@ -303,6 +302,10 @@ public class PatchListPanel {
             seedNodeComboBox.setSelectedIndex(prevSelectedIndex);
             triggerSeedNodeAction = true;
             updateListPanel();
+        }
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+            refreshSeedNodesAndProposals();
         }
     }
 
@@ -316,18 +319,6 @@ public class PatchListPanel {
         @Override
         public Component getListCellRendererComponent(
                 JList<? extends RadPatch> list, RadPatch value, int index, boolean isSelected, boolean cellHasFocus) {
-
-            /*
-
-            This code introduce a bug in filtering
-
-            if (!cells.containsKey(index)) {
-                var cell = new Cell(index, value);
-                cells.put(index, cell);
-            }
-
-            */
-
             var cell = new Cell(index, value);
             cell.setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
             cell.text.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
@@ -372,5 +363,25 @@ public class PatchListPanel {
                 return ac;
             }
         }
+    }
+
+    public DefaultListModel<RadPatch> getPatchModel() {
+        return patchModel;
+    }
+
+    public List<RadPatch> getRadPatches() {
+        return loadedRadPatches;
+    }
+
+    public ComboBox<SeedNode> getSeedNodeComboBox() {
+        return seedNodeComboBox;
+    }
+
+    public PatchSearchPanelViewModel getSearchVm() {
+        return searchVm;
+    }
+
+    public JBList getPatchesList() {
+        return patchesList;
     }
 }

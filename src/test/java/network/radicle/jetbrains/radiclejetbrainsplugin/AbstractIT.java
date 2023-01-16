@@ -6,17 +6,22 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.config.GitConfigUtil;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.junit.After;
 import org.junit.Before;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -41,10 +46,21 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public RadStub radStub;
 
     @Before
-    public void before() throws IOException {
+    public void before() throws IOException, VcsException {
         /* initialize a git repository */
         remoteRepoPath = Files.createTempDirectory(REMOTE_NAME).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
         firstRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath);
+
+        // Create a commit
+        var fileToChange = new File(firstRepo.getRoot().getPath() + "/initial_file.txt");
+        GitTestUtil.writeToFile(fileToChange,"Hello");
+        GitTestUtil.addAll(new File(firstRepo.getRoot().getPath()));
+        GitTestUtil.commit(new File(firstRepo.getRoot().getPath()),"My Changes");
+        var commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot());
+
+        var myCommit = commitHistory.get(0);
+        var changes = (ArrayList) myCommit.getChanges();
+        var change = (Change) changes.get(0);
 
         remoteRepoPath1 = Files.createTempDirectory(REMOTE_NAME_1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
 
@@ -54,7 +70,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         radicleSettingsHandler.savePath(RAD_PATH);
 
         /* initialize rad stub service */
-        radStub = RadStub.replaceRadicleApplicationService(this);
+        radStub = RadStub.replaceRadicleApplicationService(this,change.getBeforeRevision().getRevisionNumber().asString());
+        logger.debug("Before revision hash : {}",change.getBeforeRevision().getRevisionNumber().asString());
+        logger.debug("Current revision hash : {}",firstRepo.getCurrentRevision());
 
         /* add seed node in config */
         initializeProject(firstRepo);

@@ -233,8 +233,8 @@ public class PatchProposalPanel {
             }
             var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.commitHash, true);
             final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
+            patchChanges.setValue(changes);
             ApplicationManager.getApplication().invokeLater(() -> {
-                patchChanges.setValue(changes);
                 filesTab.append(" " + changes.size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 latch.countDown();
             });
@@ -248,8 +248,8 @@ public class PatchProposalPanel {
                 final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
                         patch.commitHash + "..." + current);
                 logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.commitHash, current, history);
+                patchCommits.setValue(history);
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    patchCommits.setValue(history);
                     commitTab.append(" " + patchCommits.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 });
             } catch (Exception e) {

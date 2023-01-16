@@ -10,15 +10,17 @@ import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.cd;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.git;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.tac;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GitTestUtil {
+    private static final Logger logger = LoggerFactory.getLogger(GitTestUtil.class);
 
     @NotNull
     public static GitRepository createGitRepository(
@@ -43,6 +45,22 @@ public class GitTestUtil {
         GitRepository repository = grm.getRepositoryForRoot(file);
         assertThat(repository).as("Couldn't find repository for root " + root).isNotNull();
         return repository;
+    }
+
+    public static void writeToFile(@NotNull File file, @NotNull String content) {
+        try {
+            append(file,content);
+        } catch (Exception e) {
+            logger.warn("Unable to write to the file");
+        }
+    }
+
+    public static void addAll(File workingDir) {
+        run(workingDir, List.of("git.exe","add","--verbose","."),false);
+    }
+
+    public static void commit(File workingDir, String comment) {
+        run(workingDir, List.of("git.exe","commit","-m",comment),false);
     }
 
     public static void setupGitConfig() {
