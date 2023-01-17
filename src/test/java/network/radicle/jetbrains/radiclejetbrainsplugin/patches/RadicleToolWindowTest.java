@@ -170,7 +170,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         var patchProposalPanel = controller.getPatchProposalPanel();
         // Wait to load the changes
         while (patchProposalPanel.patchChanges.getValue().isEmpty() || patchProposalPanel.patchCommits.getValue().isEmpty()) {
-            logger.info("Wait to load patch and commits changes");
+            logger.info("Wait to load patch and commit changes");
         }
         assertThat(patchProposalPanel.patchChanges.getValue().size()).isEqualTo(1);
         assertThat(patchProposalPanel.patchCommits.getValue().size()).isEqualTo(1);

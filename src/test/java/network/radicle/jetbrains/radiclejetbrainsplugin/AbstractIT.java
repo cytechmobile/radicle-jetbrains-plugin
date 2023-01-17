@@ -54,8 +54,8 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         // Create a commit
         var fileToChange = new File(firstRepo.getRoot().getPath() + "/initial_file.txt");
         GitTestUtil.writeToFile(fileToChange, "Hello");
-        GitTestUtil.addAll(new File(firstRepo.getRoot().getPath()));
-        GitTestUtil.commit(new File(firstRepo.getRoot().getPath()), "My Changes");
+        GitExecutor.addCommit("my message");
+
         var commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot());
 
         var myCommit = commitHistory.get(0);
