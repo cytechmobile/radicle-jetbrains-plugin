@@ -9,16 +9,24 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.*;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.FIRST_PEER_ID;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.FIRST_BRANCH_NAME;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_PEER_ID;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_BRANCH_NAME;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_COMMIT_HASH;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class RadicleToolWindowTest extends AbstractIT {
-
+    private static final Logger logger = LoggerFactory.getLogger(RadicleToolWindowTest.class);
     private RadicleToolWindow radicleToolWindow;
+
     @Before
     public void setUpToolWindow() throws InterruptedException {
         radicleToolWindow = new RadicleToolWindow();
@@ -161,8 +169,8 @@ public class RadicleToolWindowTest extends AbstractIT {
         controller.createPatchProposalPanel(radPatch);
         var patchProposalPanel = controller.getPatchProposalPanel();
         // Wait to load the changes
-        while(patchProposalPanel.patchChanges.getValue().isEmpty() || patchProposalPanel.patchCommits.getValue().isEmpty()) {
-
+        while (patchProposalPanel.patchChanges.getValue().isEmpty() || patchProposalPanel.patchCommits.getValue().isEmpty()) {
+            logger.info("Wait to load patch and commits changes");
         }
         assertThat(patchProposalPanel.patchChanges.getValue().size()).isEqualTo(1);
         assertThat(patchProposalPanel.patchCommits.getValue().size()).isEqualTo(1);
@@ -195,7 +203,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         assertThat(loadedRadPatches.get(0).branchName).isEqualTo(FIRST_BRANCH_NAME);
         assertThat(loadedRadPatches.get(0).commitHash).isEqualTo(radStub.firstCommitHash);
 
-        assertThat(loadedRadPatches.get(1).peerId).isEqualTo(radStub.SECOND_PEER_ID);
+        assertThat(loadedRadPatches.get(1).peerId).isEqualTo(SECOND_PEER_ID);
         assertThat(loadedRadPatches.get(1).branchName).isEqualTo(radStub.SECOND_BRANCH_NAME);
         assertThat(loadedRadPatches.get(1).commitHash).isEqualTo(radStub.SECOND_COMMIT_HASH);
 

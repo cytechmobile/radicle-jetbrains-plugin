@@ -25,7 +25,8 @@ public class RadStub extends RadicleApplicationService {
     public static final String SECOND_PEER_ID = "hyy8y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ww";
     public static final String FIRST_BRANCH_NAME = "master";
     public static final String SECOND_BRANCH_NAME = "master2";
-    public String TRACK_RESPONSE = "{exitCode=0, timeout=false, cancelled=false, stdout=asd rad:git:hnrkqxsqc8oz8cth167tua786mof7btgrubto (pine.radicle.garden)\n" +
+    public String trackResponse = "{exitCode=0, timeout=false, cancelled=false, stdout=asd " +
+            "rad:git:hnrkqxsqc8oz8cth167tua786mof7btgrubto (pine.radicle.garden)\n" +
             "├── " + FIRST_PEER_ID + "\n" +
             "│   └── " + FIRST_BRANCH_NAME + " MY_COMMIT_HASH\n" +
             "│\n" +
@@ -63,9 +64,9 @@ public class RadStub extends RadicleApplicationService {
         } else if (cmdLine.getCommandLineString().contains("self")) {
             stdout = GIT_STORAGE + "\n" + KEYS_STORAGE;
         } else if (cmdLine.getCommandLineString().contains("track")) {
-            TRACK_RESPONSE = TRACK_RESPONSE.replace("MY_COMMIT_HASH", this.firstCommitHash);
-            stdout = TRACK_RESPONSE;
-        } else if(cmdLine.getCommandLineString().contains("remote ls")) {
+            trackResponse = trackResponse.replace("MY_COMMIT_HASH", this.firstCommitHash);
+            stdout = trackResponse;
+        } else if (cmdLine.getCommandLineString().contains("remote ls")) {
             stdout = "";
         }
 

@@ -19,7 +19,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Before
     public void before() {
-        radStub = RadStub.replaceRadicleApplicationService(this,"");
+        radStub = RadStub.replaceRadicleApplicationService(this, "");
         radicleSettingsHandler = new RadicleSettingsHandler();
         radicleSettingsView = new RadicleSettingsView();
         radicleSettingsView.apply();

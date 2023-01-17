@@ -53,9 +53,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         // Create a commit
         var fileToChange = new File(firstRepo.getRoot().getPath() + "/initial_file.txt");
-        GitTestUtil.writeToFile(fileToChange,"Hello");
+        GitTestUtil.writeToFile(fileToChange, "Hello");
         GitTestUtil.addAll(new File(firstRepo.getRoot().getPath()));
-        GitTestUtil.commit(new File(firstRepo.getRoot().getPath()),"My Changes");
+        GitTestUtil.commit(new File(firstRepo.getRoot().getPath()), "My Changes");
         var commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot());
 
         var myCommit = commitHistory.get(0);
@@ -70,9 +70,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         radicleSettingsHandler.savePath(RAD_PATH);
 
         /* initialize rad stub service */
-        radStub = RadStub.replaceRadicleApplicationService(this,change.getBeforeRevision().getRevisionNumber().asString());
-        logger.debug("Before revision hash : {}",change.getBeforeRevision().getRevisionNumber().asString());
-        logger.debug("Current revision hash : {}",firstRepo.getCurrentRevision());
+        radStub = RadStub.replaceRadicleApplicationService(this, change.getBeforeRevision().getRevisionNumber().asString());
+        logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
+        logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 
         /* add seed node in config */
         initializeProject(firstRepo);
