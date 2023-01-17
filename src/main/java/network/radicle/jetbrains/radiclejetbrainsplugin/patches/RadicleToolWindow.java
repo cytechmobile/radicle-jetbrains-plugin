@@ -10,10 +10,12 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JPanel;
+import javax.swing.*;
+import java.awt.*;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
 
@@ -23,7 +25,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
         var contentManager = toolWindow.getContentManager();
-        var issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), "Issues", true);
+        var issueContent = toolWindow.getContentManager().getFactory().createContent(getIssuePanel(), "Issues", true);
         var patchContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), null, false);
         patchContent.setDisposer(Disposer.newDisposable(toolWindow.getDisposable(), "RadiclePatchProposalsContent"));
         toolWindowManagerListener = new ToolWindowManagerListener() {
@@ -53,6 +55,12 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                         });
                     });
                 });
+    }
+
+    private JComponent getIssuePanel() {
+        var mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(new JLabel(RadicleBundle.message("issueContent"), SwingConstants.CENTER), BorderLayout.CENTER);
+        return mainPanel;
     }
 
     @Override
