@@ -127,6 +127,7 @@ public class GitExecutor {
         try {
             clientProcess = builder.start();
         } catch (IOException e) {
+            LOG.error("Error:{}", e);
             throw new RuntimeException(e);
         }
 
