@@ -29,6 +29,10 @@ public class RadiclePushAction extends AnAction {
         performAction(project, e);
     }
 
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
+
     public void performAction(Project project, @Nullable AnActionEvent e) {
         if (!RadAction.isCliPathConfigured(project)) {
             return;

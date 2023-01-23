@@ -14,6 +14,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
@@ -96,6 +97,16 @@ public abstract class RadAction {
 
     public List<NotificationAction> notificationActions() {
         return null;
+    }
+
+    public static void showRadIcon(@NotNull AnActionEvent e) {
+        if (e.getProject() == null) {
+           e.getPresentation().setEnabledAndVisible(false);
+           return ;
+        }
+        final var gitRepoManager = GitRepositoryManager.getInstance(e.getProject());
+        var repos = gitRepoManager.getRepositories();
+        e.getPresentation().setEnabledAndVisible(repos.size() > 0);
     }
 
     public static RadConfig getStoragePath() {

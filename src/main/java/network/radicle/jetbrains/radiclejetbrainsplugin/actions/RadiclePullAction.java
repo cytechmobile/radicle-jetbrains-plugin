@@ -20,6 +20,10 @@ public class RadiclePullAction extends AnAction {
         performAction(project);
     }
 
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
+
     public void performAction(Project project) {
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();

@@ -25,6 +25,10 @@ public class RadicleSyncAction extends AnAction {
         performAction(project);
     }
 
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
+
     public void performAction(@NotNull Project project) {
         final var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
