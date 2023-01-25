@@ -148,7 +148,7 @@ public class PatchProposalPanel {
     private JComponent descriptionComponent() {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody("Something awesome is coming soon. Stay tuned");
+        titlePane.setBody("This area is reserved to show the description and other details of the Patch Proposal, in an upcoming version of the plugin.");
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC());
         return nonOpaquePanel;
