@@ -102,7 +102,7 @@ public abstract class RadAction {
     public static void showRadIcon(@NotNull AnActionEvent e) {
         if (e.getProject() == null) {
            e.getPresentation().setEnabledAndVisible(false);
-           return ;
+           return;
         }
         final var gitRepoManager = GitRepositoryManager.getInstance(e.getProject());
         var repos = gitRepoManager.getRepositories();
