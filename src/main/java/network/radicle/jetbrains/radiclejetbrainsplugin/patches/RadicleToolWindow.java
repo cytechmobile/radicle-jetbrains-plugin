@@ -27,7 +27,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
 
     @Override
     public void init(@NotNull ToolWindow window) {
-        createToolWindowContent(window.getProject(),window);
+        createToolWindowContent(window.getProject(), window);
     }
 
     @Override
