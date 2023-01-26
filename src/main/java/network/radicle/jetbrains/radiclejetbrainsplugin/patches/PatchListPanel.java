@@ -189,7 +189,6 @@ public class PatchListPanel {
         if (patchListSearchValue.getFilterCount() == 0) {
             patchModel.addAll(loadedRadPatches);
         } else {
-            var stateFilter = patchListSearchValue.state;
             var projectFilter = patchListSearchValue.project;
             var searchFilter = patchListSearchValue.searchQuery;
             var peerIdFilter = patchListSearchValue.peerId;
@@ -197,7 +196,6 @@ public class PatchListPanel {
                     .filter(p -> searchFilter == null || p.peerId.contains(searchFilter) || p.branchName.contains(searchFilter))
                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
                     .filter(p -> peerIdFilter == null || p.peerId.contains(peerIdFilter))
-                    .filter(p -> stateFilter == null)
                     .collect(Collectors.toList());
             patchModel.addAll(filteredPatches);
         }
