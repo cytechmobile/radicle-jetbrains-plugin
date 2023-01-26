@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil;
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation;
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory;
@@ -9,10 +8,8 @@ import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import java.util.Arrays;
+import javax.swing.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
         PatchSearchPanelViewModel.PatchListQuickFilter, PatchSearchPanelViewModel> {
