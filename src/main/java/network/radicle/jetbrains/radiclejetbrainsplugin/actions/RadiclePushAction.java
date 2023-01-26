@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -22,6 +23,16 @@ import java.util.Collections;
 import java.util.HashSet;
 
 public class RadiclePushAction extends AnAction {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

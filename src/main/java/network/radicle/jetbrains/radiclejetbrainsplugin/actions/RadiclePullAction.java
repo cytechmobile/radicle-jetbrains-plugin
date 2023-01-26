@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +15,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CountDownLatch;
 
 public class RadiclePullAction extends AnAction {
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         var project = e.getProject();
