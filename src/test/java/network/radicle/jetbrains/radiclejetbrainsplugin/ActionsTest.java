@@ -201,14 +201,14 @@ public class ActionsTest extends AbstractIT {
     public void testSuccessNotificationAfterInstalled() throws InterruptedException {
         radicleSettingsHandler.savePath("");
         var rm = new RadicleManagerListener();
-        rm.projectOpened(getProject());
+        rm.runActivity(getProject());
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
 
         radicleSettingsHandler.savePath(RAD_PATH);
-        rm.projectOpened(getProject());
+        rm.runActivity(getProject());
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNull();
     }

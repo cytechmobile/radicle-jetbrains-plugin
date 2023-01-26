@@ -21,9 +21,14 @@ import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
-
     protected ToolWindowManagerListener toolWindowManagerListener;
     protected PatchTabController patchTabController;
+
+    @Override
+    public void init(@NotNull ToolWindow window) {
+        createToolWindowContent(window.getProject(), window);
+    }
+
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
