@@ -8,7 +8,7 @@ import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 import java.util.List;
 
 public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
@@ -35,7 +35,6 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
 
         return List.of(projectFilter, authorFilter);
     }
-
 
     @NotNull
     @Override
