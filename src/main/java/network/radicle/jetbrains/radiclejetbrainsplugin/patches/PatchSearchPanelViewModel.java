@@ -47,15 +47,6 @@ public class PatchSearchPanelViewModel
         this.radPatchesCountDown = countdown;
     }
 
-    public MutableStateFlow<String> stateFilterState() {
-        return partialState(getSearchState(), PatchListSearchValue::getState,
-                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, state) -> {
-                    var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
-                    copyPatchSearchValue.state = (String) state;
-                    return copyPatchSearchValue;
-                });
-    }
-
     public MutableStateFlow<String> peerIdFilterState() {
         return partialState(getSearchState(), PatchListSearchValue::getPeerId,
                 (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, authorName) -> {
@@ -120,8 +111,7 @@ public class PatchSearchPanelViewModel
 
     @Override
     public List<PatchListQuickFilter> getQuickFilters() {
-        var stateQuickFilter = new PatchListQuickFilter().openStateQuickFilter();
-        return List.of(stateQuickFilter);
+        return List.of();
     }
 
 
@@ -131,12 +121,6 @@ public class PatchSearchPanelViewModel
 
         public PatchListQuickFilter() {
             patchListSearchValue = new PatchListSearchValue();
-        }
-
-        public PatchListQuickFilter openStateQuickFilter() {
-            patchListSearchValue = new PatchListSearchValue();
-            patchListSearchValue.state = PatchListSearchValue.State.OPEN.name;
-            return this;
         }
 
         @NotNull

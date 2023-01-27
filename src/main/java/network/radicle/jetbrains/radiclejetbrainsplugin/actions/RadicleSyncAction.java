@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +18,16 @@ import java.util.concurrent.CountDownLatch;
 
 public class RadicleSyncAction extends AnAction {
     protected CountDownLatch updateCountDown;
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
