@@ -43,7 +43,7 @@ dependencies {
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
-    testImplementation("org.mockito:mockito-core:5.0.0")
+    testImplementation("org.mockito:mockito-core:5.2.0")
 }
 
 checkstyle {
