@@ -102,12 +102,11 @@ public class RadicleMenusJavaTest {
             actionMenu(remoteRobot, "Radicle").isShowing();
         });
 
-        step("Ensure Radicle sub-menu items (sync, push, pull) show", () -> {
+        step("Ensure Radicle sub-menu items (sync, pull) show", () -> {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").click();
             actionMenuItem(remoteRobot, "Pull").isShowing();
-            actionMenuItem(remoteRobot, "Push").isShowing();
             actionMenuItem(remoteRobot, "Synchronize").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
             actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
@@ -116,11 +115,9 @@ public class RadicleMenusJavaTest {
         step("Ensure Radicle toolbar actions show", () -> {
             keyboard.hotKey(VK_ESCAPE);
             isXPathComponentVisible(idea, "//div[@myicon='rad_pull.svg']");
-            isXPathComponentVisible(idea, "//div[@myicon='rad_push.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");
         });
-
 
 //        step("Check console output", () -> {
 //            final Locator locator = byXpath("//div[@class='ConsoleViewImpl']");

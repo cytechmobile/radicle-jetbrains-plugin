@@ -107,7 +107,7 @@ public abstract class RadAction {
         for (var repo : repos) {
             try {
                 var isProjectInitialized = isProjectRadInitialized(repo);
-                if (isProjectInitialized && isSeedNodeConfigured(repo, true)) {
+                if (isProjectInitialized) {
                     initializedRepos.add(repo);
                 }
             } catch (Exception e) {
@@ -137,7 +137,7 @@ public abstract class RadAction {
         var nonConfiguredRepos = new ArrayList<GitRepository>();
         for (var repo : repos) {
             try {
-                var isConfigured = isSeedNodeConfigured(repo, false);
+                var isConfigured = isProjectRadInitialized(repo);
                 if (!isConfigured) {
                     nonConfiguredRepos.add(repo);
                 }
@@ -146,31 +146,6 @@ public abstract class RadAction {
             }
         }
         return nonConfiguredRepos;
-    }
-
-    private static boolean isSeedNodeConfigured(GitRepository repo, boolean showNotification) {
-        var seedNodes = List.of("https://pine.radicle.garden", "https://willow.radicle.garden", "https://maple.radicle.garden");
-        boolean hasSeedNode = false;
-        try {
-            var handler = new GitLineHandler(repo.getProject(), repo.getRoot(), GitCommand.CONFIG);
-            handler.setSilent(true);
-            handler.addParameters("--null", "--local", "--get", "rad.seed");
-            var seed = Git.getInstance().runCommand(handler).getOutputOrThrow(1).trim();
-            if (!Strings.isNullOrEmpty(seed)) {
-                for (String node : seedNodes) {
-                    hasSeedNode = seed.contains(node);
-                    if (hasSeedNode) {
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logger.warn("unable to read git config file", e);
-        }
-        if (!hasSeedNode && showNotification) {
-            showErrorNotification(repo.getProject(), "radCliError", RadicleBundle.message("seedNodeMissing"));
-        }
-        return hasSeedNode;
     }
 
     public static void showRadIcon(@NotNull AnActionEvent e) {
