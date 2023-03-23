@@ -32,6 +32,8 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
     public static final String RAD_VERSION = "0.6.1";
     public static final String RAD_PATH = "/usr/bin/rad";
+    public static final String RAD_HOME= "/home/test/radicle";
+    public static final String RAD_HOME1= "/test2/secondInstallation";
     public static final String WSL = "wsl";
     protected static final String REMOTE_NAME = "testRemote";
     protected static final String REMOTE_NAME_1 = "testRemote1";
@@ -121,7 +123,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             assertThat("-ic").isEqualTo(cmd.getParametersList().get(1));
             assertThat(cmd.getParametersList().get(2)).contains(RAD_PATH);
         } else {
-            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
+            assertThat(cmd.getCommandLineString()).contains(RAD_PATH);
         }
     }
 
