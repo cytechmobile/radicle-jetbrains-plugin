@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
@@ -78,7 +77,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
-        assertThat(radicleSettingsView.getRadDetails().id).isEqualTo(RadStub.NODE_ID);
+        assertThat(radicleSettingsView.getRadDetails().id).isEqualTo(RadStub.nodeId);
     }
 
     @Test
@@ -147,8 +146,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertThat(cmd.getCommandLineString()).contains(AbstractIT.RAD_PATH + " --version");
     }
 
-    private void assertCommands (GeneralCommandLine radSelfCmd, GeneralCommandLine identityUnlockedCmd,
-                                String radHome) {
+    private void assertCommands(GeneralCommandLine radSelfCmd, GeneralCommandLine identityUnlockedCmd, String radHome) {
         assertThat(radSelfCmd).isNotNull();
         assertThat(radSelfCmd.getCommandLineString()).contains("export RAD_HOME=" + radHome);
         assertThat(radSelfCmd.getCommandLineString()).contains(AbstractIT.RAD_PATH);

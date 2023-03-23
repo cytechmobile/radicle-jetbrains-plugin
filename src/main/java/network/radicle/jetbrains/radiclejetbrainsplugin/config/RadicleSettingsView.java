@@ -21,8 +21,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+
+import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
@@ -90,7 +95,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         if (!RadAction.isSuccess(output)) {
             return "";
         }
-        return output.getStdout().replace("\n","");
+        return output.getStdout().replace("\n", "");
     }
 
     private boolean isRadHomeValidPath(String radPath, String radHome) {

@@ -47,7 +47,7 @@ public class RadicleApplicationService {
         final var settings = settingsHandler.loadSettings();
         final var radExePath = Strings.isNullOrEmpty(radPath) ? settings.getPath() : radPath;
         final var radHomePath = Strings.isNullOrEmpty(radHome) ? settings.getRadHome() : radHome;
-        return executeCommand(radExePath, radHomePath, "." , List.of("self"), null, "");
+        return executeCommand(radExePath, radHomePath, ".", List.of("self"), null, "");
     }
 
     public ProcessOutput clone(String urn, String directory) {
@@ -55,7 +55,7 @@ public class RadicleApplicationService {
     }
 
     public boolean isIdentityUnlocked(String key) {
-        var output = executeCommand("ssh-add","",".",List.of("-l"), null, "");
+        var output = executeCommand("ssh-add", "", ".", List.of("-l"), null, "");
         if (!RadAction.isSuccess(output) || Strings.isNullOrEmpty(key)) {
             return false;
         }
@@ -88,7 +88,7 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput auth(String passphrase, String radHome, String radPath) {
-        return executeCommandWithStdin(".",radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
+        return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
     }
 
     public ProcessOutput inspect(GitRepository root) {
@@ -112,7 +112,8 @@ public class RadicleApplicationService {
                 Objects.requireNonNull(root.getCurrentBranchName())), root);
     }
 
-    public ProcessOutput executeCommandWithStdin(String workDir,String radHome, String radPath, List<String> args, @Nullable GitRepository repo, String stdin) {
+    public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
+                                                 @Nullable GitRepository repo, String stdin) {
         final var settings = settingsHandler.loadSettings();
         final var path = Strings.isNullOrEmpty(radPath) ? settings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? settings.getRadHome() : radHome;
@@ -123,13 +124,13 @@ public class RadicleApplicationService {
         final var settings = settingsHandler.loadSettings();
         final var radPath = settings.getPath();
         final var radHome = settings.getRadHome();
-        return executeCommand(radPath, radHome, workDir, args, repo,"");
+        return executeCommand(radPath, radHome, workDir, args, repo, "");
     }
 
     public ProcessOutput executeCommand(String exePath, String workDir, List<String> args, @Nullable GitRepository repo) {
         final var settings = settingsHandler.loadSettings();
         final var radHome = settings.getRadHome();
-        return executeCommand(exePath, radHome, workDir, args, repo,"");
+        return executeCommand(exePath, radHome, workDir, args, repo, "");
     }
 
     public ProcessOutput executeCommand(

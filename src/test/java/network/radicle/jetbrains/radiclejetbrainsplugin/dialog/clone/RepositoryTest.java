@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.ui.TextFieldWithHistory;

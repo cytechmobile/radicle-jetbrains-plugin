@@ -10,7 +10,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicat
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.*;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_HOME;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_HOME1;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_PATH;
 
 public class RadStub extends RadicleApplicationService {
 
@@ -31,11 +33,11 @@ public class RadStub extends RadicleApplicationService {
             "│   └── " + SECOND_BRANCH_NAME + " " + SECOND_COMMIT_HASH + " \n" +
             "│\n" +
             ", stderr=}";
-    public String KEY_HASH = "SHA256:ydAxDGTdnXu2wQ+EfWJ8xn9UMHqjH8TaovWJW6KZCsA";
-    public static String NODE_ID =  "did:key:z6MkgrVBxtgFynk6AWZ9ZDM5NVnHuvWeyMJkVD1aUVtMXPug";
-    public String radSelfResponse = "ID             " + NODE_ID + "\n" +
+    public String keyHash = "SHA256:ydAxDGTdnXu2wQ+EfWJ8xn9UMHqjH8TaovWJW6KZCsA";
+    public static String nodeId =  "did:key:z6MkgrVBxtgFynk6AWZ9ZDM5NVnHuvWeyMJkVD1aUVtMXPug";
+    public String radSelfResponse = "ID             " + nodeId + "\n" +
             "Node ID        z6MkgrVBxtgFynk6AWZ9ZDM5NVnHuvWeyMJkVD1aUVtMXPug\n" +
-            "Key (hash)     " + KEY_HASH + "\n" +
+            "Key (hash)     " + keyHash + "\n" +
             "Key (full)     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICOqmEeeO8DuIrnzyJtx/54eWyzaajQXaE0txB6W7/1X\n" +
             "Storage (git)  /home/stelios/.radicle/storage\n" +
             "Storage (keys) /home/stelios/.radicle/keys\n" +
@@ -74,8 +76,8 @@ public class RadStub extends RadicleApplicationService {
         } else if (cmdLine.getCommandLineString().contains("self")) {
             if (cmdLine.getCommandLineString().contains(RAD_HOME)) {
                 stdout = radSelfResponse;
-            } else if(cmdLine.getCommandLineString().contains(RAD_HOME1)) {
-                KEY_HASH = KEY_HASH + "A";
+            } else if (cmdLine.getCommandLineString().contains(RAD_HOME1)) {
+                keyHash = keyHash + "A";
                 stdout = trackResponse;
             } else {
                 pr.setExitCode(-1);

@@ -2,14 +2,13 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.DocumentAdapter;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JComponent;
+import javax.swing.Action;
 import javax.swing.event.DocumentEvent;
 
 public class IdentityDialog extends DialogWrapper {
