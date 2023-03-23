@@ -9,7 +9,7 @@ plugins {
     id("java")
     checkstyle
     // Kotlin support
-    id("org.jetbrains.kotlin.jvm") version "1.8.0"
+    id("org.jetbrains.kotlin.jvm") version "1.8.10"
     // Gradle IntelliJ Plugin
     id("org.jetbrains.intellij") version "1.13.2"
     // Gradle Changelog Plugin
@@ -29,7 +29,7 @@ repositories {
     }
 }
 
-var remoteRobotVersion = "0.11.16"
+var remoteRobotVersion = "0.11.18"
 
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
@@ -43,7 +43,7 @@ dependencies {
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
-    testImplementation("org.mockito:mockito-core:4.11.0")
+    testImplementation("org.mockito:mockito-core:5.2.0")
 }
 
 checkstyle {
