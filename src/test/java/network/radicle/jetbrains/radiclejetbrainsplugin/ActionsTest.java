@@ -3,6 +3,8 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import org.junit.Test;
@@ -58,9 +60,9 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
 
-      //  var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-      //  assertThat(not).isNotNull();
-      //  assertThat(not.getContent()).contains(new RadPull(null).getNotificationSuccessMessage());
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(new RadPull(null).getNotificationSuccessMessage());
     }
 
     @Test
@@ -71,9 +73,9 @@ public class ActionsTest extends AbstractIT {
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("sync");
-     ///   var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-     //   assertThat(not).isNotNull();
-      //  assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
     }
 
     @Test
