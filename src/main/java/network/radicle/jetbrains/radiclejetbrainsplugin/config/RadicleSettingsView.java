@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
@@ -21,13 +22,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JButton;
+import javax.swing.JPanel;
 import javax.swing.JLabel;
-
-
+import javax.swing.event.DocumentEvent;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
@@ -220,8 +219,13 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private void initListeners() {
         testButton.addActionListener(e -> this.updateRadVersionLabel());
         testRadHomeButton.addActionListener(e -> this.unlockOrCreateIdentity());
-        radPathField.getTextField().addFocusListener(new FieldFocusListener(radPathField, AutoDetect.Type.RAD_EXE_PATH));
-        radHomeField.getTextField().addFocusListener(new FieldFocusListener(radHomeField, AutoDetect.Type.RAD_HOME));
+
+        var radPathFieldListener = new FieldListener(radPathField, AutoDetect.Type.RAD_EXE_PATH);
+        var radHomeFieldListener = new FieldListener(radHomeField, AutoDetect.Type.RAD_HOME);
+        radPathField.getTextField().addFocusListener(radPathFieldListener);
+        radHomeField.getTextField().addFocusListener(radHomeFieldListener);
+        radPathField.getTextField().getDocument().addDocumentListener(radPathFieldListener);
+        radHomeField.getTextField().getDocument().addDocumentListener(radHomeFieldListener);
     }
 
     @Override
@@ -339,11 +343,11 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         }
     }
 
-    private class FieldFocusListener implements FocusListener {
+    private class FieldListener extends DocumentAdapter implements FocusListener {
         private final TextFieldWithBrowseButton textField;
         private final AutoDetect.Type type;
 
-        public FieldFocusListener(TextFieldWithBrowseButton textField, AutoDetect.Type type) {
+        public FieldListener(TextFieldWithBrowseButton textField, AutoDetect.Type type) {
             this.textField = textField;
             this.type = type;
         }
@@ -363,6 +367,14 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             if (getPathFromTextField(textField).isEmpty()) {
                 var autoDetect = new AutoDetect(textField, type);
                 autoDetect.detectAndUpdateField();
+            }
+        }
+
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+            /* Change the color of the field when the user select a path from the dialog */
+            if (!textField.getText().contains(RadicleBundle.message("autoDetected"))) {
+                textField.getTextField().setForeground(JBColor.BLACK);
             }
         }
     }
