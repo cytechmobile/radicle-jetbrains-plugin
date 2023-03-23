@@ -34,6 +34,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
@@ -120,11 +121,17 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radSelf = new RadSelf(RadSelf.RadSelfAction.ACTIVE_PROFILE);
+            var radSelf = new RadSelf("", "");
             var output = radSelf.perform();
-            var activeProfile = output.getExitCode() == 0 ? output.getStdout().replace("\n", "") : "";
+            String activeNodeId;
+            if (RadAction.isSuccess(output)) {
+                var radDetails = new RadDetails(output.getStdoutLines(true));
+                activeNodeId = radDetails.nodeId;
+            } else {
+                activeNodeId = "";
+            }
             ApplicationManager.getApplication().invokeLater(() ->
-                    activeProfileLabel.setText(RadicleBundle.message("activeIdentity") + activeProfile), ModalityState.any());
+                    activeProfileLabel.setText(RadicleBundle.message("activeIdentity") + activeNodeId), ModalityState.any());
         });
     }
 
