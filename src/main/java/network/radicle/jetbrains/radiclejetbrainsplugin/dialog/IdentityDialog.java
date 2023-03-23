@@ -14,7 +14,6 @@ import javax.swing.event.DocumentEvent;
 
 public class IdentityDialog extends DialogWrapper {
     private JPanel contentPane;
-    public JTextField nameField;
     public JTextField passphraseField;
 
     public IdentityDialog() {
@@ -46,18 +45,16 @@ public class IdentityDialog extends DialogWrapper {
 
     protected void init() {
         super.init();
-        setTitle(RadicleBundle.message("newIdentity"));
-        var isFormValid = !nameField.getText().isEmpty() || !passphraseField.getText().isEmpty();
+        var isFormValid =  !passphraseField.getText().isEmpty();
         setOKActionEnabled(isFormValid);
         var textFieldListener = new TextFieldListener();
-        nameField.getDocument().addDocumentListener(textFieldListener);
         passphraseField.getDocument().addDocumentListener(textFieldListener);
     }
 
     public class TextFieldListener extends DocumentAdapter {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-            if (nameField.getText().isEmpty() || passphraseField.getText().isEmpty()) {
+            if (passphraseField.getText().isEmpty()) {
                 setOKActionEnabled(false);
             } else {
                 setOKActionEnabled(true);
