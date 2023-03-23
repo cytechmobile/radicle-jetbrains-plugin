@@ -186,6 +186,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     @Override
     public boolean isModified() {
+        this.settings = this.radicleSettingsHandler.loadSettings();
         var selectedPath = getPathFromTextField(radPathField);
         var selectedRadHome = getPathFromTextField(radHomeField);
         return !selectedPath.equals(this.settings.getPath()) ||

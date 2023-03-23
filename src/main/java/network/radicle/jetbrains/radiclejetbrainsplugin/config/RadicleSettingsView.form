@@ -63,7 +63,7 @@
           <component id="d1bf7" class="javax.swing.JLabel">
             <constraints border-constraint="West"/>
             <properties>
-              <text value="Profile Storage (RAD HOME):"/>
+              <text value="Path to Profile Storage (RAD_HOME)"/>
             </properties>
           </component>
           <component id="71725" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="radHomeField">
