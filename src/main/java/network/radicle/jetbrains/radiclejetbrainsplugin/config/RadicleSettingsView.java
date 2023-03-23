@@ -27,10 +27,14 @@ import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
+
+import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
     private static final String SUPPORTED_CLI_VERSION = "0.8.0";
@@ -43,7 +47,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private JLabel enforceVersionLabel;
     protected TextFieldWithBrowseButton radHomeField;
     private JButton testRadHomeButton;
-    private JLabel nodeIdLabel;
+    private JLabel msgLabel;
     private RadicleSettings settings;
     private final RadicleSettingsHandler radicleSettingsHandler;
     private IdentityDialog identityDialog;
@@ -105,7 +109,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private void unlockOrCreateIdentity() {
-        nodeIdLabel.setText("");
+        msgLabel.setText("");
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radHome = getPathFromTextField(radHomeField);
             var radPath = getPathFromTextField(radPathField);
@@ -115,12 +119,12 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             radDetails = new RadDetails(lines);
             var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
             var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
-            /* If radSelf executed with exit code 0 then we have an identity */
+            /* If radSelf executed with exit code 0 then we have an identity !! */
             var success = RadAction.isSuccess(output);
             ApplicationManager.getApplication().invokeLater(() -> {
                 /* if there is identity and its unlocked just update the label with node id */
                 if (success && isIdentityUnlocked) {
-                    nodeIdLabel.setText(radDetails.id);
+                    msgLabel.setText(radDetails.id);
                     return;
                 }
                 /* if there is no identity or unlocked identity show passphrase dialog */
@@ -132,8 +136,15 @@ public class RadicleSettingsView  implements SearchableConfigurable {
                 if (okButton) {
                     var action = !success ? RadAuth.RadAuthAction.CREATE_IDENTITY :
                             RadAuth.RadAuthAction.UNLOCKED_IDENTITY;
-                    ApplicationManager.getApplication().executeOnPooledThread(() ->
-                            new RadAuth(dialog.passphraseField.getText(), radHome, radPath, action).perform());
+                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                        var radAuth = new RadAuth(dialog.passphraseField.getText(), radHome, radPath, action);
+                        var radAuthOutput = radAuth.perform();
+                        var isSuccess = RadAction.isSuccess(radAuthOutput);
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            var msg = isSuccess ? radAuth.getNotificationSuccessMessage() : radAuthOutput.getStderr();
+                            this.msgLabel.setText("<html>" + msg + "</html>");
+                        }, ModalityState.any());
+                    });
                 }
             }, ModalityState.any());
         });
@@ -199,7 +210,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var title = !isCompatibleVersion ? RadicleBundle.message("invalidRad") : RadicleBundle.message("noNode");
             var msg = !isCompatibleVersion ? RadicleBundle.message("radNotInstalled") : RadicleBundle.message("createNode");
             ApplicationManager.getApplication().invokeLater(() ->
-                    RadAction.showNotification(null, title, msg, NotificationType.WARNING,
+                    showNotification(null, title, msg, NotificationType.WARNING,
                             List.of(new RadAction.ConfigureRadCliNotificationAction(null,
                                     RadicleBundle.lazyMessage("configure")))), ModalityState.any());
         });
@@ -229,6 +240,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private void initComponents() {
+        this.msgLabel.setPreferredSize(new Dimension(200, this.msgLabel.getHeight()));
         radPathField.setText(this.settings.getPath());
         radPathField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
