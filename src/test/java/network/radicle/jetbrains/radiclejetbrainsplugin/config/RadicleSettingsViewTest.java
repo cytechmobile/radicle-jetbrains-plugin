@@ -1,15 +1,18 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.assertCmd;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
@@ -18,11 +21,14 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     private RadStub radStub;
 
     @Before
-    public void before() {
+    public void before() throws InterruptedException {
         radStub = RadStub.replaceRadicleApplicationService(this, "");
         radicleSettingsHandler = new RadicleSettingsHandler();
+        radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsView = new RadicleSettingsView();
-        radicleSettingsView.apply();
+        /* pop previous commands from queue ( Checking for compatible version ) */
+        radStub.commands.poll(10, TimeUnit.SECONDS);
     }
 
     @Test
@@ -41,23 +47,16 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     @Test
-    public void testIsModifiedApply() throws ConfigurationException, InterruptedException {
+    public void testIsModifiedApply() {
         assertThat(radicleSettingsView.isModified()).isFalse();
         radicleSettingsView.getPathField().setText("/radpath");
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
 
         radicleSettingsView = new RadicleSettingsView();
-        assertThat(radicleSettingsView.isModified()).isFalse();
-        assertThat(radicleSettingsView.getComboBox().getSelectedIndex()).isEqualTo(RadicleSettings.RadSyncType.ASK.val);
-
-        radicleSettingsView.getComboBox().setSelectedIndex(RadicleSettings.RadSyncType.YES.val);
+        radicleSettingsView.getHomeField().setText("/home");
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
-
-        radicleSettingsView = new RadicleSettingsView();
-        assertThat(radicleSettingsView.isModified()).isFalse();
-        assertThat(radicleSettingsView.getComboBox().getSelectedIndex()).isEqualTo(RadicleSettings.RadSyncType.YES.val);
     }
 
     @Test
@@ -70,32 +69,91 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     @Test
+    public void testButtonWithUnlockedIdentity() throws InterruptedException {
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        radicleSettingsView = new RadicleSettingsView();
+        radStub.commands.poll(10, TimeUnit.SECONDS);
+        var testButton = radicleSettingsView.getRadHomeTestButton();
+        testButton.doClick();
+        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
+        assertThat(radicleSettingsView.getRadDetails().id).isEqualTo(RadStub.NODE_ID);
+    }
+
+    @Test
+    public void testButtonWithoutIdentity() throws InterruptedException {
+        var identityDialog = new IdentityDialog() {
+            @Override
+            public boolean showAndGet() {
+                assertThat(getTitle()).isEqualTo(RadicleBundle.message("newIdentity"));
+                return true;
+            }
+        };
+        radicleSettingsHandler.saveRadHome("/lakis");
+        radicleSettingsView = new RadicleSettingsView(identityDialog);
+        radStub.commands.poll(10, TimeUnit.SECONDS);
+        var testButton = radicleSettingsView.getRadHomeTestButton();
+        testButton.doClick();
+        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCommands(radSelfCmd, identityUnlockedCmd, "/lakis");
+    }
+
+    @Test
+    public void testButtonWithLockedIdentity() throws InterruptedException {
+       var identityDialog = new IdentityDialog() {
+           @Override
+           public boolean showAndGet() {
+               assertThat(getTitle()).isEqualTo(RadicleBundle.message("unlockIdentity"));
+               return true;
+           }
+       };
+      radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
+      radicleSettingsView = new RadicleSettingsView(identityDialog);
+      radStub.commands.poll(10, TimeUnit.SECONDS);
+      var testButton = radicleSettingsView.getRadHomeTestButton();
+      testButton.doClick();
+      var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
+      var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+      assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME1);
+    }
+
+    @Test
+    public void getRadHomeTest() throws InterruptedException {
+        var home = radicleSettingsView.getRadHome();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(home).isEqualTo(AbstractIT.RAD_HOME);
+        assertThat(cmd).isNotNull();
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("rad path");
+    }
+
+    @Test
     public void getRadPathTest() throws InterruptedException {
         var path = radicleSettingsView.getRadPath();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(path).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(cmd).isNotNull();
-        if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(AbstractIT.WSL);
-            assertThat(cmd.getParametersList().get(0)).isEqualTo("bash");
-            assertThat(cmd.getParametersList().get(1)).isEqualTo("-ic");
-        } else {
-            assertThat(cmd.getExePath()).isEqualTo("which");
-        }
         assertThat(cmd.getCommandLineString()).contains("which rad");
     }
 
     @Test
     public void getRadVersion() throws InterruptedException {
-        radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
-        /* pop previous command from queue ( placeholder triggers it ) */
-        radStub.commands.poll(10, TimeUnit.SECONDS);
-        radicleSettingsView = new RadicleSettingsView();
         var version = radicleSettingsView.getRadVersion();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        AbstractIT.assertCmd(cmd);
+        assertCmd(cmd);
         assertThat(version).isEqualTo(AbstractIT.RAD_VERSION);
         assertThat(cmd.getCommandLineString()).contains(AbstractIT.RAD_PATH + " --version");
     }
 
+    private void assertCommands (GeneralCommandLine radSelfCmd, GeneralCommandLine identityUnlockedCmd,
+                                String radHome) {
+        assertThat(radSelfCmd).isNotNull();
+        assertThat(radSelfCmd.getCommandLineString()).contains("export RAD_HOME=" + radHome);
+        assertThat(radSelfCmd.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radSelfCmd.getCommandLineString()).contains("rad self");
+        assertThat(identityUnlockedCmd).isNotNull();
+        assertThat(identityUnlockedCmd.getCommandLineString()).contains("ssh-add -l");
+    }
 }
