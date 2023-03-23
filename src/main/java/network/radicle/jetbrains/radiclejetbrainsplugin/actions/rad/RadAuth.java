@@ -1,7 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
+import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
 public class RadAuth extends RadAction {
@@ -15,6 +17,11 @@ public class RadAuth extends RadAction {
         this.action = action;
         this.radHome = radHome;
         this.radPath = radPath;
+    }
+
+    @Override
+    public boolean showNotification() {
+        return false;
     }
 
     @Override
@@ -45,7 +52,9 @@ public class RadAuth extends RadAction {
         var isSuccess = RadAuth.isSuccess(output) && !output.getStdout().contains("failed");
         var pr = new ProcessOutput(isSuccess ? 0 : -1);
         /* Write from stdOut to stdErr in order to appear the message in the notification */
-        pr.appendStderr(output.getStdout());
+        var stdOut = output.getStdout();
+        var errorMessage = !Strings.isNullOrEmpty(stdOut) ? stdOut : RadicleBundle.message("radCliError");
+        pr.appendStderr(errorMessage);
         return pr;
     }
 
