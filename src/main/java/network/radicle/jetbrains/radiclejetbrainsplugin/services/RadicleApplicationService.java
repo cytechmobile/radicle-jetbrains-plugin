@@ -9,9 +9,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadConfig;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +18,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
     private static final int TIMEOUT = 60_000;
     private final RadicleSettingsHandler settingsHandler;
-    private Map<String, String> radStoragePath = null;
 
     public RadicleApplicationService() {
         this(new RadicleSettingsHandler());
@@ -39,42 +35,38 @@ public class RadicleApplicationService {
         this.settingsHandler = radicleSettingsHandler;
     }
 
-    public void setRadConfigPaths(String gitStoragePath, String keysStoragePath) {
-        if (radStoragePath == null) {
-            radStoragePath = new HashMap<>();
-        }
-        radStoragePath.put("gitStoragePath", gitStoragePath);
-        radStoragePath.put("keysStoragePath", keysStoragePath);
+    public ProcessOutput homePath() {
+        return executeCommand(".", List.of("path"), null);
     }
 
-    public RadConfig getRadStoragePath() {
-        if (radStoragePath == null) {
-            return null;
-        }
-        return new RadConfig(radStoragePath.get("gitStoragePath"), radStoragePath.get("keysStoragePath"));
+    public ProcessOutput radPath() {
+        return executeCommand("which", ".", List.of("rad"), null);
     }
 
-    public ProcessOutput getRadPath() {
-        return executeCommand("which", ".", List.of("rad"), null, false);
-    }
-
-    public ProcessOutput self(boolean activeProfile) {
-        if (activeProfile) {
-            return executeCommand(".", List.of("self", "--profile"), null);
-        } else {
-            return executeCommand(".", List.of("self"), null);
-        }
+    public ProcessOutput self(String radHome, String radPath) {
+        final var settings = settingsHandler.loadSettings();
+        final var radExePath = Strings.isNullOrEmpty(radPath) ? settings.getPath() : radPath;
+        final var radHomePath = Strings.isNullOrEmpty(radHome) ? settings.getRadHome() : radHome;
+        return executeCommand(radExePath, radHomePath, "." , List.of("self"), null, "");
     }
 
     public ProcessOutput clone(String urn, String directory) {
         return executeCommand(directory, List.of("clone", urn, "--no-confirm"), null);
     }
 
+    public boolean isIdentityUnlocked(String key) {
+        var output = executeCommand("ssh-add","",".",List.of("-l"), null, "");
+        if (!RadAction.isSuccess(output) || Strings.isNullOrEmpty(key)) {
+            return false;
+        }
+        return output.getStdout().contains(key);
+    }
+
     public ProcessOutput getVersion(String path) {
         if (Strings.isNullOrEmpty(path)) {
             return executeCommand(".", List.of("--version"), null);
         } else {
-            return executeCommand(path, ".", List.of("--version"), null, false);
+            return executeCommand(path, ".", List.of("--version"), null);
         }
     }
 
@@ -95,12 +87,8 @@ public class RadicleApplicationService {
                 "--default-branch", branch, "--no-confirm"), root);
     }
 
-    public ProcessOutput auth(String name, String passphrase, boolean setDefaultProfile) {
-        if (setDefaultProfile) {
-            return executeCommandWithStdin(".", List.of("auth", name), null);
-        } else {
-            return executeCommand(".", List.of("auth", "--init", "--name", name, "--passphrase", passphrase), null);
-        }
+    public ProcessOutput auth(String passphrase, String radHome, String radPath) {
+        return executeCommandWithStdin(".",radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
     }
 
     public ProcessOutput inspect(GitRepository root) {
@@ -124,27 +112,40 @@ public class RadicleApplicationService {
                 Objects.requireNonNull(root.getCurrentBranchName())), root);
     }
 
-    public ProcessOutput executeCommandWithStdin(String workDir, List<String> args, @Nullable GitRepository repo) {
+    public ProcessOutput executeCommandWithStdin(String workDir,String radHome, String radPath, List<String> args, @Nullable GitRepository repo, String stdin) {
         final var settings = settingsHandler.loadSettings();
-        final var radPath = settings.getPath();
-        return executeCommand(radPath, workDir, args, repo, true);
+        final var path = Strings.isNullOrEmpty(radPath) ? settings.getPath() : radPath;
+        final var home = Strings.isNullOrEmpty(radHome) ? settings.getRadHome() : radHome;
+        return executeCommand(path, home, workDir, args, repo, stdin);
     }
 
     public ProcessOutput executeCommand(String workDir, List<String> args, @Nullable GitRepository repo) {
         final var settings = settingsHandler.loadSettings();
         final var radPath = settings.getPath();
-        return executeCommand(radPath, workDir, args, repo, false);
+        final var radHome = settings.getRadHome();
+        return executeCommand(radPath, radHome, workDir, args, repo,"");
+    }
+
+    public ProcessOutput executeCommand(String exePath, String workDir, List<String> args, @Nullable GitRepository repo) {
+        final var settings = settingsHandler.loadSettings();
+        final var radHome = settings.getRadHome();
+        return executeCommand(exePath, radHome, workDir, args, repo,"");
     }
 
     public ProcessOutput executeCommand(
-            String exePath, String workDir, List<String> args, @Nullable GitRepository repo, boolean isDefaultIdentityAction) {
+            String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin) {
         ProcessOutput result;
         final var cmdLine = new GeneralCommandLine();
-        if (SystemInfo.isWindows) {
-            //TODO remove wsl
-            cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(exePath + " " + String.join(" ", args));
+        var params = "";
+        if (!Strings.isNullOrEmpty(radHome)) {
+            params = "export RAD_HOME=" + radHome + "; " + exePath + " " + String.join(" ", args);
         } else {
-            cmdLine.withExePath(exePath).withParameters(args);
+            params = exePath + " " + String.join(" ", args);
+        }
+        if (SystemInfo.isWindows) {
+            cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(params);
+        } else {
+            cmdLine.withParameters(params);
         }
         cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
                 // we need parent environment to be present to our rad execution
@@ -158,8 +159,8 @@ public class RadicleApplicationService {
                 console.showCommandLine("[" + workDir + "] " + cmdLine.getCommandLineString());
             }
 
-            if (isDefaultIdentityAction) {
-                result = execAndGetOutputWithStdin(cmdLine);
+            if (!Strings.isNullOrEmpty(stdin)) {
+                result = execAndGetOutputWithStdin(cmdLine, stdin);
             } else {
                 result = execAndGetOutput(cmdLine);
             }
@@ -180,12 +181,11 @@ public class RadicleApplicationService {
         }
     }
 
-    public ProcessOutput execAndGetOutputWithStdin(GeneralCommandLine cmdLine) {
-        var output = ExecUtil.execAndGetOutput(cmdLine, "");
+    public ProcessOutput execAndGetOutputWithStdin(GeneralCommandLine cmdLine, String stdin) {
+        var output = ExecUtil.execAndGetOutput(cmdLine, stdin);
         var exitCode = Strings.isNullOrEmpty(output) ? -1 : 0;
-        var msg = Strings.isNullOrEmpty(output) ? RadicleBundle.message("setDefaultIdentityError") : "";
         var pr = new ProcessOutput(exitCode);
-        pr.appendStderr(msg);
+        pr.appendStdout(output);
         return pr;
     }
 
