@@ -72,16 +72,12 @@ public abstract class RadAction {
             if (showNotification()) {
                 showErrorNotification(project, "radCliError", output.getStderr());
             }
-           // ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project, "radCliError", output.getStderr()), ModalityState.any());
             return output;
         }
         logger.info(this.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
         if (!this.getNotificationSuccessMessage().isEmpty() && showNotification()) {
             showNotification(project, "", this.getNotificationSuccessMessage(),
                     NotificationType.INFORMATION, this.notificationActions());
-           //ApplicationManager.getApplication().invokeLater(() ->
-           //        showNotification(project, "", this.getNotificationSuccessMessage(),
-           //                NotificationType.INFORMATION, this.notificationActions()), ModalityState.any());
         }
         return output;
     }
