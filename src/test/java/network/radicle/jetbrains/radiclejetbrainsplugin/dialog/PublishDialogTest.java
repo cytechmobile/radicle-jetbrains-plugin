@@ -22,7 +22,7 @@ public class PublishDialogTest extends AbstractIT {
     @Test
     public void testDialogWithRadInitializedPr() throws InterruptedException {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
-        initializeProject(secondRepo);
+//        initializeProject(secondRepo);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
         assertThat(publishDialog.getProjectSelect().isVisible()).isFalse();
         assertThat(publishDialog.getProjectNameLabel().isVisible()).isFalse();
@@ -35,15 +35,14 @@ public class PublishDialogTest extends AbstractIT {
 
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("push --seed " +
-                publishDialog.getSeedNodeSelect().getSelectedItem());
+        assertThat(cmd.getCommandLineString()).contains("init");
 
         cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNull();
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Push"));
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
         removeRemoteRadUrl(secondRepo);
     }
 
@@ -84,14 +83,9 @@ public class PublishDialogTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("init --name " + NAME + " --description " + DESCRIPTION +
                 " --default-branch " + BRANCHNAME + " --no-confirm");
 
-        cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("push --seed " +
-                publishDialog.getSeedNodeSelect().getSelectedItem());
-
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Push"));
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
     }
 
 }

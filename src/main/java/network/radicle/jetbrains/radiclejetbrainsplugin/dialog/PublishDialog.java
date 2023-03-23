@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -9,10 +8,8 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextArea;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInit;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPush;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,18 +63,9 @@ public class PublishDialog extends DialogWrapper {
         super.doOKAction();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var repo = (GitRepository) projectSelect.getSelectedItem();
-            ProcessOutput output = null;
             if (!isSelectedRepoInitialized) {
                 var init = new RadInit(repo, nameField.getText(), descriptionField.getText(), branchField.getText());
-                output = init.perform();
-            }
-            if (isSelectedRepoInitialized || output.getExitCode() == 0) {
-                final var countDown = new CountDownLatch(1);
-                UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("publishProgressBar"),
-                        countDown);
-                ApplicationManager.getApplication().executeOnPooledThread(ubt::queue);
-                var push = new RadPush(repo, (String) seedNodeSelect.getSelectedItem());
-                push.perform(countDown);
+                init.perform();
             }
         });
     }
