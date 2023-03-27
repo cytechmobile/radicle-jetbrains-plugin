@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import org.assertj.core.util.Strings;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -33,18 +34,18 @@ public class RadStub extends RadicleApplicationService {
             "│   └── " + SECOND_BRANCH_NAME + " " + SECOND_COMMIT_HASH + " \n" +
             "│\n" +
             ", stderr=}";
-    public String keyHash = "SHA256:ydAxDGTdnXu2wQ+EfWJ8xn9UMHqjH8TaovWJW6KZCsA";
-    public static String nodeId =  "did:key:z6MkgrVBxtgFynk6AWZ9ZDM5NVnHuvWeyMJkVD1aUVtMXPug";
+    public String keyHash = "SHA256:myFakeHash";
+    public static String nodeId =  "did:key:fakeDid";
     public String radSelfResponse = "ID             " + nodeId + "\n" +
-            "Node ID        z6MkgrVBxtgFynk6AWZ9ZDM5NVnHuvWeyMJkVD1aUVtMXPug\n" +
+            "Node ID        fakeDid\n" +
             "Key (hash)     " + keyHash + "\n" +
-            "Key (full)     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICOqmEeeO8DuIrnzyJtx/54eWyzaajQXaE0txB6W7/1X\n" +
-            "Storage (git)  /home/stelios/.radicle/storage\n" +
-            "Storage (keys) /home/stelios/.radicle/keys\n" +
-            "Node (socket)  /home/stelios/.radicle/node/radicle.sock";
+            "Key (full)     ssh-ed25519 myFullKey\n" +
+            "Storage (git)  /home/test/.myInstallation/storage\n" +
+            "Storage (keys) /home/test/.myInstallation/keys\n" +
+            "Node (socket)  /home/test/.myInstallation/node/radicle.sock";
 
     public RadStub(String commitHash) {
-       this.firstCommitHash = commitHash;
+        this.firstCommitHash = commitHash;
     }
 
     @Override
@@ -67,16 +68,17 @@ public class RadStub extends RadicleApplicationService {
             stdout = RAD_HOME;
         } else if (cmdLine.getCommandLineString().contains("which")) {
             stdout = RAD_PATH;
-        } else if (cmdLine.getCommandLineString().contains("self --profile")) {
-            stdout = ACTIVE_PROFILE;
         } else if (cmdLine.getCommandLineString().contains("clone rad:ooo")) {
             return new ProcessOutput(-1);
         } else if (cmdLine.getCommandLineString().contains("ssh-add")) {
-            stdout = "SHA256:ydAxDGTdnXu2wQ+EfWJ8xn9UMHqjH8TaovWJW6KZCsA";
+            stdout = keyHash;
         } else if (cmdLine.getCommandLineString().contains("self")) {
-            if (cmdLine.getCommandLineString().contains(RAD_HOME)) {
+            var envRadHome = cmdLine.getEnvironment().get("RAD_HOME");
+            if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome)
+                    && envRadHome.contains(RAD_HOME))) {
                 stdout = radSelfResponse;
-            } else if (cmdLine.getCommandLineString().contains(RAD_HOME1)) {
+            } else if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome)
+                    && envRadHome.contains(RAD_HOME1))) {
                 keyHash = keyHash + "A";
                 stdout = trackResponse;
             } else {
