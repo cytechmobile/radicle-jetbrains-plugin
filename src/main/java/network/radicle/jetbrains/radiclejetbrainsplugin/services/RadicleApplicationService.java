@@ -44,10 +44,7 @@ public class RadicleApplicationService {
     }
 
     public ProcessOutput self(String radHome, String radPath) {
-        final var settings = settingsHandler.loadSettings();
-        final var radExePath = Strings.isNullOrEmpty(radPath) ? settings.getPath() : radPath;
-        final var radHomePath = Strings.isNullOrEmpty(radHome) ? settings.getRadHome() : radHome;
-        return executeCommand(radExePath, radHomePath, ".", List.of("self"), null, "");
+        return executeCommand(radPath, radHome, ".", List.of("self"), null, "");
     }
 
     public ProcessOutput clone(String urn, String directory) {
@@ -55,8 +52,11 @@ public class RadicleApplicationService {
     }
 
     public boolean isIdentityUnlocked(String key) {
+        if (Strings.isNullOrEmpty(key)) {
+            return false;
+        }
         var output = executeCommand("ssh-add", "", ".", List.of("-l"), null, "");
-        if (!RadAction.isSuccess(output) || Strings.isNullOrEmpty(key)) {
+        if (!RadAction.isSuccess(output)) {
             return false;
         }
         return output.getStdout().contains(key);
@@ -146,7 +146,10 @@ public class RadicleApplicationService {
         if (SystemInfo.isWindows) {
             cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(params);
         } else {
-            cmdLine.withParameters(params);
+            cmdLine.withExePath(exePath).withParameters(args);
+            if (!Strings.isNullOrEmpty(radHome)) {
+                cmdLine.withEnvironment("RAD_HOME", radHome);
+            }
         }
         cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
                 // we need parent environment to be present to our rad execution
