@@ -123,7 +123,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             ApplicationManager.getApplication().invokeLater(() -> {
                 /* if there is identity and its unlocked just update the label with node id */
                 if (success && isIdentityUnlocked) {
-                    msgLabel.setText(radDetails.id);
+                    msgLabel.setText(radDetails.did);
                     return;
                 }
                 /* if there is no identity or unlocked identity show passphrase dialog */

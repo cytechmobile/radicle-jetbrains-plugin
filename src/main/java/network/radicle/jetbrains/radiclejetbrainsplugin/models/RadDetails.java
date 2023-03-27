@@ -6,7 +6,7 @@ public class RadDetails {
     private static final String DOUBLE_SPACE = "  ";
     private static final String SINGLE_SPACE = " ";
 
-    public String id;
+    public String did;
     public String nodeId;
     public String keyHash;
     public String keyFull;
@@ -29,7 +29,7 @@ public class RadDetails {
     private void parseDetails(List<String> details) {
         if (details.size() > 0) {
             var parts = details.get(0).split(DOUBLE_SPACE);
-            id = parts[parts.length - 1].trim();
+            did = parts[parts.length - 1].trim();
         }
 
         if (details.size() > 1) {
