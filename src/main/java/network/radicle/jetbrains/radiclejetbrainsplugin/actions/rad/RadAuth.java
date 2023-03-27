@@ -20,7 +20,7 @@ public class RadAuth extends RadAction {
     }
 
     @Override
-    public boolean showNotification() {
+    public boolean shouldShowNotification() {
         return false;
     }
 

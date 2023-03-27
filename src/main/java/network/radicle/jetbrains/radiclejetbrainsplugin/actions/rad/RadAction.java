@@ -55,7 +55,7 @@ public abstract class RadAction {
 
     public abstract String getActionName();
 
-    public boolean showNotification() {
+    public boolean shouldShowNotification() {
         return true;
     }
 
@@ -69,13 +69,13 @@ public abstract class RadAction {
         latch.countDown();
         if (!success) {
             logger.warn(this.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-            if (showNotification()) {
+            if (shouldShowNotification()) {
                 showErrorNotification(project, "radCliError", output.getStderr());
             }
             return output;
         }
         logger.info(this.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
-        if (!this.getNotificationSuccessMessage().isEmpty() && showNotification()) {
+        if (!this.getNotificationSuccessMessage().isEmpty() && shouldShowNotification()) {
             showNotification(project, "", this.getNotificationSuccessMessage(),
                     NotificationType.INFORMATION, this.notificationActions());
         }
