@@ -11,6 +11,7 @@ public class RadicleSettingsHandler {
     public static final String PATH_KEY = "path";
     public static final String RAD_SYNC_KEY = "radSyncKey";
     public static final String RAD_SEED_KEY = "radSeedKey";
+    public static final String RAD_HOME = "radHome";
 
     public static final String RAD_SEED_SEPERATOR = "|";
     public static final String DEFAULT_SEED_PORT = "8777";
@@ -30,11 +31,15 @@ public class RadicleSettingsHandler {
     }
 
     public RadicleSettings loadSettings() {
-        return new RadicleSettings(getPath(), getRadSync(), getSeedNodes());
+        return new RadicleSettings(getPath(), getRadSync(), getSeedNodes(), getRadHome());
     }
 
     public void savePath(String path) {
         getApplicationProperties().setValue(PATH_KEY, path);
+    }
+
+    public void saveRadHome(String radHome) {
+        getApplicationProperties().setValue(RAD_HOME, radHome);
     }
 
     public void saveRadSync(RadicleSettings.RadSyncType type) {
@@ -43,6 +48,10 @@ public class RadicleSettingsHandler {
 
     private String getPath() {
         return getApplicationProperties().getValue(PATH_KEY, "");
+    }
+
+    private String getRadHome() {
+        return getApplicationProperties().getValue(RAD_HOME, "");
     }
 
     private Integer getRadSync() {

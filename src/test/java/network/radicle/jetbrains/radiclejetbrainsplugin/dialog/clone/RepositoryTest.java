@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.ui.TextFieldWithHistory;
@@ -37,11 +36,7 @@ public class RepositoryTest extends AbstractIT {
         radCheckoutComponent.doClone(new CompositeCheckoutListener(super.myProject));
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
-        if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(WSL);
-        } else {
-            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
-        }
+        assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("clone rad:git123");
     }
 

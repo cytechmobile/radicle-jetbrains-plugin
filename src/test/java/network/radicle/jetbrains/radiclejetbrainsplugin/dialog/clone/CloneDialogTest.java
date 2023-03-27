@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsKey;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -62,12 +61,8 @@ public class CloneDialogTest extends AbstractIT {
         cloneDialog = new CloneRadDialog(super.myProject, new ProjectApi(httpClient));
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
-        if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(WSL);
-        } else {
-            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
-        }
-        assertThat(cmd.getCommandLineString()).contains("self --profile");
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("self");
     }
 
     @Test
@@ -129,11 +124,7 @@ public class CloneDialogTest extends AbstractIT {
         cloneDialog.doClone(new CheckoutProvider());
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
-        if (SystemInfo.isWindows) {
-            assertThat(cmd.getExePath()).isEqualTo(WSL);
-        } else {
-            assertThat(cmd.getExePath()).isEqualTo(RAD_PATH);
-        }
+        assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("clone " + radProject.radUrl);
         cloneDialog.radProjectJBList.remove(0);
     }

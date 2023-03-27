@@ -8,6 +8,7 @@ import java.util.List;
 public class RadicleSettings {
     private String path;
     private Integer radSync;
+    private String radHome;
     private List<SeedNode> seedNodes;
 
     public enum RadSyncType {
@@ -25,14 +26,19 @@ public class RadicleSettings {
         }
     }
 
-    public RadicleSettings(String path, Integer radSync, List<SeedNode> seedNodes) {
+    public RadicleSettings(String path, Integer radSync, List<SeedNode> seedNodes, String radHome) {
         this.path = path;
         this.radSync = radSync;
         this.seedNodes = seedNodes;
+        this.radHome = radHome;
     }
 
     public String getPath() {
         return path;
+    }
+
+    public String getRadHome() {
+        return radHome;
     }
 
     public Integer getRadSync() {

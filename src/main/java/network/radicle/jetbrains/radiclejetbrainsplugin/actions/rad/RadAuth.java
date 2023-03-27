@@ -3,29 +3,33 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 
-import java.util.List;
-
 public class RadAuth extends RadAction {
-    private final String name;
     private final String passphrase;
+    private final String radHome;
+    private final String radPath;
     private final RadAuthAction action;
 
-    public RadAuth(String name, String passphrase, RadAuthAction action) {
-        this.name = name;
+    public RadAuth(String passphrase, String radHome, String radPath, RadAuthAction action) {
         this.passphrase = passphrase;
         this.action = action;
+        this.radHome = radHome;
+        this.radPath = radPath;
+    }
+
+    @Override
+    public boolean shouldShowNotification() {
+        return false;
     }
 
     @Override
     public String getActionName() {
         if (action == RadAuthAction.CREATE_IDENTITY) {
             return "AuthCreateIdentity";
-        } else if (action == RadAuthAction.SET_DEFAULT_IDENTITY) {
-            return "AuthSetDefaultIdentity";
-        } else if (action == RadAuthAction.REMOVE_IDENTITY) {
-            return "AuthRemoveIdentity";
+        } else if (action == RadAuthAction.UNLOCKED_IDENTITY) {
+            return "AuthUnlockedIdentity";
         }
         return "";
     }
@@ -33,39 +37,28 @@ public class RadAuth extends RadAction {
     @Override
     public ProcessOutput run() {
         switch (action) {
+            case UNLOCKED_IDENTITY:
             case CREATE_IDENTITY:
                 return createNewIdentity();
-            case REMOVE_IDENTITY:
-                return removeIdentity();
-            case SET_DEFAULT_IDENTITY:
-                return setDefaultIdentity();
             default:
                 return new ProcessOutput(-1);
         }
     }
 
-    public ProcessOutput removeIdentity() {
-        var storagePath = getStoragePath();
-        if (Strings.isNullOrEmpty(storagePath.keysStoragePath) || Strings.isNullOrEmpty(storagePath.gitStoragePath)) {
-            return new ProcessOutput(-1);
-        }
-        var gitStoragePath = storagePath.gitStoragePath + "/" + name;
-        var keysStoragePath = storagePath.keysStoragePath + "/" + name;
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.executeCommand("rm", ".", List.of("-rf", gitStoragePath, keysStoragePath), null, false);
-    }
-
-    public ProcessOutput setDefaultIdentity() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.auth(name, passphrase, true);
-    }
-
     public ProcessOutput createNewIdentity() {
         var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
-        return rad.auth(name, passphrase, false);
+        var output = rad.auth(passphrase, radHome, radPath);
+        /* rad auth return success exit code (0) and a failed msg if the password is wrong */
+        var isSuccess = RadAuth.isSuccess(output) && !output.getStdout().contains("failed");
+        var pr = new ProcessOutput(isSuccess ? 0 : -1);
+        /* Write from stdOut to stdErr in order to appear the message in the notification */
+        var stdOut = output.getStdout();
+        var errorMessage = !Strings.isNullOrEmpty(stdOut) ? stdOut : RadicleBundle.message("radCliError");
+        pr.appendStderr(errorMessage);
+        return pr;
     }
 
     public enum RadAuthAction {
-        CREATE_IDENTITY, REMOVE_IDENTITY, SET_DEFAULT_IDENTITY
+        CREATE_IDENTITY, UNLOCKED_IDENTITY
     }
 }
