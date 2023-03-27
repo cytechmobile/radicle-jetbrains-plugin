@@ -74,11 +74,11 @@ public class RadStub extends RadicleApplicationService {
             stdout = keyHash;
         } else if (cmdLine.getCommandLineString().contains("self")) {
             var envRadHome = cmdLine.getEnvironment().get("RAD_HOME");
-            if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome)
-                    && envRadHome.contains(RAD_HOME))) {
+            if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome) &&
+                    envRadHome.contains(RAD_HOME))) {
                 stdout = radSelfResponse;
-            } else if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome)
-                    && envRadHome.contains(RAD_HOME1))) {
+            } else if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome) &&
+                    envRadHome.contains(RAD_HOME1))) {
                 keyHash = keyHash + "A";
                 stdout = trackResponse;
             } else {
