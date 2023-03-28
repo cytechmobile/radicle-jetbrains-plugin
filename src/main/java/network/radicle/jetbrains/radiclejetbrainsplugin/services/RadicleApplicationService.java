@@ -19,7 +19,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class RadicleApplicationService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleApplicationService.class);
@@ -107,9 +106,8 @@ public class RadicleApplicationService {
         return executeCommand(root.getRoot().getPath(), List.of("remote", "ls"), root);
     }
 
-    public ProcessOutput sync(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("sync", "--branch",
-                Objects.requireNonNull(root.getCurrentBranchName())), root);
+    public ProcessOutput fetch(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("fetch"), root);
     }
 
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
