@@ -7,7 +7,6 @@ import java.util.List;
 
 public class RadicleSettings {
     private String path;
-    private Integer radSync;
     private String radHome;
     private List<SeedNode> seedNodes;
 
@@ -26,9 +25,8 @@ public class RadicleSettings {
         }
     }
 
-    public RadicleSettings(String path, Integer radSync, List<SeedNode> seedNodes, String radHome) {
+    public RadicleSettings(String path, List<SeedNode> seedNodes, String radHome) {
         this.path = path;
-        this.radSync = radSync;
         this.seedNodes = seedNodes;
         this.radHome = radHome;
     }
@@ -41,10 +39,6 @@ public class RadicleSettings {
         return radHome;
     }
 
-    public Integer getRadSync() {
-        return radSync;
-    }
-
     public List<SeedNode> getSeedNodes() {
         return seedNodes;
     }
@@ -53,7 +47,6 @@ public class RadicleSettings {
     public String toString() {
         return "RadicleSettings{" +
                 "path='" + path + '\'' +
-                ", radSync=" + radSync +
                 '}';
     }
 }
