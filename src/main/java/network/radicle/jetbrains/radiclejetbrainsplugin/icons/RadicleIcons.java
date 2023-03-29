@@ -12,17 +12,11 @@ public class  RadicleIcons {
 
     public static final Icon RADICLE_TOOL_WINDOW = getIcon("rad_tool_window", true);
 
-    public static final Icon RADICLE_PUSH = getIcon("rad_push", true);
-
-    public static final Icon RADICLE_PULL = getIcon("rad_pull", true);
-
     public static final Icon RADICLE_FETCH = getIcon("rad_fetch", true);
 
     public static final Icon RADICLE_CLONE = getIcon("rad_clone", true);
 
     public static final Icon RADICLE_SHARE = getIcon("rad_share", true);
-
-    public static final Icon CHECK_ICON = getIcon("check", false);
 
     private static boolean isNewUiEnabled() {
         return Registry.get("ide.experimental.ui").asBoolean();
