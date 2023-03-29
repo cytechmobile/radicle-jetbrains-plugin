@@ -16,7 +16,7 @@ public class  RadicleIcons {
 
     public static final Icon RADICLE_PULL = getIcon("rad_pull", true);
 
-    public static final Icon RADICLE_SYNC = getIcon("rad_sync", true);
+    public static final Icon RADICLE_FETCH = getIcon("rad_fetch", true);
 
     public static final Icon RADICLE_CLONE = getIcon("rad_clone", true);
 

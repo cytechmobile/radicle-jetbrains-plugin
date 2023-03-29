@@ -10,13 +10,13 @@ import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadFetch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class RadicleSyncAction extends AnAction {
+public class RadicleFetchAction extends AnAction {
     protected CountDownLatch updateCountDown;
 
     @Override
@@ -53,10 +53,10 @@ public class RadicleSyncAction extends AnAction {
             }
             updateCountDown = new CountDownLatch(radInitializedRepos.size());
             radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var sync = new RadSync(repo);
-                sync.perform(updateCountDown);
+                var fetch = new RadFetch(repo);
+                fetch.perform(updateCountDown);
             }));
-            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radSyncProgressTitle"),
+            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radFetchProgressTitle"),
                     updateCountDown);
             new Thread(ubt::queue).start();
         });

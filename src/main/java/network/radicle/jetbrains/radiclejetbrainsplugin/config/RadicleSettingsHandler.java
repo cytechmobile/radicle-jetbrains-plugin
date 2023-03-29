@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 public class RadicleSettingsHandler {
 
     public static final String PATH_KEY = "path";
-    public static final String RAD_SYNC_KEY = "radSyncKey";
     public static final String RAD_SEED_KEY = "radSeedKey";
     public static final String RAD_HOME = "radHome";
 
@@ -31,7 +30,7 @@ public class RadicleSettingsHandler {
     }
 
     public RadicleSettings loadSettings() {
-        return new RadicleSettings(getPath(), getRadSync(), getSeedNodes(), getRadHome());
+        return new RadicleSettings(getPath(), getSeedNodes(), getRadHome());
     }
 
     public void savePath(String path) {
@@ -42,20 +41,12 @@ public class RadicleSettingsHandler {
         getApplicationProperties().setValue(RAD_HOME, radHome);
     }
 
-    public void saveRadSync(RadicleSettings.RadSyncType type) {
-        getApplicationProperties().setValue(RAD_SYNC_KEY, type.val, RadicleSettings.RadSyncType.ASK.val);
-    }
-
     private String getPath() {
         return getApplicationProperties().getValue(PATH_KEY, "");
     }
 
     private String getRadHome() {
         return getApplicationProperties().getValue(RAD_HOME, "");
-    }
-
-    private Integer getRadSync() {
-        return getApplicationProperties().getInt(RAD_SYNC_KEY, RadicleSettings.RadSyncType.ASK.val);
     }
 
     public void saveSeedNodes(List<SeedNode> seedNodes) {
