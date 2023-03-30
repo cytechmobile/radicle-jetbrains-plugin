@@ -91,7 +91,7 @@ public class PublishDialog extends DialogWrapper {
         projectSelect.addItemListener(e -> updateLayout());
         projectSelect.setRenderer(new ComboBoxCellRenderer());
         for (var node : seedNodes) {
-            seedNodeSelect.addItem(node.host);
+            seedNodeSelect.addItem(node.url);
         }
         for (var repo : repos) {
             projectSelect.addItem(repo);

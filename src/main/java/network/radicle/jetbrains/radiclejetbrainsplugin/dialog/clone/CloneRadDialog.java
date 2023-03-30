@@ -33,7 +33,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
@@ -306,7 +306,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         public void mouseClicked(MouseEvent e) {
             var selectedProject = radProjectJBList.getSelectedValue();
             if (e.getClickCount() == 2 && selectedSeedNode != null && selectedProject != null) {
-                var projectUrl = RAD_UI_URL + selectedSeedNode.host + "/" + selectedProject.urn;
+                //TODO fix this
+                var projectUrl = RAD_UI_URL + selectedSeedNode.url + "/" + selectedProject.urn;
                 if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                     try {
                         Desktop.getDesktop().browse(new URI(projectUrl));
@@ -325,7 +326,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             if (node == null) {
                 return new JLabel("");
             }
-            return new JLabel(node.host);
+            return new JLabel(node.url);
         }
     }
 
@@ -342,7 +343,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
             triggerSeedNodeAction = false;
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsSeedNodeView.class);
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsView.class);
             var prevSelectedIndex = seedNodeComboBox.getSelectedIndex();
             initializeSeedNodeCombobox();
             seedNodeComboBox.setSelectedIndex(prevSelectedIndex);

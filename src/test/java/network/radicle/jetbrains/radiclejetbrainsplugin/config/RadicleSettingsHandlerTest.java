@@ -28,7 +28,7 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
     @Test
     public void loadSettings() {
         var settings = radicleSettingsHandler.loadSettings();
-        var newSeedNodes = List.of(new SeedNode("192.168.1.1", "8080"));
+        var newSeedNodes = List.of(new SeedNode("http://127.0.0.1:8080"));
         assertThat(settings.getPath()).isEmpty();
         assertThat(settings.getSeedNodes()).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
@@ -36,6 +36,7 @@ public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
         var newSettings = radicleSettingsHandler.loadSettings();
         assertThat(newSettings.getPath()).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(newSettings.getSeedNodes()).usingRecursiveComparison().isEqualTo(newSeedNodes);
+        newSettings = radicleSettingsHandler.loadSettings();
         radicleSettingsHandler.saveSeedNodes(null);
     }
 
