@@ -1,9 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleFetchAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePullAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPull;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadFetch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
@@ -52,20 +50,6 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
-    public void radPullAction() throws InterruptedException {
-        var rpa = new RadiclePullAction();
-        rpa.performAction(getProject());
-
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(cmd).isNotNull();
-        assertCmd(cmd);
-
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(new RadPull(null).getNotificationSuccessMessage());
-    }
-
-    @Test
     public void radFetchAction() throws InterruptedException {
         var rfa = new RadicleFetchAction();
         rfa.performAction(getProject());
@@ -97,17 +81,10 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void cliConfiguredError() throws InterruptedException {
         radicleSettingsHandler.savePath("");
-        var rpa = new RadiclePullAction();
-        rpa.performAction(getProject());
-
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("radCliPathMissingText"));
-
         var rsa = new RadicleFetchAction();
         rsa.performAction(getProject());
 
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("radCliPathMissingText"));
 
@@ -127,12 +104,6 @@ public class ActionsTest extends AbstractIT {
         rsa.performAction(getProject());
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
-
-        var rpa = new RadiclePullAction();
-        rpa.performAction(getProject());
-
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
 
         initializeProject(firstRepo);

@@ -90,18 +90,6 @@ public class RadicleApplicationService {
         return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
     }
 
-    public ProcessOutput inspect(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("inspect"), root);
-    }
-
-    public ProcessOutput push(GitRepository root, String seed) {
-        return executeCommand(root.getRoot().getPath(), List.of("push", "--seed", seed), root);
-    }
-
-    public ProcessOutput pull(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("pull"), root);
-    }
-
     public ProcessOutput remoteList(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("remote", "ls"), root);
     }
