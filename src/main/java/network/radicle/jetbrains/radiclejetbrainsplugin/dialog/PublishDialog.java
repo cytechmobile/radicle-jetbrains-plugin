@@ -80,7 +80,7 @@ public class PublishDialog extends DialogWrapper {
         setOKActionEnabled(false);
         setTitle(RadicleBundle.message("shareProject"));
         var settings = radicleSettingsHandler.loadSettings();
-        var seedNodes = settings.getSeedNodes();
+        var seedNode = settings.getSeedNode();
         var textFieldListener = new TextFieldListener();
         nameField.getDocument().addDocumentListener(textFieldListener);
         branchField.getDocument().addDocumentListener(textFieldListener);
@@ -90,9 +90,7 @@ public class PublishDialog extends DialogWrapper {
         descriptionField.getDocument().addDocumentListener(textFieldListener);
         projectSelect.addItemListener(e -> updateLayout());
         projectSelect.setRenderer(new ComboBoxCellRenderer());
-        for (var node : seedNodes) {
-            seedNodeSelect.addItem(node.url);
-        }
+        seedNodeSelect.addItem(seedNode.url);
         for (var repo : repos) {
             projectSelect.addItem(repo);
         }

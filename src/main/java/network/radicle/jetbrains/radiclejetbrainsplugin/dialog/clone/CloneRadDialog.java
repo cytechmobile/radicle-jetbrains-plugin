@@ -332,11 +332,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
 
     private void initializeSeedNodeCombobox() {
         settings = radicleSettingsHandler.loadSettings();
-        var loadedSeedNodes = settings.getSeedNodes();
+        var loadedSeedNode = settings.getSeedNode();
         seedNodeComboBox.removeAllItems();
-        for (var node : loadedSeedNodes) {
-            seedNodeComboBox.addItem(node);
-        }
+        seedNodeComboBox.addItem(loadedSeedNode);
     }
 
     private class SeedNodeViewAction extends AnAction {

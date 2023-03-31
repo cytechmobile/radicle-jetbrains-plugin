@@ -83,11 +83,9 @@ public class PatchListPanel {
 
     private void initializeSeedNodeCombobox() {
         var settings = radicleSettingsHandler.loadSettings();
-        var loadedSeedNodes = settings.getSeedNodes();
+        var loadedSeedNode = settings.getSeedNode();
         seedNodeComboBox.removeAllItems();
-        for (var node : loadedSeedNodes) {
-            seedNodeComboBox.addItem(node);
-        }
+        seedNodeComboBox.addItem(loadedSeedNode);
     }
 
     public JComponent create() {
