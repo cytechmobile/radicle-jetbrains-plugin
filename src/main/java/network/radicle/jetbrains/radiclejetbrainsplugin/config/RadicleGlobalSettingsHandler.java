@@ -6,11 +6,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RadicleSettingsHandler {
+public class RadicleGlobalSettingsHandler {
 
     public static final String PATH_KEY = "path";
     public static final String RAD_SEED_KEY = "radSeedKey";
-    public static final String RAD_HOME = "radHome";
 
     public static final String RAD_SEED_SEPERATOR = "|";
     public static final String DEFAULT_SEED_PORT = "8777";
@@ -25,29 +24,22 @@ public class RadicleSettingsHandler {
             new SeedNode(MAPLE_DOMAIN_NAME, DEFAULT_SEED_PORT)
     );
 
-    public RadicleSettingsHandler() {
+    public RadicleGlobalSettingsHandler() {
         saveDefaultSeedNodes();
     }
 
-    public RadicleSettings loadSettings() {
-        return new RadicleSettings(getPath(), getSeedNodes(), getRadHome());
+    public RadicleGlobalSettings loadSettings() {
+        return new RadicleGlobalSettings(getPath(), getSeedNodes());
     }
 
     public void savePath(String path) {
         getApplicationProperties().setValue(PATH_KEY, path);
     }
 
-    public void saveRadHome(String radHome) {
-        getApplicationProperties().setValue(RAD_HOME, radHome);
-    }
-
     private String getPath() {
         return getApplicationProperties().getValue(PATH_KEY, "");
     }
 
-    private String getRadHome() {
-        return getApplicationProperties().getValue(RAD_HOME, "");
-    }
 
     public void saveSeedNodes(List<SeedNode> seedNodes) {
         String seedListToString = null;
