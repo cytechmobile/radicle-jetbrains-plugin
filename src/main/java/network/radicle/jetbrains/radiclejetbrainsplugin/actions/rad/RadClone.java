@@ -1,14 +1,16 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import com.intellij.openapi.project.Project;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+
 
 public class RadClone extends RadAction {
     private String radUrn;
     private String directory;
 
-    public RadClone(String radUrn, String directory) {
+    public RadClone(String radUrn, String directory, Project project) {
+        super(project);
         this.radUrn = radUrn;
         this.directory = directory;
     }
@@ -20,7 +22,7 @@ public class RadClone extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = project.getService(RadicleProjectService.class);
         return rad.clone(radUrn, directory);
     }
 }

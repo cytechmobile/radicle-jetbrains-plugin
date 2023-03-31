@@ -2,10 +2,9 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadFetch extends RadAction {
     public RadFetch(GitRepository repo) {
@@ -19,7 +18,7 @@ public class RadFetch extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = repo.getProject().getService(RadicleProjectService.class);
         var output = rad.fetch(repo);
         /* rad fetch return success exit code (0) and a failed msg if fetch command failed */
         var isSuccess = RadAction.isSuccess(output) && !output.getStdout().contains("Failed");
