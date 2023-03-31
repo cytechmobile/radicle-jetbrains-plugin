@@ -2,16 +2,14 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
-import java.util.List;
-
 public class RadicleSettings {
     private String path;
     private String radHome;
-    private List<SeedNode> seedNodes;
+    private SeedNode seedNode;
 
-    public RadicleSettings(String path, List<SeedNode> seedNodes, String radHome) {
+    public RadicleSettings(String path, SeedNode seedNodes, String radHome) {
         this.path = path;
-        this.seedNodes = seedNodes;
+        this.seedNode = seedNodes;
         this.radHome = radHome;
     }
 
@@ -23,8 +21,8 @@ public class RadicleSettings {
         return radHome;
     }
 
-    public List<SeedNode> getSeedNodes() {
-        return seedNodes;
+    public SeedNode getSeedNode() {
+        return seedNode;
     }
 
     @Override
