@@ -37,14 +37,14 @@ public class ProjectApi {
                 response = EntityUtils.toString(res.getEntity());
             }
 
-            if (res.getStatusLine().getStatusCode() == 200) {
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
                 var json = new ObjectMapper().readTree(response);
                 String version = json.get("version").asText("");
                 String id = json.get("node").get("id").asText("");
                 return new SeedNodeInfo(id, version, null);
             }
-
-            return new SeedNodeInfo(null, null, "HTTP Status code: " + res.getStatusLine().getStatusCode() + " " + response);
+            var statusCode = res != null  ? res.getStatusLine().getStatusCode() : "";
+            return new SeedNodeInfo(null, null, "HTTP Status code: " + statusCode + " " + response);
         } catch (Exception e) {
             logger.warn("http request exception {}", url, e);
             return new SeedNodeInfo(null, null, "Exception: " + e.getMessage());
