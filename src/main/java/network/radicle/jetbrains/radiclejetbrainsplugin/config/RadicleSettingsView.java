@@ -157,22 +157,30 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private void updateRadVersionLabel() {
-        var msg = RadicleBundle.message("radNotInstalled");
-        var version = getRadVersion();
-        if (!Strings.isNullOrEmpty(version)) {
-            msg = RadicleBundle.message("radVersion") + " " + version;
-        }
-        String finalMsg = msg;
-        ApplicationManager.getApplication().invokeLater(() -> {
-            radVersionLabel.setText(finalMsg);
-            showHideEnforceLabel(version);
-        }, ModalityState.any());
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var msg = RadicleBundle.message("radNotInstalled");
+            var version = getRadVersion();
+            if (!Strings.isNullOrEmpty(version)) {
+                msg = RadicleBundle.message("radVersion") + " " + version;
+            }
+            String finalMsg = msg;
+            ApplicationManager.getApplication().invokeLater(() -> {
+                radVersionLabel.setText(finalMsg);
+                showHideEnforceLabel(version);
+            }, ModalityState.any());
+        });
+    }
+
+    private boolean isValidNodeApi() {
+        var api = new ProjectApi();
+        var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
+        return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
     }
 
     private void checkSeedNodeApiUrl() {
         var api = new ProjectApi();
         var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
-        if (resp == null || !Strings.isNullOrEmpty(resp.errorMessage())) {
+        if (!isValidNodeApi()) {
             seedNodeApiUrlMsgLabel.setText("<html>" +
                     RadicleBundle.message("seedNodeCheckError") +
                     (resp == null ? "" :  "<br>" + resp.errorMessage()) +
@@ -208,7 +216,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         var selectedRadHome = getPathFromTextField(radHomeField);
         return !selectedPath.equals(this.settings.getPath()) ||
                 !selectedRadHome.equals(this.settings.getRadHome()) ||
-                !getSelectedNodeUrl().equals(this.settings.getSeedNodes().get(0).url);
+                !getSelectedNodeUrl().equals(this.settings.getSeedNode().url);
     }
 
     @Override
@@ -216,22 +224,40 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         var path = getPathFromTextField(radPathField);
         var radHomePath = getPathFromTextField(radHomeField);
         var nodeUrl = getSelectedNodeUrl();
-        radicleSettingsHandler.saveSeedNodes(List.of(new SeedNode(nodeUrl)));
+        radicleSettingsHandler.saveSeedNode(nodeUrl);
         radicleSettingsHandler.saveRadHome(radHomePath);
         radicleSettingsHandler.savePath(path);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
             var isCompatibleVersion = version.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
             var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath);
+            var isValidNodeApi = isValidNodeApi();
             /* Rad version and home path is valid we don't have to show a notification warning */
-            if (isCompatibleVersion && isRadHomeValidPath) {
+            if (isCompatibleVersion && isRadHomeValidPath && isValidNodeApi) {
                 return;
             }
             /* Show a notification warning that RAD_HOME or rad executable are invalid */
-            var title = !isCompatibleVersion ? RadicleBundle.message("invalidRad") : RadicleBundle.message("noNode");
-            var msg = !isCompatibleVersion ? RadicleBundle.message("radNotInstalled") : RadicleBundle.message("createNode");
+            var title = "";
+            if (!isCompatibleVersion) {
+                title = RadicleBundle.message("invalidRad");
+            } else if (!isRadHomeValidPath) {
+                title = RadicleBundle.message("noNode");
+            } else {
+                title = RadicleBundle.message("invalidSeedApi");
+            }
+
+            var msg = "";
+            if (!isCompatibleVersion) {
+                msg = RadicleBundle.message("radNotInstalled");
+            } else if (!isRadHomeValidPath) {
+                msg = RadicleBundle.message("createNode");
+            } else {
+                msg = RadicleBundle.message("invalidSeedApiMsg");
+            }
+            String finalTitle = title;
+            String finalMsg = msg;
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(null, title, msg, NotificationType.WARNING,
+                    showNotification(null, finalTitle, finalMsg, NotificationType.WARNING,
                             List.of(new RadAction.ConfigureRadCliNotificationAction(null,
                                     RadicleBundle.lazyMessage("configure")))), ModalityState.any());
         });
@@ -292,7 +318,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var autoDetect = new AutoDetect(radHomeField, AutoDetect.Type.RAD_HOME);
             autoDetect.detectAndUpdateField();
         }
-        seedNodeApiUrl.setText(this.settings.getSeedNodes().get(0).url);
+        seedNodeApiUrl.setText(this.settings.getSeedNode().url);
         initListeners();
         /* Show a warning label if the rad version is incompatible */
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -328,10 +354,6 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     public TextFieldWithBrowseButton getPathField() {
         return radPathField;
-    }
-
-    public JTextField getSeedNodeApiUrl() {
-        return seedNodeApiUrl;
     }
 
     public TextFieldWithBrowseButton getHomeField() {
