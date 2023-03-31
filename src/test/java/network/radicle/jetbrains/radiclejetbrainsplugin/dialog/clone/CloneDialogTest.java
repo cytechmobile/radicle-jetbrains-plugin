@@ -3,7 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 import com.intellij.openapi.vcs.VcsKey;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.apache.http.HttpResponse;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnit4.class)
 public class CloneDialogTest extends AbstractIT {
 
-    private RadicleSettingsHandler radicleSettingsHandler;
+    private RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
     private CloneRadDialog cloneDialog;
     private HttpClient httpClient;
     private HttpResponse httpResponse;
@@ -37,8 +37,8 @@ public class CloneDialogTest extends AbstractIT {
 
     @Before
     public void beforeTest() {
-        radicleSettingsHandler = new RadicleSettingsHandler();
-        radicleSettingsHandler.savePath("");
+        radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
+        radicleGlobalSettingsHandler.savePath("");
         httpClient = mock(HttpClient.class);
         httpResponse = mock(HttpResponse.class);
         statusLine = mock(StatusLine.class);
@@ -57,7 +57,7 @@ public class CloneDialogTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
-        radicleSettingsHandler.savePath(RAD_PATH);
+        radicleGlobalSettingsHandler.savePath(RAD_PATH);
         cloneDialog = new CloneRadDialog(super.myProject, new ProjectApi(httpClient));
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
@@ -68,7 +68,7 @@ public class CloneDialogTest extends AbstractIT {
     @Test
     public void testDefaultSeedNodes() {
         var seedNodeModel = cloneDialog.seedNodeComboBox.getModel();
-        var settingsSeedNodes = radicleSettingsHandler.loadSettings().getSeedNodes();
+        var settingsSeedNodes = radicleGlobalSettingsHandler.loadSettings().getSeedNodes();
         for (var i = 0; i < settingsSeedNodes.size(); i++) {
             var seed = seedNodeModel.getElementAt(i);
             assertThat(seed).usingRecursiveComparison().isEqualTo(settingsSeedNodes.get(i));
@@ -110,7 +110,7 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void successCloneTest() throws InterruptedException {
-        radicleSettingsHandler.savePath("");
+        radicleGlobalSettingsHandler.savePath("");
         var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy", "testName", "Test", "rad:hnrk81ky87cii8h68nedkej991c5dspazi9xy");
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
@@ -120,7 +120,7 @@ public class CloneDialogTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
-        radicleSettingsHandler.savePath(RAD_PATH);
+        radicleGlobalSettingsHandler.savePath(RAD_PATH);
         cloneDialog.doClone(new CheckoutProvider());
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();

@@ -17,10 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(JUnit4.class)
 public class ActionsTest extends AbstractIT {
 
+
     @Test
     public void cloneTest() throws InterruptedException {
         var radUrl = "rad:git:123";
-        var clone = new RadClone(radUrl, "C:\\");
+        var clone = new RadClone(radUrl, "C:\\", getProject());
         clone.perform();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
@@ -53,7 +54,6 @@ public class ActionsTest extends AbstractIT {
     public void radFetchAction() throws InterruptedException {
         var rfa = new RadicleFetchAction();
         rfa.performAction(getProject());
-
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("fetch");
@@ -64,7 +64,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void testSuccessNotificationAfterInstalled() throws InterruptedException {
-        radicleSettingsHandler.savePath("");
+        radicleGlobalSettingsHandler.savePath("");
         var rm = new RadicleManagerListener();
         rm.runActivity(getProject());
 
@@ -72,7 +72,7 @@ public class ActionsTest extends AbstractIT {
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
 
-        radicleSettingsHandler.savePath(RAD_PATH);
+        radicleGlobalSettingsHandler.savePath(RAD_PATH);
         rm.runActivity(getProject());
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNull();
@@ -80,7 +80,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void cliConfiguredError() throws InterruptedException {
-        radicleSettingsHandler.savePath("");
+        radicleGlobalSettingsHandler.savePath("");
         var rsa = new RadicleFetchAction();
         rsa.performAction(getProject());
 
@@ -94,7 +94,7 @@ public class ActionsTest extends AbstractIT {
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
 
-        radicleSettingsHandler.savePath(RAD_PATH);
+        radicleGlobalSettingsHandler.savePath(RAD_PATH);
     }
 
     @Test

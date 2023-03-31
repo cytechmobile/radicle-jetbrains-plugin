@@ -5,6 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -13,7 +14,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
 import org.junit.After;
 import org.junit.Before;
 
@@ -37,7 +38,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public static final String WSL = "wsl";
     protected static final String REMOTE_NAME = "testRemote";
     protected static final String REMOTE_NAME_1 = "testRemote1";
-    protected RadicleSettingsHandler radicleSettingsHandler;
+    protected RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
     protected String remoteRepoPath;
     protected String remoteRepoPath1;
     protected GitRepository firstRepo;
@@ -67,12 +68,14 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         remoteRepoPath1 = Files.createTempDirectory(REMOTE_NAME_1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
 
         /* set rad path */
-        radicleSettingsHandler = new RadicleSettingsHandler();
-        radicleSettingsHandler.loadSettings();
-        radicleSettingsHandler.savePath(RAD_PATH);
+        radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
+        radicleGlobalSettingsHandler.loadSettings();
+        radicleGlobalSettingsHandler.savePath(RAD_PATH);
+
 
         /* initialize rad stub service */
-        radStub = RadStub.replaceRadicleApplicationService(this, change.getBeforeRevision().getRevisionNumber().asString());
+        radStub = RadStub.replaceRadicleProjectService(this, change.getBeforeRevision().getRevisionNumber().asString(), getProject());
+
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 

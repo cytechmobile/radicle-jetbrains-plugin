@@ -11,32 +11,32 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RadicleSettingsHandlerTest extends LightPlatform4TestCase {
-    RadicleSettingsHandler radicleSettingsHandler;
+public class RadicleGlobalSettingsHandlerTest extends LightPlatform4TestCase {
+    RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
 
     @Before
     public void before() {
-        radicleSettingsHandler = new RadicleSettingsHandler();
-        radicleSettingsHandler.savePath(null);
+        radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
+        radicleGlobalSettingsHandler.savePath(null);
     }
 
     @After
     public void after() {
-        radicleSettingsHandler.savePath(null);
+        radicleGlobalSettingsHandler.savePath(null);
     }
 
     @Test
     public void loadSettings() {
-        var settings = radicleSettingsHandler.loadSettings();
+        var settings = radicleGlobalSettingsHandler.loadSettings();
         var newSeedNodes = List.of(new SeedNode("192.168.1.1", "8080"));
         assertThat(settings.getPath()).isEmpty();
-        assertThat(settings.getSeedNodes()).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
-        radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
-        radicleSettingsHandler.saveSeedNodes(newSeedNodes);
-        var newSettings = radicleSettingsHandler.loadSettings();
+        assertThat(settings.getSeedNodes()).usingRecursiveComparison().isEqualTo(RadicleGlobalSettingsHandler.DEFAULT_SEED_NODES);
+        radicleGlobalSettingsHandler.savePath(AbstractIT.RAD_PATH);
+        radicleGlobalSettingsHandler.saveSeedNodes(newSeedNodes);
+        var newSettings = radicleGlobalSettingsHandler.loadSettings();
         assertThat(newSettings.getPath()).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(newSettings.getSeedNodes()).usingRecursiveComparison().isEqualTo(newSeedNodes);
-        radicleSettingsHandler.saveSeedNodes(null);
+        radicleGlobalSettingsHandler.saveSeedNodes(null);
     }
 
 }

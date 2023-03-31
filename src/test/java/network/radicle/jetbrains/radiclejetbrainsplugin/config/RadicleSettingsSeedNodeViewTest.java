@@ -35,7 +35,7 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
     @Test
     public void testDefaultSeedNodes() {
         var loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
-        assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
+        assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleGlobalSettingsHandler.DEFAULT_SEED_NODES);
     }
 
     @Test
@@ -75,7 +75,7 @@ public class RadicleSettingsSeedNodeViewTest extends LightPlatform4TestCase {
 
         radicleSeetingsSeedNodeView = new RadicleSettingsSeedNodeView();
         loadedSeedNodes = radicleSeetingsSeedNodeView.getSeedNodeDecorator().getLoadedSeedNodes();
-        assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
+        assertThat(loadedSeedNodes).usingRecursiveComparison().isEqualTo(RadicleGlobalSettingsHandler.DEFAULT_SEED_NODES);
     }
 
 }
