@@ -1,6 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,8 +17,8 @@ public class SeedNode {
     public static List<SeedNode> getNodesFromString(String[] nodes) {
         var seedNodes = new ArrayList<SeedNode>();
         for (var n : nodes) {
-            var name = n.split("\\" + RadicleSettingsHandler.RAD_SEED_SEPERATOR)[0];
-            var port = n.split("\\" + RadicleSettingsHandler.RAD_SEED_SEPERATOR)[1];
+            var name = n.split("\\" + RadicleGlobalSettingsHandler.RAD_SEED_SEPERATOR)[0];
+            var port = n.split("\\" + RadicleGlobalSettingsHandler.RAD_SEED_SEPERATOR)[1];
             seedNodes.add(new SeedNode(name, port));
         }
         return seedNodes;
@@ -26,7 +26,7 @@ public class SeedNode {
 
     @Override
     public String toString() {
-        return host + RadicleSettingsHandler.RAD_SEED_SEPERATOR + port;
+        return host + RadicleGlobalSettingsHandler.RAD_SEED_SEPERATOR + port;
     }
 
     @Override

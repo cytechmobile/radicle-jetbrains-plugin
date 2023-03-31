@@ -31,8 +31,8 @@ import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettings;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
@@ -87,8 +87,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected JButton loadMore;
     protected AsyncProcessIcon searchSpinner;
     protected ComboBox<SeedNode> seedNodeComboBox;
-    private final RadicleSettingsHandler radicleSettingsHandler;
-    private RadicleSettings settings;
+    private final RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
+    private RadicleGlobalSettings settings;
     private static final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
     private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
@@ -105,8 +105,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         this.loadedProjects = new ArrayList<>();
         this.project = project;
         this.projectApi = api;
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
-        this.settings = this.radicleSettingsHandler.loadSettings();
+        this.radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
+        this.settings = this.radicleGlobalSettingsHandler.loadSettings();
         initializeIdentityPanel();
         initializeProjectPanel();
         initializeMainPanel();
@@ -121,7 +121,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radSelf = new RadSelf();
+            var radSelf = new RadSelf(project);
             var output = radSelf.perform();
             String activeNodeId;
             if (RadAction.isSuccess(output)) {
@@ -330,7 +330,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     private void initializeSeedNodeCombobox() {
-        settings = radicleSettingsHandler.loadSettings();
+        settings = radicleGlobalSettingsHandler.loadSettings();
         var loadedSeedNodes = settings.getSeedNodes();
         seedNodeComboBox.removeAllItems();
         for (var node : loadedSeedNodes) {

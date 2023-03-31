@@ -18,19 +18,19 @@ import java.util.List;
 
 public class RadicleSeedNodeDecorator {
 
-    private final RadicleSettingsHandler radicleSettingsHandler;
-    private RadicleSettings settings;
+    private final RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
+    private RadicleGlobalSettings settings;
     protected JBTable table;
     private List<SeedNode> loadedSeedNodes;
     private List<SeedNode> cpLoadedSeedNodes;
 
     public RadicleSeedNodeDecorator() {
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
         loadSeedNodes();
     }
 
     public void loadSeedNodes() {
-        this.settings = this.radicleSettingsHandler.loadSettings();
+        this.settings = this.radicleGlobalSettingsHandler.loadSettings();
         this.loadedSeedNodes = this.settings.getSeedNodes();
         cpLoadedSeedNodes = new ArrayList<>(this.loadedSeedNodes);
     }

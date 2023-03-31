@@ -63,7 +63,7 @@ public class CloneUtil {
         ProgressManager.getInstance().run(new Task.Backgroundable(project, RadicleBundle.message("cloningProcess") + clPr.url()) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-                final var clone = new RadClone(clPr.url(), tmpFolderPath);
+                final var clone = new RadClone(clPr.url(), tmpFolderPath, project);
                 var pr = clone.perform(countDownLatch);
                 if (pr.getExitCode() != 0) {
                     return;

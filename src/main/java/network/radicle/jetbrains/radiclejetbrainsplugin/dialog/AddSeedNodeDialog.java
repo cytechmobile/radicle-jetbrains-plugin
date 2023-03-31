@@ -7,7 +7,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.AsyncProcessIcon;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class AddSeedNodeDialog extends DialogWrapper {
 
     public AddSeedNodeDialog(List<SeedNode> seedNodes) {
         super(true);
-        portField.setText(RadicleSettingsHandler.DEFAULT_SEED_PORT);
+        portField.setText(RadicleGlobalSettingsHandler.DEFAULT_SEED_PORT);
         this.loadedSeedNodes = seedNodes;
         setTitle(RadicleBundle.message("addSeedNode"));
         init();

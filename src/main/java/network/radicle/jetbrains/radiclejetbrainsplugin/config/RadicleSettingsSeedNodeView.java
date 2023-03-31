@@ -14,13 +14,13 @@ import java.awt.BorderLayout;
 
 public class RadicleSettingsSeedNodeView implements SearchableConfigurable {
 
-    private final RadicleSettingsHandler radicleSettingsHandler;
+    private final RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
     public static final String ID = RadicleBundle.message("radicle");
     protected JPanel mainPanel;
     private RadicleSeedNodeDecorator seedNodeDecorator;
 
     public RadicleSettingsSeedNodeView() {
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
         seedNodeDecorator = new RadicleSeedNodeDecorator();
     }
 
@@ -47,7 +47,7 @@ public class RadicleSettingsSeedNodeView implements SearchableConfigurable {
 
     @Override
     public void apply() {
-        radicleSettingsHandler.saveSeedNodes(seedNodeDecorator.getCpLoadedSeedNodes());
+        radicleGlobalSettingsHandler.saveSeedNodes(seedNodeDecorator.getCpLoadedSeedNodes());
         seedNodeDecorator.loadSeedNodes();
     }
 
