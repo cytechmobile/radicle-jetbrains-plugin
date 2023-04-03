@@ -1,10 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
-
-import java.util.ArrayList;
-import java.util.List;
-
 public class SeedNode {
     public String url;
 

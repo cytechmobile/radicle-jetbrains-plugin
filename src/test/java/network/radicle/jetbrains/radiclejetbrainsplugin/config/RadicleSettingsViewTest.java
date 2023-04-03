@@ -28,6 +28,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsHandler = new RadicleGlobalSettingsHandler();
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
+        radicleSettingsHandler.saveSeedNode("http://localhost:8080");
         radicleSettingsView = new RadicleSettingsView(getProject());
         /* pop previous commands from queue ( Checking for compatible version ) */
         radStub.commands.poll(10, TimeUnit.SECONDS);

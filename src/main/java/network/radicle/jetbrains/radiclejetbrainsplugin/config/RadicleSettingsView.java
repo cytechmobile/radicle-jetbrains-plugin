@@ -20,7 +20,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,6 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private JLabel seedNodeApiUrlLabel;
     private JLabel seedNodeApiUrlMsgLabel;
     private JTextField seedNodeApiUrl;
-    private RadicleSettings settings;
     private IdentityDialog identityDialog;
     private RadDetails radDetails;
     private final Project myProject;
@@ -235,7 +233,8 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         var radHomePath = getPathFromTextField(radHomeField);
         var nodeUrl = getSelectedNodeUrl();
         radicleProjectSettingsHandler.saveRadHome(radHomePath);
-        radicleProjectSettingsHandler.savePath(path);
+        radicleGlobalSettingsHandler.savePath(path);
+        radicleGlobalSettingsHandler.saveSeedNode(nodeUrl);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
             var isCompatibleVersion = version.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
@@ -267,7 +266,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             String finalMsg = msg;
             ApplicationManager.getApplication().invokeLater(() ->
                     showNotification(myProject, finalTitle, finalMsg, NotificationType.WARNING,
-                            List.of(new RadAction.ConfigureRadCliNotificationAction(null,
+                            List.of(new RadAction.ConfigureRadCliNotificationAction(myProject,
                                     RadicleBundle.lazyMessage("configure")))), ModalityState.any());
         });
     }
@@ -327,7 +326,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var autoDetect = new AutoDetect(radHomeField, AutoDetect.Type.RAD_HOME);
             autoDetect.detectAndUpdateField();
         }
-        seedNodeApiUrl.setText(this.settings.getSeedNode().url);
+        seedNodeApiUrl.setText(this.globalSettings.getSeedNode().url);
         initListeners();
         /* Show a warning label if the rad version is incompatible */
         ApplicationManager.getApplication().executeOnPooledThread(() -> {

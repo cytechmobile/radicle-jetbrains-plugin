@@ -68,7 +68,7 @@ public class CloneDialogTest extends AbstractIT {
     @Test
     public void testDefaultSeedNodes() {
         var seedNodeModel = cloneDialog.seedNodeComboBox.getModel();
-        var settingsSeedNode = radicleGlobalSettingsHandler.loadSettings().getSeedNodes();
+        var settingsSeedNode = radicleGlobalSettingsHandler.loadSettings().getSeedNode();
         assertThat(seedNodeModel.getElementAt(0).url).isEqualTo(settingsSeedNode.url);
     }
 

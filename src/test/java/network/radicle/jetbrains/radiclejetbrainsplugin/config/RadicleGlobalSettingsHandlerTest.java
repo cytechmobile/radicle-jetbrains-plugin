@@ -27,13 +27,13 @@ public class RadicleGlobalSettingsHandlerTest extends LightPlatform4TestCase {
         var settings = radicleGlobalSettingsHandler.loadSettings();
         var newSeedNode = "http://127.0.0.1:8080";
         assertThat(settings.getPath()).isEmpty();
-        assertThat(settings.getSeedNode().url).isEqualTo(RadicleSettingsHandler.DEFAULT_SEED_NODES);
-        radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
-        radicleSettingsHandler.saveSeedNode(newSeedNode);
-        var newSettings = radicleSettingsHandler.loadSettings();
+        assertThat(settings.getSeedNode().url).isEqualTo(RadicleGlobalSettingsHandler.DEFAULT_SEED_NODES);
+        radicleGlobalSettingsHandler.savePath(AbstractIT.RAD_PATH);
+        radicleGlobalSettingsHandler.saveSeedNode(newSeedNode);
+        var newSettings = radicleGlobalSettingsHandler.loadSettings();
         assertThat(newSettings.getPath()).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(newSettings.getSeedNode().url).isEqualTo(newSeedNode);
-        radicleSettingsHandler.saveSeedNode(null);
+        radicleGlobalSettingsHandler.saveSeedNode(null);
     }
 
 }

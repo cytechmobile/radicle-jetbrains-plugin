@@ -1,22 +1,22 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
+
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import java.util.List;
 
 public class RadicleGlobalSettings {
     private String path;
-    private List<SeedNode> seedNodes;
+    private SeedNode seedNode;
 
-    public RadicleGlobalSettings(String path, List<SeedNode> seedNodes) {
+    public RadicleGlobalSettings(String path, SeedNode seedNode) {
         this.path = path;
-        this.seedNodes = seedNodes;
+        this.seedNode = seedNode;
     }
 
     public String getPath() {
         return path;
     }
 
-    public List<SeedNode> getSeedNodes() {
-        return seedNodes;
+    public SeedNode getSeedNode() {
+        return seedNode;
     }
 
     @Override

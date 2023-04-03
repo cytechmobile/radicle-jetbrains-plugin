@@ -4,22 +4,18 @@ import com.google.common.base.Strings;
 import com.intellij.ide.util.PropertiesComponent;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class RadicleGlobalSettingsHandler {
-public class RadicleSettingsHandler {
 
     public static final String PATH_KEY = "path";
     public static final String RAD_SEED_KEY = "radSeedKey";
-    public static final String RAD_HOME = "radHome";
     public static final String DEFAULT_SEED_NODES = "http://localhost:8080";
 
     public RadicleGlobalSettingsHandler() {
         saveDefaultSeedNodes();
     }
 
-    public RadicleSettings loadSettings() {
+    public RadicleGlobalSettings loadSettings() {
         return new RadicleGlobalSettings(getPath(), getSeedNode());
     }
 
