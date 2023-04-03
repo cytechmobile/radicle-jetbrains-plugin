@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     private RadicleSettingsView radicleSettingsView;
     private RadicleProjectSettingsHandler radicleProjectSettingsHandler;
-    private RadicleGlobalSettingsHandler radicleSettingsHandler;
+    private RadicleProjectSettingsHandler radicleSettingsHandler;
     private RadStub radStub;
 
     @Before
@@ -26,7 +26,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub = RadStub.replaceRadicleProjectService(this, "", getProject());
         radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
-        radicleSettingsHandler = new RadicleGlobalSettingsHandler();
+        radicleSettingsHandler = new RadicleProjectSettingsHandler(getProject());
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
         radicleSettingsHandler.saveSeedNode("http://localhost:8080");
         radicleSettingsView = new RadicleSettingsView(getProject());

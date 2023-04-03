@@ -9,31 +9,31 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleGlobalSettingsHandlerTest extends LightPlatform4TestCase {
-    RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
+    RadicleProjectSettingsHandler radicleProjectSettingsHandler;
 
     @Before
     public void before() {
-        radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
-        radicleGlobalSettingsHandler.savePath(null);
+        radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
+        radicleProjectSettingsHandler.savePath(null);
     }
 
     @After
     public void after() {
-        radicleGlobalSettingsHandler.savePath(null);
+        radicleProjectSettingsHandler.savePath(null);
     }
 
     @Test
     public void loadSettings() {
-        var settings = radicleGlobalSettingsHandler.loadSettings();
+        var settings = radicleProjectSettingsHandler.loadSettings();
         var newSeedNode = "http://127.0.0.1:8080";
         assertThat(settings.getPath()).isEmpty();
-        assertThat(settings.getSeedNode().url).isEqualTo(RadicleGlobalSettingsHandler.DEFAULT_SEED_NODES);
-        radicleGlobalSettingsHandler.savePath(AbstractIT.RAD_PATH);
-        radicleGlobalSettingsHandler.saveSeedNode(newSeedNode);
-        var newSettings = radicleGlobalSettingsHandler.loadSettings();
+        assertThat(settings.getSeedNode().url).isEqualTo(RadicleProjectSettingsHandler.DEFAULT_SEED_NODES);
+        radicleProjectSettingsHandler.savePath(AbstractIT.RAD_PATH);
+        radicleProjectSettingsHandler.saveSeedNode(newSeedNode);
+        var newSettings = radicleProjectSettingsHandler.loadSettings();
         assertThat(newSettings.getPath()).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(newSettings.getSeedNode().url).isEqualTo(newSeedNode);
-        radicleGlobalSettingsHandler.saveSeedNode(null);
+        radicleProjectSettingsHandler.saveSeedNode(null);
     }
 
 }
