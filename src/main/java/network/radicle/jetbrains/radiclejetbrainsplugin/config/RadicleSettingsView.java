@@ -20,6 +20,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,8 @@ import java.util.List;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
-    private static final String SUPPORTED_CLI_VERSION = "0.8.0";
+    private DefaultArtifactVersion minVersion = new DefaultArtifactVersion("0.8.0");
+    private DefaultArtifactVersion maxVersion = new DefaultArtifactVersion("0.9.0");
     public static final String ID = RadicleBundle.message("radicle");
 
     protected TextFieldWithBrowseButton radPathField;
@@ -229,16 +231,16 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         radicleSettingsHandler.savePath(path);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
-            var isCompatibleVersion = version.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
+            var isVersionSupported = isCompatibleVersion(version);
             var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath);
             var isValidNodeApi = isValidNodeApi();
             /* Rad version and home path is valid we don't have to show a notification warning */
-            if (isCompatibleVersion && isRadHomeValidPath && isValidNodeApi) {
+            if (isVersionSupported && isRadHomeValidPath && isValidNodeApi) {
                 return;
             }
             /* Show a notification warning that RAD_HOME or rad executable are invalid */
             var title = "";
-            if (!isCompatibleVersion) {
+            if (!isVersionSupported) {
                 title = RadicleBundle.message("invalidRad");
             } else if (!isRadHomeValidPath) {
                 title = RadicleBundle.message("noNode");
@@ -247,7 +249,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             }
 
             var msg = "";
-            if (!isCompatibleVersion) {
+            if (!isVersionSupported) {
                 msg = RadicleBundle.message("radNotInstalled");
             } else if (!isRadHomeValidPath) {
                 msg = RadicleBundle.message("createNode");
@@ -329,13 +331,17 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         });
     }
 
+    private boolean isCompatibleVersion(String v) {
+        var version = new DefaultArtifactVersion(v.replace("\n", "").trim());
+        return version.compareTo(minVersion) >= 0 && version.compareTo(maxVersion) <= 0;
+    }
+
     private void showHideEnforceLabel(String radVersion) {
         if (Strings.isNullOrEmpty(radVersion)) {
             return;
         }
         enforceVersionLabel.setVisible(false);
-        var isCompatibleVersion = radVersion.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
-        if (!isCompatibleVersion) {
+        if (!isCompatibleVersion(radVersion)) {
             enforceVersionLabel.setVisible(true);
         }
     }
