@@ -3,11 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 import com.google.common.base.Strings;
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -43,25 +39,11 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.awt.Font;
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -89,14 +71,13 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected ComboBox<SeedNode> seedNodeComboBox;
     private final RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
     private RadicleGlobalSettings settings;
-    private static final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
     private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
     protected int page;
     private boolean triggerSeedNodeAction = true;
-    private JBLabel errorMsg;
+    protected JBLabel errorMsg;
 
     public enum TextFieldType {
         SEARCH_FIELD, BROWSE_FIELD
