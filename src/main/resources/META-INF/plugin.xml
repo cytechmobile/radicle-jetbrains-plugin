@@ -23,12 +23,6 @@
                 nonDefaultProject="true"
                 displayName="Radicle"/>
 
-        <applicationConfigurable
-                groupId="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
-                displayName="Seed Nodes"
-                id="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView"
-                instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsSeedNodeView" />
-
         <checkoutProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.RadCheckoutProvider" />
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>

@@ -306,7 +306,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         public void mouseClicked(MouseEvent e) {
             var selectedProject = radProjectJBList.getSelectedValue();
             if (e.getClickCount() == 2 && selectedSeedNode != null && selectedProject != null) {
-                var projectUrl = RAD_UI_URL + selectedSeedNode.host + "/" + selectedProject.urn;
+                //TODO fix this
+                var projectUrl = RAD_UI_URL + selectedSeedNode.url + "/" + selectedProject.urn;
                 if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                     try {
                         Desktop.getDesktop().browse(new URI(projectUrl));
@@ -325,24 +326,22 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             if (node == null) {
                 return new JLabel("");
             }
-            return new JLabel(node.host);
+            return new JLabel(node.url);
         }
     }
 
     private void initializeSeedNodeCombobox() {
         settings = radicleGlobalSettingsHandler.loadSettings();
-        var loadedSeedNodes = settings.getSeedNodes();
+        var loadedSeedNode = settings.getSeedNode();
         seedNodeComboBox.removeAllItems();
-        for (var node : loadedSeedNodes) {
-            seedNodeComboBox.addItem(node);
-        }
+        seedNodeComboBox.addItem(loadedSeedNode);
     }
 
     private class SeedNodeViewAction extends AnAction {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
             triggerSeedNodeAction = false;
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsSeedNodeView.class);
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, RadicleSettingsView.class);
             var prevSelectedIndex = seedNodeComboBox.getSelectedIndex();
             initializeSeedNodeCombobox();
             seedNodeComboBox.setSelectedIndex(prevSelectedIndex);

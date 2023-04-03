@@ -83,11 +83,9 @@ public class PatchListPanel {
 
     private void initializeSeedNodeCombobox() {
         var settings = radicleGlobalSettingsHandler.loadSettings();
-        var loadedSeedNodes = settings.getSeedNodes();
+        var loadedSeedNode = settings.getSeedNode();
         seedNodeComboBox.removeAllItems();
-        for (var node : loadedSeedNodes) {
-            seedNodeComboBox.addItem(node);
-        }
+        seedNodeComboBox.addItem(loadedSeedNode);
     }
 
     public JComponent create() {
@@ -96,10 +94,8 @@ public class PatchListPanel {
         Disposer.register(controller.getDisposer(), () -> CoroutineScopeKt.cancel(scope, null));
         searchVm = new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
         var filterPanel = new PatchFilterPanel(searchVm).create(scope);
-        var seedNodePanel = createSeedNodePanel();
         var verticalPanel = new JPanel(new VerticalLayout(5));
         verticalPanel.add(filterPanel);
-        verticalPanel.add(seedNodePanel);
         var mainPanel = JBUI.Panels.simplePanel();
         var listPanel = createListPanel();
         mainPanel.addToTop(verticalPanel);
@@ -272,7 +268,7 @@ public class PatchListPanel {
         if (selectedSeedNode == null) {
             return;
         }
-        var url = "http://" + selectedSeedNode.host;
+        var url = selectedSeedNode.url;
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {

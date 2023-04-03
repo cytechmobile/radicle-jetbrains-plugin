@@ -28,9 +28,31 @@ public class ProjectApi {
         this.client = client;
     }
 
+    public SeedNodeInfo checkApi(SeedNode node) {
+        var url = node.url + "/api/v1";
+        try {
+            var res = client.execute(new HttpGet(url));
+            String response = "";
+            if (res != null) {
+                response = EntityUtils.toString(res.getEntity());
+            }
+
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
+                var json = new ObjectMapper().readTree(response);
+                String version = json.get("version").asText("");
+                String id = json.get("node").get("id").asText("");
+                return new SeedNodeInfo(id, version, null);
+            }
+            var statusCode = res != null  ? res.getStatusLine().getStatusCode() : "";
+            return new SeedNodeInfo(null, null, "HTTP Status code: " + statusCode + " " + response);
+        } catch (Exception e) {
+            logger.warn("http request exception {}", url, e);
+            return new SeedNodeInfo(null, null, "Exception: " + e.getMessage());
+        }
+    }
+
     public List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
-        var url = "https://" + selectedNode.host + ":" + selectedNode.port + "/v1/projects?per-page=" + PER_PAGE +
-                "&page=" + page;
+        var url = selectedNode.url + "/api/v1/projects?per-page=" + PER_PAGE + "&page=" + page;
         try {
             var res = client.execute(new HttpGet(url));
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
@@ -54,7 +76,8 @@ public class ProjectApi {
                 var projectId = urnParts.length > 2 ? urnParts[2] : "";
                 var name = (String) n.get("name");
                 var description = (String) n.get("description");
-                var radUrl = "rad://" + selectedNode.host + "/" + projectId;
+                //TODO fix this
+                var radUrl = "rad://" + selectedNode.url + "/" + projectId;
                 return new RadProject(urn, name, description, radUrl);
             }).collect(Collectors.toList());
         } catch (Exception e) {
@@ -63,4 +86,5 @@ public class ProjectApi {
         }
     }
 
+    public record SeedNodeInfo(String id, String version, String errorMessage) { }
 }
