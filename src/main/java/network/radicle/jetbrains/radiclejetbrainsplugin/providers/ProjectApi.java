@@ -57,7 +57,7 @@ public class ProjectApi {
             var res = client.execute(new HttpGet(url));
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
                 String response = EntityUtils.toString(res.getEntity());
-                return convertJsonToObject(response, selectedNode);
+                return convertJsonToObject(response);
             }
             return null;
         } catch (Exception e) {
@@ -66,19 +66,15 @@ public class ProjectApi {
         }
     }
 
-    private List<RadProject> convertJsonToObject(String json, SeedNode selectedNode) {
+    private List<RadProject> convertJsonToObject(String json) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() { });
             return radProjects.stream().map(n -> {
-                var urn = ((String) n.get("urn"));
-                var urnParts = urn.split(":");
-                var projectId = urnParts.length > 2 ? urnParts[2] : "";
+                var id = ((String) n.get("id"));
                 var name = (String) n.get("name");
                 var description = (String) n.get("description");
-                //TODO fix this
-                var radUrl = "rad://" + selectedNode.url + "/" + projectId;
-                return new RadProject(urn, name, description, radUrl);
+                return new RadProject(id, name, description);
             }).collect(Collectors.toList());
         } catch (Exception e) {
             logger.warn("Deserialization of rad project failed : {}", json, e);
