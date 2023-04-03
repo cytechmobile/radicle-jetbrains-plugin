@@ -64,7 +64,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void testSuccessNotificationAfterInstalled() throws InterruptedException {
-        radicleGlobalSettingsHandler.savePath("");
+        radicleProjectSettingsHandler.savePath("");
         var rm = new RadicleManagerListener();
         rm.runActivity(getProject());
 
@@ -72,7 +72,7 @@ public class ActionsTest extends AbstractIT {
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
 
-        radicleGlobalSettingsHandler.savePath(RAD_PATH);
+        radicleProjectSettingsHandler.savePath(RAD_PATH);
         rm.runActivity(getProject());
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNull();
@@ -80,7 +80,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void cliConfiguredError() throws InterruptedException {
-        radicleGlobalSettingsHandler.savePath("");
+        radicleProjectSettingsHandler.savePath("");
         var rsa = new RadicleFetchAction();
         rsa.performAction(getProject());
 
@@ -94,7 +94,7 @@ public class ActionsTest extends AbstractIT {
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
 
-        radicleGlobalSettingsHandler.savePath(RAD_PATH);
+        radicleProjectSettingsHandler.savePath(RAD_PATH);
     }
 
     @Test
