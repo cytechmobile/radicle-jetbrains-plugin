@@ -15,7 +15,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +159,7 @@ public abstract class RadAction {
     }
 
     public static boolean isCliPathConfigured(Project project) {
-        var rsh = new RadicleGlobalSettingsHandler();
+        var rsh = new RadicleProjectSettingsHandler(project);
         var rs = rsh.loadSettings();
         logger.debug("settings are: {}", rs);
         // check if rad cli is configured

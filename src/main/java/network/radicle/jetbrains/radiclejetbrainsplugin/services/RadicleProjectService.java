@@ -11,7 +11,6 @@ import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -25,17 +24,14 @@ import java.util.List;
 public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
-    private final RadicleGlobalSettingsHandler globalSettingsHandler;
     private final RadicleProjectSettingsHandler projectSettingsHandler;
 
     public RadicleProjectService(Project project) {
-        this(new RadicleGlobalSettingsHandler(), new RadicleProjectSettingsHandler(project));
+        this(new RadicleProjectSettingsHandler(project));
     }
 
     @NonInjectable
-    public RadicleProjectService(RadicleGlobalSettingsHandler radicleGlobalSettingsHandler,
-                                 RadicleProjectSettingsHandler radicleProjectSettingsHandler) {
-        this.globalSettingsHandler = radicleGlobalSettingsHandler;
+    public RadicleProjectService(RadicleProjectSettingsHandler radicleProjectSettingsHandler) {
         this.projectSettingsHandler = radicleProjectSettingsHandler;
     }
 
@@ -48,9 +44,8 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput self(String radHome, String radPath) {
-        final var globalSettings = globalSettingsHandler.loadSettings();
         final var projectSettings = projectSettingsHandler.loadSettings();
-        final var path = Strings.isNullOrEmpty(radPath) ? globalSettings.getPath() : radPath;
+        final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
         return executeCommand(path, home, ".", List.of("self"), null, "");
     }
@@ -109,17 +104,15 @@ public class RadicleProjectService {
 
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
                                                  @Nullable GitRepository repo, String stdin) {
-        final var globalSettings = globalSettingsHandler.loadSettings();
         final var projectSettings = projectSettingsHandler.loadSettings();
-        final var path = Strings.isNullOrEmpty(radPath) ? globalSettings.getPath() : radPath;
+        final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
         return executeCommand(path, home, workDir, args, repo, stdin);
     }
 
     public ProcessOutput executeCommand(String workDir, List<String> args, @Nullable GitRepository repo) {
-        final var globalSettings = globalSettingsHandler.loadSettings();
         final var projectSettings = projectSettingsHandler.loadSettings();
-        final var radPath = globalSettings.getPath();
+        final var radPath = projectSettings.getPath();
         final var radHome = projectSettings.getRadHome();
         return executeCommand(radPath, radHome, workDir, args, repo, "");
     }

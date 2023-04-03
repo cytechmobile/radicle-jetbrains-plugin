@@ -51,10 +51,8 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     protected TextFieldWithBrowseButton radHomeField;
     private JButton testRadHomeButton;
     private JLabel msgLabel;
-    private RadicleGlobalSettings globalSettings;
     private RadicleProjectSettings projectSettings;
-    private final RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
-    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
+    private final RadicleProjectSettingsHandler radicleSettingsHandler;
     private JButton seedNodeApiUrlTestBtn;
     private JLabel seedNodeApiUrlLabel;
     private JLabel seedNodeApiUrlMsgLabel;
@@ -66,10 +64,8 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     public RadicleSettingsView(Project project) {
         super();
         myProject = project;
-        this.radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
-        this.globalSettings = this.radicleGlobalSettingsHandler.loadSettings();
-        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
-        this.projectSettings = this.radicleProjectSettingsHandler.loadSettings();
+        this.radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
+        this.projectSettings = this.radicleSettingsHandler.loadSettings();
         initComponents();
     }
 
@@ -218,13 +214,13 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     @Override
     public boolean isModified() {
-        this.globalSettings = this.radicleGlobalSettingsHandler.loadSettings();
-        this.projectSettings = this.radicleProjectSettingsHandler.loadSettings();
+        this.projectSettings = this.radicleSettingsHandler.loadSettings();
+        this.projectSettings = this.radicleSettingsHandler.loadSettings();
         var selectedPath = getPathFromTextField(radPathField);
         var selectedRadHome = getPathFromTextField(radHomeField);
-        return !selectedPath.equals(this.globalSettings.getPath()) ||
+        return !selectedPath.equals(this.projectSettings.getPath()) ||
                 !selectedRadHome.equals(this.projectSettings.getRadHome()) ||
-                !getSelectedNodeUrl().equals(this.globalSettings.getSeedNode().url);
+                !getSelectedNodeUrl().equals(this.projectSettings.getSeedNode().url);
     }
 
     @Override
@@ -232,9 +228,9 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         var path = getPathFromTextField(radPathField);
         var radHomePath = getPathFromTextField(radHomeField);
         var nodeUrl = getSelectedNodeUrl();
-        radicleProjectSettingsHandler.saveRadHome(radHomePath);
-        radicleGlobalSettingsHandler.savePath(path);
-        radicleGlobalSettingsHandler.saveSeedNode(nodeUrl);
+        radicleSettingsHandler.saveRadHome(radHomePath);
+        radicleSettingsHandler.savePath(path);
+        radicleSettingsHandler.saveSeedNode(nodeUrl);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
             var isCompatibleVersion = version.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
@@ -306,7 +302,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     private void initComponents() {
         this.msgLabel.setPreferredSize(new Dimension(200, this.msgLabel.getHeight()));
-        radPathField.setText(this.globalSettings.getPath());
+        radPathField.setText(this.projectSettings.getPath());
         radPathField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
 
@@ -326,7 +322,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var autoDetect = new AutoDetect(radHomeField, AutoDetect.Type.RAD_HOME);
             autoDetect.detectAndUpdateField();
         }
-        seedNodeApiUrl.setText(this.globalSettings.getSeedNode().url);
+        seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
         initListeners();
         /* Show a warning label if the rad version is incompatible */
         ApplicationManager.getApplication().executeOnPooledThread(() -> {

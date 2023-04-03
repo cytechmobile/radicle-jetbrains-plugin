@@ -10,7 +10,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInit;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleGlobalSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class PublishDialog extends DialogWrapper {
     private JLabel seedNodeLabel;
     private final List<GitRepository> repos;
     private final Project project;
-    private final RadicleGlobalSettingsHandler radicleGlobalSettingsHandler;
+    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private boolean isSelectedRepoInitialized;
     public CountDownLatch isUiLoaded = new CountDownLatch(1);
 
@@ -49,7 +49,7 @@ public class PublishDialog extends DialogWrapper {
         super(true);
         this.repos = repos;
         this.project = project;
-        this.radicleGlobalSettingsHandler = new RadicleGlobalSettingsHandler();
+        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         init();
     }
 
@@ -79,7 +79,7 @@ public class PublishDialog extends DialogWrapper {
         super.init();
         setOKActionEnabled(false);
         setTitle(RadicleBundle.message("shareProject"));
-        var settings = radicleGlobalSettingsHandler.loadSettings();
+        var settings = radicleProjectSettingsHandler.loadSettings();
         var seedNode = settings.getSeedNode();
         var textFieldListener = new TextFieldListener();
         nameField.getDocument().addDocumentListener(textFieldListener);
