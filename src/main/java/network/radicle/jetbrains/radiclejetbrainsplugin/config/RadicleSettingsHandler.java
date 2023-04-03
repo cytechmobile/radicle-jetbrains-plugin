@@ -1,36 +1,22 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
+import com.google.common.base.Strings;
 import com.intellij.ide.util.PropertiesComponent;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class RadicleSettingsHandler {
 
     public static final String PATH_KEY = "path";
     public static final String RAD_SEED_KEY = "radSeedKey";
     public static final String RAD_HOME = "radHome";
-
-    public static final String RAD_SEED_SEPERATOR = "|";
-    public static final String DEFAULT_SEED_PORT = "8777";
-
-    public static final String PINE_DOMAIN_NAME = "pine.radicle.garden";
-    public static final String WILLOW_DOMAIN_NAME = "willow.radicle.garden";
-    public static final String MAPLE_DOMAIN_NAME = "maple.radicle.garden";
-
-    public static final List<SeedNode> DEFAULT_SEED_NODES = List.of(
-            new SeedNode(PINE_DOMAIN_NAME, DEFAULT_SEED_PORT),
-            new SeedNode(WILLOW_DOMAIN_NAME, DEFAULT_SEED_PORT),
-            new SeedNode(MAPLE_DOMAIN_NAME, DEFAULT_SEED_PORT)
-    );
+    public static final String DEFAULT_SEED_NODES = "http://localhost:8080";
 
     public RadicleSettingsHandler() {
         saveDefaultSeedNodes();
     }
 
     public RadicleSettings loadSettings() {
-        return new RadicleSettings(getPath(), getSeedNodes(), getRadHome());
+        return new RadicleSettings(getPath(), getSeedNode(), getRadHome());
     }
 
     public void savePath(String path) {
@@ -49,31 +35,22 @@ public class RadicleSettingsHandler {
         return getApplicationProperties().getValue(RAD_HOME, "");
     }
 
-    public void saveSeedNodes(List<SeedNode> seedNodes) {
-        String seedListToString = null;
-        if (seedNodes != null) {
-            seedListToString = seedNodes.stream().map(Object::toString).collect(Collectors.joining(","));
-        }
-        getApplicationProperties().setValue(RAD_SEED_KEY, seedListToString);
+    public void saveSeedNode(String seedNode) {
+        getApplicationProperties().setValue(RAD_SEED_KEY, Strings.nullToEmpty(seedNode));
     }
 
-    private List<SeedNode> getSeedNodes() {
-        var seeds = getApplicationProperties().getValue(RAD_SEED_KEY);
-        if (seeds != null) {
-            if (seeds.isEmpty()) {
-                return List.of();
-            } else {
-                var stringNodes = seeds.split(",");
-                return SeedNode.getNodesFromString(stringNodes);
-            }
+    private SeedNode getSeedNode() {
+        var seed = getApplicationProperties().getValue(RAD_SEED_KEY);
+        if (Strings.isNullOrEmpty(seed)) {
+            return new SeedNode("");
         }
-        return null;
+        return new SeedNode(seed);
     }
 
     private void saveDefaultSeedNodes() {
-        var loadedSeedNodes = getSeedNodes();
-        if (loadedSeedNodes == null) {
-            saveSeedNodes(DEFAULT_SEED_NODES);
+        var loadedSeedNode = getSeedNode();
+        if (Strings.isNullOrEmpty(loadedSeedNode.url)) {
+            saveSeedNode(DEFAULT_SEED_NODES);
         }
     }
 
