@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -26,23 +27,26 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.event.DocumentEvent;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
     private static final DefaultArtifactVersion MIN_VERSION = new DefaultArtifactVersion("0.8.0");
     private static final DefaultArtifactVersion MAX_VERSION = new DefaultArtifactVersion("0.9.0");
+    private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
     public static final String ID = RadicleBundle.message("radicle");
 
     protected TextFieldWithBrowseButton radPathField;
@@ -105,7 +109,11 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     protected String getRadHome() {
-        var radHome = new RadPath(myProject);
+        var radPath = getPathFromTextField(radPathField);
+        if (Strings.isNullOrEmpty(radPath)) {
+            return "";
+        }
+        var radHome = new RadPath(myProject, radPath);
         var output = radHome.perform();
         if (!RadAction.isSuccess(output)) {
             return "";
@@ -316,13 +324,33 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         enforceVersionLabel.setText(RadicleBundle.message("unSupportedCliVer"));
         enforceVersionLabel.setFont(enforceVersionLabel.getFont().deriveFont(Font.BOLD));
         /* Try to autodetect RAD_HOME and RAD PATH */
-        if (Strings.isNullOrEmpty(getPathFromTextField(radPathField))) {
+        var hasRadPath = !Strings.isNullOrEmpty(getPathFromTextField(radPathField));
+        var hasRadHome = !Strings.isNullOrEmpty(getPathFromTextField(radHomeField));
+        var latch = new CountDownLatch(!hasRadPath ? 1 : 0);
+        if (!hasRadPath) {
             var autoDetect = new AutoDetect(radPathField, AutoDetect.Type.RAD_EXE_PATH);
-            autoDetect.detectAndUpdateField();
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+               var radPath = autoDetect.detect();
+               ApplicationManager.getApplication().invokeLater(() -> {
+                   autoDetect.updateField(radPath);
+                   latch.countDown();
+               }, ModalityState.any());
+            });
         }
-        if (Strings.isNullOrEmpty(getPathFromTextField(radHomeField))) {
+        if (!hasRadHome) {
             var autoDetect = new AutoDetect(radHomeField, AutoDetect.Type.RAD_HOME);
-            autoDetect.detectAndUpdateField();
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                try {
+                    //We have to wait for RAD_PATH, in order to find RAD_HOME
+                    latch.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    logger.warn("Unable to wait for rad path");
+                }
+                var radHome = autoDetect.detect();
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    autoDetect.updateField(radHome);
+                }, ModalityState.any());
+            });
         }
         seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
         initListeners();
@@ -396,16 +424,15 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             return this.type == Type.RAD_EXE_PATH ? getRadPath() : getRadHome();
         }
 
-        public void detectAndUpdateField() {
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var path = getPath();
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    if (!Strings.isNullOrEmpty(path) && textField != null) {
-                        textField.getTextField().setForeground(JBColor.GRAY);
-                        textField.setText(RadicleBundle.message("autoDetected") + path);
-                    }
-                }, ModalityState.any());
-            });
+        public void updateField(String path) {
+            if (!Strings.isNullOrEmpty(path) && textField != null) {
+                textField.getTextField().setForeground(JBColor.GRAY);
+                textField.setText(RadicleBundle.message("autoDetected") + path);
+            }
+        }
+
+        public String detect() {
+            return getPath();
         }
     }
 
@@ -432,7 +459,12 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             //Auto-detect path
             if (getPathFromTextField(textField).isEmpty()) {
                 var autoDetect = new AutoDetect(textField, type);
-                autoDetect.detectAndUpdateField();
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                   var path = autoDetect.detect();
+                   ApplicationManager.getApplication().invokeLater(() -> {
+                       autoDetect.updateField(path);
+                   }, ModalityState.any());
+                });
             }
         }
 

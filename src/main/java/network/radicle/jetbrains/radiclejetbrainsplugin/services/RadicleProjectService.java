@@ -35,8 +35,8 @@ public class RadicleProjectService {
         this.projectSettingsHandler = radicleProjectSettingsHandler;
     }
 
-    public ProcessOutput homePath() {
-        return executeCommand(".", List.of("path"), null);
+    public ProcessOutput homePath(String radPath) {
+        return executeCommand(radPath, ".", List.of("path"), null);
     }
 
     public ProcessOutput radPath() {
