@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
 public class RadicleProjectSettingsHandler {
-
-    public static final String RAD_HOME_KEY = "radHome";
-    public static final String PATH_KEY = "path";
-    public static final String RAD_SEED_KEY = "radSeedKey";
+    public static final String RAD_SETTINGS_PREFIX = RadicleProjectSettingsHandler.class.getPackageName();
+    public static final String RAD_HOME_KEY = RAD_SETTINGS_PREFIX + ".radHome";
+    public static final String PATH_KEY = RAD_SETTINGS_PREFIX + ".path";
+    public static final String RAD_SEED_KEY = RAD_SETTINGS_PREFIX + ".radSeedKey";
     public static final String DEFAULT_SEED_NODES = "http://localhost:8080";
     private final Project project;
 
