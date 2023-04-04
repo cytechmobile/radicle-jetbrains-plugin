@@ -23,8 +23,8 @@ public class PublishDialogTest extends AbstractIT {
     public void testDialogWithRadInitializedPr() throws InterruptedException {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
-        assertThat(publishDialog.getProjectSelect().isVisible()).isFalse();
-        assertThat(publishDialog.getProjectNameLabel().isVisible()).isFalse();
+        assertThat(publishDialog.getProjectSelect().isVisible()).isTrue();
+        assertThat(publishDialog.getProjectNameLabel().isVisible()).isTrue();
         assertThat(publishDialog.getSeedNodeSelect().isVisible()).isTrue();
         assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
 
@@ -64,8 +64,8 @@ public class PublishDialogTest extends AbstractIT {
         removeRemoteRadUrl(secondRepo);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
 
-        assertThat(publishDialog.getProjectSelect().isVisible()).isFalse();
-        assertThat(publishDialog.getProjectNameLabel().isVisible()).isFalse();
+        assertThat(publishDialog.getProjectSelect().isVisible()).isTrue();
+        assertThat(publishDialog.getProjectNameLabel().isVisible()).isTrue();
         assertThat(publishDialog.getSeedNodeSelect().isVisible()).isTrue();
         assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
 

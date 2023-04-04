@@ -168,7 +168,7 @@ public abstract class RadAction {
         if (Strings.isNullOrEmpty(rs.getPath())) {
             logger.warn("no rad cli path configured");
             showNotification(project, "radCliPathMissing", "radCliPathMissingText", NotificationType.WARNING,
-                    List.of(new ConfigureRadCliNotificationAction(null, RadicleBundle.lazyMessage("configure"))));
+                    List.of(new ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
             return false;
         }
         return true;
