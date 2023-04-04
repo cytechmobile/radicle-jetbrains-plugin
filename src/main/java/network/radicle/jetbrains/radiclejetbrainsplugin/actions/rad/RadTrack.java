@@ -1,9 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadTrack extends RadAction {
     protected Peer peer;
@@ -30,7 +29,7 @@ public class RadTrack extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = repo.getProject().getService(RadicleProjectService.class);
         return rad.track(repo, peer == null ? null : peer.id, node == null ? null : node.url);
     }
 

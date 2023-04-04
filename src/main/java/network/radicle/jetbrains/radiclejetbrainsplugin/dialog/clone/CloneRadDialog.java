@@ -3,11 +3,11 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 import com.google.common.base.Strings;
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -31,8 +31,8 @@ import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettings;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
@@ -43,25 +43,26 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
+import javax.swing.JButton;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.JLabel;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Component;
 import java.awt.Desktop;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -87,15 +88,15 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected JButton loadMore;
     protected AsyncProcessIcon searchSpinner;
     protected ComboBox<SeedNode> seedNodeComboBox;
-    private final RadicleSettingsHandler radicleSettingsHandler;
-    private RadicleSettings settings;
-    private static final String RAD_UI_URL = "https://app.radicle.xyz/seeds/";
+    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
+    private RadicleProjectSettings settings;
     private final ProjectApi projectApi;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
     protected int page;
     private boolean triggerSeedNodeAction = true;
+    protected JBLabel errorMsg;
 
     public enum TextFieldType {
         SEARCH_FIELD, BROWSE_FIELD
@@ -105,8 +106,8 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         this.loadedProjects = new ArrayList<>();
         this.project = project;
         this.projectApi = api;
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
-        this.settings = this.radicleSettingsHandler.loadSettings();
+        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
+        this.settings = this.radicleProjectSettingsHandler.loadSettings();
         initializeIdentityPanel();
         initializeProjectPanel();
         initializeMainPanel();
@@ -121,7 +122,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radSelf = new RadSelf();
+            var radSelf = new RadSelf(project);
             var output = radSelf.perform();
             String activeNodeId;
             if (RadAction.isSuccess(output)) {
@@ -136,9 +137,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     @Override
-    public String url() {
+    public String getId() {
         var selectedProject = radProjectJBList.getSelectedValue();
-        return selectedProject.radUrl;
+        return selectedProject.id;
     }
 
     @Override
@@ -249,9 +250,14 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         gridPanel.add(searchField);
         projectPanel.add(gridPanel, BorderLayout.NORTH);
 
-        var bottomGrid = new JPanel(new GridLayout(2, 1));
+        var bottomGrid = new JPanel(new GridLayout(3, 1));
         bottomGrid.add(loadMore);
         bottomGrid.add(new JBLabel(RadicleBundle.message("openInBrowser")));
+        errorMsg = new JBLabel("<html>" + RadicleBundle.message("httpRequestErrorTitle") + "<br/>" +
+                 RadicleBundle.message("httpRequestErrorDesc") + "</html>");
+        errorMsg.setForeground(JBColor.RED);
+        errorMsg.setVisible(false);
+        bottomGrid.add(errorMsg);
         projectPanel.add(bottomGrid, BorderLayout.SOUTH);
         projectPanel.add(projectListPanel, BorderLayout.CENTER);
     }
@@ -259,6 +265,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     private void fetchProjects() {
         searchSpinner.setVisible(true);
         loadMore.setEnabled(false);
+        errorMsg.setVisible(false);
         SwingUtilities.invokeLater(() -> {
             /* scroll to the bottom */
             var bar = projectListPanel.getVerticalScrollBar();
@@ -267,8 +274,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radProjects = projectApi.fetchRadProjects(selectedSeedNode, page);
             if (radProjects == null) {
-                RadAction.showErrorNotification(project, RadicleBundle.message("httpRequestErrorTitle"),
-                        RadicleBundle.message("httpRequestErrorDesc"));
+                errorMsg.setVisible(true);
             }
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (radProjects != null) {
@@ -306,8 +312,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         public void mouseClicked(MouseEvent e) {
             var selectedProject = radProjectJBList.getSelectedValue();
             if (e.getClickCount() == 2 && selectedSeedNode != null && selectedProject != null) {
-                //TODO fix this
-                var projectUrl = RAD_UI_URL + selectedSeedNode.url + "/" + selectedProject.urn;
+                var projectUrl = selectedSeedNode.url + "/api/v1/projects/" + selectedProject.id;
                 if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                     try {
                         Desktop.getDesktop().browse(new URI(projectUrl));
@@ -331,7 +336,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     private void initializeSeedNodeCombobox() {
-        settings = radicleSettingsHandler.loadSettings();
+        settings = radicleProjectSettingsHandler.loadSettings();
         var loadedSeedNode = settings.getSeedNode();
         seedNodeComboBox.removeAllItems();
         seedNodeComboBox.addItem(loadedSeedNode);
@@ -355,7 +360,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
                                                       boolean cellHasFocus) {
             var radProject = (RadProject) value;
             return new JLabel("<html><b>Name: </b>" + radProject.name + "<br/>" +
-                    "<b>Urn: </b>" + radProject.urn + "<br/>" + "<br/>" + "</html>");
+                    "<b>Urn: </b>" + radProject.id + "<br/>" + "<br/>" + "</html>");
         }
     }
 
@@ -381,7 +386,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             searchSpinner.setVisible(true);
             projectModel.clear();
             for (var pr : loadedProjects) {
-                if (pr.name.toLowerCase().contains(filter) || pr.urn.toLowerCase().contains(filter)) {
+                if (pr.name.toLowerCase().contains(filter) || pr.id.toLowerCase().contains(filter)) {
                     projectModel.addElement(pr);
                 }
             }

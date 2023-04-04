@@ -22,7 +22,6 @@ public class PublishDialogTest extends AbstractIT {
     @Test
     public void testDialogWithRadInitializedPr() throws InterruptedException {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
-//        initializeProject(secondRepo);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
         assertThat(publishDialog.getProjectSelect().isVisible()).isFalse();
         assertThat(publishDialog.getProjectNameLabel().isVisible()).isFalse();
@@ -33,17 +32,17 @@ public class PublishDialogTest extends AbstractIT {
         Thread.sleep(1000);
         publishDialog.doOKAction();
 
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("init");
+         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+         assertCmd(cmd);
+         assertThat(cmd.getCommandLineString()).contains("init");
 
-        cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(cmd).isNull();
+         cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+         assertThat(cmd).isNull();
 
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
-        removeRemoteRadUrl(secondRepo);
+         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+         assertThat(not).isNotNull();
+         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
+         removeRemoteRadUrl(secondRepo);
     }
 
     @Test
