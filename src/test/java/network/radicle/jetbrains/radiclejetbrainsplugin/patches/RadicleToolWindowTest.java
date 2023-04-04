@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.openapi.project.Project;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,14 +11,11 @@ import org.junit.runners.JUnit4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
-
-import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.FIRST_PEER_ID;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.FIRST_BRANCH_NAME;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_PEER_ID;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.FIRST_PEER_ID;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_BRANCH_NAME;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_COMMIT_HASH;
-
+import static network.radicle.jetbrains.radiclejetbrainsplugin.RadStub.SECOND_PEER_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
@@ -35,26 +31,6 @@ public class RadicleToolWindowTest extends AbstractIT {
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
         //Wait to load the patch proposals
         Thread.sleep(2000);
-    }
-
-    @Test
-    public void testSeedNodeSelection() throws InterruptedException {
-        var controller = radicleToolWindow.patchTabController;
-        var listPanel = controller.getPatchListPanel();
-        var seedNodeComboBox = listPanel.getSeedNodeComboBox();
-
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        var selectedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
-        assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("track --seed http://" + selectedNode.host + " --remote");
-
-        for (int i = 1; i < seedNodeComboBox.getItemCount(); i++) {
-            seedNodeComboBox.setSelectedIndex(i);
-            cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-            selectedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
-            assertCmd(cmd);
-            assertThat(cmd.getCommandLineString()).contains("track --seed http://" + selectedNode.host + " --remote");
-        }
     }
 
     @Test
@@ -174,22 +150,6 @@ public class RadicleToolWindowTest extends AbstractIT {
         }
         assertThat(patchProposalPanel.patchChanges.getValue().size()).isEqualTo(1);
         assertThat(patchProposalPanel.patchCommits.getValue().size()).isEqualTo(1);
-    }
-
-    @Test
-    public void testRefreshButton() throws InterruptedException {
-        var controller = radicleToolWindow.patchTabController;
-        var listPanel = controller.getPatchListPanel();
-        var seedNodeComboBox = listPanel.getSeedNodeComboBox();
-
-        radStub.commands.poll(10, TimeUnit.SECONDS);
-
-        var refreshAction = listPanel.new RefreshSeedNodeAction();
-        refreshAction.refreshSeedNodesAndProposals();
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        var selectedNode = (SeedNode) seedNodeComboBox.getSelectedItem();
-        assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("track --seed http://" + selectedNode.host + " --remote");
     }
 
     @Test

@@ -68,11 +68,8 @@ public class CloneDialogTest extends AbstractIT {
     @Test
     public void testDefaultSeedNodes() {
         var seedNodeModel = cloneDialog.seedNodeComboBox.getModel();
-        var settingsSeedNodes = radicleSettingsHandler.loadSettings().getSeedNodes();
-        for (var i = 0; i < settingsSeedNodes.size(); i++) {
-            var seed = seedNodeModel.getElementAt(i);
-            assertThat(seed).usingRecursiveComparison().isEqualTo(settingsSeedNodes.get(i));
-        }
+        var settingsSeedNode = radicleSettingsHandler.loadSettings().getSeedNode();
+        assertThat(seedNodeModel.getElementAt(0).url).isEqualTo(settingsSeedNode.url);
     }
 
     @Test
@@ -80,7 +77,7 @@ public class CloneDialogTest extends AbstractIT {
         when(statusLine.getStatusCode()).thenReturn(400);
         when(httpClient.execute(any())).thenReturn(httpResponse);
 
-        cloneDialog.seedNodeComboBox.setSelectedIndex(1);
+        cloneDialog.seedNodeComboBox.setSelectedIndex(0);
         cloneDialog.loadProjects();
 
         notificationsQueue.take();
@@ -100,7 +97,7 @@ public class CloneDialogTest extends AbstractIT {
         when(httpResponse.getEntity()).thenReturn(se);
         when(statusLine.getStatusCode()).thenReturn(200);
         when(httpClient.execute(any())).thenReturn(httpResponse);
-        cloneDialog.seedNodeComboBox.setSelectedIndex(1);
+        cloneDialog.seedNodeComboBox.setSelectedIndex(0);
         cloneDialog.loadProjects();
         assertThat(cloneDialog.page).isEqualTo(0);
         var loadMoreListener = cloneDialog.new LoadButtonListener();
