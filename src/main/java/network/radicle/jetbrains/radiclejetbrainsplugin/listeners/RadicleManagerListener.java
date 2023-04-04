@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class RadicleManagerListener implements StartupActivity {
     }
 
     private void showSuccessNotification(Project project) {
-        var radicleSettingsHandler = new RadicleSettingsHandler();
+        var radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
         var settings = radicleSettingsHandler.loadSettings();
         if (Strings.isNullOrEmpty(settings.getPath())) {
             RadAction.showNotification(project, "radicle", "installedSuccessfully", NotificationType.INFORMATION,

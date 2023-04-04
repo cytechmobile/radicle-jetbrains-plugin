@@ -13,7 +13,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import org.junit.After;
 import org.junit.Before;
 
@@ -37,7 +37,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public static final String WSL = "wsl";
     protected static final String REMOTE_NAME = "testRemote";
     protected static final String REMOTE_NAME_1 = "testRemote1";
-    protected RadicleSettingsHandler radicleSettingsHandler;
+    protected RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     protected String remoteRepoPath;
     protected String remoteRepoPath1;
     protected GitRepository firstRepo;
@@ -67,12 +67,14 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         remoteRepoPath1 = Files.createTempDirectory(REMOTE_NAME_1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
 
         /* set rad path */
-        radicleSettingsHandler = new RadicleSettingsHandler();
-        radicleSettingsHandler.loadSettings();
-        radicleSettingsHandler.savePath(RAD_PATH);
+        radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
+        radicleProjectSettingsHandler.loadSettings();
+        radicleProjectSettingsHandler.savePath(RAD_PATH);
+
 
         /* initialize rad stub service */
-        radStub = RadStub.replaceRadicleApplicationService(this, change.getBeforeRevision().getRevisionNumber().asString());
+        radStub = RadStub.replaceRadicleProjectService(this, change.getBeforeRevision().getRevisionNumber().asString(), getProject());
+
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 

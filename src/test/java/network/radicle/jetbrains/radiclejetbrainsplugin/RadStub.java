@@ -2,10 +2,10 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
 
 import java.util.concurrent.BlockingQueue;
@@ -15,9 +15,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_HO
 import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_HOME1;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_PATH;
 
-public class RadStub extends RadicleApplicationService {
-
-    public static final String ACTIVE_PROFILE = "myProfile";
+public class RadStub extends RadicleProjectService {
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
     public String firstCommitHash;
     public static final String SECOND_COMMIT_HASH = "970b7ceb6678bc42e4fb0b9e3628914e1e1b8dae";
@@ -44,7 +42,9 @@ public class RadStub extends RadicleApplicationService {
             "Storage (keys) /home/test/.myInstallation/keys\n" +
             "Node (socket)  /home/test/.myInstallation/node/radicle.sock";
 
-    public RadStub(String commitHash) {
+
+    public RadStub(String commitHash, Project project) {
+        super(project);
         this.firstCommitHash = commitHash;
     }
 
@@ -96,10 +96,10 @@ public class RadStub extends RadicleApplicationService {
         return pr;
     }
 
-    public static RadStub replaceRadicleApplicationService(UsefulTestCase utc, String commitHash) {
-        var stub = new RadStub(commitHash);
-        ServiceContainerUtil.replaceService(ApplicationManager.getApplication(),
-                RadicleApplicationService.class, stub, utc.getTestRootDisposable());
+    public static RadStub replaceRadicleProjectService(UsefulTestCase utc, String commitHash, Project project) {
+        var stub = new RadStub(commitHash, project);
+        ServiceContainerUtil.replaceService(project,
+                RadicleProjectService.class, stub, utc.getTestRootDisposable());
         return stub;
     }
 }

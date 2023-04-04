@@ -15,9 +15,9 @@ import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +65,7 @@ public abstract class RadAction {
 
     public ProcessOutput perform(CountDownLatch latch) {
         var output = this.run();
-        var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleApplicationService.class));
+        var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleProjectService.class));
         latch.countDown();
         if (!success) {
             logger.warn(this.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
@@ -159,7 +159,7 @@ public abstract class RadAction {
     }
 
     public static boolean isCliPathConfigured(Project project) {
-        var rsh = new RadicleSettingsHandler();
+        var rsh = new RadicleProjectSettingsHandler(project);
         var rs = rsh.loadSettings();
         logger.debug("settings are: {}", rs);
         // check if rad cli is configured
