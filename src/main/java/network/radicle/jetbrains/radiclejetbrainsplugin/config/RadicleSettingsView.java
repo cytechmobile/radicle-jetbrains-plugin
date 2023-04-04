@@ -41,8 +41,8 @@ import java.util.List;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
-    private static final DefaultArtifactVersion minVersion = new DefaultArtifactVersion("0.8.0");
-    private static final DefaultArtifactVersion maxVersion = new DefaultArtifactVersion("0.9.0");
+    private static final DefaultArtifactVersion MIN_VERSION = new DefaultArtifactVersion("0.8.0");
+    private static final DefaultArtifactVersion MAX_VERSION = new DefaultArtifactVersion("0.9.0");
     public static final String ID = RadicleBundle.message("radicle");
 
     protected TextFieldWithBrowseButton radPathField;
@@ -340,7 +340,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             return false;
         }
         var version = new DefaultArtifactVersion(v.replace("\n", "").trim());
-        return version.compareTo(minVersion) >= 0 && version.compareTo(maxVersion) <= 0;
+        return version.compareTo(MIN_VERSION) >= 0 && version.compareTo(MAX_VERSION) <= 0;
     }
 
     private void showHideEnforceLabel(String radVersion) {
