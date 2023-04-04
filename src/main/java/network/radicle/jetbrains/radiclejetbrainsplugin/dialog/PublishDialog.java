@@ -94,11 +94,6 @@ public class PublishDialog extends DialogWrapper {
         for (var repo : repos) {
             projectSelect.addItem(repo);
         }
-
-        if (repos.size() == 1) {
-            projectSelect.setVisible(false);
-            projectNameLabel.setVisible(false);
-        }
         updateLayout();
     }
 
