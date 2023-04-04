@@ -70,7 +70,9 @@ public abstract class RadAction {
         if (!success) {
             logger.warn(this.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
             if (shouldShowNotification()) {
-                showErrorNotification(project, "radCliError", output.getStderr());
+                var errorMsg = output.getStderr();
+                var outputMsg = output.getStdout();
+                showErrorNotification(project, "radCliError", !Strings.isNullOrEmpty(errorMsg) ? errorMsg : outputMsg);
             }
             return output;
         }

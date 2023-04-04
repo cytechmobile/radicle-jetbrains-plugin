@@ -1,15 +1,13 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
 public class RadProject {
-    public String urn;
+    public String id;
     public String name;
     public String description;
-    public String radUrl;
 
-    public RadProject(String urn, String name, String description, String radUrl) {
-        this.urn = urn;
+    public RadProject(String id, String name, String description) {
+        this.id = id;
         this.name = name;
         this.description = description;
-        this.radUrl = radUrl;
     }
 }
