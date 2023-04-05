@@ -60,7 +60,6 @@ rad 0.8.0
 ### Accepting Contributed Changes (Pulling from Seed Node)
 
 * Open a Radicle-initialised repo in your Jetbrains IDE.
-* Ensure a seed node has been configured. 
 * Use `Git -> Radicle -> Fetch` (or the corresponding toolbar icon) to fetch changes from the seed node. 
 * Merge changes as appropriate, using your IDE.
 
