@@ -4,6 +4,52 @@
 
 ## Unreleased
 
+## 0.4.0 - 2023-04-05
+
+### Features
+- * `rad clone` - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/189
+  * `rad pull`(removed - happens with `git pull` now) - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/190
+  * `rad sync` - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/193
+  * `rad auth` (remove management of multiple identities) - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/192
+  * `rad push` (removed - happens with `git push rad` now) - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/191
+- Replace seed node management with configuration to seed node HTTP API URl - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/203
+- Make `RAD_HOME` per-project-configurable instead of an application-wide setting - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/206
+- Change `rad` CLI compatible version to 0.8.0+ by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/215
+- Add package prefix to settings keys by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/218
+- Hide Radicle Tool Window to avoid confusion while Patch Proposals are not migrated on Heartwood by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/217
+- Find RAD_HOME without RAD_PATH being in the settings by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/220
+
+### Bugfixes
+- Unclear what module is being shared to Radicle - https://github.com/cytechmobile/radicle-jetbrains-plugin/issues/143
+
+### Dependabot (Security) Updates
+- Bump assertj-core from 3.23.1 to 3.24.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/159
+- Bump mockito-core from 4.10.0 to 4.11.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/156
+- Bump org.jetbrains.kotlin.jvm from 1.7.22 to 1.8.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/157
+- Bump junit-vintage-engine from 5.9.1 to 5.9.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/161
+- Bump junit-jupiter-api from 5.9.1 to 5.9.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/164
+- Bump junit-platform-launcher from 1.9.1 to 1.9.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/162
+- Bump junit-jupiter-engine from 5.9.1 to 5.9.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/163
+- Bump JetBrains/qodana-action from 2022.3.0 to 2022.3.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/180
+- Bump org.jetbrains.intellij from 1.12.0 to 1.13.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/199
+- Bump org.jetbrains.kotlin.jvm from 1.8.0 to 1.8.10 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/183
+- Bump JetBrains/qodana-action from 2022.2.4 to 2022.3.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/146
+- Bump org.jetbrains.intellij from 1.10.1 to 1.11.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/154
+- Bump JetBrains/qodana-action from 2022.2.3 to 2022.2.4 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/139
+- Bump jtalk/url-health-check-action from 2 to 3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/135
+- Bump org.jetbrains.intellij from 1.9.0 to 1.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/137
+- Bump mockito-core from 4.8.1 to 4.9.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/136
+- Bump mockito-core from 4.9.0 to 4.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/151
+- Bump org.jetbrains.kotlin.jvm from 1.7.20 to 1.7.22 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-
+- Bump org.jetbrains.intellij from 1.11.0 to 1.12.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/168
+- Bump assertj-core from 3.24.1 to 3.24.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/171
+- Bump org.jetbrains.intellij from 1.13.2 to 1.13.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/208
+- Bump mockito-core from 4.11.0 to 5.0.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/167
+- Bump JetBrains/qodana-action from 2022.3.2 to 2022.3.4 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/186
+- Bump remoteRobotVersion from 0.11.16 to 0.11.18 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/198
+- Bump org.mockito:mockito-core from 5.0.0 to 5.2.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/200
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.3.0...v0.4.0
+
 ## 0.3.0-alpha - 2023-01-27
 - New Radicle Tool Window added to IDE by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/153, https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/172
 - Add Patch Proposals to Radicle Tool Window by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/160
