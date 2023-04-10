@@ -98,6 +98,10 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("remote", "ls"), root);
     }
 
+    public ProcessOutput inspect(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("inspect"), root);
+    }
+
     public ProcessOutput fetch(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("fetch"), root);
     }
