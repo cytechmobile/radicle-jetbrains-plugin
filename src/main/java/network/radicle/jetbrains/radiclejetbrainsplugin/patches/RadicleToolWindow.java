@@ -12,6 +12,7 @@ import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
@@ -23,13 +24,22 @@ import java.awt.BorderLayout;
 public class RadicleToolWindow extends VcsToolWindowFactory {
     protected ToolWindowManagerListener toolWindowManagerListener;
     protected PatchTabController patchTabController;
+    protected ProjectApi myApi;
+
+    public RadicleToolWindow() {
+        myApi = new ProjectApi();
+    }
+
+    public RadicleToolWindow(ProjectApi api) {
+        myApi = api;
+    }
 
     @Override
     public void init(@NotNull ToolWindow window) {
-        //super.init(window);
+        super.init(window);
         //Workaround at activating toolwindow content and check for available radicle repos
         // TODO: disable RTW until proper porting to heartwood
-        //window.getContentManager();
+        window.getContentManager();
     }
 
     @Override
@@ -46,7 +56,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                     contentManager.addContent(patchContent);
                     contentManager.addContent(issueContent);
                     contentManager.setSelectedContent(patchContent, true);
-                    patchTabController = new PatchTabController(patchContent, project);
+                    patchTabController = new PatchTabController(patchContent, project, myApi);
                     patchTabController.createPatchesPanel();
                 }
             }
