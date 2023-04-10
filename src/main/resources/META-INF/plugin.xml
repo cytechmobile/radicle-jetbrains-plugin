@@ -26,11 +26,9 @@
         <checkoutProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.RadCheckoutProvider" />
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
-        <!-- TODO: disabled until ported to heartwood -->
-        <!--
+
         <toolWindow icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_TOOL_WINDOW"
                 factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.patches.RadicleToolWindow" id="Radicle"/>
-        -->
         <postStartupActivity implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener"/>
     </extensions>
 
