@@ -47,11 +47,11 @@ public class PatchSearchPanelViewModel
         this.radPatchesCountDown = countdown;
     }
 
-    public MutableStateFlow<String> peerIdFilterState() {
-        return partialState(getSearchState(), PatchListSearchValue::getPeerId,
+    public MutableStateFlow<String> authorFilterState() {
+        return partialState(getSearchState(), PatchListSearchValue::getAuthor,
                 (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, authorName) -> {
                     var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
-                    copyPatchSearchValue.peerId = (String) authorName;
+                    copyPatchSearchValue.author = (String) authorName;
                     return copyPatchSearchValue;
                 });
     }
@@ -94,8 +94,8 @@ public class PatchSearchPanelViewModel
             if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
-            if (!peersIds.contains(p.peerId)) {
-                peersIds.add(p.peerId);
+            if (!peersIds.contains(p.author)) {
+                peersIds.add(p.author);
             }
         }
         return peersIds;
