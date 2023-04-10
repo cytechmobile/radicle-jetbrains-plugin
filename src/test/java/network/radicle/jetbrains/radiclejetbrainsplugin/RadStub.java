@@ -84,6 +84,8 @@ public class RadStub extends RadicleProjectService {
             } else {
                 pr.setExitCode(-1);
             }
+        } else if (cmdLine.getCommandLineString().contains("inspect")) {
+            stdout = "rad:123";
         } else if (cmdLine.getCommandLineString().contains("track")) {
             trackResponse = trackResponse.replace("MY_COMMIT_HASH", this.firstCommitHash);
             stdout = trackResponse;
