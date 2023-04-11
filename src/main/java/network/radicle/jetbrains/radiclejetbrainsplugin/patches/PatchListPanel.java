@@ -32,7 +32,7 @@ import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
@@ -66,7 +66,7 @@ public class PatchListPanel {
     private final Project project;
     private final ComboBox<SeedNode> seedNodeComboBox;
     private final DefaultListModel<RadPatch> patchModel;
-    private final RadicleSettingsHandler radicleSettingsHandler;
+    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private boolean triggerSeedNodeAction = true;
     private List<RadPatch> loadedRadPatches;
     private ProgressStripe progressStripe;
@@ -77,12 +77,12 @@ public class PatchListPanel {
         this.controller = ctrl;
         this.project = project;
         this.patchModel = new DefaultListModel<>();
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         this.seedNodeComboBox = new ComboBox<>();
     }
 
     private void initializeSeedNodeCombobox() {
-        var settings = radicleSettingsHandler.loadSettings();
+        var settings = radicleProjectSettingsHandler.loadSettings();
         var loadedSeedNode = settings.getSeedNode();
         seedNodeComboBox.removeAllItems();
         seedNodeComboBox.addItem(loadedSeedNode);

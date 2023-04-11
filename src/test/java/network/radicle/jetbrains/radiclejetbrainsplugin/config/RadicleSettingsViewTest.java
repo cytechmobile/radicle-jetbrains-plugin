@@ -17,16 +17,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     private RadicleSettingsView radicleSettingsView;
-    private RadicleSettingsHandler radicleSettingsHandler;
+    private RadicleProjectSettingsHandler radicleProjectSettingsHandler;
+    private RadicleProjectSettingsHandler radicleSettingsHandler;
     private RadStub radStub;
 
     @Before
     public void before() throws InterruptedException {
-        radStub = RadStub.replaceRadicleApplicationService(this, "");
-        radicleSettingsHandler = new RadicleSettingsHandler();
+        radStub = RadStub.replaceRadicleProjectService(this, "", getProject());
+        radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        radicleSettingsHandler = new RadicleProjectSettingsHandler(getProject());
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
-        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
-        radicleSettingsView = new RadicleSettingsView();
+        radicleSettingsHandler.saveSeedNode("http://localhost:8080");
+        radicleSettingsView = new RadicleSettingsView(getProject());
         /* pop previous commands from queue ( Checking for compatible version ) */
         radStub.commands.poll(10, TimeUnit.SECONDS);
     }
@@ -53,7 +56,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
 
-        radicleSettingsView = new RadicleSettingsView();
+        radicleSettingsView = new RadicleSettingsView(getProject());
         radicleSettingsView.getHomeField().setText("/home");
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
@@ -70,8 +73,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void testButtonWithUnlockedIdentity() throws InterruptedException {
-        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
-        radicleSettingsView = new RadicleSettingsView();
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        radicleSettingsView = new RadicleSettingsView(getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
@@ -90,8 +93,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
                 return true;
             }
         };
-        radicleSettingsHandler.saveRadHome("/lakis");
-        radicleSettingsView = new RadicleSettingsView(identityDialog);
+        radicleProjectSettingsHandler.saveRadHome("/lakis");
+        radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
@@ -117,8 +120,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
                 return true;
             }
         };
-        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
-        radicleSettingsView = new RadicleSettingsView(identityDialog);
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
+        radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();

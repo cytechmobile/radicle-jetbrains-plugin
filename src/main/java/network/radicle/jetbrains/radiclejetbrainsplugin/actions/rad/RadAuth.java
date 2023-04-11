@@ -2,9 +2,9 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadAuth extends RadAction {
     private final String passphrase;
@@ -12,7 +12,8 @@ public class RadAuth extends RadAction {
     private final String radPath;
     private final RadAuthAction action;
 
-    public RadAuth(String passphrase, String radHome, String radPath, RadAuthAction action) {
+    public RadAuth(String passphrase, String radHome, String radPath, RadAuthAction action, Project project) {
+        super(project);
         this.passphrase = passphrase;
         this.action = action;
         this.radHome = radHome;
@@ -46,7 +47,7 @@ public class RadAuth extends RadAction {
     }
 
     public ProcessOutput createNewIdentity() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = project.getService(RadicleProjectService.class);
         var output = rad.auth(passphrase, radHome, radPath);
         /* rad auth return success exit code (0) and a failed msg if the password is wrong */
         var isSuccess = RadAuth.isSuccess(output) && !output.getStdout().contains("failed");

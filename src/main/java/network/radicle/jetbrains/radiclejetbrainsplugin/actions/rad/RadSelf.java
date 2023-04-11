@@ -1,29 +1,26 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import com.intellij.openapi.project.Project;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadSelf extends RadAction {
-    private final String radHome;
-    private final String radPath;
+    private String radHome;
+    private String radPath;
 
-    public RadSelf(String radHome, String radPath) {
+    public RadSelf(String radHome, String radPath, Project project) {
+        super(project);
         this.radHome = radHome;
         this.radPath = radPath;
     }
 
-    public RadSelf() {
-        var radicleSettingsHandler = new RadicleSettingsHandler();
-        var settings = radicleSettingsHandler.loadSettings();
-        this.radHome = settings.getRadHome();
-        this.radPath = settings.getPath();
+    public RadSelf(Project project) {
+        super(project);
     }
 
     @Override
     public ProcessOutput run() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = project.getService(RadicleProjectService.class);
         return rad.self(radHome, radPath);
     }
 

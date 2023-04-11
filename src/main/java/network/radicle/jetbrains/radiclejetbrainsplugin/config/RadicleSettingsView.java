@@ -5,8 +5,10 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -19,27 +21,32 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleApplicationService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.event.DocumentEvent;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
-    private static final String SUPPORTED_CLI_VERSION = "0.8.0";
+    private static final DefaultArtifactVersion MIN_VERSION = new DefaultArtifactVersion("0.8.0");
+    private static final DefaultArtifactVersion MAX_VERSION = new DefaultArtifactVersion("0.9.0");
+    private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
     public static final String ID = RadicleBundle.message("radicle");
 
     protected TextFieldWithBrowseButton radPathField;
@@ -50,29 +57,31 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     protected TextFieldWithBrowseButton radHomeField;
     private JButton testRadHomeButton;
     private JLabel msgLabel;
+    private RadicleProjectSettings projectSettings;
+    private final RadicleProjectSettingsHandler radicleSettingsHandler;
     private JButton seedNodeApiUrlTestBtn;
     private JLabel seedNodeApiUrlLabel;
     private JLabel seedNodeApiUrlMsgLabel;
     private JTextField seedNodeApiUrl;
-    private RadicleSettings settings;
-    private final RadicleSettingsHandler radicleSettingsHandler;
     private IdentityDialog identityDialog;
     private RadDetails radDetails;
+    private final Project myProject;
 
-    public RadicleSettingsView() {
+    public RadicleSettingsView(Project project) {
         super();
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
-        this.settings = this.radicleSettingsHandler.loadSettings();
+        myProject = project;
+        this.radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
+        this.projectSettings = this.radicleSettingsHandler.loadSettings();
         initComponents();
     }
 
-    public RadicleSettingsView(IdentityDialog identityDialog) {
-        this();
+    public RadicleSettingsView(IdentityDialog identityDialog, Project project) {
+        this(project);
         this.identityDialog = identityDialog;
     }
 
     protected String getRadVersion() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = myProject.getService(RadicleProjectService.class);
         if (Strings.isNullOrEmpty(getPathFromTextField(radPathField))) {
             return "";
         }
@@ -86,7 +95,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     protected String getRadPath() {
-        var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+        var rad = myProject.getService(RadicleProjectService.class);
         ProcessOutput output = rad.radPath();
         if (!RadAction.isSuccess(output)) {
             return "";
@@ -100,7 +109,11 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     protected String getRadHome() {
-        var radHome = new RadPath();
+        var radPath = getPathFromTextField(radPathField);
+        if (Strings.isNullOrEmpty(radPath)) {
+            return "";
+        }
+        var radHome = new RadPath(myProject, radPath);
         var output = radHome.perform();
         if (!RadAction.isSuccess(output)) {
             return "";
@@ -109,7 +122,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private boolean isRadHomeValidPath(String radPath, String radHome) {
-        var radSelf = new RadSelf(radHome, radPath);
+        var radSelf = new RadSelf(radHome, radPath, myProject);
         var output = radSelf.perform();
         return RadAction.isSuccess(output);
     }
@@ -119,11 +132,11 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radHome = getPathFromTextField(radHomeField);
             var radPath = getPathFromTextField(radPathField);
-            var radSelf = new RadSelf(radHome, radPath);
+            var radSelf = new RadSelf(radHome, radPath, myProject);
             var output = radSelf.perform();
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
-            var rad = ApplicationManager.getApplication().getService(RadicleApplicationService.class);
+            var rad = myProject.getService(RadicleProjectService.class);
             var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
             /* If radSelf executed with exit code 0 then we have an identity !! */
             var success = RadAction.isSuccess(output);
@@ -143,7 +156,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
                     var action = !success ? RadAuth.RadAuthAction.CREATE_IDENTITY :
                             RadAuth.RadAuthAction.UNLOCKED_IDENTITY;
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var radAuth = new RadAuth(dialog.passphraseField.getText(), radHome, radPath, action);
+                        var radAuth = new RadAuth(dialog.passphraseField.getText(), radHome, radPath, action, myProject);
                         var radAuthOutput = radAuth.perform();
                         var isSuccess = RadAction.isSuccess(radAuthOutput);
                         ApplicationManager.getApplication().invokeLater(() -> {
@@ -211,12 +224,13 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     @Override
     public boolean isModified() {
-        this.settings = this.radicleSettingsHandler.loadSettings();
+        this.projectSettings = this.radicleSettingsHandler.loadSettings();
+        this.projectSettings = this.radicleSettingsHandler.loadSettings();
         var selectedPath = getPathFromTextField(radPathField);
         var selectedRadHome = getPathFromTextField(radHomeField);
-        return !selectedPath.equals(this.settings.getPath()) ||
-                !selectedRadHome.equals(this.settings.getRadHome()) ||
-                !getSelectedNodeUrl().equals(this.settings.getSeedNode().url);
+        return !selectedPath.equals(this.projectSettings.getPath()) ||
+                !selectedRadHome.equals(this.projectSettings.getRadHome()) ||
+                !getSelectedNodeUrl().equals(this.projectSettings.getSeedNode().url);
     }
 
     @Override
@@ -224,21 +238,21 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         var path = getPathFromTextField(radPathField);
         var radHomePath = getPathFromTextField(radHomeField);
         var nodeUrl = getSelectedNodeUrl();
-        radicleSettingsHandler.saveSeedNode(nodeUrl);
         radicleSettingsHandler.saveRadHome(radHomePath);
         radicleSettingsHandler.savePath(path);
+        radicleSettingsHandler.saveSeedNode(nodeUrl);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
-            var isCompatibleVersion = version.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
+            var isVersionSupported = isCompatibleVersion(version);
             var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath);
             var isValidNodeApi = isValidNodeApi();
             /* Rad version and home path is valid we don't have to show a notification warning */
-            if (isCompatibleVersion && isRadHomeValidPath && isValidNodeApi) {
+            if (isVersionSupported && isRadHomeValidPath && isValidNodeApi) {
                 return;
             }
             /* Show a notification warning that RAD_HOME or rad executable are invalid */
             var title = "";
-            if (!isCompatibleVersion) {
+            if (!isVersionSupported) {
                 title = RadicleBundle.message("invalidRad");
             } else if (!isRadHomeValidPath) {
                 title = RadicleBundle.message("noNode");
@@ -247,7 +261,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             }
 
             var msg = "";
-            if (!isCompatibleVersion) {
+            if (!isVersionSupported) {
                 msg = RadicleBundle.message("radNotInstalled");
             } else if (!isRadHomeValidPath) {
                 msg = RadicleBundle.message("createNode");
@@ -257,8 +271,8 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             String finalTitle = title;
             String finalMsg = msg;
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(null, finalTitle, finalMsg, NotificationType.WARNING,
-                            List.of(new RadAction.ConfigureRadCliNotificationAction(null,
+                    showNotification(myProject, finalTitle, finalMsg, NotificationType.WARNING,
+                            List.of(new RadAction.ConfigureRadCliNotificationAction(myProject,
                                     RadicleBundle.lazyMessage("configure")))), ModalityState.any());
         });
     }
@@ -298,11 +312,11 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     private void initComponents() {
         this.msgLabel.setPreferredSize(new Dimension(200, this.msgLabel.getHeight()));
-        radPathField.setText(this.settings.getPath());
+        radPathField.setText(this.projectSettings.getPath());
         radPathField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
 
-        radHomeField.setText(this.settings.getRadHome());
+        radHomeField.setText(this.projectSettings.getRadHome());
         radHomeField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
                 new FileChooserDescriptor(false, true, false, false, false, false));
 
@@ -310,15 +324,35 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         enforceVersionLabel.setText(RadicleBundle.message("unSupportedCliVer"));
         enforceVersionLabel.setFont(enforceVersionLabel.getFont().deriveFont(Font.BOLD));
         /* Try to autodetect RAD_HOME and RAD PATH */
-        if (Strings.isNullOrEmpty(getPathFromTextField(radPathField))) {
+        var hasRadPath = !Strings.isNullOrEmpty(getPathFromTextField(radPathField));
+        var hasRadHome = !Strings.isNullOrEmpty(getPathFromTextField(radHomeField));
+        var latch = new CountDownLatch(!hasRadPath ? 1 : 0);
+        if (!hasRadPath) {
             var autoDetect = new AutoDetect(radPathField, AutoDetect.Type.RAD_EXE_PATH);
-            autoDetect.detectAndUpdateField();
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+               var radPath = autoDetect.detect();
+               ApplicationManager.getApplication().invokeLater(() -> {
+                   autoDetect.updateField(radPath);
+                   latch.countDown();
+               }, ModalityState.any());
+            });
         }
-        if (Strings.isNullOrEmpty(getPathFromTextField(radHomeField))) {
+        if (!hasRadHome) {
             var autoDetect = new AutoDetect(radHomeField, AutoDetect.Type.RAD_HOME);
-            autoDetect.detectAndUpdateField();
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                try {
+                    //We have to wait for RAD_PATH, in order to find RAD_HOME
+                    latch.await(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    logger.warn("Unable to wait for rad path");
+                }
+                var radHome = autoDetect.detect();
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    autoDetect.updateField(radHome);
+                }, ModalityState.any());
+            });
         }
-        seedNodeApiUrl.setText(this.settings.getSeedNode().url);
+        seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
         initListeners();
         /* Show a warning label if the rad version is incompatible */
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -329,13 +363,20 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         });
     }
 
+    private boolean isCompatibleVersion(String v) {
+        if (Strings.isNullOrEmpty(v)) {
+            return false;
+        }
+        var version = new DefaultArtifactVersion(v.replace("\n", "").trim());
+        return version.compareTo(MIN_VERSION) >= 0 && version.compareTo(MAX_VERSION) <= 0;
+    }
+
     private void showHideEnforceLabel(String radVersion) {
         if (Strings.isNullOrEmpty(radVersion)) {
             return;
         }
         enforceVersionLabel.setVisible(false);
-        var isCompatibleVersion = radVersion.replace("\n", "").trim().equals(SUPPORTED_CLI_VERSION);
-        if (!isCompatibleVersion) {
+        if (!isCompatibleVersion(radVersion)) {
             enforceVersionLabel.setVisible(true);
         }
     }
@@ -383,16 +424,15 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             return this.type == Type.RAD_EXE_PATH ? getRadPath() : getRadHome();
         }
 
-        public void detectAndUpdateField() {
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var path = getPath();
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    if (!Strings.isNullOrEmpty(path) && textField != null) {
-                        textField.getTextField().setForeground(JBColor.GRAY);
-                        textField.setText(RadicleBundle.message("autoDetected") + path);
-                    }
-                }, ModalityState.any());
-            });
+        public void updateField(String path) {
+            if (!Strings.isNullOrEmpty(path) && textField != null) {
+                textField.getTextField().setForeground(JBColor.GRAY);
+                textField.setText(RadicleBundle.message("autoDetected") + path);
+            }
+        }
+
+        public String detect() {
+            return getPath();
         }
     }
 
@@ -419,7 +459,12 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             //Auto-detect path
             if (getPathFromTextField(textField).isEmpty()) {
                 var autoDetect = new AutoDetect(textField, type);
-                autoDetect.detectAndUpdateField();
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                   var path = autoDetect.detect();
+                   ApplicationManager.getApplication().invokeLater(() -> {
+                       autoDetect.updateField(path);
+                   }, ModalityState.any());
+                });
             }
         }
 

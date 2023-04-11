@@ -63,13 +63,13 @@ public class RadCheckoutProvider implements CheckoutProvider {
         public List<ValidationInfo> doValidateAll() {
             var list = super.doValidateAll();
             if (urlField != null && !isValidUrl(urlField.getText())) {
-                ContainerUtil.addIfNotNull(list, new ValidationInfo(RadicleBundle.message("invalidUrl"), urlField));
+                ContainerUtil.addIfNotNull(list, new ValidationInfo(RadicleBundle.message("invalidId"), urlField));
             }
             return list;
         }
 
         private boolean isValidUrl(String url) {
-            return url.startsWith("rad://");
+            return url.startsWith("rad:");
         }
 
         /* This doClone is for 2022 version */
@@ -89,7 +89,7 @@ public class RadCheckoutProvider implements CheckoutProvider {
         }
 
         @Override
-        public String url() {
+        public String getId() {
             return getUrl();
         }
 

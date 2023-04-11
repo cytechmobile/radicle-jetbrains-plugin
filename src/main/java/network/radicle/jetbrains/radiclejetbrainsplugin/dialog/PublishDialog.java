@@ -10,7 +10,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInit;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class PublishDialog extends DialogWrapper {
     private JLabel seedNodeLabel;
     private final List<GitRepository> repos;
     private final Project project;
-    private final RadicleSettingsHandler radicleSettingsHandler;
+    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private boolean isSelectedRepoInitialized;
     public CountDownLatch isUiLoaded = new CountDownLatch(1);
 
@@ -49,7 +49,7 @@ public class PublishDialog extends DialogWrapper {
         super(true);
         this.repos = repos;
         this.project = project;
-        this.radicleSettingsHandler = new RadicleSettingsHandler();
+        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         init();
     }
 
@@ -79,7 +79,7 @@ public class PublishDialog extends DialogWrapper {
         super.init();
         setOKActionEnabled(false);
         setTitle(RadicleBundle.message("shareProject"));
-        var settings = radicleSettingsHandler.loadSettings();
+        var settings = radicleProjectSettingsHandler.loadSettings();
         var seedNode = settings.getSeedNode();
         var textFieldListener = new TextFieldListener();
         nameField.getDocument().addDocumentListener(textFieldListener);
@@ -93,11 +93,6 @@ public class PublishDialog extends DialogWrapper {
         seedNodeSelect.addItem(seedNode.url);
         for (var repo : repos) {
             projectSelect.addItem(repo);
-        }
-
-        if (repos.size() == 1) {
-            projectSelect.setVisible(false);
-            projectNameLabel.setVisible(false);
         }
         updateLayout();
     }
