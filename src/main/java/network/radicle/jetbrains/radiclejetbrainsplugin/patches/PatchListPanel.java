@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
@@ -25,7 +26,6 @@ import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
@@ -42,7 +42,6 @@ import javax.swing.JList;
 import javax.swing.JLabel;
 import java.awt.Component;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
@@ -157,9 +156,9 @@ public class PatchListPanel {
             var searchFilter = patchListSearchValue.searchQuery;
             var peerAuthorFilter = patchListSearchValue.author;
             List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                    .filter(p -> searchFilter == null || p.author.contains(searchFilter) || p.title.contains(searchFilter))
+                    .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) || p.title.contains(searchFilter))
                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> peerAuthorFilter == null || p.author.contains(peerAuthorFilter))
+                    .filter(p -> peerAuthorFilter == null || p.author.id().contains(peerAuthorFilter))
                     .collect(Collectors.toList());
             patchModel.addAll(filteredPatches);
         }
@@ -175,7 +174,7 @@ public class PatchListPanel {
         for (GitRepository repo : radInitializedRepos) {
             var radInspect = new RadInspect(repo);
             var output = radInspect.perform();
-            if (RadSelf.isSuccess(output)) {
+            if (RadAction.isSuccess(output)) {
                 var radProjectId = output.getStdout().trim();
                 var seedNode =  this.radicleProjectSettingsHandler.loadSettings().getSeedNode();
                 var patches = myApi.fetchPatches(seedNode, radProjectId, repo);
@@ -222,13 +221,13 @@ public class PatchListPanel {
                 JList<? extends RadPatch> list, RadPatch value, int index, boolean isSelected, boolean cellHasFocus) {
             var cell = new Cell(index, value);
             cell.setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
-            cell.text.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
+            cell.title.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
             return cell;
         }
 
         public static class Cell extends JPanel {
             public final int index;
-            public final JLabel text;
+            public final JLabel title;
             public final RadPatch patch;
 
             public Cell(int index, RadPatch patch) {
@@ -250,14 +249,14 @@ public class PatchListPanel {
                 var innerPanel = new JPanel();
                 innerPanel.setLayout(new BorderLayout());
 
-                text = new JLabel(patch.title);
-                patchPanel.add(text, BorderLayout.NORTH);
+                title = new JLabel(patch.title);
+                patchPanel.add(title, BorderLayout.NORTH);
                 var revision = patch.revisions.get(patch.revisions.size() - 1);
-                var date = Date.from(revision.created());
+                var date = Date.from(revision.timestamp());
                 var formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(date);
-                var comment = new JLabel("Created : " + formattedDate + " by " + patch.author);
-                comment.setForeground(Color.GRAY);
-                patchPanel.add(comment, BorderLayout.SOUTH);
+                var info = new JLabel("Created : " + formattedDate + " by " + patch.author.id());
+                info.setForeground(JBColor.GRAY);
+                patchPanel.add(info, BorderLayout.SOUTH);
                 add(patchPanel, new CC().minWidth("0").gapAfter("push"));
             }
 

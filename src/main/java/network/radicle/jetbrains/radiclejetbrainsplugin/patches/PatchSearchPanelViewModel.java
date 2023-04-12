@@ -94,8 +94,8 @@ public class PatchSearchPanelViewModel
             if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
-            if (!peersIds.contains(p.author)) {
-                peersIds.add(p.author);
+            if (!peersIds.contains(p.author.id())) {
+                peersIds.add(p.author.id());
             }
         }
         return peersIds;
