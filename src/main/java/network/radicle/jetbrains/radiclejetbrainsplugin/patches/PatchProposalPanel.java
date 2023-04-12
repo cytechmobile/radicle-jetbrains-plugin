@@ -42,9 +42,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JLabel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -224,9 +225,7 @@ public class PatchProposalPanel {
 
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            //TODO first make sure that the peer is tracked
             //TODO fetch first and then show the changes
-
             var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.revisions.get(patch.revisions.size() - 1).base(), true);
             final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
             patchChanges.setValue(changes);

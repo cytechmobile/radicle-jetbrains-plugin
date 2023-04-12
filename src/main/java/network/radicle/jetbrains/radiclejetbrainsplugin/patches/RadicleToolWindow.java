@@ -38,7 +38,6 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
     public void init(@NotNull ToolWindow window) {
         super.init(window);
         //Workaround at activating toolwindow content and check for available radicle repos
-        // TODO: disable RTW until proper porting to heartwood
         window.getContentManager();
     }
 
