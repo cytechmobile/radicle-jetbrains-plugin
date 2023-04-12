@@ -65,6 +65,24 @@ public class PatchSearchPanelViewModel
                 });
     }
 
+    public MutableStateFlow<String> stateFilter() {
+        return partialState(getSearchState(), PatchListSearchValue::getState,
+                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, state) -> {
+                    var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
+                    copyPatchSearchValue.state = (String) state;
+                    return copyPatchSearchValue;
+                });
+    }
+
+    public MutableStateFlow<String> tagFilter() {
+        return partialState(getSearchState(), PatchListSearchValue::getTag,
+                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, tag) -> {
+                    var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
+                    copyPatchSearchValue.tag = (String) tag;
+                    return copyPatchSearchValue;
+                });
+    }
+
     public List<String> getProjectNames() {
         var isFinished = new CountDownLatch(1);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -81,7 +99,29 @@ public class PatchSearchPanelViewModel
         return projectNames;
     }
 
-    public List<String> getPeerIds() {
+    public List<String> getTags() {
+        var selectedProjectFilter = this.getSearchState().getValue().project;
+        List<String> tags = new ArrayList<>();
+        try {
+            radPatchesCountDown.await();
+        } catch (Exception e) {
+            logger.warn("Unable to get rad tags", e);
+            return tags;
+        }
+        for (var p : radPatches) {
+            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                continue;
+            }
+            for (var tag : p.tags) {
+                if (!tags.contains(tag)) {
+                    tags.add(tag);
+                }
+            }
+        }
+        return tags;
+    }
+
+    public List<String> getAuthors() {
         var selectedProjectFilter = this.getSearchState().getValue().project;
         List<String> peersIds = new ArrayList<>();
         try {
@@ -111,7 +151,19 @@ public class PatchSearchPanelViewModel
 
     @Override
     public List<PatchListQuickFilter> getQuickFilters() {
-        return List.of();
+        var openFilter = new PatchListQuickFilter();
+        openFilter.patchListSearchValue.state = RadPatch.State.OPEN.status;
+
+        var closedFilter = new PatchListQuickFilter();
+        closedFilter.patchListSearchValue.state = RadPatch.State.CLOSED.status;
+
+        var mergedFilter = new PatchListQuickFilter();
+        mergedFilter.patchListSearchValue.state = RadPatch.State.MERGED.status;
+
+        var archivedFilter = new PatchListQuickFilter();
+        archivedFilter.patchListSearchValue.state = RadPatch.State.ARCHIVED.status;
+
+        return List.of(openFilter, closedFilter, mergedFilter, archivedFilter);
     }
 
 
