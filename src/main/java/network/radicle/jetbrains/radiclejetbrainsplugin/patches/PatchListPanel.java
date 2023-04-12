@@ -155,10 +155,15 @@ public class PatchListPanel {
             var projectFilter = patchListSearchValue.project;
             var searchFilter = patchListSearchValue.searchQuery;
             var peerAuthorFilter = patchListSearchValue.author;
+            var stateFilter = patchListSearchValue.state;
+            var tagFilter = patchListSearchValue.tag;
             List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                    .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) || p.title.contains(searchFilter))
+                    .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
+                            p.title.contains(searchFilter) || p.description.contains(searchFilter))
                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> peerAuthorFilter == null || p.author.id().contains(peerAuthorFilter))
+                    .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
+                    .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
+                    .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
                     .collect(Collectors.toList());
             patchModel.addAll(filteredPatches);
         }
