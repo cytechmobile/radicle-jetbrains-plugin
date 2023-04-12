@@ -3,8 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class PatchListSearchValue implements ReviewListSearchValue {
     public String project;
     public String searchQuery;
