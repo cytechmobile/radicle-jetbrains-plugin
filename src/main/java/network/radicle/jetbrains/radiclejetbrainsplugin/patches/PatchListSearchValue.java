@@ -10,6 +10,14 @@ public class PatchListSearchValue implements ReviewListSearchValue {
     public String state;
     public String tag;
 
+    public PatchListSearchValue(PatchListSearchValue searchValue) {
+        this.project = searchValue.project;
+        this.searchQuery = searchValue.searchQuery;
+        this.author = searchValue.author;
+        this.state = searchValue.state;
+        this.tag = searchValue.tag;
+    }
+
     public String getProject() {
         return project;
     }
@@ -25,14 +33,6 @@ public class PatchListSearchValue implements ReviewListSearchValue {
     }
 
     public PatchListSearchValue() {
-    }
-
-    public PatchListSearchValue(PatchListSearchValue searchValue) {
-        this.project = searchValue.project;
-        this.searchQuery = searchValue.searchQuery;
-        this.author = searchValue.author;
-        this.state = searchValue.state;
-        this.tag = searchValue.tag;
     }
 
     @Override
