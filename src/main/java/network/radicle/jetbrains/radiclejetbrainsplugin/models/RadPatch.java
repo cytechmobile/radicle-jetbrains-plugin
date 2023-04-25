@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import git4idea.repo.GitRepository;
 
@@ -18,9 +19,6 @@ public class RadPatch {
     public State state;
     public List<Revision> revisions;
 
-    public record Author(String id) {
-    }
-
     public RadPatch(String id, String title, Author author, String description, String target, List<String> tags,
                     State state, List<Revision> revisions) {
         this.id = id;
@@ -34,8 +32,26 @@ public class RadPatch {
     }
 
     public RadPatch() {
+
     }
 
+    public record Revision(String id, String description, String base, String oid, List<String> refs,
+                           List<Merge> merges, Instant timestamp,
+                           List<Discussion> discussions, List<String> reviews) {
+    }
+
+    public record Merge(String node, String commit, Instant timestamp) {
+
+    }
+
+    public record Discussion(String id, Author author, String body, Instant timestamp, String replyTo,
+                             List<String> reactions) {
+    }
+
+    public record Author(String id) {
+
+    }
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
         OPEN("Open"),
         CLOSED("Closed"),
@@ -57,69 +73,5 @@ public class RadPatch {
             }
             return null;
         }
-    }
-
-    public record Revision(String id, String description, String base, String oid, List<String> refs,
-                           List<Merge> merges, Instant timestamp,
-                           List<Discussion> discussions, List<String> reviews) {
-
-        @Override
-        public String toString() {
-            return "{" +
-                    "\"id\":\"" + id + '\"' +
-                    ", \"description\":\"" + description + '\"' +
-                    ", \"base\":\"" + base + '\"' +
-                    ", \"oid\":\"" + oid + '\"' +
-                    ", \"refs\":" + refs +
-                    ", \"merges\":" + merges +
-                    ", \"timestamp\":" + timestamp.toEpochMilli() +
-                    ", \"discussions\":" + discussions +
-                    ", \"reviews\":" + reviews +
-                    '}';
-        }
-    }
-
-    public record Merge(String node, String commit, Instant timestamp) {
-        @Override
-        public String toString() {
-            return "{" +
-                    "\"node\":\"" + node + '\"' +
-                    ", \"commit\":\"" + commit + '\"' +
-                    ", \"timestamp\":" + timestamp.toEpochMilli() +
-                    '}';
-        }
-    }
-
-    public record Discussion(String id, Author author, String body, Instant timestamp, String replyTo,
-                             List<String> reactions) {
-        @Override
-        public String toString() {
-            return "{" +
-                    "\"id\":\"" + id + '\"' +
-                    ", \"author\":\"" + author +
-                    ", \"body\":\"" + body + '\"' +
-                    ", \"timestamp\":" + timestamp.toEpochMilli() +
-                    ", \"replyTo\":\"" + replyTo + '\"' +
-                    ", \"reactions\":[" + wrapWithQuotesAndJoin(reactions) +
-                    '}';
-        }
-    }
-
-    @Override
-    public String toString() {
-        return  "{" +
-                "\"id\":\"" + id + '\"' +
-                ", \"title\":\"" + title + '\"' +
-                ", \"author\":" + "{\"id\":\"" + author.id + "\"}" +
-                ", \"description\":\"" + description + '\"' +
-                ", \"target\":\"" + target + '\"' +
-                ", \"tags\":[" + wrapWithQuotesAndJoin(tags) +
-                "], \"state\":{\"status\":\"" + state.status.toLowerCase() + "\"}" +
-                ", \"revisions\":" + revisions +
-                '}';
-    }
-
-    private static String wrapWithQuotesAndJoin(List<String> strings) {
-        return strings.isEmpty() ? "" : "\"" + String.join("\", \"", strings) + "\"";
     }
 }

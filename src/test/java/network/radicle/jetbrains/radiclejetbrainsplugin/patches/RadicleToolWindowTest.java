@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
@@ -45,7 +46,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         HttpClient httpClient = mock(HttpClient.class);
         HttpResponse httpResponse = mock(HttpResponse.class);
         StatusLine statusLine = mock(StatusLine.class);
-        StringEntity se = new StringEntity(getTestPatches().toString());
+        StringEntity se = new StringEntity(new ObjectMapper().findAndRegisterModules().writeValueAsString(getTestPatches()));
         se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
         when(httpResponse.getEntity()).thenReturn(se);
         when(statusLine.getStatusCode()).thenReturn(200);

@@ -46,7 +46,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.2.0")
 
     // Deserialize timestamps to Instant
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0-rc2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0")
 }
 
 checkstyle {
