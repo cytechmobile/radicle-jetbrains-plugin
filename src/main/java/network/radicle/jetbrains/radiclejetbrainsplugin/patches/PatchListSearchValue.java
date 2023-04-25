@@ -6,13 +6,13 @@ import org.jetbrains.annotations.Nullable;
 public class PatchListSearchValue implements ReviewListSearchValue {
     public String project;
     public String searchQuery;
-    public String peerId;
+    public String author;
 
     public String getProject() {
         return project;
     }
-    public String getPeerId() {
-        return peerId;
+    public String getAuthor() {
+        return author;
     }
 
     public PatchListSearchValue() {
@@ -21,7 +21,7 @@ public class PatchListSearchValue implements ReviewListSearchValue {
     public PatchListSearchValue(PatchListSearchValue searchValue) {
         this.project = searchValue.project;
         this.searchQuery = searchValue.searchQuery;
-        this.peerId = searchValue.peerId;
+        this.author = searchValue.author;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class PatchListSearchValue implements ReviewListSearchValue {
         if (searchQuery != null) {
             count++;
         }
-        if (peerId != null) {
+        if (author != null) {
             count++;
         }
         return count;

@@ -2,6 +2,9 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.providers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import git4idea.repo.GitRepository;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.apache.http.client.HttpClient;
@@ -51,6 +54,30 @@ public class ProjectApi {
         }
     }
 
+    public List<RadPatch> fetchPatches(SeedNode node, String projectId, GitRepository repo) {
+        var url = node.url + "/api/v1/projects/" + projectId + "/patches";
+        try {
+            var res = client.execute(new HttpGet(url));
+            String response = "";
+            if (res != null) {
+                response = EntityUtils.toString(res.getEntity());
+            }
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
+                var objectMapper = new ObjectMapper();
+                /* Support Instant type */
+                objectMapper.registerModule(new JavaTimeModule());
+                var patches = objectMapper.readValue(response, new TypeReference<List<RadPatch>>() { });
+                for (var patch : patches) {
+                    patch.repo = repo;
+                }
+                return patches;
+            }
+        } catch (Exception e) {
+            logger.warn("http request exception {}", url, e);
+        }
+        return List.of();
+    }
+
     public List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
         var url = selectedNode.url + "/api/v1/projects?per-page=" + PER_PAGE + "&page=" + page;
         try {
@@ -69,7 +96,8 @@ public class ProjectApi {
     private List<RadProject> convertJsonToObject(String json) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() { });
+            List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() {
+            });
             return radProjects.stream().map(n -> {
                 var id = ((String) n.get("id"));
                 var name = (String) n.get("name");

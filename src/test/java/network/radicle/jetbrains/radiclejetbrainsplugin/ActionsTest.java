@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleFetchAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadFetch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import org.junit.Test;
@@ -48,6 +49,17 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("track 123");
+    }
+
+    @Test
+    public void radInspectAction() throws InterruptedException {
+        var inspectAction = new RadInspect(firstRepo);
+        inspectAction.perform();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("inspect");
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNull();
     }
 
     @Test

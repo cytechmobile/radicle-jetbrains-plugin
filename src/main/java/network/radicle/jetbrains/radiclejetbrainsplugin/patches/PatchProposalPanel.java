@@ -38,15 +38,14 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadRemote;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JLabel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -148,7 +147,7 @@ public class PatchProposalPanel {
     private JComponent descriptionComponent() {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody("This area is reserved to show the description and other details of the Patch Proposal, in an upcoming version of the plugin.");
+        titlePane.setBody(patch.description);
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC());
         return nonOpaquePanel;
@@ -159,7 +158,7 @@ public class PatchProposalPanel {
         icon.setIcon(CollaborationToolsIcons.PullRequestOpen);
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody(patch.branchName + " - " + patch.commitHash);
+        titlePane.setBody(patch.title);
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
         nonOpaquePanel.add(titlePane, new CC());
@@ -175,7 +174,9 @@ public class PatchProposalPanel {
             currentBranch = gitRepoManager.getRepositories().get(0).getCurrentBranch().getName();
         }
         var to = createLabel(currentBranch);
-        var from = createLabel(patch.branchName + " - " + patch.commitHash);
+        var revision = patch.revisions.get(patch.revisions.size() - 1);
+        var ref = revision.refs().get(revision.refs().size() - 1);
+        var from = createLabel(ref);
         branchPanel.add(to, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
         var arrowLabel = new JLabel(UIUtil.leftArrow());
         arrowLabel.setForeground(CurrentBranchComponent.TEXT_COLOR);
@@ -224,13 +225,8 @@ public class PatchProposalPanel {
 
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            //first make sure that the peer is tracked
-            boolean ok = checkAndTrackPeerIfNeeded();
-            if (!ok) {
-                latch.countDown();
-                return;
-            }
-            var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.commitHash, true);
+            //TODO fetch first and then show the changes
+            var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.revisions.get(patch.revisions.size() - 1).base(), true);
             final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
             patchChanges.setValue(changes);
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -244,9 +240,10 @@ public class PatchProposalPanel {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var current = patch.repo.getCurrentRevision();
             try {
+                //TODO fetch first and then show the changes
                 final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
-                        patch.commitHash + "..." + current);
-                logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.commitHash, current, history);
+                        patch.revisions.get(patch.revisions.size() - 1).base() + "..." + current);
+                logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.revisions.size() - 1, current, history);
                 patchCommits.setValue(history);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     commitTab.append(" " + patchCommits.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
@@ -258,22 +255,5 @@ public class PatchProposalPanel {
                         RadicleBundle.message("errorCalculatingPatchProposalCommits"));
             }
         });
-    }
-
-    protected boolean checkAndTrackPeerIfNeeded() {
-        if (patch.self) {
-            return true;
-        }
-        final var trackedPeers = new RadRemote(patch.repo).findTrackedPeers();
-        if (trackedPeers != null && !trackedPeers.isEmpty()) {
-            var tracked = trackedPeers.stream().filter(p -> p.id().equals(patch.peerId)).findAny().orElse(null);
-            if (tracked != null) {
-                return true;
-            }
-        }
-
-        var trackPeer = new RadTrack(patch.repo, new RadTrack.Peer(patch.peerId));
-        var out = trackPeer.perform();
-        return RadTrack.isSuccess(out);
     }
 }
