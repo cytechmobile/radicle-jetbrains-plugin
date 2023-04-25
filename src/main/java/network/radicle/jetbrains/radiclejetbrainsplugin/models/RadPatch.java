@@ -67,7 +67,7 @@ public class RadPatch {
         @JsonCreator
         public static State forValues(@JsonProperty("status") String status) {
             for (State state : State.values()) {
-                if (state.status.toLowerCase().equals(status)) {
+                if (state.status.equalsIgnoreCase(status)) {
                     return state;
                 }
             }

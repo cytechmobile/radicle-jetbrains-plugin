@@ -44,7 +44,8 @@ public class RadicleToolWindowTest extends AbstractIT {
         var radPatch2 = new RadPatch("c4d12", "secondProposal", new RadPatch.Author(AUTHOR1),
                 "My description", "testTarget", List.of("firstTag", "secondTag", "tag1"),
                 RadPatch.State.CLOSED, List.of(revision));
-        return List.of(radPatch, radPatch2);
+        patches = List.of(radPatch, radPatch2);
+        return patches;
     }
 
     @Before

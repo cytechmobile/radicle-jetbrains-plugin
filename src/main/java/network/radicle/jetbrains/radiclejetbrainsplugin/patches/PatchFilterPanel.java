@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JComponent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
@@ -58,9 +59,6 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
     @NotNull
     @Override
     protected String getQuickFilterTitle(@NotNull PatchSearchPanelViewModel.PatchListQuickFilter patchListQuickFilter) {
-        if (patchListQuickFilter.getFilter().state != null) {
-            return patchListQuickFilter.getFilter().state;
-        }
-        return "";
+        return Objects.requireNonNullElse(patchListQuickFilter.getFilter().state, "");
     }
 }
