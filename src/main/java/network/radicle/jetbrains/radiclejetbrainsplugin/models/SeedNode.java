@@ -18,7 +18,7 @@ public class SeedNode {
             return false;
         }
 
-        return toString().equals(obj.toString());
+         return toString().equals(obj.toString());
     }
 
     @Override
