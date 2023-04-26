@@ -13,7 +13,7 @@ public class RadPath extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad =  project.getService(RadicleProjectService.class);
+        var rad =   project.getService(RadicleProjectService.class);
         return rad.homePath(radPath);
     }
 

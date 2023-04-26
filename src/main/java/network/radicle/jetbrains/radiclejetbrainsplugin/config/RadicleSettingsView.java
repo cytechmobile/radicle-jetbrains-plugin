@@ -161,7 +161,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
                         var isSuccess = RadAction.isSuccess(radAuthOutput);
                         ApplicationManager.getApplication().invokeLater(() -> {
                             var msg = isSuccess ? radAuth.getNotificationSuccessMessage() : radAuthOutput.getStderr();
-                            this.msgLabel.setText("<html>" + msg + "</html>");
+                            this.msgLabel.setText("<html >" + msg + "</html>");
                         }, ModalityState.any());
                     });
                 }
@@ -171,10 +171,10 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     private void updateRadVersionLabel() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var msg = RadicleBundle.message("radNotInstalled");
+            var msg = RadicleBundle.message("radNo Installed");
             var version = getRadVersion();
             if (!Strings.isNullOrEmpty(version)) {
-                msg = RadicleBundle.message("radVersion") + " " + version;
+                msg = RadicleBundle.message("rad Version") + " " + version;
             }
             String finalMsg = msg;
             ApplicationManager.getApplication().invokeLater(() -> {
