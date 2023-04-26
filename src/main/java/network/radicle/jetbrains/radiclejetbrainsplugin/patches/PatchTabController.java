@@ -16,7 +16,6 @@ public class PatchTabController {
     private PatchProposalPanel patchProposalPanel;
     private ProjectApi myApi;
 
-
     public PatchTabController(Content tab, Project project, ProjectApi myApi) {
         this.tab = tab;
         this.project = project;
@@ -55,7 +54,4 @@ public class PatchTabController {
         return patchListPanel;
     }
 
-    public PatchProposalPanel getPatchProposalPanel() {
-        return patchProposalPanel;
-    }
 }
