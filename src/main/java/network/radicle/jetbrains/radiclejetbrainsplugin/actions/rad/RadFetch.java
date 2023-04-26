@@ -18,7 +18,7 @@ public class RadFetch extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = repo.getProject().getService(RadicleProjectService.class);
+        var rad =  repo.getProject().getService(RadicleProjectService.class);
         var output = rad.fetch(repo);
         /* rad fetch return success exit code (0) and a failed msg if fetch command failed */
         var isSuccess = RadAction.isSuccess(output) && !output.getStdout().contains("Failed");
