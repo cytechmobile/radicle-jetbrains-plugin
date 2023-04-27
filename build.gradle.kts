@@ -42,7 +42,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.24.2")
 
     // Logging Network Calls
-    testImplementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    testImplementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     testImplementation("org.mockito:mockito-core:5.2.0")
 
     // Deserialize timestamps to Instant
