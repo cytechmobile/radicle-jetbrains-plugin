@@ -130,14 +130,14 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private void unlockOrCreateIdentity() {
         msgLabel.setText("");
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radHome = getPathFromTextField(radHomeField);
+            var radHome =  getPathFromTextField(radHomeField);
             var radPath = getPathFromTextField(radPathField);
-            var radSelf = new RadSelf(radHome, radPath, myProject);
+            var radSelf =  new RadSelf(radHome, radPath, myProject);
             var output = radSelf.perform();
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
             var rad = myProject.getService(RadicleProjectService.class);
-            var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
+            var isIdentityUnlocked =  rad.isIdentityUnlocked(radDetails.keyHash);
             /* If radSelf executed with exit code 0 then we have an identity !! */
             var success = RadAction.isSuccess(output);
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -147,7 +147,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
                     return;
                 }
                 /* if there is no identity or unlocked identity show passphrase dialog */
-                var title = !success ? RadicleBundle.message("newIdentity") :
+                var title = !success ?  RadicleBundle.message("newIdentity") :
                         RadicleBundle.message("unlockIdentity");
                 var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
                 dialog.setTitle(title);
