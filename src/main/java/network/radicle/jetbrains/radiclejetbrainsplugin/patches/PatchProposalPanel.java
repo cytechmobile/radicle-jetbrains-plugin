@@ -30,7 +30,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
-import git4idea.repo.GitRepositoryManager;
 import icons.CollaborationToolsIcons;
 import kotlin.Unit;
 import net.miginfocom.layout.CC;
@@ -42,10 +41,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -168,12 +166,7 @@ public class PatchProposalPanel {
     private JComponent branchComponent(Project project) {
         var branchPanel = new NonOpaquePanel();
         branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
-        var currentBranch = "";
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        if (gitRepoManager.getRepositories().size() > 0) {
-            currentBranch = gitRepoManager.getRepositories().get(0).getCurrentBranch().getName();
-        }
-        var to = createLabel(currentBranch);
+        var to = createLabel(patch.defaultBranch);
         var revision = patch.revisions.get(patch.revisions.size() - 1);
         var ref = revision.refs().get(revision.refs().size() - 1);
         var from = createLabel(ref);

@@ -107,7 +107,7 @@ public class CloneDialogTest extends AbstractIT {
     @Test
     public void successCloneTest() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("");
-        var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy", "testName", "Test");
+        var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy", "testName", "Test", "main");
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());
@@ -127,7 +127,7 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void errorCloneTest() throws InterruptedException {
-        var radProject = new RadProject("hnr", "testName", "Test");
+        var radProject = new RadProject("hnr", "testName", "Test", "main");
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());

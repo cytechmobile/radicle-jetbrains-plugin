@@ -10,6 +10,8 @@ import java.util.List;
 
 public class RadPatch {
     public GitRepository repo;
+    public String defaultBranch;
+    public String projectId;
     public String id;
     public String title;
     public Author author;
@@ -19,8 +21,12 @@ public class RadPatch {
     public State state;
     public List<Revision> revisions;
 
-    public RadPatch(String id, String title, Author author, String description, String target, List<String> tags,
-                    State state, List<Revision> revisions) {
+    public RadPatch() {
+        // for json
+    }
+
+    public RadPatch(
+            String id, String title, Author author, String description, String target, List<String> tags, State state, List<Revision> revisions) {
         this.id = id;
         this.title = title;
         this.author = author;
@@ -31,26 +37,16 @@ public class RadPatch {
         this.revisions = revisions;
     }
 
-    public RadPatch() {
+    public record Revision(
+            String id, String description, String base, String oid, List<String> refs,
+            List<Merge> merges, Instant timestamp, List<Discussion> discussions, List<String> reviews) { }
 
-    }
+    public record Merge(String node, String commit, Instant timestamp) { }
 
-    public record Revision(String id, String description, String base, String oid, List<String> refs,
-                           List<Merge> merges, Instant timestamp,
-                           List<Discussion> discussions, List<String> reviews) {
-    }
+    public record Discussion(String id, Author author, String body, Instant timestamp, String replyTo, List<String> reactions) { }
 
-    public record Merge(String node, String commit, Instant timestamp) {
+    public record Author(String id) { }
 
-    }
-
-    public record Discussion(String id, Author author, String body, Instant timestamp, String replyTo,
-                             List<String> reactions) {
-    }
-
-    public record Author(String id) {
-
-    }
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
         OPEN("Open"),
