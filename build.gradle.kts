@@ -35,7 +35,7 @@ dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
     testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.3")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.3")
 
@@ -43,7 +43,7 @@ dependencies {
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
-    testImplementation("org.mockito:mockito-core:5.2.0")
+    testImplementation("org.mockito:mockito-core:5.3.1")
 
     // Deserialize timestamps to Instant
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0")
