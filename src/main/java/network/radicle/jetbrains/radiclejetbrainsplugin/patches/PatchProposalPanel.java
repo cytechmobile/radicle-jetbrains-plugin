@@ -157,9 +157,16 @@ public class PatchProposalPanel {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
         titlePane.setBody(patch.title);
-        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
-        nonOpaquePanel.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
-        nonOpaquePanel.add(titlePane, new CC());
+        var idPane = new BaseHtmlEditorPane();
+        idPane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 0.8)));
+        idPane.setForeground(JBColor.GRAY);
+        idPane.setBody(patch.id);
+        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").fill().flowY()));
+        var iconAndTitlePane = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        iconAndTitlePane.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+        iconAndTitlePane.add(titlePane, new CC());
+        nonOpaquePanel.add(iconAndTitlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        nonOpaquePanel.add(idPane, new CC());
         return nonOpaquePanel;
     }
 
