@@ -48,9 +48,9 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 public class PatchProposalPanel {
     private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
@@ -225,12 +225,19 @@ public class PatchProposalPanel {
 
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            //TODO fetch first and then show the changes
-            var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.revisions.get(patch.revisions.size() - 1).base(), true);
-            final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
+            // TODO fetch first and then show the changes
+            // calculate file changes for each revision and gather them all
+            List<Change> changes = new ArrayList<>();
+            for (var rev : patch.revisions) {
+                final var diff = GitChangeUtils.getDiff(patch.repo, rev.base(), rev.oid(), true);
+                if (diff != null && !diff.isEmpty()) {
+                    changes.addAll(diff);
+                }
+            }
+            changes = changes.stream().distinct().collect(Collectors.toList());
             patchChanges.setValue(changes);
             ApplicationManager.getApplication().invokeLater(() -> {
-                filesTab.append(" " + changes.size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+                filesTab.append(" " + patchChanges.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 latch.countDown();
             });
         });
@@ -238,12 +245,15 @@ public class PatchProposalPanel {
 
     protected void calculatePatchCommits() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var current = patch.repo.getCurrentRevision();
+            //TODO fetch first and then show the changes
             try {
-                //TODO fetch first and then show the changes
-                final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
-                        patch.revisions.get(patch.revisions.size() - 1).base() + "..." + current);
-                logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.revisions.size() - 1, current, history);
+                List<GitCommit> history = new ArrayList<>();
+                for (var rev : patch.revisions) {
+                    var cmts = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(), rev.base() + "..." + rev.oid());
+                    history.addAll(cmts);
+                }
+                history = history.stream().distinct().collect(Collectors.toList());
+                logger.info("calculated history for patch: {} - {}", patch, history);
                 patchCommits.setValue(history);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     commitTab.append(" " + patchCommits.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
