@@ -53,5 +53,4 @@ public class PatchTabController {
     public PatchListPanel getPatchListPanel() {
         return patchListPanel;
     }
-
 }

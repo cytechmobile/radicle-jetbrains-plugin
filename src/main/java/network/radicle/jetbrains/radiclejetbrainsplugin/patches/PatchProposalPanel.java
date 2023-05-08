@@ -30,7 +30,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
-import git4idea.repo.GitRepositoryManager;
 import icons.CollaborationToolsIcons;
 import kotlin.Unit;
 import net.miginfocom.layout.CC;
@@ -42,15 +41,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 public class PatchProposalPanel {
     private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
@@ -159,21 +157,23 @@ public class PatchProposalPanel {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
         titlePane.setBody(patch.title);
-        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
-        nonOpaquePanel.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
-        nonOpaquePanel.add(titlePane, new CC());
+        var idPane = new BaseHtmlEditorPane();
+        idPane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 0.8)));
+        idPane.setForeground(JBColor.GRAY);
+        idPane.setBody(patch.id);
+        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").fill().flowY()));
+        var iconAndTitlePane = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        iconAndTitlePane.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+        iconAndTitlePane.add(titlePane, new CC());
+        nonOpaquePanel.add(iconAndTitlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        nonOpaquePanel.add(idPane, new CC());
         return nonOpaquePanel;
     }
 
     private JComponent branchComponent(Project project) {
         var branchPanel = new NonOpaquePanel();
         branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
-        var currentBranch = "";
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        if (gitRepoManager.getRepositories().size() > 0) {
-            currentBranch = gitRepoManager.getRepositories().get(0).getCurrentBranch().getName();
-        }
-        var to = createLabel(currentBranch);
+        var to = createLabel(patch.defaultBranch);
         var revision = patch.revisions.get(patch.revisions.size() - 1);
         var ref = revision.refs().get(revision.refs().size() - 1);
         var from = createLabel(ref);
@@ -225,12 +225,19 @@ public class PatchProposalPanel {
 
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            //TODO fetch first and then show the changes
-            var diff = GitChangeUtils.getDiff(patch.repo, patch.repo.getCurrentRevision(), patch.revisions.get(patch.revisions.size() - 1).base(), true);
-            final List<Change> changes = diff == null ? Collections.emptyList() : new ArrayList<>(diff);
+            // TODO fetch first and then show the changes
+            // calculate file changes for each revision and gather them all
+            List<Change> changes = new ArrayList<>();
+            for (var rev : patch.revisions) {
+                final var diff = GitChangeUtils.getDiff(patch.repo, rev.base(), rev.oid(), true);
+                if (diff != null && !diff.isEmpty()) {
+                    changes.addAll(diff);
+                }
+            }
+            changes = changes.stream().distinct().collect(Collectors.toList());
             patchChanges.setValue(changes);
             ApplicationManager.getApplication().invokeLater(() -> {
-                filesTab.append(" " + changes.size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
+                filesTab.append(" " + patchChanges.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
                 latch.countDown();
             });
         });
@@ -238,12 +245,15 @@ public class PatchProposalPanel {
 
     protected void calculatePatchCommits() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var current = patch.repo.getCurrentRevision();
+            //TODO fetch first and then show the changes
             try {
-                //TODO fetch first and then show the changes
-                final var history = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(),
-                        patch.revisions.get(patch.revisions.size() - 1).base() + "..." + current);
-                logger.info("calculated history for patch: {} - ({}..{}) {}", patch, patch.revisions.size() - 1, current, history);
+                List<GitCommit> history = new ArrayList<>();
+                for (var rev : patch.revisions) {
+                    var cmts = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(), rev.base() + "..." + rev.oid());
+                    history.addAll(cmts);
+                }
+                history = history.stream().distinct().collect(Collectors.toList());
+                logger.info("calculated history for patch: {} - {}", patch, history);
                 patchCommits.setValue(history);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     commitTab.append(" " + patchCommits.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));

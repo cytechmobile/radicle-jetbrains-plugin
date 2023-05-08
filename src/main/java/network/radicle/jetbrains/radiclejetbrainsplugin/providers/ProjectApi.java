@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.providers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import git4idea.repo.GitRepository;
@@ -14,11 +15,11 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ProjectApi {
+    public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
     private static final Logger logger = LoggerFactory.getLogger(ProjectApi.class);
     private static final int PER_PAGE = 10;
     private final HttpClient client;
@@ -55,6 +56,10 @@ public class ProjectApi {
     }
 
     public List<RadPatch> fetchPatches(SeedNode node, String projectId, GitRepository repo) {
+        var radProject = fetchRadProject(node, projectId);
+        if (radProject == null) {
+            return List.of();
+        }
         var url = node.url + "/api/v1/projects/" + projectId + "/patches";
         try {
             var res = client.execute(new HttpGet(url));
@@ -63,11 +68,10 @@ public class ProjectApi {
                 response = EntityUtils.toString(res.getEntity());
             }
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var objectMapper = new ObjectMapper();
-                /* Support Instant type */
-                objectMapper.registerModule(new JavaTimeModule());
-                var patches = objectMapper.readValue(response, new TypeReference<List<RadPatch>>() { });
+                var patches = MAPPER.readValue(response, new TypeReference<List<RadPatch>>() { });
                 for (var patch : patches) {
+                    patch.projectId = projectId;
+                    patch.defaultBranch = radProject.defaultBranch;
                     patch.repo = repo;
                 }
                 return patches;
@@ -84,7 +88,7 @@ public class ProjectApi {
             var res = client.execute(new HttpGet(url));
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
                 String response = EntityUtils.toString(res.getEntity());
-                return convertJsonToObject(response);
+                return MAPPER.readValue(response, new TypeReference<>() { });
             }
             return null;
         } catch (Exception e) {
@@ -93,20 +97,18 @@ public class ProjectApi {
         }
     }
 
-    private List<RadProject> convertJsonToObject(String json) {
-        ObjectMapper mapper = new ObjectMapper();
+    public RadProject fetchRadProject(SeedNode selectedNode, String projectId) {
+        var url = selectedNode.url + "/api/v1/projects/" + projectId;
         try {
-            List<HashMap<String, Object>> radProjects = mapper.readValue(json, new TypeReference<>() {
-            });
-            return radProjects.stream().map(n -> {
-                var id = ((String) n.get("id"));
-                var name = (String) n.get("name");
-                var description = (String) n.get("description");
-                return new RadProject(id, name, description);
-            }).collect(Collectors.toList());
+            var res = client.execute(new HttpGet(url));
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
+                String response = EntityUtils.toString(res.getEntity());
+                return MAPPER.readValue(response, RadProject.class);
+            }
+            return null;
         } catch (Exception e) {
-            logger.warn("Deserialization of rad project failed : {}", json, e);
-            return List.of();
+            logger.warn("http request exception {}", url, e);
+            return null;
         }
     }
 
