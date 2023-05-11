@@ -46,7 +46,7 @@ public class PublishDialogTest extends AbstractIT {
     }
 
     @Test
-    public void testDialogWithMultipleRepositories() {
+    public void testDialogWithMultipleRepositories() throws InterruptedException {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         initializeProject(firstRepo);
         removeRemoteRadUrl(secondRepo);

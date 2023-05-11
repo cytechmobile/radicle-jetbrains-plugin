@@ -34,8 +34,8 @@ public class PatchTabController {
         mainPanel.repaint();
     }
 
-    public void createPatchProposalPanel(RadPatch patch) {
-        tab.setDisplayName("Patch Proposal from: " + patch.author);
+    public PatchProposalPanel createPatchProposalPanel(RadPatch patch) {
+        tab.setDisplayName(RadicleBundle.message("patchProposalFrom") + patch.author.id());
         patchProposalPanel = new PatchProposalPanel();
         var panel = patchProposalPanel.createViewPatchProposalPanel(this, patch, project);
         var mainPanel = tab.getComponent();
@@ -44,6 +44,7 @@ public class PatchTabController {
         mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
+        return patchProposalPanel;
     }
 
     public Disposable getDisposer() {

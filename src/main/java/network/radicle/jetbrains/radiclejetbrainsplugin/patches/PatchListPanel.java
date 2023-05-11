@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -28,6 +29,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.overview.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
@@ -136,7 +138,9 @@ public class PatchListPanel {
                 }
                 final var selectedPatch = patchesList.getSelectedValue();
                 patchModel.clear();
-                controller.createPatchProposalPanel(selectedPatch);
+                var patchPanel = controller.createPatchProposalPanel(selectedPatch);
+                var commits = patchPanel.patchCommits;
+                FileEditorManager.getInstance(project).openFile(new PatchVirtualFile(selectedPatch, commits),true);
             }
         });
         var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);
