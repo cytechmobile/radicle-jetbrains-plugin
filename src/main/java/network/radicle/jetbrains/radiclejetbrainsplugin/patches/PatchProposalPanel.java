@@ -4,7 +4,9 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -14,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -23,6 +26,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -152,20 +156,56 @@ public class PatchProposalPanel {
     }
 
     private JComponent titleComponent() {
-        var icon = new JLabel();
-        icon.setIcon(CollaborationToolsIcons.PullRequestOpen);
-        var titlePane = new BaseHtmlEditorPane();
+        final var icon = new JLabel(CollaborationToolsIcons.PullRequestOpen);
+
+        final var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
         titlePane.setBody(patch.title);
-        var idPane = new BaseHtmlEditorPane();
+
+        final var iconAndTitlePane = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        iconAndTitlePane.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+        iconAndTitlePane.add(titlePane, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+
+        final var editTitlePane = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+
+        final var editTitleBtn = CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+            logger.warn("edit title");
+            editTitlePane.removeAll();
+            final var editedTitle = new EditorTextField(patch.title);
+
+            editTitlePane.add(editedTitle, new CC().growX().gapRight(String.valueOf(JBUIScale.scale(4))));
+            final var submitBtn = new InlineIconButton(CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered, null, "submit");
+            submitBtn.setActionListener(se -> {
+                logger.warn("submit title: {}", editedTitle.getText());
+                //TODO: actually submit patch title change
+                patch.title = editedTitle.getText();
+                titlePane.setBody(patch.title);
+                editTitlePane.removeAll();
+                iconAndTitlePane.revalidate();
+
+                iconAndTitlePane.repaint();
+            });
+            editTitlePane.add(submitBtn, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+            final var cancelBtn = new InlineIconButton(AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null, "Close");
+            cancelBtn.setActionListener(e2 -> {
+                editTitlePane.removeAll();
+                iconAndTitlePane.revalidate();
+                iconAndTitlePane.repaint();
+            });
+            editTitlePane.add(cancelBtn, new CC());
+            return null;
+        });
+
+        iconAndTitlePane.add(editTitleBtn, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+
+        final var idPane = new BaseHtmlEditorPane();
         idPane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 0.8)));
         idPane.setForeground(JBColor.GRAY);
         idPane.setBody(patch.id);
-        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").fill().flowY()));
-        var iconAndTitlePane = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
-        iconAndTitlePane.add(icon, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
-        iconAndTitlePane.add(titlePane, new CC());
+
+        final var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").fill().flowY()));
         nonOpaquePanel.add(iconAndTitlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        nonOpaquePanel.add(editTitlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
         nonOpaquePanel.add(idPane, new CC());
         return nonOpaquePanel;
     }
