@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.util.messages.MessageBusConnection;
+import git4idea.GitCommit;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -46,7 +48,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     private MessageBusConnection mbc;
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
-
+    public List<GitCommit> commitHistory;
     @Before
     public void before() throws IOException, VcsException {
         /* initialize a git repository */
@@ -58,7 +60,12 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         GitTestUtil.writeToFile(fileToChange, "Hello");
         GitExecutor.addCommit("my message");
 
-        var commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot());
+        // Create second a commit
+        fileToChange = new File(firstRepo.getRoot().getPath() + "/initial_file_2.txt");
+        GitTestUtil.writeToFile(fileToChange, "Hello2");
+        GitExecutor.addCommit("my second message");
+
+        commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot());
 
         var myCommit = commitHistory.get(0);
         var changes = (ArrayList) myCommit.getChanges();
@@ -113,7 +120,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
                 secondRepo.dispose();
             }
         } catch (Exception e) {
-            logger.warn("error disposing git repo");
+            logger.warn("error disposing git repo", e);
         }
     }
 
