@@ -23,6 +23,8 @@
                 nonDefaultProject="true"
                 displayName="Radicle"/>
 
+        <fileIconProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider$PatchVirtualFileIconProvider"/>
+        <fileEditorProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider"/>
         <checkoutProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.RadCheckoutProvider" />
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
