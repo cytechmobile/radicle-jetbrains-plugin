@@ -142,10 +142,10 @@ public class PatchListPanel {
                 controller.createPatchProposalPanel(selectedPatch);
                 var editorManager = FileEditorManager.getInstance(project);
                 var file = new PatchVirtualFile(selectedPatch);
-                var isOpen = Arrays.stream(editorManager.getSelectedEditors()).filter(editor ->
-                        editor.getFile() instanceof PatchVirtualFile &&
-                                ((PatchVirtualFile) editor.getFile()).getPatch().id.equals(selectedPatch.id)).findFirst();
-                if (isOpen.isEmpty()) {
+                var editor = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
+                        ed.getFile() instanceof PatchVirtualFile &&
+                                ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(selectedPatch.id)).findFirst();
+                if (editor.isEmpty()) {
                     editorManager.openFile(file, true);
                 }
             }
