@@ -39,7 +39,7 @@ public class RadPatch {
 
     public record Revision(
             String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<Discussion> discussions, List<String> reviews) { }
+            List<Merge> merges, Instant timestamp, List<Discussion> discussions, List<Object> reviews) { }
 
     public record Merge(String node, String commit, Instant timestamp) { }
 
