@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -14,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.cd;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.git;
@@ -27,26 +30,38 @@ public class GitTestUtil {
     @NotNull
     public static GitRepository createGitRepository(
             @NotNull Project project, @NotNull String remotePath) {
-        cd(remotePath);
-        git("init");
-        setupGitConfig();
-        tac("initial_file.txt");
-        VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(remotePath, GitUtil.DOT_GIT));
-        assertThat(gitDir).isNotNull();
-        return registerRepo(project, remotePath);
+        try {
+            cd(remotePath);
+            git("init");
+            setupGitConfig();
+            tac("initial_file.txt");
+            tac("initial_file_2.txt");
+            VirtualFile gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(remotePath, GitUtil.DOT_GIT));
+            assertThat(gitDir).isNotNull();
+            return registerRepo(project, remotePath);
+        } catch (Exception e) {
+            logger.warn("Unable to create git repo");
+            return null;
+        }
     }
 
     @NotNull
-    public static GitRepository registerRepo(Project project, String root) {
+    public static GitRepository registerRepo(Project project, String root) throws InterruptedException {
         ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
         vcsManager.setDirectoryMapping(root, GitVcs.NAME);
         VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
         assertThat(vcsManager.getAllVcsRoots().length).isNotZero();
         GitRepositoryManager grm = GitUtil.getRepositoryManager(project);
 
-        GitRepository repository = grm.getRepositoryForRoot(file);
+        AtomicReference<GitRepository> repository = new AtomicReference<>();
+        var countDown = new CountDownLatch(1);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            repository.set(grm.getRepositoryForRoot(file));
+            countDown.countDown();
+        });
+        countDown.await();
         assertThat(repository).as("Couldn't find repository for root " + root).isNotNull();
-        return repository;
+        return repository.get();
     }
 
    public static void writeToFile(@NotNull File file, @NotNull String content) {

@@ -12,6 +12,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +49,12 @@ public class RadicleProjectService {
         final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
         return executeCommand(path, home, ".", List.of("self"), null, "");
+    }
+
+    public ProcessOutput fetchPeerChanges(RadPatch patch) {
+        var didParts = patch.author.id().split(":");
+        return executeCommand("git", patch.repo.getRoot().getPath(), List.of("fetch",
+                didParts.length == 3 ? didParts[2] : ""), null);
     }
 
     public ProcessOutput clone(String urn, String directory) {
