@@ -31,7 +31,9 @@ public class RadAuth extends RadAction {
             return "AuthCreateIdentity";
         } else if (action == RadAuthAction.UNLOCKED_IDENTITY) {
             return "AuthUnlockedIdentity";
-        }
+        } else if (action == RadAuthAction.UNLOCKED_IDENTITY) {
+        return "AuthUnlockedIdentity";
+    }
         return "";
     }
 

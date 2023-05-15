@@ -14,7 +14,7 @@ public class RadRemote extends RadAction {
 
     @Override
     public String getActionName() {
-        return "Remote";
+        return "Remotee";
     }
 
     @Override
