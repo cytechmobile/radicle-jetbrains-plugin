@@ -9,17 +9,17 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
-import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JPanel;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
+import java.util.List;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
     protected ToolWindowManagerListener toolWindowManagerListener;
@@ -64,16 +64,24 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
         project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, toolWindowManagerListener);
         project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE,
                 (GitRepositoryChangeListener) repository -> {
-                    var gitRepoManager = GitRepositoryManager.getInstance(project);
-                    var repos = gitRepoManager.getRepositories();
+                    //var gitRepoManager = GitRepositoryManager.getInstance(project);
+                    //var repos = gitRepoManager.getRepositories();
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                        var radInited = RadAction.getInitializedReposWithNodeConfigured(List.of(repository), false);
+                        if (!radInited.isEmpty()) {
+                            ApplicationManager.getApplication().invokeLater(() -> {
+                                toolWindow.setAvailable(true);
+                            });
+                        }
+                    });
+                    /*ApplicationManager.getApplication().executeOnPooledThread(() -> {
                         var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, false);
                         ApplicationManager.getApplication().invokeLater(() -> {
                             if (!radInitializedRepos.isEmpty()) {
                                 toolWindow.setAvailable(true);
                             }
                         });
-                    });
+                    });*/
                 });
     }
 

@@ -41,6 +41,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchEdit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,13 +178,20 @@ public class PatchProposalPanel {
             final var submitBtn = new InlineIconButton(CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered, null, "submit");
             submitBtn.setActionListener(se -> {
                 logger.warn("submit title: {}", editedTitle.getText());
-                //TODO: actually submit patch title change
-                patch.title = editedTitle.getText();
-                titlePane.setBody(patch.title);
-                editTitlePane.removeAll();
-                iconAndTitlePane.revalidate();
-
-                iconAndTitlePane.repaint();
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    var patchEdit = new RadPatchEdit(patch.repo, patch.id, editedTitle.getText());
+                    var out = patchEdit.perform();
+                    final boolean success = RadAction.isSuccess(out);
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        if (success) {
+                            patch.title = editedTitle.getText();
+                            titlePane.setBody(patch.title);
+                        }
+                        editTitlePane.removeAll();
+                        iconAndTitlePane.revalidate();
+                        iconAndTitlePane.repaint();
+                    });
+                });
             });
             editTitlePane.add(submitBtn, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
             final var cancelBtn = new InlineIconButton(AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null, "Close");
