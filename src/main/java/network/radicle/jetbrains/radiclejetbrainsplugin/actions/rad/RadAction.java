@@ -17,6 +17,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
@@ -74,24 +75,24 @@ public abstract class RadAction {
     }
 
     public ProcessOutput perform(IdentityDialog dialog) {
-        var pr = project != null ? project : repo.getProject();
-        var projectHandler = new RadicleProjectSettingsHandler(pr);
-        var projectSettings = projectHandler.loadSettings();
+        var projectSettings = getProjectSettings();
         return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath(), dialog);
     }
 
     public ProcessOutput perform() {
-        var pr = project != null ? project : repo.getProject();
-        var projectHandler = new RadicleProjectSettingsHandler(pr);
-        var projectSettings = projectHandler.loadSettings();
+        var projectSettings = getProjectSettings();
         return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath(), null);
     }
 
     public ProcessOutput perform(CountDownLatch latch) {
+        var projectSettings = getProjectSettings();
+        return perform(latch, projectSettings.getRadHome(), projectSettings.getPath(), null);
+    }
+
+    private RadicleProjectSettings getProjectSettings() {
         var pr = project != null ? project : repo.getProject();
         var projectHandler = new RadicleProjectSettingsHandler(pr);
-        var projectSettings = projectHandler.loadSettings();
-        return perform(latch, projectSettings.getRadHome(), projectSettings.getPath(), null);
+        return projectHandler.loadSettings();
     }
 
     private ProcessOutput unlockIdentity(String radHome, String radPath, IdentityDialog dialog) {
