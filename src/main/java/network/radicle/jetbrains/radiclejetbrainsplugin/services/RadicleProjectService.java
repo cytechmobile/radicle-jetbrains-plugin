@@ -45,10 +45,7 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput self(String radHome, String radPath) {
-        final var projectSettings = projectSettingsHandler.loadSettings();
-        final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
-        final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
-        return executeCommand(path, home, ".", List.of("self"), null, "");
+        return executeCommand(radPath, radHome, ".", List.of("self"), null, "");
     }
 
     public ProcessOutput fetchPeerChanges(RadPatch patch) {
