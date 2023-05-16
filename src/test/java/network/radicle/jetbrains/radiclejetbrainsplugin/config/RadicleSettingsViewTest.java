@@ -51,12 +51,19 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void testIsModifiedApply() {
+        var identityDialog = new IdentityDialog() {
+            @Override
+            public boolean showAndGet() {
+                return true;
+            }
+        };
+        radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         assertThat(radicleSettingsView.isModified()).isFalse();
         radicleSettingsView.getPathField().setText("/radpath");
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
 
-        radicleSettingsView = new RadicleSettingsView(getProject());
+        radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radicleSettingsView.getHomeField().setText("/home");
         assertThat(radicleSettingsView.isModified()).isTrue();
         radicleSettingsView.apply();
@@ -80,6 +87,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         testButton.doClick();
         var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        radStub.commands.poll(10, TimeUnit.SECONDS);
+        radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
         assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.nodeId);
     }

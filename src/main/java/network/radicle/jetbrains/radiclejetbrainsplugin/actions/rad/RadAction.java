@@ -69,25 +69,32 @@ public abstract class RadAction {
         return false;
     }
 
-    public ProcessOutput perform(String radHome, String radPath) {
-        return perform(new CountDownLatch(1), radHome, radPath);
+    public ProcessOutput perform(String radHome, String radPath, IdentityDialog dialog) {
+        return perform(new CountDownLatch(1), radHome, radPath, dialog);
+    }
+
+    public ProcessOutput perform(IdentityDialog dialog) {
+        var pr = project != null ? project : repo.getProject();
+        var projectHandler = new RadicleProjectSettingsHandler(pr);
+        var projectSettings = projectHandler.loadSettings();
+        return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath(), dialog);
     }
 
     public ProcessOutput perform() {
         var pr = project != null ? project : repo.getProject();
         var projectHandler = new RadicleProjectSettingsHandler(pr);
         var projectSettings = projectHandler.loadSettings();
-        return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath());
+        return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath(), null);
     }
 
     public ProcessOutput perform(CountDownLatch latch) {
         var pr = project != null ? project : repo.getProject();
         var projectHandler = new RadicleProjectSettingsHandler(pr);
         var projectSettings = projectHandler.loadSettings();
-        return perform(latch, projectSettings.getRadHome(), projectSettings.getPath());
+        return perform(latch, projectSettings.getRadHome(), projectSettings.getPath(), null);
     }
 
-    private ProcessOutput unlockIdentity(String radHome, String radPath) {
+    private ProcessOutput unlockIdentity(String radHome, String radPath, IdentityDialog dialog) {
         if (project == null && repo == null) {
             return new ProcessOutput(0);
         }
@@ -104,13 +111,13 @@ public abstract class RadAction {
         if (showDialog) {
             var latch = new CountDownLatch(1);
             ApplicationManager.getApplication().invokeLater(() -> {
-                var dialog = new IdentityDialog();
                 var title = !success ? RadicleBundle.message("newIdentity") :
                         RadicleBundle.message("unlockIdentity");
-                dialog.setTitle(title);
-                okButton.set(dialog.showAndGet());
+                var myDialog = dialog == null ? new IdentityDialog() : dialog;
+                myDialog.setTitle(title);
+                okButton.set(myDialog.showAndGet());
                 latch.countDown();
-                passphrase.set(dialog.passphraseField.getText());
+                passphrase.set(myDialog.passphraseField.getText());
             }, ModalityState.any());
             try {
                 latch.await();
@@ -128,11 +135,11 @@ public abstract class RadAction {
         return newOutput;
     }
 
-    public ProcessOutput perform(CountDownLatch latch, String radHome, String radPath) {
+    public ProcessOutput perform(CountDownLatch latch, String radHome, String radPath, IdentityDialog dialog) {
         ProcessOutput output = null;
         var unlockIdentity = shouldUnlockIdentity();
         if (unlockIdentity) {
-            output = unlockIdentity(radHome, radPath);
+            output = unlockIdentity(radHome, radPath, dialog);
         }
         if ((output != null && RadAction.isSuccess(output) || !unlockIdentity)) {
             output = this.run();

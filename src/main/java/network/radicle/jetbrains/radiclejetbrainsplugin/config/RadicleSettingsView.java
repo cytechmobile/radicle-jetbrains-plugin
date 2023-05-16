@@ -122,17 +122,19 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     private boolean isRadHomeValidPath(String radPath, String radHome) {
         var radSelf = new RadSelf(radHome, radPath, myProject);
-        var output = radSelf.perform();
+        var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
+        var output = radSelf.perform(dialog);
         return RadAction.isSuccess(output);
     }
 
     private void unlockOrCreateIdentity() {
         msgLabel.setText("");
+        var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radHome = getPathFromTextField(radHomeField);
             var radPath = getPathFromTextField(radPathField);
             var radSelf = new RadSelf(radHome, radPath, myProject);
-            var output = radSelf.perform(radHome, radPath);
+            var output = radSelf.perform(radHome, radPath, dialog);
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
             ApplicationManager.getApplication().invokeLater(() -> {
