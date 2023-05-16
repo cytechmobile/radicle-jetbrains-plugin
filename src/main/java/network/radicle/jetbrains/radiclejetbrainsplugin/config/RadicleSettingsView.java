@@ -120,9 +120,8 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         return output.getStdout().replace("\n", "");
     }
 
-    private boolean isRadHomeValidPath(String radPath, String radHome) {
+    private boolean isRadHomeValidPath(String radPath, String radHome, IdentityDialog dialog) {
         var radSelf = new RadSelf(radHome, radPath, myProject);
-        var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
         var output = radSelf.perform(dialog);
         return RadAction.isSuccess(output);
     }
@@ -211,6 +210,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     @Override
     public void apply() {
+        var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
         var path = getPathFromTextField(radPathField);
         var radHomePath = getPathFromTextField(radHomeField);
         var nodeUrl = getSelectedNodeUrl();
@@ -220,7 +220,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
             var isVersionSupported = isCompatibleVersion(version);
-            var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath);
+            var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath, dialog);
             var isValidNodeApi = isValidNodeApi();
             /* Rad version and home path is valid we don't have to show a notification warning */
             if (isVersionSupported && isRadHomeValidPath && isValidNodeApi) {
