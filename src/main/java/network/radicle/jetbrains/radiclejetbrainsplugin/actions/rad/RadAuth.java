@@ -49,6 +49,10 @@ public class RadAuth extends RadAction {
     public ProcessOutput createNewIdentity() {
         var rad = project.getService(RadicleProjectService.class);
         var output = rad.auth(passphrase, radHome, radPath);
+        return validateOutput(output);
+    }
+
+    public  static ProcessOutput validateOutput(ProcessOutput output) {
         /* rad auth return success exit code (0) and a failed msg if the password is wrong */
         var isSuccess = RadAuth.isSuccess(output) && !output.getStdout().contains("failed");
         var pr = new ProcessOutput(isSuccess ? 0 : -1);
