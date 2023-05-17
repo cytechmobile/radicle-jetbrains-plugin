@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 import com.google.common.base.Strings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
@@ -50,7 +49,7 @@ public class RadicleProjectService {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
-        return executeCommand(path, home, ".", List.of("self"), null, "", false);
+        return executeCommand(path, home, ".", List.of("self"), null, "");
     }
 
     public ProcessOutput fetchPeerChanges(RadPatch patch) {
@@ -75,7 +74,7 @@ public class RadicleProjectService {
         if (Strings.isNullOrEmpty(key)) {
             return false;
         }
-        var output = executeCommand("ssh-add", "", ".", List.of("-l"), null, "", false);
+        var output = executeCommand("ssh-add", "", ".", List.of("-l"), null, "");
         if (!RadAction.isSuccess(output)) {
             return false;
         }
@@ -124,7 +123,7 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput patchEdit(GitRepository root, String patchId, String message) {
-        return executeCommandWithPty(root.getRoot().getPath(), List.of("patch", "edit", patchId, "--message", message), root);
+        return executeCommand(root.getRoot().getPath(), List.of("patch", "edit", patchId, "--message", message), root);
     }
 
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
@@ -132,33 +131,26 @@ public class RadicleProjectService {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
-        return executeCommand(path, home, workDir, args, repo, stdin, false);
+        return executeCommand(path, home, workDir, args, repo, stdin);
     }
 
     public ProcessOutput executeCommand(String workDir, List<String> args, @Nullable GitRepository repo) {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radPath = projectSettings.getPath();
         final var radHome = projectSettings.getRadHome();
-        return executeCommand(radPath, radHome, workDir, args, repo, "", false);
-    }
-
-    public ProcessOutput executeCommandWithPty(String workDir, List<String> args, @Nullable GitRepository repo) {
-        final var projectSettings = projectSettingsHandler.loadSettings();
-        final var radPath = projectSettings.getPath();
-        final var radHome = projectSettings.getRadHome();
-        return executeCommand(radPath, radHome, workDir, args, repo, "", true);
+        return executeCommand(radPath, radHome, workDir, args, repo, "");
     }
 
     public ProcessOutput executeCommand(String exePath, String workDir, List<String> args, @Nullable GitRepository repo) {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radHome = projectSettings.getRadHome();
-        return executeCommand(exePath, radHome, workDir, args, repo, "", false);
+        return executeCommand(exePath, radHome, workDir, args, repo, "");
     }
 
     public ProcessOutput executeCommand(
-            String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin, boolean pty) {
+            String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin) {
         ProcessOutput result;
-        final var cmdLine = pty ? new PtyCommandLine().withConsoleMode(true) : new GeneralCommandLine();
+        final var cmdLine = new GeneralCommandLine();
         var params = "";
         if (!Strings.isNullOrEmpty(radHome)) {
             params = "export RAD_HOME=" + radHome + "; " + exePath + " " + String.join(" ", args);
