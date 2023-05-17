@@ -1,13 +1,16 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 
 import java.awt.BorderLayout;
+import java.util.Arrays;
 
 public class PatchTabController {
     private Project project;
@@ -44,6 +47,17 @@ public class PatchTabController {
         mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
+    }
+
+    public void openPatchTimelineOnEditor(RadPatch patch) {
+        var editorManager = FileEditorManager.getInstance(project);
+        var file = new PatchVirtualFile(patch);
+        var editor = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
+                ed.getFile() instanceof PatchVirtualFile &&
+                        ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).findFirst();
+        if (editor.isEmpty()) {
+            editorManager.openFile(file, true);
+        }
     }
 
     public Disposable getDisposer() {

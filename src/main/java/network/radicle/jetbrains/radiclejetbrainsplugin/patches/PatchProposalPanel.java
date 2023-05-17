@@ -18,6 +18,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -57,8 +58,10 @@ public class PatchProposalPanel {
     protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
     protected TabInfo commitTab;
     protected TabInfo filesTab;
+    protected PatchTabController controller;
 
     public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch radPatch, Project project) {
+        this.controller = controller;
         this.patch = radPatch;
         this.patchChanges.setValue(List.of());
         this.patchCommits.setValue(List.of());
@@ -69,19 +72,19 @@ public class PatchProposalPanel {
         var infoComponent = createInfoComponent(project);
         var tabInfo = new TabInfo(infoComponent);
         tabInfo.setText(RadicleBundle.message("info"));
-        tabInfo.setSideComponent(createReturnToListSideComponent(controller));
+        tabInfo.setSideComponent(createReturnToListSideComponent());
 
         var filesComponent = createFilesComponent(controller);
         var filesInfo = new TabInfo(filesComponent);
         filesTab = filesInfo;
         filesInfo.setText(RadicleBundle.message("files"));
-        filesInfo.setSideComponent(createReturnToListSideComponent(controller));
+        filesInfo.setSideComponent(createReturnToListSideComponent());
 
         var commitComponent = createCommitComponent(controller);
         var commitInfo = new TabInfo(commitComponent);
         commitTab = commitInfo;
         commitInfo.setText(RadicleBundle.message("commits"));
-        commitInfo.setSideComponent(createReturnToListSideComponent(controller));
+        commitInfo.setSideComponent(createReturnToListSideComponent());
 
         var tabs = new SingleHeightTabs(null, uiDisposable);
         tabs.addTab(tabInfo);
@@ -90,7 +93,7 @@ public class PatchProposalPanel {
         return tabs;
     }
 
-    protected JComponent createReturnToListSideComponent(PatchTabController controller) {
+    protected JComponent createReturnToListSideComponent() {
         return ReturnToListComponent.INSTANCE.createReturnToListSideComponent(RadicleBundle.message("backToList"),
                 () -> {
                     controller.createPatchesPanel();
@@ -147,7 +150,12 @@ public class PatchProposalPanel {
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
         titlePane.setBody(patch.description);
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
-        nonOpaquePanel.add(titlePane, new CC());
+        nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {
+            controller.openPatchTimelineOnEditor(patch);
+        });
+        viewTimelineLink.setBorder(JBUI.Borders.emptyTop(4));
+        nonOpaquePanel.add(viewTimelineLink, new CC().gapBottom(String.valueOf(UI.scale(8))));
         return nonOpaquePanel;
     }
 
