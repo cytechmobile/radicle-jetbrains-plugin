@@ -18,6 +18,7 @@ import javax.swing.JComponent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,7 +61,8 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testRevSection() throws InterruptedException {
-        patchEditorComponent.getComponentsFactory().getLatch().await();
+        boolean waited = patchEditorComponent.getComponentsFactory().getLatch().await(3, TimeUnit.SECONDS);
+        assertThat(waited).isTrue();
         var groupedCommits = patchEditorComponent.getComponentsFactory().getGroupedCommits();
         assertThat(groupedCommits.get(patch.revisions.get(0).id()).get(0)).isEqualTo(commitHistory.get(0));
         assertThat(groupedCommits.get(patch.revisions.get(1).id()).get(0)).isEqualTo(commitHistory.get(1));

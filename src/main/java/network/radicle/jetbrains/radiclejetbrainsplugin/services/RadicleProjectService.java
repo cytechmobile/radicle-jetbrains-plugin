@@ -55,8 +55,12 @@ public class RadicleProjectService {
 
     public ProcessOutput fetchPeerChanges(RadPatch patch) {
         GitFetchSupport gfs = GitFetchSupport.fetchSupport(patch.repo.getProject());
-        var gfr = gfs.fetchAllRemotes(List.of(patch.repo));
-        gfr.showNotificationIfFailed();
+        try {
+            var gfr = gfs.fetchAllRemotes(List.of(patch.repo));
+            gfr.showNotificationIfFailed();
+        } catch (Exception e) {
+            logger.warn("error fetching repo: {} for patch:{}", patch.repo, patch);
+        }
         return new ProcessOutput(0);
         // var didParts = patch.author.id().split(":");
         // return executeCommand("git", patch.repo.getRoot().getPath(), List.of("fetch",
