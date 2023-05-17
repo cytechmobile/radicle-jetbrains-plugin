@@ -142,7 +142,7 @@ public abstract class RadAction {
         if (unlockIdentity) {
             output = unlockIdentity(radHome, radPath, dialog);
         }
-        if ((output != null && RadAction.isSuccess(output) || !unlockIdentity)) {
+        if ((output != null && RadAction.isSuccess(output)) || !unlockIdentity) {
             output = this.run();
         }
         var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleProjectService.class));
