@@ -99,7 +99,8 @@ public class TimelineComponent {
             return null;
         }));
 
-        var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL, i -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel);
+        var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
+                i -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel);
         b.withHeader(contentPanel, actionsPanel);
         return b.build();
     }
@@ -123,7 +124,8 @@ public class TimelineComponent {
         private final SingleValueModel<String> content;
         private final Function<String, Boolean> okAction;
 
-        public EditablePanelHandler(Project project, JComponent paneComponent, String actionName, SingleValueModel<String> content, Function<String, Boolean> okAction) {
+        public EditablePanelHandler(
+                Project project, JComponent paneComponent, String actionName, SingleValueModel<String> content, Function<String, Boolean> okAction) {
             this.project = project;
             this.paneComponent = paneComponent;
             this.editorPaneLayout = SizeRestrictedSingleComponentLayout.Companion.constant(null, null);
@@ -160,8 +162,10 @@ public class TimelineComponent {
                     return null;
                 });
 
-                var doc = LanguageTextField.createDocument(content.getValue(), PlainTextLanguage.INSTANCE, project, new LanguageTextField.SimpleDocumentCreator());
-                var field = CommentTextFieldFactory.INSTANCE.create(project, doc, CommentTextFieldFactory.ScrollOnChangePolicy.ScrollToField.INSTANCE, content.getValue());
+                var doc = LanguageTextField.createDocument(content.getValue(), PlainTextLanguage.INSTANCE, project,
+                        new LanguageTextField.SimpleDocumentCreator());
+                var field = CommentTextFieldFactory.INSTANCE.create(project, doc, CommentTextFieldFactory.ScrollOnChangePolicy.ScrollToField.INSTANCE,
+                        content.getValue());
                 //CollaborationToolsUIUtil.installValidator(textField, model.errorValue.map { it?.localizedMessage })
                 //var inputField = wrapWithProgressOverlay(textField, model.isBusyValue);
 

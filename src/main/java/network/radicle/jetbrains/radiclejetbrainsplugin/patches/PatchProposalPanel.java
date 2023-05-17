@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
@@ -79,13 +78,13 @@ public class PatchProposalPanel {
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent());
 
-        var filesComponent = createFilesComponent(controller);
+        var filesComponent = createFilesComponent();
         var filesInfo = new TabInfo(filesComponent);
         filesTab = filesInfo;
         filesInfo.setText(RadicleBundle.message("files"));
         filesInfo.setSideComponent(createReturnToListSideComponent());
 
-        var commitComponent = createCommitComponent(controller);
+        var commitComponent = createCommitComponent();
         var commitInfo = new TabInfo(commitComponent);
         commitTab = commitInfo;
         commitInfo.setText(RadicleBundle.message("commits"));
@@ -106,14 +105,13 @@ public class PatchProposalPanel {
                 });
     }
 
-    protected JComponent createCommitComponent(PatchTabController controller) {
-        final var project = patch.repo.getProject();
-        var simpleChangesTree = getChangesBrowser(patch.repo.getProject(), controller);
+    protected JComponent createCommitComponent() {
+        var simpleChangesTree = getChangesBrowser();
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
         final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
-        var commitBrowser = new CommitsBrowserComponentBuilder(project, (SingleValueModel) patchCommits)
+        var commitBrowser = new CommitsBrowserComponentBuilder(patch.project, (SingleValueModel) patchCommits)
                 .setEmptyCommitListText(RadicleBundle.message("patchProposalNoCommits"))
                 .onCommitSelected(c -> {
                     if (c == null || !(c instanceof GitCommit gc)) {
@@ -131,7 +129,7 @@ public class PatchProposalPanel {
     }
 
     protected JComponent createInfoComponent() {
-        var branchPanel = branchComponent(patch.repo.getProject());
+        var branchPanel = branchComponent();
         var titlePanel = titleComponent();
         var descriptionPanel = descriptionComponent();
 
@@ -186,7 +184,7 @@ public class PatchProposalPanel {
         return nonOpaquePanel;
     }
 
-    private JComponent branchComponent(Project project) {
+    private JComponent branchComponent() {
         var branchPanel = new NonOpaquePanel();
         branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         var to = createLabel(patch.defaultBranch);
@@ -214,8 +212,8 @@ public class PatchProposalPanel {
         return label;
     }
 
-    protected JComponent createFilesComponent(PatchTabController controller) {
-        var simpleChangesTree = getChangesBrowser(patch.repo.getProject(), controller);
+    protected JComponent createFilesComponent() {
+        var simpleChangesTree = getChangesBrowser();
         var radLoadingChangePanel = new LoadingChangesPanel(simpleChangesTree, simpleChangesTree.getViewer().getEmptyText(), controller.getDisposer());
         radLoadingChangePanel.loadChangesInBackground(() -> {
             var countDown = new CountDownLatch(1);
@@ -232,9 +230,9 @@ public class PatchProposalPanel {
         return panel.addToCenter(ScrollPaneFactory.createScrollPane(radLoadingChangePanel, true));
     }
 
-    protected SimpleChangesBrowser getChangesBrowser(Project project, PatchTabController controller) {
+    protected SimpleChangesBrowser getChangesBrowser() {
         var simpleChangesTree = new SimpleChangesBrowser(patch.project, List.of());
-        DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, simpleChangesTree, controller.getDisposer());
+        DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(patch.project, simpleChangesTree, controller.getDisposer());
         simpleChangesTree.setShowDiffActionPreview(diffPreview);
         return simpleChangesTree;
     }
