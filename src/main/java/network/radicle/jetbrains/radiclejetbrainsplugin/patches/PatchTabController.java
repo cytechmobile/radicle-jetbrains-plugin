@@ -1,6 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
@@ -9,6 +11,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 
+import javax.swing.JComponent;
 import java.awt.BorderLayout;
 import java.util.Arrays;
 
@@ -38,24 +41,43 @@ public class PatchTabController {
     }
 
     public void createPatchProposalPanel(RadPatch patch) {
-        tab.setDisplayName("Patch Proposal from: " + patch.author);
-        patchProposalPanel = new PatchProposalPanel();
-        var panel = patchProposalPanel.createViewPatchProposalPanel(this, patch, project);
-        var mainPanel = tab.getComponent();
-        mainPanel.setLayout(new BorderLayout());
+        final var mainPanel = tab.getComponent();
+        final var patchModel = new SingleValueModel<>(patch);
+        createInternalPatchProposalPanel(patchModel, mainPanel);
+        patchModel.addListener(p -> {
+            var fetched = myApi.fetchPatch(patch.seedNode, patch.projectId, patch.repo, patch.id);
+            if (fetched != null) {
+                ApplicationManager.getApplication().invokeLater(() -> createPatchProposalPanel(fetched));
+            }
+            return null;
+        });
+    }
+
+    protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {
+        tab.setDisplayName("Patch Proposal from: " + patch.getValue().author);
+        patchProposalPanel = new PatchProposalPanel(this, patch);
+        var panel = patchProposalPanel.createViewPatchProposalPanel();
         mainPanel.removeAll();
         mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
+        openPatchTimelineOnEditor(patch, true);
     }
 
-    public void openPatchTimelineOnEditor(RadPatch patch) {
+    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> patchModel, boolean force) {
         var editorManager = FileEditorManager.getInstance(project);
-        var file = new PatchVirtualFile(patch);
-        var editor = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
+        final var patch = patchModel.getValue();
+        var file = new PatchVirtualFile(patchModel);
+        var editorTabs = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
                 ed.getFile() instanceof PatchVirtualFile &&
-                        ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).findFirst();
-        if (editor.isEmpty()) {
+                        ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).toList();
+        if (force) {
+            for (var et : editorTabs) {
+                editorManager.closeFile(et.getFile());
+            }
+        }
+
+        if (force || editorTabs.isEmpty()) {
             editorManager.openFile(file, true);
         }
     }

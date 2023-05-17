@@ -43,13 +43,13 @@ public class TimelineComponent {
 
     private final TimelineComponentFactory componentsFactory;
     private final RadPatch radPatch;
+    private final SingleValueModel<RadPatch> radPatchModel;
     private BaseHtmlEditorPane headerTitle;
-    private SingleValueModel<String> titleModel;
 
-    public TimelineComponent(RadPatch radPatch) {
-        this.radPatch = radPatch;
+    public TimelineComponent(SingleValueModel<RadPatch> radPatchModel) {
+        this.radPatchModel = radPatchModel;
+        this.radPatch = radPatchModel.getValue();
         componentsFactory = new TimelineComponentFactory(radPatch);
-        titleModel = new SingleValueModel<>(radPatch.title);
     }
 
     public JComponent create() {
@@ -82,15 +82,13 @@ public class TimelineComponent {
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
 
-        var panelHandle = new EditablePanelHandler(radPatch.repo.getProject(), headerTitle, RadicleBundle.message("patch.proposal.change.title", "change title"), titleModel, (editedTitle) -> {
+        var panelHandle = new EditablePanelHandler(radPatch.repo.getProject(), headerTitle,
+                RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (editedTitle) -> {
             var patchEdit = new RadPatchEdit(radPatch.repo, radPatch.id, editedTitle);
             var out = patchEdit.perform();
             final boolean success = RadAction.isSuccess(out);
             if (success) {
-                titleModel.setValue(editedTitle);
-                headerTitle.setBody(editedTitle);
-                headerTitle.invalidate();
-                headerTitle.repaint();
+                radPatchModel.setValue(radPatch);
             }
             return true;
         });

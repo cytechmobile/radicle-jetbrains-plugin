@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitCommit;
@@ -25,6 +26,7 @@ public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private TimelineComponent patchEditorComponent;
     private RadPatch patch;
+    private SingleValueModel<RadPatch> patchModel;
 
     @Before
     public void beforeTest() {
@@ -32,7 +34,8 @@ public class TimelineTest extends AbstractIT {
         var gitRepoManager = GitRepositoryManager.getInstance(getProject());
         var repos = gitRepoManager.getRepositories();
         patch.repo = repos.get(0);
-        patchEditorComponent = new TimelineComponent(patch);
+        patchModel = new SingleValueModel<>(patch);
+        patchEditorComponent = new TimelineComponent(patchModel);
         patchEditorComponent.create();
     }
 

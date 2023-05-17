@@ -54,22 +54,27 @@ import java.util.stream.Collectors;
 public class PatchProposalPanel {
     private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
     protected RadPatch patch;
+    protected SingleValueModel<RadPatch> patchModel;
     protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
     protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
     protected TabInfo commitTab;
     protected TabInfo filesTab;
     protected PatchTabController controller;
 
-    public JComponent createViewPatchProposalPanel(PatchTabController controller, RadPatch radPatch, Project project) {
+    public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
-        this.patch = radPatch;
+        this.patchModel = patch;
+        this.patch = patch.getValue();
+    }
+
+    public JComponent createViewPatchProposalPanel() {
         this.patchChanges.setValue(List.of());
         this.patchCommits.setValue(List.of());
 
         calculatePatchCommits();
 
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
-        var infoComponent = createInfoComponent(project);
+        var infoComponent = createInfoComponent();
         var tabInfo = new TabInfo(infoComponent);
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent());
@@ -125,8 +130,8 @@ public class PatchProposalPanel {
         return splitter;
     }
 
-    protected JComponent createInfoComponent(Project project) {
-        var branchPanel = branchComponent(project);
+    protected JComponent createInfoComponent() {
+        var branchPanel = branchComponent(patch.repo.getProject());
         var titlePanel = titleComponent();
         var descriptionPanel = descriptionComponent();
 
@@ -152,7 +157,7 @@ public class PatchProposalPanel {
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
         final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {
-            controller.openPatchTimelineOnEditor(patch);
+            controller.openPatchTimelineOnEditor(patchModel, false);
         });
         viewTimelineLink.setBorder(JBUI.Borders.emptyTop(4));
         nonOpaquePanel.add(viewTimelineLink, new CC().gapBottom(String.valueOf(UI.scale(8))));
@@ -228,7 +233,7 @@ public class PatchProposalPanel {
     }
 
     protected SimpleChangesBrowser getChangesBrowser(Project project, PatchTabController controller) {
-        var simpleChangesTree = new SimpleChangesBrowser(patch.repo.getProject(), List.of());
+        var simpleChangesTree = new SimpleChangesBrowser(patch.project, List.of());
         DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, simpleChangesTree, controller.getDisposer());
         simpleChangesTree.setShowDiffActionPreview(diffPreview);
         return simpleChangesTree;

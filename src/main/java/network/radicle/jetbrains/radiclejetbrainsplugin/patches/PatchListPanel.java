@@ -137,7 +137,6 @@ public class PatchListPanel {
                 final var selectedPatch = patchesList.getSelectedValue();
                 patchModel.clear();
                 controller.createPatchProposalPanel(selectedPatch);
-                controller.openPatchTimelineOnEditor(selectedPatch);
             }
         });
         var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);
