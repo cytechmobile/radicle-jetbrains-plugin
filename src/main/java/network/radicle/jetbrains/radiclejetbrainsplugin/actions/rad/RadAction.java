@@ -7,6 +7,8 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import git4idea.commands.Git;
@@ -15,8 +17,11 @@ import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -25,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class RadAction {
@@ -59,12 +66,85 @@ public abstract class RadAction {
         return true;
     }
 
+    public boolean shouldUnlockIdentity() {
+        return false;
+    }
+
+    public ProcessOutput perform(String radHome, String radPath, IdentityDialog dialog) {
+        return perform(new CountDownLatch(1), radHome, radPath, dialog);
+    }
+
+    public ProcessOutput perform(IdentityDialog dialog) {
+        var projectSettings = getProjectSettings();
+        return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath(), dialog);
+    }
+
     public ProcessOutput perform() {
-        return perform(new CountDownLatch(1));
+        var projectSettings = getProjectSettings();
+        return perform(new CountDownLatch(1), projectSettings.getRadHome(), projectSettings.getPath(), null);
     }
 
     public ProcessOutput perform(CountDownLatch latch) {
-        var output = this.run();
+        var projectSettings = getProjectSettings();
+        return perform(latch, projectSettings.getRadHome(), projectSettings.getPath(), null);
+    }
+
+    private RadicleProjectSettings getProjectSettings() {
+        var pr = project != null ? project : repo.getProject();
+        var projectHandler = new RadicleProjectSettingsHandler(pr);
+        return projectHandler.loadSettings();
+    }
+
+    private ProcessOutput unlockIdentity(String radHome, String radPath, IdentityDialog dialog) {
+        if (project == null && repo == null) {
+            return new ProcessOutput(0);
+        }
+        var pr = project != null ? project : repo.getProject();
+        var rad = pr.getService(RadicleProjectService.class);
+        var output = rad.self(radHome, radPath);
+        var lines = output.getStdoutLines(true);
+        var radDetails = new RadDetails(lines);
+        var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
+        var success = RadAction.isSuccess(output);
+        var showDialog = !success || !isIdentityUnlocked;
+        AtomicBoolean okButton = new AtomicBoolean(false);
+        AtomicReference<String> passphrase = new AtomicReference<>("");
+        if (showDialog) {
+            var latch = new CountDownLatch(1);
+            ApplicationManager.getApplication().invokeLater(() -> {
+                var title = !success ? RadicleBundle.message("newIdentity") :
+                        RadicleBundle.message("unlockIdentity");
+                var myDialog = dialog == null ? new IdentityDialog() : dialog;
+                myDialog.setTitle(title);
+                okButton.set(myDialog.showAndGet());
+                latch.countDown();
+                passphrase.set(myDialog.passphraseField.getText());
+            }, ModalityState.any());
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                logger.error("error awaiting update latch!", e);
+                return new ProcessOutput(-1);
+            }
+        }
+        if (okButton.get()) {
+              var authOutput = rad.auth(passphrase.get(), radHome, radPath);
+              return RadAuth.validateOutput(authOutput);
+        }
+        var newOutput = new ProcessOutput(showDialog ? -1 : 0);
+        newOutput.appendStderr(RadicleBundle.message("unableToUnlock"));
+        return newOutput;
+    }
+
+    public ProcessOutput perform(CountDownLatch latch, String radHome, String radPath, IdentityDialog dialog) {
+        ProcessOutput output = null;
+        var unlockIdentity = shouldUnlockIdentity();
+        if (unlockIdentity) {
+            output = unlockIdentity(radHome, radPath, dialog);
+        }
+        if ((output != null && RadAction.isSuccess(output)) || !unlockIdentity) {
+            output = this.run();
+        }
         var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleProjectService.class));
         latch.countDown();
         if (!success) {
