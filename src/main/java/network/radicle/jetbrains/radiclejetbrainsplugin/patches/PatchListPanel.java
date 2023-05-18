@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -29,26 +28,24 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.JComponent;
 import javax.swing.DefaultListModel;
-import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
-import javax.swing.ListCellRenderer;
-import javax.swing.JList;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
-import java.awt.Component;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -140,14 +137,6 @@ public class PatchListPanel {
                 final var selectedPatch = patchesList.getSelectedValue();
                 patchModel.clear();
                 controller.createPatchProposalPanel(selectedPatch);
-                var editorManager = FileEditorManager.getInstance(project);
-                var file = new PatchVirtualFile(selectedPatch);
-                var editor = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
-                        ed.getFile() instanceof PatchVirtualFile &&
-                                ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(selectedPatch.id)).findFirst();
-                if (editor.isEmpty()) {
-                    editorManager.openFile(file, true);
-                }
             }
         });
         var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);

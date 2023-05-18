@@ -8,6 +8,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
+import git4idea.fetch.GitFetchSupport;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
@@ -52,9 +53,17 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput fetchPeerChanges(RadPatch patch) {
-        var didParts = patch.author.id().split(":");
-        return executeCommand("git", patch.repo.getRoot().getPath(), List.of("fetch",
-                didParts.length == 3 ? didParts[2] : ""), null);
+        GitFetchSupport gfs = GitFetchSupport.fetchSupport(patch.repo.getProject());
+        try {
+            var gfr = gfs.fetchAllRemotes(List.of(patch.repo));
+            gfr.showNotificationIfFailed();
+        } catch (Exception e) {
+            logger.warn("error fetching repo: {} for patch:{}", patch.repo, patch);
+        }
+        return new ProcessOutput(0);
+        // var didParts = patch.author.id().split(":");
+        // return executeCommand("git", patch.repo.getRoot().getPath(), List.of("fetch",
+        //        didParts.length == 3 ? didParts[2] : ""), null);
     }
 
     public ProcessOutput clone(String urn, String directory) {
@@ -102,7 +111,7 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput remoteList(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("remote", "ls"), root);
+        return executeCommand(root.getRoot().getPath(), List.of("remote", "list"), root);
     }
 
     public ProcessOutput inspect(GitRepository root) {
@@ -111,6 +120,13 @@ public class RadicleProjectService {
 
     public ProcessOutput fetch(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("fetch"), root);
+    }
+
+    public ProcessOutput patchEdit(GitRepository root, String patchId, String message) {
+        if (SystemInfo.isWindows) {
+            message = "'" + message + "'";
+        }
+        return executeCommand(root.getRoot().getPath(), List.of("patch", "edit", patchId, "--message", message), root);
     }
 
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
