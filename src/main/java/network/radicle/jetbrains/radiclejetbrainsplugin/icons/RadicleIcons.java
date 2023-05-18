@@ -18,6 +18,8 @@ public class  RadicleIcons {
 
     public static final Icon RADICLE_SHARE = getIcon("rad_share", true);
 
+    public static final Icon RADICLE_PULL = getIcon("rad_pull", true);
+
     private static boolean isNewUiEnabled() {
         return Registry.get("ide.experimental.ui").asBoolean();
     }

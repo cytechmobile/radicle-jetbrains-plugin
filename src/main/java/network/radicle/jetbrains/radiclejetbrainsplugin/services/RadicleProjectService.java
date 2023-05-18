@@ -11,6 +11,7 @@ import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.Nullable;
@@ -80,16 +81,26 @@ public class RadicleProjectService {
         }
     }
 
-    public ProcessOutput track(GitRepository root, String reference, String nodeUrl) {
+    public ProcessOutput trackRepo(RadTrack.Repo repo) {
         List<String> args = new ArrayList<>();
         args.add("track");
-        if (!Strings.isNullOrEmpty(reference)) {
-            args.add(reference);
+        args.add(repo.rid());
+        if (!repo.scope().equals(RadTrack.Scope.NONE)) {
+            args.add("--scope");
+            args.add(repo.scope().name.toLowerCase());
         }
-        if (!Strings.isNullOrEmpty(nodeUrl)) {
-            args.addAll(List.of("--seed", nodeUrl, "--remote"));
+        return executeCommand(".", args, null);
+    }
+
+    public ProcessOutput trackPeer(RadTrack.Peer peer) {
+        List<String> args = new ArrayList<>();
+        args.add("track");
+        args.add(peer.nid());
+        if (!Strings.isNullOrEmpty(peer.alias())) {
+            args.add("--alias");
+            args.add(peer.alias());
         }
-        return executeCommand(root.getRoot().getPath(), args, root);
+        return executeCommand(".", args, null);
     }
 
     public ProcessOutput init(GitRepository root, String name, String description, String branch) {
