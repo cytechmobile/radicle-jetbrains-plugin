@@ -46,6 +46,11 @@
             <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" anchor="after" relative-to-action="Radicle.Fetch.New.Ui"/>
         </action>
 
+        <action id="Radicle.Track.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
+                text="Rad Track" description="Radicle track from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+            <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" anchor="after" relative-to-action="Radicle.Clone.New.Ui"/>
+        </action>
+
 
         <!-- Radicle Group, under Git -->
         <group
@@ -66,6 +71,11 @@
             <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
+        <action id="Radicle.Track" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
+                text="Track" description="Radicle track" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+            <add-to-group group-id="Radicle.MainMenu" anchor="first"  />
+        </action>
+
         <action id="Radicle.Publish" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadiclePublishAction"
                 text="Share Project on Radicle" description="Radicle publish" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_SHARE">
             <add-to-group group-id="Radicle.MainMenu" anchor="first" />
@@ -82,6 +92,11 @@
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Fetch.navBartoolbar"/>
         </action>
 
+        <action id="Radicle.Trac.trackBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
+                text="Rad Track" description="Radicle clone from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+            <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Clone.cloneBartoolbar"/>
+        </action>
+
         <action id="Radicle.Fetch.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleFetchAction"
                 text="Rad Fetch" description="Radicle fetch from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_FETCH">
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Vcs.Push"/>
@@ -92,7 +107,9 @@
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Fetch.toolbar"/>
         </action>
 
-
-
+        <action id="Radicle.Track.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
+                text="Rad Track" description="Radicle track from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+            <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Clone.toolbar"/>
+        </action>
     </actions>
 </idea-plugin>
