@@ -14,7 +14,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAuth;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
@@ -121,50 +120,26 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         return output.getStdout().replace("\n", "");
     }
 
-    private boolean isRadHomeValidPath(String radPath, String radHome) {
+    private boolean isRadHomeValidPath(String radPath, String radHome, IdentityDialog dialog) {
         var radSelf = new RadSelf(radHome, radPath, myProject);
-        var output = radSelf.perform();
+        var output = radSelf.perform(dialog);
         return RadAction.isSuccess(output);
     }
 
     private void unlockOrCreateIdentity() {
         msgLabel.setText("");
+        var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radHome = getPathFromTextField(radHomeField);
             var radPath = getPathFromTextField(radPathField);
             var radSelf = new RadSelf(radHome, radPath, myProject);
-            var output = radSelf.perform();
+            var output = radSelf.perform(radHome, radPath, dialog);
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
-            var rad = myProject.getService(RadicleProjectService.class);
-            var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
-            /* If radSelf executed with exit code 0 then we have an identity !! */
-            var success = RadAction.isSuccess(output);
             ApplicationManager.getApplication().invokeLater(() -> {
-                /* if there is identity and its unlocked just update the label with node id */
-                if (success && isIdentityUnlocked) {
-                    msgLabel.setText(radDetails.did);
-                    return;
-                }
-                /* if there is no identity or unlocked identity show passphrase dialog */
-                var title = !success ? RadicleBundle.message("newIdentity") :
-                        RadicleBundle.message("unlockIdentity");
-                var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
-                dialog.setTitle(title);
-                var okButton = dialog.showAndGet();
-                if (okButton) {
-                    var action = !success ? RadAuth.RadAuthAction.CREATE_IDENTITY :
-                            RadAuth.RadAuthAction.UNLOCKED_IDENTITY;
-                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var radAuth = new RadAuth(dialog.passphraseField.getText(), radHome, radPath, action, myProject);
-                        var radAuthOutput = radAuth.perform();
-                        var isSuccess = RadAction.isSuccess(radAuthOutput);
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            var msg = isSuccess ? radAuth.getNotificationSuccessMessage() : radAuthOutput.getStderr();
-                            this.msgLabel.setText("<html>" + msg + "</html>");
-                        }, ModalityState.any());
-                    });
-                }
+                var isSuccess = RadAction.isSuccess(output);
+                var msg = isSuccess ? radDetails.did : output.getStderr();
+                this.msgLabel.setText("<html>" + msg + "</html>");
             }, ModalityState.any());
         });
     }
@@ -235,6 +210,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     @Override
     public void apply() {
+        var dialog = this.identityDialog == null ? new IdentityDialog() : this.identityDialog;
         var path = getPathFromTextField(radPathField);
         var radHomePath = getPathFromTextField(radHomeField);
         var nodeUrl = getSelectedNodeUrl();
@@ -244,7 +220,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
             var isVersionSupported = isCompatibleVersion(version);
-            var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath);
+            var isRadHomeValidPath = isRadHomeValidPath(path, radHomePath, dialog);
             var isValidNodeApi = isValidNodeApi();
             /* Rad version and home path is valid we don't have to show a notification warning */
             if (isVersionSupported && isRadHomeValidPath && isValidNodeApi) {

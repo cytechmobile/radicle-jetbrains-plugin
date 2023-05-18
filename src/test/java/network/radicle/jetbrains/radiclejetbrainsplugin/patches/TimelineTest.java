@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitCommit;
@@ -17,6 +18,7 @@ import javax.swing.JComponent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,6 +27,7 @@ public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private TimelineComponent patchEditorComponent;
     private RadPatch patch;
+    private SingleValueModel<RadPatch> patchModel;
 
     @Before
     public void beforeTest() {
@@ -32,7 +35,8 @@ public class TimelineTest extends AbstractIT {
         var gitRepoManager = GitRepositoryManager.getInstance(getProject());
         var repos = gitRepoManager.getRepositories();
         patch.repo = repos.get(0);
-        patchEditorComponent = new TimelineComponent(patch);
+        patchModel = new SingleValueModel<>(patch);
+        patchEditorComponent = new TimelineComponent(patchModel);
         patchEditorComponent.create();
     }
 
@@ -57,7 +61,8 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testRevSection() throws InterruptedException {
-        patchEditorComponent.getComponentsFactory().getLatch().await();
+        boolean waited = patchEditorComponent.getComponentsFactory().getLatch().await(3, TimeUnit.SECONDS);
+        assertThat(waited).isTrue();
         var groupedCommits = patchEditorComponent.getComponentsFactory().getGroupedCommits();
         assertThat(groupedCommits.get(patch.revisions.get(0).id()).get(0)).isEqualTo(commitHistory.get(0));
         assertThat(groupedCommits.get(patch.revisions.get(1).id()).get(0)).isEqualTo(commitHistory.get(1));
