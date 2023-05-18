@@ -4,7 +4,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleFetchActi
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadFetch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,27 +27,6 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("clone " + radUrl);
-    }
-
-    @Test
-    public void radTrackAction() throws InterruptedException {
-        final var node = new RadTrack.SeedNode("http://pine.radicle.com");
-        var track = new RadTrack(firstRepo, node);
-        track.run();
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(cmd).isNotNull();
-        assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("track --seed " + node.url() + " --remote");
-    }
-
-    @Test
-    public void radTrackPeerAction() throws InterruptedException {
-        var trackPeer = new RadTrack(firstRepo, new RadTrack.Peer("123"));
-        trackPeer.perform();
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertThat(cmd).isNotNull();
-        assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("track 123");
     }
 
     @Test
