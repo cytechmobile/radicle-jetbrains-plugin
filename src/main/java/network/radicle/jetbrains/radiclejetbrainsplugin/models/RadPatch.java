@@ -3,13 +3,16 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 
 import java.time.Instant;
 import java.util.List;
 
 public class RadPatch {
+    public SeedNode seedNode;
     public GitRepository repo;
+    public Project project;
     public String defaultBranch;
     public String projectId;
     public String id;

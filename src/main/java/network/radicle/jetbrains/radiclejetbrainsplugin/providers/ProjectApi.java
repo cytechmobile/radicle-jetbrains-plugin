@@ -70,6 +70,8 @@ public class ProjectApi {
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
                 var patches = MAPPER.readValue(response, new TypeReference<List<RadPatch>>() { });
                 for (var patch : patches) {
+                    patch.seedNode = node;
+                    patch.project = repo.getProject();
                     patch.projectId = projectId;
                     patch.defaultBranch = radProject.defaultBranch;
                     patch.repo = repo;
@@ -80,6 +82,33 @@ public class ProjectApi {
             logger.warn("http request exception {}", url, e);
         }
         return List.of();
+    }
+
+    public RadPatch fetchPatch(SeedNode node, String projectId, GitRepository repo, String patchId) {
+        var radProject = fetchRadProject(node, projectId);
+        if (radProject == null) {
+            return null;
+        }
+        final var url = node.url + "/api/v1/projects/" + projectId + "/patches/" + patchId;
+        try {
+            var res = client.execute(new HttpGet(url));
+            String response = "";
+            if (res != null) {
+                response = EntityUtils.toString(res.getEntity());
+            }
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
+                var patch = MAPPER.readValue(response, RadPatch.class);
+                patch.seedNode = node;
+                patch.project = repo.getProject();
+                patch.projectId = projectId;
+                patch.defaultBranch = radProject.defaultBranch;
+                patch.repo = repo;
+                return patch;
+            }
+        } catch (Exception e) {
+            logger.warn("http request exception {}", url, e);
+        }
+        return null;
     }
 
     public List<RadProject> fetchRadProjects(SeedNode selectedNode, int page) {
