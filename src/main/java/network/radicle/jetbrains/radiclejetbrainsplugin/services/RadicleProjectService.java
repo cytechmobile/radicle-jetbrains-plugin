@@ -93,7 +93,7 @@ public class RadicleProjectService {
         args.add(repo.rid());
         if (!repo.scope().equals(RadTrack.Scope.NONE)) {
             args.add("--scope");
-            args.add(repo.scope().name.toLowerCase());
+            args.add(repo.scope().name);
         }
         return executeCommand(".", args, null);
     }

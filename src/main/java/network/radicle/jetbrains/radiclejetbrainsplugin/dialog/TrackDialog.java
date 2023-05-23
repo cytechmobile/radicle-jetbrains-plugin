@@ -118,7 +118,7 @@ public class TrackDialog extends DialogWrapper {
                 setText(((RadTrack.RadTrackType) value).name);
             }
             if (value instanceof RadTrack.Scope) {
-                setText(((RadTrack.Scope) value).name);
+                setText(((RadTrack.Scope) value).label);
             }
             return this;
         }

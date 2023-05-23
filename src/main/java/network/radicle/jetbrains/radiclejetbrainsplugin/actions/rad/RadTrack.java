@@ -44,12 +44,14 @@ public class RadTrack extends RadAction {
     }
 
     public enum Scope {
-        NONE(RadicleBundle.message("none")),
-        TRUSTED(RadicleBundle.message("trusted")),
-        ALL(RadicleBundle.message("all"));
+        NONE(RadicleBundle.message("none"), "none"),
+        TRUSTED(RadicleBundle.message("trusted"), "trusted"),
+        ALL(RadicleBundle.message("all"), "all");
 
+        public final String label;
         public final String name;
-        Scope(String name) {
+        Scope(String label, String name) {
+            this.label = label;
             this.name = name;
         }
     }
