@@ -19,6 +19,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
@@ -46,6 +49,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -59,6 +63,8 @@ public class PatchProposalPanel {
     protected TabInfo commitTab;
     protected TabInfo filesTab;
     protected PatchTabController controller;
+    private SingleHeightTabs tabs;
+    private JComponent commitBrowser;
 
     public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
@@ -90,7 +96,7 @@ public class PatchProposalPanel {
         commitInfo.setText(RadicleBundle.message("commits"));
         commitInfo.setSideComponent(createReturnToListSideComponent());
 
-        var tabs = new SingleHeightTabs(null, uiDisposable);
+        tabs = new SingleHeightTabs(null, uiDisposable);
         tabs.addTab(tabInfo);
         tabs.addTab(filesInfo);
         tabs.addTab(commitInfo);
@@ -111,7 +117,7 @@ public class PatchProposalPanel {
         splitter.setOpaque(true);
         splitter.setBackground(UIUtil.getListBackground());
         final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
-        var commitBrowser = new CommitsBrowserComponentBuilder(patch.project, (SingleValueModel) patchCommits)
+        commitBrowser = new CommitsBrowserComponentBuilder(patch.project, (SingleValueModel) patchCommits)
                 .setEmptyCommitListText(RadicleBundle.message("patchProposalNoCommits"))
                 .onCommitSelected(c -> {
                     if (c == null || !(c instanceof GitCommit gc)) {
@@ -155,7 +161,7 @@ public class PatchProposalPanel {
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
         final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {
-            controller.openPatchTimelineOnEditor(patchModel, false);
+            controller.openPatchTimelineOnEditor(patchModel, this, false);
         });
         viewTimelineLink.setBorder(JBUI.Borders.emptyTop(4));
         nonOpaquePanel.add(viewTimelineLink, new CC().gapBottom(String.valueOf(UI.scale(8))));
@@ -264,6 +270,7 @@ public class PatchProposalPanel {
                 List<GitCommit> history = new ArrayList<>();
                 for (var rev : patch.revisions) {
                     var cmts = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(), rev.base() + "..." + rev.oid());
+                    Collections.reverse(cmts);
                     history.addAll(cmts);
                 }
                 history = history.stream().distinct().collect(Collectors.toList());
@@ -279,5 +286,25 @@ public class PatchProposalPanel {
                         RadicleBundle.message("errorCalculatingPatchProposalCommits"));
             }
         });
+    }
+
+    private JBList<GitCommit> findCommitList() {
+        var jbScrollPane = ((JBScrollPane) commitBrowser.getComponents()[1]);
+        var jbViewPort = (JBViewport) jbScrollPane.getComponents()[0];
+        return (JBList<GitCommit>) jbViewPort.getComponents()[0];
+    }
+
+    public void selectCommit(String oid) {
+        tabs.select(commitTab, true);
+        var list = findCommitList();
+        var index = -1;
+        for (var i = 0; i < list.getItemsCount(); i++) {
+            var item = list.getModel().getElementAt(i);
+            if (oid.contains(item.getId().asString())) {
+                index = i;
+                break;
+            }
+        }
+        list.setSelectedIndex(index);
     }
 }

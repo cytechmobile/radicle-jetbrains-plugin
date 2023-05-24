@@ -61,13 +61,13 @@ public class PatchTabController {
         mainPanel.add(panel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
-        openPatchTimelineOnEditor(patch, true);
+        openPatchTimelineOnEditor(patch, patchProposalPanel, true);
     }
 
-    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> patchModel, boolean force) {
+    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> patchModel, PatchProposalPanel proposalPanel, boolean force) {
         var editorManager = FileEditorManager.getInstance(project);
         final var patch = patchModel.getValue();
-        var file = new PatchVirtualFile(patchModel);
+        var file = new PatchVirtualFile(patchModel, proposalPanel);
         var editorTabs = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
                 ed.getFile() instanceof PatchVirtualFile &&
                         ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).toList();

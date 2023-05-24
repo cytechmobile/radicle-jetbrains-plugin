@@ -28,6 +28,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchEdit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,10 +47,10 @@ public class TimelineComponent {
     private final SingleValueModel<RadPatch> radPatchModel;
     private BaseHtmlEditorPane headerTitle;
 
-    public TimelineComponent(SingleValueModel<RadPatch> radPatchModel) {
+    public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
         this.radPatchModel = radPatchModel;
         this.radPatch = radPatchModel.getValue();
-        componentsFactory = new TimelineComponentFactory(radPatch);
+        componentsFactory = new TimelineComponentFactory(radPatch, patchProposalPanel);
     }
 
     public JComponent create() {

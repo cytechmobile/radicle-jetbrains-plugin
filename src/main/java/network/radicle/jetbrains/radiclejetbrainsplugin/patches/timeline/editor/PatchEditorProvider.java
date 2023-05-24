@@ -52,7 +52,7 @@ public class PatchEditorProvider implements FileEditorProvider, DumbAware {
         }
 
         public void initPanel() {
-            panel = new TimelineComponent(file.getPatchModel()).create();
+            panel = new TimelineComponent(file.getPatchModel(), file.getProposalPanel()).create();
             panel.setOpaque(true);
             panel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
         }
