@@ -49,10 +49,10 @@ public class RadTrack extends RadAction {
         ALL(RadicleBundle.message("all"), "all");
 
         public final String label;
-        public final String name;
-        Scope(String label, String name) {
+        public final String value;
+        Scope(String label, String value) {
             this.label = label;
-            this.name = name;
+            this.value = value;
         }
     }
 

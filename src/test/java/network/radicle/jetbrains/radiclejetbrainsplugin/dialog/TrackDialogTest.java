@@ -79,7 +79,7 @@ public class TrackDialogTest extends AbstractIT {
 
         cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
-        var selected = ((RadTrack.Scope) Objects.requireNonNull(trackDialog.getScopeSelect().getSelectedItem())).name.toLowerCase();
+        var selected = ((RadTrack.Scope) Objects.requireNonNull(trackDialog.getScopeSelect().getSelectedItem())).value;
         assertThat(cmd.getCommandLineString()).contains("track " + REPO_ID + " --scope " + selected);
 
     }
