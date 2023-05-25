@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline;
 
-import com.intellij.CommonBundle;
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtilKt;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
@@ -9,38 +8,28 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil;
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
-import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory;
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory;
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
-import com.intellij.collaboration.ui.util.ActionUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.project.Project;
-import com.intellij.ui.LanguageTextField;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchEdit;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import java.util.List;
+import javax.swing.*;
 
-import static kotlinx.coroutines.flow.StateFlowKt.MutableStateFlow;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getHorizontalPanel;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getVerticalPanel;
 
 public class TimelineComponent {
-    private static final Logger logger = LoggerFactory.getLogger(TimelineComponent.class);
-
     private final TimelineComponentFactory componentsFactory;
     private final RadPatch radPatch;
     private final SingleValueModel<RadPatch> radPatchModel;
@@ -53,19 +42,29 @@ public class TimelineComponent {
     }
 
     public JComponent create() {
-//        var header = getHeader();
         var header = getHeader();
         var descriptionWrapper = new Wrapper();
         descriptionWrapper.setOpaque(false);
         descriptionWrapper.setContent(componentsFactory.createDescSection());
 
-        var timelinePanel = new JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
+        var timelinePanel = getVerticalPanel(0);
         timelinePanel.setBorder(JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0));
 
         timelinePanel.setOpaque(false);
         timelinePanel.add(header);
         timelinePanel.add(descriptionWrapper);
         timelinePanel.add(componentsFactory.createRevisionSection());
+
+        var horizontalPanel = getHorizontalPanel(8);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            var radDetails = getCurrentRadDetails();
+            if (radDetails != null) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                    timelinePanel.add(commentSection);
+                }, ModalityState.any());
+            }
+        });
 
         var mainPanel = new Wrapper();
         var scrollPanel = ScrollPaneFactory.createScrollPane(timelinePanel, true);
@@ -75,6 +74,39 @@ public class TimelineComponent {
         return mainPanel;
     }
 
+    private RadDetails getCurrentRadDetails() {
+        var radSelf = new RadSelf(radPatch.project);
+        radSelf.askForIdentity(false);
+        var output = radSelf.perform();
+        if (RadAction.isSuccess(output)) {
+            return new RadDetails(output.getStdoutLines(true));
+        }
+        return null;
+    }
+
+    public boolean createComment(String comment) {
+        if (Strings.isNullOrEmpty(comment)) {
+            return true;
+        }
+        var patchComment = new RadPatchComment(radPatch.repo, radPatch.id, comment);
+        var out = patchComment.perform();
+        final boolean success = RadAction.isSuccess(out);
+        if (success) {
+            radPatchModel.setValue(radPatch);
+        }
+        return true;
+    }
+
+    private EditablePanelHandler getCommentField() {
+       var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), new JPanel(),
+                RadicleBundle.message("patch.comment", "Comment"), new SingleValueModel<>(""), this::createComment)
+                .hideCancelAction(true)
+                .closeEditorAfterSubmit(false)
+                .build();
+        panelHandle.showAndFocusEditor();
+        return panelHandle;
+    }
+
     private JComponent getHeader() {
         final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radPatch.title, radPatch.id, "", "");
 
@@ -82,7 +114,7 @@ public class TimelineComponent {
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
 
-        var panelHandle = new EditablePanelHandler(radPatch.repo.getProject(), headerTitle,
+        var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), headerTitle,
                 RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (editedTitle) -> {
             var patchEdit = new RadPatchEdit(radPatch.repo, radPatch.id, editedTitle);
             var out = patchEdit.perform();
@@ -91,7 +123,7 @@ public class TimelineComponent {
                 radPatchModel.setValue(radPatch);
             }
             return true;
-        });
+        }).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
@@ -111,103 +143,5 @@ public class TimelineComponent {
 
     public TimelineComponentFactory getComponentsFactory() {
         return componentsFactory;
-    }
-
-    public static class EditablePanelHandler {
-        private final Project project;
-        private final JComponent paneComponent;
-        private final SizeRestrictedSingleComponentLayout editorPaneLayout;
-        public final JPanel panel;
-        public JComponent editor;
-        private final String actionName;
-        //todo this needs to become dynamically editable
-        private final SingleValueModel<String> content;
-        private final Function<String, Boolean> okAction;
-
-        public EditablePanelHandler(
-                Project project, JComponent paneComponent, String actionName, SingleValueModel<String> content, Function<String, Boolean> okAction) {
-            this.project = project;
-            this.paneComponent = paneComponent;
-            this.editorPaneLayout = SizeRestrictedSingleComponentLayout.Companion.constant(null, null);
-            this.panel = new JPanel(null);
-            this.panel.setOpaque(false);
-            this.editor = null;
-            this.content = content;
-            this.actionName = actionName;
-            this.okAction = okAction;
-            this.hideEditor();
-            content.addListener(e -> {
-                var displayed = this.editor != null;
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    this.hideEditor();
-                    if (displayed) {
-                        this.showAndFocusEditor();
-                    }
-                });
-                return null;
-            });
-        }
-
-        public void showAndFocusEditor() {
-            if (editor == null) {
-                /*val model = GHCommentTextFieldModel(project, getSourceText()) { newText ->
-                        updateText(newText).successOnEdt {
-                    hideEditor()
-                }*/
-
-                var submitShortcutText = CommentInputActionsComponentFactory.INSTANCE.getSubmitShortcutText();
-                var cancelAction = ActionUtilKt.swingAction(CommonBundle.getCancelButtonText(), (e) -> {
-                    logger.warn("cancel action");
-                    hideEditor();
-                    return null;
-                });
-
-                var doc = LanguageTextField.createDocument(content.getValue(), PlainTextLanguage.INSTANCE, project,
-                        new LanguageTextField.SimpleDocumentCreator());
-                var field = CommentTextFieldFactory.INSTANCE.create(project, doc, CommentTextFieldFactory.ScrollOnChangePolicy.ScrollToField.INSTANCE,
-                        content.getValue());
-                //CollaborationToolsUIUtil.installValidator(textField, model.errorValue.map { it?.localizedMessage })
-                //var inputField = wrapWithProgressOverlay(textField, model.isBusyValue);
-
-                var primaryAction = ActionUtilKt.swingAction(actionName, e -> {
-                    logger.warn("primary action");
-                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var res = okAction.fun(field.getText());
-                        if (res) {
-                            ApplicationManager.getApplication().invokeLater(this::hideEditor);
-                        }
-                    });
-                    return null;
-                });
-                var actions = new CommentInputActionsComponentFactory.Config(
-                        MutableStateFlow(primaryAction),
-                        MutableStateFlow(List.of()), MutableStateFlow(List.of()),
-                        MutableStateFlow(cancelAction),
-                        MutableStateFlow(RadicleBundle.message("patch.proposal.submit.hint", "{0} to {1}", submitShortcutText, actionName)));
-
-                editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(field, actions);
-                panel.remove(paneComponent);
-
-                panel.setLayout(editorPaneLayout);
-                panel.add(editor);
-                panel.revalidate();
-                panel.repaint();
-            }
-
-            if (editor != null) {
-                CollaborationToolsUIUtil.INSTANCE.focusPanel(editor);
-            }
-        }
-
-        public void hideEditor() {
-            if (editor != null) {
-                panel.remove(editor);
-            }
-            panel.setLayout(new BorderLayout());
-            panel.add(paneComponent, BorderLayout.CENTER);
-            panel.revalidate();
-            panel.repaint();
-            editor = null;
-        }
     }
 }

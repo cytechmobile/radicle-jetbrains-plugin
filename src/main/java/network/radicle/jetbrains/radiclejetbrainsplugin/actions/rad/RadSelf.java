@@ -8,6 +8,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectS
 public class RadSelf extends RadAction {
     private final String radHome;
     private final String radPath;
+    private boolean unlockIdentity = true;
 
     public RadSelf(String radHome, String radPath, Project project) {
         super(project);
@@ -21,6 +22,10 @@ public class RadSelf extends RadAction {
         var projectSettings = projectHandler.loadSettings();
         this.radHome = projectSettings.getRadHome();
         this.radPath = projectSettings.getPath();
+    }
+
+    public void askForIdentity(boolean ask) {
+        unlockIdentity = ask;
     }
 
     @Override
@@ -41,6 +46,6 @@ public class RadSelf extends RadAction {
 
     @Override
     public boolean shouldUnlockIdentity() {
-        return true;
+        return unlockIdentity;
     }
 }
