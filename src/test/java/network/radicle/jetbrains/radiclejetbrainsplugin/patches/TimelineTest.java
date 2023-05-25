@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
-    private static String DUMMY_COMMENT = "Hello";
+    private static String dummyComment = "Hello";
     private TimelineComponent patchEditorComponent;
     private RadPatch patch;
 
@@ -77,13 +77,13 @@ public class TimelineTest extends AbstractIT {
 
         radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
-        patchEditorComponent.createComment(DUMMY_COMMENT);
+        patchEditorComponent.createComment(dummyComment);
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         if (SystemInfo.isWindows) {
-            DUMMY_COMMENT = "'" + DUMMY_COMMENT + "'";
+            dummyComment = "'" + dummyComment + "'";
         }
-        assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + DUMMY_COMMENT );
+        assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + dummyComment);
     }
 
     public List<JComponent> findElement(JPanel panel, JComponent el, ArrayList<JComponent> components) {
