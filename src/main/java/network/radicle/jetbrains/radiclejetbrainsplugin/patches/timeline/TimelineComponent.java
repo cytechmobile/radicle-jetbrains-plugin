@@ -23,8 +23,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 
-import javax.swing.*;
-
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getHorizontalPanel;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getVerticalPanel;
