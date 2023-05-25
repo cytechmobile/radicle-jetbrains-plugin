@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepositoryManager;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
-    private static final String DUMMY_COMMENT = "Hello";
+    private static String DUMMY_COMMENT = "Hello";
     private TimelineComponent patchEditorComponent;
     private RadPatch patch;
 
@@ -79,7 +80,10 @@ public class TimelineTest extends AbstractIT {
         patchEditorComponent.createComment(DUMMY_COMMENT);
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message '" + DUMMY_COMMENT + "'");
+        if (SystemInfo.isWindows) {
+            DUMMY_COMMENT = "'" + DUMMY_COMMENT + "'";
+        }
+        assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + DUMMY_COMMENT );
     }
 
     public List<JComponent> findElement(JPanel panel, JComponent el, ArrayList<JComponent> components) {
