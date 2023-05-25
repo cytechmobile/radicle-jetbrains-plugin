@@ -119,6 +119,13 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("fetch"), root);
     }
 
+    public ProcessOutput patchComment(GitRepository root, String patchId, String message) {
+        if (SystemInfo.isWindows) {
+            message = "'" + message + "'";
+        }
+        return executeCommand(root.getRoot().getPath(), List.of("comment", patchId, "--message", message), root);
+    }
+
     public ProcessOutput patchEdit(GitRepository root, String patchId, String message) {
         if (SystemInfo.isWindows) {
             message = "'" + message + "'";
