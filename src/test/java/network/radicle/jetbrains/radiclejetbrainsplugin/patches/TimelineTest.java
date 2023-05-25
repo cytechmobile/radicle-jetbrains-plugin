@@ -37,7 +37,7 @@ public class TimelineTest extends AbstractIT {
         var repos = gitRepoManager.getRepositories();
         patch.repo = repos.get(0);
         var patchModel = new SingleValueModel<>(patch);
-        patchEditorComponent = new TimelineComponent(patchModel);
+        patchEditorComponent = new TimelineComponent(patchModel, null);
         patchEditorComponent.create();
     }
 

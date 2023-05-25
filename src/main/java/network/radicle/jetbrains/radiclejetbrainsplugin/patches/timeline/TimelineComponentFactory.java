@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
@@ -20,11 +21,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.event.HyperlinkEvent;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -42,9 +46,11 @@ public class TimelineComponentFactory {
     private final CountDownLatch latch = new CountDownLatch(1);
     private JComponent descSection;
     private Map<String, List<GitCommit>> groupedCommits;
+    private final PatchProposalPanel patchProposalPanel;
 
-    public TimelineComponentFactory(RadPatch radPatch) {
+    public TimelineComponentFactory(RadPatch radPatch, PatchProposalPanel patchProposalPanel) {
         this.patch = radPatch;
+        this.patchProposalPanel = patchProposalPanel;
     }
 
     public JComponent createDescSection() {
@@ -150,6 +156,13 @@ public class TimelineComponentFactory {
         var commitEditor = new BaseHtmlEditorPane();
         commitEditor.setBody(builder.toString());
         commitEditor.removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+        commitEditor.addHyperlinkListener(new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+                var href = e.getDescription();
+                patchProposalPanel.selectCommit(href);
+            }
+        });
         return commitEditor;
     }
 
