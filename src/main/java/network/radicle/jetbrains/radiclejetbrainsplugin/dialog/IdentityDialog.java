@@ -13,7 +13,7 @@ import javax.swing.event.DocumentEvent;
 
 public class IdentityDialog extends DialogWrapper {
     private JPanel contentPane;
-    public JTextField passphraseField;
+    private JTextField passphraseField;
 
     public IdentityDialog() {
         super(true);
@@ -40,6 +40,10 @@ public class IdentityDialog extends DialogWrapper {
     protected Action[] createActions() {
         super.createDefaultActions();
         return new Action[]{getOKAction(), getCancelAction()};
+    }
+
+    public String getPassword() {
+        return passphraseField.getText();
     }
 
     protected void init() {
