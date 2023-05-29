@@ -135,7 +135,11 @@ public abstract class RadAction {
         }
         if (!isIdentityUnlocked && hasIdentity && hasStoredPassword) {
             var authOutput = rad.auth(storedPassword, radHome, radPath);
-            return  RadAuth.validateOutput(authOutput);
+            var success = RadAuth.validateOutput(authOutput);
+            if (!RadAction.isSuccess(success)) {
+                projectSettings.savePassphrase(radDetails.nodeId, null);
+            }
+            return success;
         }
         if (okButton.get()) {
               var authOutput = rad.auth(passphrase.get(), radHome, radPath);
