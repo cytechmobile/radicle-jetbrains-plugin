@@ -1,8 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleFetchAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadFetch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
@@ -64,14 +64,14 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void radFetchAction() throws InterruptedException {
-        var rfa = new RadicleFetchAction();
+        var rfa = new RadicleSyncAction();
         rfa.performAction(getProject());
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("fetch");
+        assertThat(cmd.getCommandLineString()).contains("sync -f");
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(new RadFetch(null).getNotificationSuccessMessage());
+        assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
     }
 
     @Test
@@ -93,14 +93,14 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void cliConfiguredError() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("");
-        var rsa = new RadicleFetchAction();
+        var rsa = new RadicleSyncAction();
         rsa.performAction(getProject());
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("radCliPathMissingText"));
 
-        var rps = new RadicleFetchAction();
+        var rps = new RadicleSyncAction();
         rps.performAction(getProject(), List.of(firstRepo));
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
@@ -112,7 +112,7 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void testRadInitError() throws InterruptedException {
         removeRemoteRadUrl(firstRepo);
-        var rsa = new RadicleFetchAction();
+        var rsa = new RadicleSyncAction();
         rsa.performAction(getProject());
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);

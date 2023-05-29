@@ -115,8 +115,8 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("inspect"), root);
     }
 
-    public ProcessOutput fetch(GitRepository root) {
-        return executeCommand(root.getRoot().getPath(), List.of("fetch"), root);
+    public ProcessOutput sync(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("sync", "-f"), root);
     }
 
     public ProcessOutput patchEdit(GitRepository root, String patchId, String message) {
