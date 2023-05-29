@@ -55,7 +55,7 @@ public class RadStub extends RadicleProjectService {
         cmdLine.withEnvironment("stdin", stdin);
         commands.add(cmdLine);
         var pr = new ProcessOutput(0);
-        var stdout = "stdout:" + stdin;
+        var stdout = "stdout";
         pr.appendStdout(stdout);
         return pr;
     }
