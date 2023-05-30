@@ -2,10 +2,12 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponent;
 import org.junit.Before;
@@ -25,9 +27,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
+    private static String dummyComment = "Hello";
     private TimelineComponent patchEditorComponent;
     private RadPatch patch;
-    private SingleValueModel<RadPatch> patchModel;
 
     @Before
     public void beforeTest() {
@@ -35,7 +37,7 @@ public class TimelineTest extends AbstractIT {
         var gitRepoManager = GitRepositoryManager.getInstance(getProject());
         var repos = gitRepoManager.getRepositories();
         patch.repo = repos.get(0);
-        patchModel = new SingleValueModel<>(patch);
+        var patchModel = new SingleValueModel<>(patch);
         patchEditorComponent = new TimelineComponent(patchModel, null);
         patchEditorComponent.create();
     }
@@ -68,6 +70,22 @@ public class TimelineTest extends AbstractIT {
         assertThat(groupedCommits.get(patch.revisions.get(1).id()).get(0)).isEqualTo(commitHistory.get(1));
     }
 
+    @Test
+    public void testComment() throws InterruptedException {
+        //wait for rad self to finish
+        radStub.commands.poll(10, TimeUnit.SECONDS);
+
+        radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        patchEditorComponent.createComment(dummyComment);
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(cmd);
+        if (SystemInfo.isWindows) {
+            dummyComment = "'" + dummyComment + "'";
+        }
+        assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + dummyComment);
+    }
+
     public List<JComponent> findElement(JPanel panel, JComponent el, ArrayList<JComponent> components) {
         for (var element : panel.getComponents()) {
             if (element instanceof JPanel) {
@@ -88,8 +106,10 @@ public class TimelineTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", "hello back");
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
-        return new RadPatch("c5df12", "testPatch", new RadPatch.Author(AUTHOR), "testDesc",
+        var myPatch = new RadPatch("c5df12", "testPatch", new RadPatch.Author(AUTHOR), "testDesc",
                 "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
+        myPatch.project = getProject();
+        return myPatch;
     }
 
     private RadPatch.Revision createRevision(String id, String description, GitCommit commit,

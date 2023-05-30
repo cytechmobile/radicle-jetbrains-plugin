@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
@@ -41,7 +40,7 @@ import java.util.concurrent.CountDownLatch;
 public class TimelineComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     private static final String COMMIT_HASH = "commit://";
-    private final DateTimeFormatter dateTimeformatter =
+    private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
     private final RadPatch patch;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -57,13 +56,12 @@ public class TimelineComponentFactory {
     public JComponent createDescSection() {
         var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
         var textHtmlEditor = new BaseHtmlEditorPane();
-        textHtmlEditor.setBody(patch.description);
+        var description = !Strings.isNullOrEmpty(patch.description) ? patch.description :
+                RadicleBundle.message("noDescription");
+        textHtmlEditor.setBody(description);
         contentPanel.add(textHtmlEditor);
         contentPanel.setOpaque(false);
-        //TODO implement edit functionality here
-        var editButton = CodeReviewCommentUIUtil.INSTANCE.createEditButton(actionEvent -> null);
         var horizontalPanel = getHorizontalPanel(8);
-        horizontalPanel.add(editButton);
         horizontalPanel.setOpaque(false);
         descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id(), null);
         return descSection;
@@ -134,9 +132,6 @@ public class TimelineComponentFactory {
                 }
                 textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
                 var horizontalPanel = getHorizontalPanel(8);
-                //TODO implement edit functionality here
-                var editButton = CodeReviewCommentUIUtil.INSTANCE.createEditButton(actionEvent -> null);
-                horizontalPanel.add(editButton);
                 horizontalPanel.setOpaque(false);
                 var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
                 contentPanel.setOpaque(false);
@@ -156,7 +151,7 @@ public class TimelineComponentFactory {
                             HtmlChunk.raw(commit.getFullMessage())));
             builder.append(HtmlChunk.link(commit.getAuthor().getName(), commit.getAuthor().getName()));
             builder.append(HtmlChunk.nbsp());
-            builder.append(dateTimeformatter.format(Instant.ofEpochMilli(commit.getAuthorTime())));
+            builder.append(DATE_TIME_FORMATTER.format(Instant.ofEpochMilli(commit.getAuthorTime())));
         }
         var commitEditor = new BaseHtmlEditorPane();
         commitEditor.setBody(builder.toString());
@@ -171,27 +166,28 @@ public class TimelineComponentFactory {
         return commitEditor;
     }
 
-    private JComponent createTimeLineItem(JComponent contentPanel,
+    public static JComponent createTimeLineItem(JComponent contentPanel,
                                           JComponent actionsPanel, String title, Instant date) {
-        var authorDid = HtmlChunk.link("",
+        var authorDid = HtmlChunk.link("#",
                 title).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground()))).bold();
         var titleText = new HtmlBuilder().append(authorDid)
                 .append(HtmlChunk.nbsp())
-                .append(date != null ? dateTimeformatter.format(date) : "");
+                .append(date != null ? DATE_TIME_FORMATTER.format(date) : "");
         var titleTextPane = new BaseHtmlEditorPane();
         titleTextPane.setOpaque(false);
         titleTextPane.setBody(titleText.toString());
+        titleTextPane.removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
         titleTextPane.setForeground(UIUtil.getContextHelpForeground());
         return new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 integer -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel)
                 .withHeader(titleTextPane, actionsPanel).build();
     }
 
-    private JComponent getVerticalPanel(int gap) {
+    public static JComponent getVerticalPanel(int gap) {
         return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
     }
 
-    private JComponent getHorizontalPanel(int gap) {
+    public static JComponent getHorizontalPanel(int gap) {
         return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
     }
 
