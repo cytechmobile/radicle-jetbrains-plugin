@@ -108,6 +108,7 @@ public class RadicleMenusJavaTest {
             actionMenu(remoteRobot, "Radicle").click();
             actionMenuItem(remoteRobot, "Fetch").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
+            actionMenuItem(remoteRobot, "Track").isShowing();
             actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
         });
 
