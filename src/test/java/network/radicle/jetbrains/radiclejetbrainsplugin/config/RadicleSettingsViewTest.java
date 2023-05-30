@@ -90,7 +90,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
-        assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.nodeId);
+        assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.did);
     }
 
     @Test
@@ -137,6 +137,22 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME1);
+    }
+
+    @Test
+    public void testButtonWithStoredPassword() throws InterruptedException {
+        radicleProjectSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
+        radicleSettingsView = new RadicleSettingsView(getProject());
+        radStub.commands.poll(10, TimeUnit.SECONDS);
+        var testButton = radicleSettingsView.getRadHomeTestButton();
+        testButton.doClick();
+        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME1);
+        var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
+        assertThat(auth.getEnvironment().get("stdin")).isEqualTo(RadicleGlobalSettingsHandlerTest.PASSWORD);
     }
 
     @Test

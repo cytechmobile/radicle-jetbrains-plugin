@@ -105,20 +105,26 @@ public abstract class RadAction {
         var lines = output.getStdoutLines(true);
         var radDetails = new RadDetails(lines);
         var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
-        var success = RadAction.isSuccess(output);
-        var showDialog = !success || !isIdentityUnlocked;
+        var hasIdentity = RadAction.isSuccess(output);
+        var projectSettings = new RadicleProjectSettingsHandler(pr);
+        String storedPassword =  null;
+        if (hasIdentity) {
+            storedPassword = projectSettings.getPassword(radDetails.nodeId);
+        }
+        var hasStoredPassword = !Strings.isNullOrEmpty(storedPassword);
+        var showDialog = ((!hasIdentity || !isIdentityUnlocked) && !hasStoredPassword);
         AtomicBoolean okButton = new AtomicBoolean(false);
         AtomicReference<String> passphrase = new AtomicReference<>("");
         if (showDialog) {
             var latch = new CountDownLatch(1);
             ApplicationManager.getApplication().invokeLater(() -> {
-                var title = !success ? RadicleBundle.message("newIdentity") :
+                var title = !hasIdentity ? RadicleBundle.message("newIdentity") :
                         RadicleBundle.message("unlockIdentity");
                 var myDialog = dialog == null ? new IdentityDialog() : dialog;
                 myDialog.setTitle(title);
                 okButton.set(myDialog.showAndGet());
                 latch.countDown();
-                passphrase.set(myDialog.passphraseField.getText());
+                passphrase.set(myDialog.getPassword());
             }, ModalityState.any());
             try {
                 latch.await();
@@ -127,9 +133,24 @@ public abstract class RadAction {
                 return new ProcessOutput(-1);
             }
         }
+        if (!isIdentityUnlocked && hasIdentity && hasStoredPassword) {
+            var authOutput = rad.auth(storedPassword, radHome, radPath);
+            var success = RadAuth.validateOutput(authOutput);
+            if (!RadAction.isSuccess(success)) {
+                projectSettings.savePassphrase(radDetails.nodeId, null);
+            }
+            return success;
+        }
         if (okButton.get()) {
               var authOutput = rad.auth(passphrase.get(), radHome, radPath);
-              return RadAuth.validateOutput(authOutput);
+              var success = RadAuth.validateOutput(authOutput);
+              if (RadAction.isSuccess(success)) {
+                  output = rad.self(radHome, radPath);
+                  lines = output.getStdoutLines(true);
+                  radDetails = new RadDetails(lines);
+                  projectSettings.savePassphrase(radDetails.nodeId, passphrase.get());
+              }
+              return success;
         }
         var newOutput = new ProcessOutput(showDialog ? -1 : 0);
         newOutput.appendStderr(RadicleBundle.message("unableToUnlock"));
