@@ -122,6 +122,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     private boolean isRadHomeValidPath(String radPath, String radHome, IdentityDialog dialog) {
         var radSelf = new RadSelf(radHome, radPath, myProject);
+        radSelf.askForIdentity(false);
         var output = radSelf.perform(dialog);
         return RadAction.isSuccess(output);
     }
