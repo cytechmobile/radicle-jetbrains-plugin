@@ -1,6 +1,10 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.google.common.base.Strings;
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
@@ -26,6 +30,10 @@ public class RadicleProjectSettingsHandler {
         return getApplicationProperties().getValue(PATH_KEY, "");
     }
 
+    public String getPassword(String key) {
+        return retrieveStoredCredentials(key);
+    }
+
     private SeedNode getSeedNode() {
         var seed = getApplicationProperties().getValue(RAD_SEED_KEY);
         if (Strings.isNullOrEmpty(seed)) {
@@ -46,6 +54,10 @@ public class RadicleProjectSettingsHandler {
         getApplicationProperties().setValue(RAD_SEED_KEY, Strings.nullToEmpty(seedNode));
     }
 
+    public void savePassphrase(String key, String passphrase) {
+        storeCredentials(key, passphrase);
+    }
+
     private void saveDefaultSeedNodes() {
         var loadedSeedNode = getSeedNode();
         if (Strings.isNullOrEmpty(loadedSeedNode.url)) {
@@ -59,6 +71,25 @@ public class RadicleProjectSettingsHandler {
 
     private PropertiesComponent getApplicationProperties() {
         return PropertiesComponent.getInstance(project);
+    }
+
+    private CredentialAttributes createCredentialAttributes(String key) {
+        return new CredentialAttributes(CredentialAttributesKt.generateServiceName("MySystem", key));
+    }
+
+    private void storeCredentials(String key, String password) {
+        var credentialAttributes = createCredentialAttributes(key);
+        var credentials = new Credentials(key, password);
+        PasswordSafe.getInstance().set(credentialAttributes, credentials);
+    }
+
+    private String retrieveStoredCredentials(String key) {
+        var credentialAttributes = createCredentialAttributes(key);
+        var credentials = PasswordSafe.getInstance().get(credentialAttributes);
+        if (credentials != null) {
+            return credentials.getPasswordAsString();
+        }
+        return null;
     }
 
 }

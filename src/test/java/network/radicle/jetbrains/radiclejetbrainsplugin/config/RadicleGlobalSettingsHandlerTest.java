@@ -9,6 +9,8 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleGlobalSettingsHandlerTest extends LightPlatform4TestCase {
+    private static final String KEY = "myKey";
+    public static final String PASSWORD = "password";
     RadicleProjectSettingsHandler radicleProjectSettingsHandler;
 
     @Before
@@ -34,6 +36,13 @@ public class RadicleGlobalSettingsHandlerTest extends LightPlatform4TestCase {
         assertThat(newSettings.getPath()).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(newSettings.getSeedNode().url).isEqualTo(newSeedNode);
         radicleProjectSettingsHandler.saveSeedNode(null);
+    }
+
+    @Test
+    public void testPassword() {
+        radicleProjectSettingsHandler.savePassphrase(KEY, PASSWORD);
+        var storedPassword = radicleProjectSettingsHandler.getPassword(KEY);
+        assertThat(storedPassword).isEqualTo(PASSWORD);
     }
 
 }
