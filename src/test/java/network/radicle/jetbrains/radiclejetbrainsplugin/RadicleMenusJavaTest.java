@@ -106,7 +106,7 @@ public class RadicleMenusJavaTest {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").click();
-            actionMenuItem(remoteRobot, "Fetch").isShowing();
+            actionMenuItem(remoteRobot, "Sync").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
             actionMenuItem(remoteRobot, "Track").isShowing();
             actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
