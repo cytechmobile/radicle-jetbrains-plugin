@@ -7,6 +7,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;

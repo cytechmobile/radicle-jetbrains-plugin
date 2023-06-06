@@ -188,7 +188,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
 
     public abstract JComponent getFilterPanel(S searchViewModel, CoroutineScope scope);
 
-    public abstract void filterList(Q patchListSearchValue);
+    public abstract void filterList(Q searchValue);
 
     public abstract Q getEmptySearchValueModel();
 
