@@ -71,14 +71,14 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testFilterEmptyResults() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         //Filter with search (peer id)
         filterWithSearch.searchQuery = "lala";
         var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-
+        listPanel.updateListEmptyText(filterWithSearch);
         var patchModel = listPanel.getPatchModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
         var emptyText = listPanel.getPatchesList().getEmptyText();
@@ -87,7 +87,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testFilterByAuthor() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var filter = new PatchListSearchValue();
         filter.author = AUTHOR;
@@ -109,7 +109,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testFilterByProject() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var filter = new PatchListSearchValue();
         var searchVm = listPanel.getSearchVm();
@@ -126,7 +126,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testSearch() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         //Filter with search (peer id)
@@ -149,7 +149,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testFiltersData() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var searchVm = listPanel.getSearchVm();
         var filterAuthors = searchVm.getAuthors();
@@ -163,7 +163,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testState() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         filterWithSearch.state = RadPatch.State.OPEN.status;
@@ -191,7 +191,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testTagDuplicates() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var searchVm = listPanel.getSearchVm();
         var tags = searchVm.getTags();
@@ -200,7 +200,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testTag() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         filterWithSearch.tag = "tag1";

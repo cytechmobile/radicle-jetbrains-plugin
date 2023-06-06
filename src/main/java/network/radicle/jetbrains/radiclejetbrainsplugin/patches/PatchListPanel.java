@@ -1,222 +1,101 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.google.common.base.Strings;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
-import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import kotlin.coroutines.Continuation;
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.CoroutineScope;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
-import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
-import org.jdesktop.swingx.VerticalLayout;
-import org.jetbrains.annotations.NotNull;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.DefaultListModel;
+import javax.swing.ListCellRenderer;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import java.awt.BorderLayout;
+import javax.swing.JLabel;
+import javax.swing.DefaultListModel;
 import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.BorderLayout;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
-
-public class PatchListPanel {
+public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchTabController controller;
-    private final Project project;
-    private final DefaultListModel<RadPatch> patchModel;
-    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
-    private List<RadPatch> loadedRadPatches;
-    private ProgressStripe progressStripe;
-    private PatchSearchPanelViewModel searchVm;
-    private JBList<RadPatch> patchesList;
-    private final ProjectApi myApi;
+    private final ListCellRenderer<RadPatch> patchListCellRenderer = new PatchListCellRenderer();
 
     public PatchListPanel(PatchTabController ctrl, Project project, ProjectApi api) {
-        this.myApi = api;
+        super(ctrl, project, api);
         this.controller = ctrl;
-        this.project = project;
-        this.patchModel = new DefaultListModel<>();
-        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
     }
 
-    public JComponent create() {
-        var scope = MainScope();
-        Disposer.register(controller.getDisposer(), () -> CoroutineScopeKt.cancel(scope, null));
-        searchVm = new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
-        var filterPanel = new PatchFilterPanel(searchVm).create(scope);
-        var verticalPanel = new JPanel(new VerticalLayout(5));
-        verticalPanel.add(filterPanel);
-        var mainPanel = JBUI.Panels.simplePanel();
-        var listPanel = createListPanel();
-        mainPanel.addToTop(verticalPanel);
-        mainPanel.addToCenter(listPanel);
-
-        searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
-            filterList(patchListSearchValue);
-            return null;
-        }, new Continuation<Object>() {
-            @Override
-            public void resumeWith(@NotNull Object o) {
-
-            }
-
-            @NotNull
-            @Override
-            public CoroutineContext getContext() {
-                return scope.getCoroutineContext();
-            }
-        });
-        updateListPanel();
-        return mainPanel;
+    @Override
+    public List<RadPatch> fetchData(SeedNode seedNode, String projectId, GitRepository repo) {
+        return myApi.fetchPatches(seedNode, projectId, repo);
     }
 
-    private void updateListEmptyText(PatchListSearchValue patchListSearchValue) {
-        patchesList.getEmptyText().clear();
-        if (loadedRadPatches.isEmpty() || patchModel.isEmpty()) {
-            patchesList.getEmptyText().setText(RadicleBundle.message("nothingFound"));
-        }
-        if (patchListSearchValue.getFilterCount() > 0 && (loadedRadPatches.isEmpty() || patchModel.isEmpty())) {
-            patchesList.getEmptyText().appendSecondaryText(RadicleBundle.message("clearFilters"), SimpleTextAttributes.LINK_ATTRIBUTES,
-                    e -> resetFilters());
-        }
+    @Override
+    public ListCellRenderer<RadPatch> getCellRenderer() {
+         return patchListCellRenderer;
     }
 
-    private void resetFilters() {
-        searchVm.getSearchState().setValue(new PatchListSearchValue());
+    @Override
+    public PatchSearchPanelViewModel getViewModel(CoroutineScope scope) {
+        return new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
     }
 
-    private JPanel createListPanel() {
-        patchesList = new JBList<>(patchModel);
-        patchesList.setCellRenderer(new PatchListCellRenderer());
-        patchesList.setExpandableItemsEnabled(false);
-        patchesList.getEmptyText().clear();
-        patchesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ScrollingUtil.installActions(patchesList);
-        ListUtil.installAutoSelectOnMouseMove(patchesList);
-        ListUiUtil.Selection.INSTANCE.installSelectionOnFocus(patchesList);
-        ListUiUtil.Selection.INSTANCE.installSelectionOnRightClick(patchesList);
-        patchesList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() != 1 || e.getClickCount() != 2) {
-                    return;
-                }
-                final var selectedPatch = patchesList.getSelectedValue();
-                patchModel.clear();
-                controller.createPatchProposalPanel(selectedPatch);
-            }
-        });
-        var scrollPane = ScrollPaneFactory.createScrollPane(patchesList, true);
-        progressStripe = new ProgressStripe(scrollPane, controller.getDisposer(), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-        return progressStripe;
+    @Override
+    public void onItemClick(RadPatch ob) {
+        controller.createPatchProposalPanel(ob);
     }
 
-    public void filterList(PatchListSearchValue patchListSearchValue) {
-        patchModel.clear();
-        if (loadedRadPatches == null) {
-            return;
-        }
-        if (patchListSearchValue.getFilterCount() == 0) {
-            patchModel.addAll(loadedRadPatches);
-        } else {
-            var projectFilter = patchListSearchValue.project;
-            var searchFilter = patchListSearchValue.searchQuery;
-            var peerAuthorFilter = patchListSearchValue.author;
-            var stateFilter = patchListSearchValue.state;
-            var tagFilter = patchListSearchValue.tag;
-            List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                    .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
-                            p.title.contains(searchFilter) || p.description.contains(searchFilter))
-                    .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
-                    .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
-                    .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
-                    .collect(Collectors.toList());
-            patchModel.addAll(filteredPatches);
-        }
-        updateListEmptyText(patchListSearchValue);
+    @Override
+    public JComponent getFilterPanel(PatchSearchPanelViewModel searchVm, CoroutineScope scope) {
+        return new PatchFilterPanel(searchVm).create(scope);
     }
 
-    private List<RadPatch> getPatchProposals(List<GitRepository> repos) {
-        var outputs = new ArrayList<RadPatch>();
-        var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, true);
-        if (radInitializedRepos.isEmpty()) {
-            return List.of();
-        }
-        for (GitRepository repo : radInitializedRepos) {
-            var radInspect = new RadInspect(repo);
-            var output = radInspect.perform();
-            if (RadAction.isSuccess(output)) {
-                var radProjectId = output.getStdout().trim();
-                var seedNode =  this.radicleProjectSettingsHandler.loadSettings().getSeedNode();
-                var patches = myApi.fetchPatches(seedNode, radProjectId, repo);
-                if (!patches.isEmpty()) {
-                    outputs.addAll(patches);
-                }
-            }
-        }
-        return outputs;
+     @Override
+     public void filterList(PatchListSearchValue patchListSearchValue) {
+         model.clear();
+         if (loadedData == null) {
+             return;
+         }
+         if (patchListSearchValue.getFilterCount() == 0) {
+             model.addAll(loadedData);
+         } else {
+             var projectFilter = patchListSearchValue.project;
+             var searchFilter = patchListSearchValue.searchQuery;
+             var peerAuthorFilter = patchListSearchValue.author;
+             var stateFilter = patchListSearchValue.state;
+             var tagFilter = patchListSearchValue.tag;
+             var loadedRadPatches = loadedData;
+             List<RadPatch> filteredPatches = loadedRadPatches.stream()
+                     .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
+                             p.title.contains(searchFilter) || p.description.contains(searchFilter))
+                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
+                     .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
+                     .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
+                     .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
+                     .collect(Collectors.toList());
+             model.addAll(filteredPatches);
+         }
+     }
+
+    @Override
+    public PatchListSearchValue getEmptySearchValueModel() {
+        return new PatchListSearchValue();
     }
 
-    private void updateListPanel() {
-        var radPatchesCountDown = new CountDownLatch(1);
-        searchVm.setRadPatchesCountDown(radPatchesCountDown);
-        var settings =  radicleProjectSettingsHandler.loadSettings();
-        var seedNode = settings.getSeedNode();
-        if (seedNode == null || Strings.isNullOrEmpty(seedNode.url)) {
-            return;
-        }
-        var gitRepoManager = GitRepositoryManager.getInstance(project);
-        var repos = gitRepoManager.getRepositories();
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            patchModel.clear();
-            progressStripe.startLoading();
-            var patchProposals = getPatchProposals(repos);
-            loadedRadPatches = patchProposals;
-            searchVm.setRadPatches(loadedRadPatches);
-            radPatchesCountDown.countDown();
-            patchModel.addAll(patchProposals);
-            ApplicationManager.getApplication().invokeLater(() -> {
-                progressStripe.stopLoading();
-                updateListEmptyText(searchVm.getSearchState().getValue());
-            }, ModalityState.any());
-        });
-    }
-
-    private static class PatchListCellRenderer implements ListCellRenderer<RadPatch> {
+    public static class PatchListCellRenderer implements ListCellRenderer<RadPatch> {
 
         public PatchListCellRenderer() {
         }
@@ -275,7 +154,7 @@ public class PatchListPanel {
     }
 
     public DefaultListModel<RadPatch> getPatchModel() {
-        return patchModel;
+        return model;
     }
 
     public PatchSearchPanelViewModel getSearchVm() {
@@ -283,6 +162,6 @@ public class PatchListPanel {
     }
 
     public JBList<RadPatch> getPatchesList() {
-        return patchesList;
+        return list;
     }
 }

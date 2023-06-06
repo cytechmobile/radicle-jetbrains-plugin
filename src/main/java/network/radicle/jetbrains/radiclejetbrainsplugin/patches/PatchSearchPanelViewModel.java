@@ -2,8 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
-import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel;
-import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase;
+import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepositoryManager;
@@ -12,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SearchViewModelBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -22,29 +22,19 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-public class PatchSearchPanelViewModel
-        extends ReviewListSearchPanelViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter>
-        implements ReviewListSearchPanelViewModel<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter> {
+public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter> {
 
     private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
 
     private final Project project;
     private List<String> projectNames = List.of();
-    private List<RadPatch> radPatches;
-    private CountDownLatch radPatchesCountDown;
+    protected List<RadPatch> myList;
+    protected CountDownLatch countDown;
 
     public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
                                      @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, Project project) {
         super(scope, historyModel, new PatchListSearchValue(), new PatchListQuickFilter());
         this.project = project;
-    }
-
-    public void setRadPatches(List<RadPatch> patches) {
-        this.radPatches = patches;
-    }
-
-    public void setRadPatchesCountDown(CountDownLatch countdown) {
-        this.radPatchesCountDown = countdown;
     }
 
     public MutableStateFlow<String> authorFilterState() {
@@ -103,12 +93,12 @@ public class PatchSearchPanelViewModel
         var selectedProjectFilter = this.getSearchState().getValue().project;
         List<String> tags = new ArrayList<>();
         try {
-            radPatchesCountDown.await();
+            countDown.await();
         } catch (Exception e) {
             logger.warn("Unable to get rad tags", e);
             return tags;
         }
-        for (var p : radPatches) {
+        for (var p : myList) {
             if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
@@ -125,12 +115,12 @@ public class PatchSearchPanelViewModel
         var selectedProjectFilter = this.getSearchState().getValue().project;
         List<String> peersIds = new ArrayList<>();
         try {
-            radPatchesCountDown.await();
+            countDown.await();
         } catch (Exception e) {
             logger.warn("Unable to get rad patches", e);
             return peersIds;
         }
-        for (var p : radPatches) {
+        for (var p : myList) {
             if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
@@ -166,10 +156,24 @@ public class PatchSearchPanelViewModel
         return List.of(openFilter, closedFilter, mergedFilter, archivedFilter);
     }
 
+    @Override
+    public void setList(List list) {
+        myList = list;
+    }
+
+    @Override
+    public void setCountDown(CountDownLatch countdown) {
+        this.countDown = countdown;
+    }
+
+    @Override
+    public ReviewListSearchValue getValue() {
+        return this.getSearchState().getValue();
+    }
 
     public static class PatchListQuickFilter implements ReviewListQuickFilter<PatchListSearchValue> {
 
-        private PatchListSearchValue patchListSearchValue;
+        private final PatchListSearchValue patchListSearchValue;
 
         public PatchListQuickFilter() {
             patchListSearchValue = new PatchListSearchValue();
