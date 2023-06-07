@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
-import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepositoryManager;
@@ -22,14 +21,12 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter> {
+public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter, RadPatch> {
 
     private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
 
     private final Project project;
     private List<String> projectNames = List.of();
-    protected List<RadPatch> myList;
-    protected CountDownLatch countDown;
 
     public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
                                      @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, Project project) {
@@ -154,21 +151,6 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
         archivedFilter.patchListSearchValue.state = RadPatch.State.ARCHIVED.status;
 
         return List.of(openFilter, closedFilter, mergedFilter, archivedFilter);
-    }
-
-    @Override
-    public void setList(List list) {
-        myList = list;
-    }
-
-    @Override
-    public void setCountDown(CountDownLatch countdown) {
-        this.countDown = countdown;
-    }
-
-    @Override
-    public ReviewListSearchValue getValue() {
-        return this.getSearchState().getValue();
     }
 
     public static class PatchListQuickFilter implements ReviewListQuickFilter<PatchListSearchValue> {

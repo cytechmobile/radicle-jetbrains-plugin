@@ -10,15 +10,26 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E extends ReviewListQuickFilter<T>>
+public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E extends ReviewListQuickFilter<T>, Q>
         extends ReviewListSearchPanelViewModelBase<T, E> {
+
+    protected CountDownLatch countDown;
+    protected List<Q> myList;
 
     public SearchViewModelBase(@NotNull CoroutineScope scope, @NotNull ReviewListSearchHistoryModel<T> historyModel,
                                @NotNull T emptySearch, @NotNull E defaultQuickFilter) {
         super(scope, historyModel, emptySearch, defaultQuickFilter);
     }
 
-    public abstract void setList(List list);
-    public abstract void setCountDown(CountDownLatch countdown);
-    public abstract ReviewListSearchValue getValue();
+    public void setList(List<Q> list) {
+        this.myList = list;
+    }
+
+    public void setCountDown(CountDownLatch countdown) {
+        this.countDown = countdown;
+    }
+
+    public ReviewListSearchValue getValue() {
+        return this.getSearchState().getValue();
+    }
 }
