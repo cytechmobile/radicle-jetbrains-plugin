@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHist
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import com.intellij.openapi.project.Project;
 import kotlinx.coroutines.CoroutineScope;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SearchViewModelBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSearchValue, IssueSearchPanelViewModel.IssueListQuickFilter> {
+public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSearchValue, IssueSearchPanelViewModel.IssueListQuickFilter, RadIssue> {
     private final Project project;
     public IssueSearchPanelViewModel(@NotNull CoroutineScope scope,
                                      @NotNull ReviewListSearchHistoryModel<IssueListSearchValue> historyModel,
