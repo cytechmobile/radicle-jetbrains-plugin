@@ -43,7 +43,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 
-public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends SearchViewModelBase<Q, ?>> {
+public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends SearchViewModelBase<Q, ?, P>> {
     protected final TabController controller;
     protected final Project project;
     protected final ProjectApi myApi;

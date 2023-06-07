@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
+package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -11,8 +11,8 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueTabController;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchTabController;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JPanel;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
     public ToolWindowManagerListener toolWindowManagerListener;
-    protected TabController patchTabController;
+    public TabController patchTabController;
     public TabController issueTabController;
     protected ProjectApi myApi;
 

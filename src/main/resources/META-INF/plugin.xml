@@ -30,7 +30,7 @@
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
 
         <toolWindow icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_TOOL_WINDOW"
-                factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.patches.RadicleToolWindow" id="Radicle"/>
+                    factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow" id="Radicle"/>
         <postStartupActivity implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener"/>
     </extensions>
 
