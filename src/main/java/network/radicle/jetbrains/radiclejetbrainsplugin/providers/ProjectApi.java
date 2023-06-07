@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import git4idea.repo.GitRepository;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
@@ -53,6 +54,26 @@ public class ProjectApi {
             logger.warn("http request exception {}", url, e);
             return new SeedNodeInfo(null, null, "Exception: " + e.getMessage());
         }
+    }
+    public List<RadIssue> fetchIssues(SeedNode node, String projectId, GitRepository repo) {
+        var url = node.url + "/api/v1/projects/" + projectId + "/issues";
+        try {
+            var res = client.execute(new HttpGet(url));
+            String response = "";
+            if (res != null) {
+                response = EntityUtils.toString(res.getEntity());
+            }
+            if (res != null && res.getStatusLine().getStatusCode() == 200) {
+                var issues = MAPPER.readValue(response, new TypeReference<List<RadIssue>>() { });
+                for (var issue : issues) {
+                    issue.repo = repo;
+                }
+                return issues;
+            }
+        } catch (Exception e) {
+            logger.warn("http request exception {}", url, e);
+        }
+        return List.of();
     }
 
     public List<RadPatch> fetchPatches(SeedNode node, String projectId, GitRepository repo) {
