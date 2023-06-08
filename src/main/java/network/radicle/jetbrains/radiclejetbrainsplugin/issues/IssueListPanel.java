@@ -10,16 +10,13 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
-
 import javax.accessibility.AccessibleContext;
-import javax.swing.JComponent;
 import javax.swing.ListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -32,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
-    public IssueListPanel(TabController controller, Project project, ProjectApi myApi) {
+    public IssueListPanel(IssueTabController controller, Project project, ProjectApi myApi) {
         super(controller, project, myApi);
     }
 

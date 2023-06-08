@@ -38,18 +38,6 @@ public abstract class AbstractReviewListSearchValue implements ReviewListSearchV
         return tag;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
     @Override
     public int getFilterCount() {
         int count = 0;
