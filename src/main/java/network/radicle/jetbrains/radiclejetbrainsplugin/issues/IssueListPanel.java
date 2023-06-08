@@ -13,12 +13,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.JComponent;
 import javax.swing.ListCellRenderer;
-import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -30,12 +28,9 @@ import java.util.List;
 
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
-    public IssueListPanel(TabController controller, Project project, ProjectApi myApi) {
-        super(controller, project, myApi);
-    }
 
-    public DefaultListModel<RadIssue> getIssueModel() {
-        return model;
+    public IssueListPanel(IssueTabController controller, Project project, ProjectApi myApi) {
+        super(controller, project, myApi);
     }
 
     @Override
