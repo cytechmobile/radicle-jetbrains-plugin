@@ -195,6 +195,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     public DefaultListModel<P> getModel() {
         return model;
     }
+
     public S getSearchVm() {
         return searchVm;
     }
