@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import git4idea.repo.GitRepository;
@@ -35,6 +36,14 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     public DefaultListModel<RadIssue> getIssueModel() {
         return model;
+    }
+
+    public JBList<RadIssue> getIssueList() {
+        return list;
+    }
+
+    public IssueSearchPanelViewModel getSearchVm() {
+        return searchVm;
     }
 
     @Override
