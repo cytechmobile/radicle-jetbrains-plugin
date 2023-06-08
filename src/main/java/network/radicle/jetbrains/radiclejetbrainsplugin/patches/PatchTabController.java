@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -17,7 +16,7 @@ import javax.swing.JComponent;
 import java.awt.BorderLayout;
 import java.util.Arrays;
 
-public class PatchTabController extends TabController {
+public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchListPanel patchListPanel;
 
     public PatchTabController(Content tab, Project project, ProjectApi myApi) {
@@ -73,12 +72,8 @@ public class PatchTabController extends TabController {
     }
 
     @Override
-    public ListPanel getPanel() {
+    public ListPanel<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> getPanel() {
         return patchListPanel;
-    }
-
-    public Disposable getDisposer() {
-        return tab.getDisposer();
     }
 
     public PatchListPanel getPatchListPanel() {

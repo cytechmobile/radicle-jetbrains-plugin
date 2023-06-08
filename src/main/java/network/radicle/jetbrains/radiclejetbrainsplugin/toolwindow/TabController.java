@@ -1,11 +1,13 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import java.awt.BorderLayout;
-public abstract class TabController {
+
+public abstract class TabController<S, Q extends ReviewListSearchValue, P extends SearchViewModelBase<Q, ?, S>> {
     protected final Project project;
     protected final Content tab;
     protected final ProjectApi myApi;
@@ -28,7 +30,7 @@ public abstract class TabController {
     }
 
     public abstract String getTabName();
-    public abstract ListPanel getPanel();
+    public abstract ListPanel<S, Q, P> getPanel();
     public Disposable getDisposer() {
         return tab.getDisposer();
     }
