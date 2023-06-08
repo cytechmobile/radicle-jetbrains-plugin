@@ -4,6 +4,30 @@
 
 ## Unreleased
 
+## 0.5.0 - 2023-06-06
+
+### Features
+- * with search / filtering - #130
+- Radicle Patch Activity overview migrated to Heartwood - #134
+- Radicle Patch Details migrated to Heartwood - #131
+- Clickable commit hashes in patch proposal conversation view - #227
+- New "Radicle -> Track" action: You can now track both Radicle projects and peers - #194
+- Moved passphrase to `CredentialsStore`, provided by the Jetbrains IDE Plugin Software Development Kit (SDK) - #257 , #248 , #260
+
+### Known Issues
+- Handling special characters in patch proposal title and comments - #251
+
+### Dependabot (Security) Updates
+- Bump org.junit.platform:junit-platform-launcher from 1.9.2 to 1.9.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/236
+- Bump JetBrains/qodana-action from 2022.3.4 to 2023.1.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/232
+- Bump com.squareup.okhttp3:logging-interceptor from 4.10.0 to 4.11.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/230
+- Bump org.junit.jupiter:junit-jupiter-engine from 5.9.2 to 5.9.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/239
+- Bump org.mockito:mockito-core from 5.2.0 to 5.3.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/231
+- Bump org.junit.jupiter:junit-jupiter-api from 5.9.2 to 5.9.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/238
+- Bump org.junit.vintage:junit-vintage-engine from 5.9.2 to 5.9.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/235
+- Bump com.fasterxml.jackson.datatype:jackson-datatype-jsr310 from 2.15.0 to 2.15.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/249
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.4.0...v0.5.0
+
 ## 0.4.0 - 2023-04-05
 
 ### Features
