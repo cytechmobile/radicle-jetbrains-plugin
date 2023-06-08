@@ -43,7 +43,7 @@ public class IssueListPanelTest extends AbstractIT {
     public void testListPanel() {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
-        var issueModel = listPanel.getIssueModel();
+        var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(2);
         var firstRadIssue = issueModel.get(0);
         var secondRadIssue = issueModel.get(1);
@@ -67,9 +67,9 @@ public class IssueListPanelTest extends AbstractIT {
         var listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
         listPanel.updateListEmptyText(filterWithSearch);
-        var issueModel = listPanel.getIssueModel();
+        var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(0);
-        var emptyText = listPanel.getIssueList().getEmptyText();
+        var emptyText = listPanel.getList().getEmptyText();
         assertThat(emptyText.getText()).isEqualTo("Nothing found");
     }
 
@@ -81,7 +81,7 @@ public class IssueListPanelTest extends AbstractIT {
         filter.author = AUTHOR;
         listPanel.filterList(filter);
 
-        var issueModel = listPanel.getIssueModel();
+        var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(1);
         var issue = issueModel.get(0);
         assertThat(issue.author.id()).isEqualTo(issues.get(0).author.id());
@@ -89,7 +89,7 @@ public class IssueListPanelTest extends AbstractIT {
         filter.author = AUTHOR1;
         listPanel.filterList(filter);
 
-        issueModel = listPanel.getIssueModel();
+        issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(1);
         issue = issueModel.get(0);
         assertThat(issue.author.id()).isEqualTo(issues.get(1).author.id());
@@ -105,7 +105,7 @@ public class IssueListPanelTest extends AbstractIT {
         filter.project = projectNames.get(0);
         listPanel.filterList(filter);
 
-        var issueModel = listPanel.getIssueModel();
+        var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(2);
 
         var issue = issueModel.get(0);
@@ -120,7 +120,7 @@ public class IssueListPanelTest extends AbstractIT {
         filter.assignee = issues.get(0).assignees.get(1);
         listPanel.filterList(filter);
 
-        var issueModel = listPanel.getIssueModel();
+        var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(2);
 
         var issue = issueModel.get(0);
@@ -140,7 +140,7 @@ public class IssueListPanelTest extends AbstractIT {
         var listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
 
-        var issueModel = listPanel.getIssueModel();
+        var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(1);
         var issue = issueModel.get(0);
         assertThat(issue.author.id()).isEqualTo(issues.get(0).author.id());
@@ -154,7 +154,7 @@ public class IssueListPanelTest extends AbstractIT {
         filterWithSearch.state = RadPatch.State.OPEN.status;
         var listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
-        var patchModel = listPanel.getIssueModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var issue = patchModel.get(0);
         assertThat(issue.author.id()).isEqualTo(issues.get(0).author.id());
@@ -162,7 +162,7 @@ public class IssueListPanelTest extends AbstractIT {
         filterWithSearch.state = RadPatch.State.CLOSED.status;
         listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getIssueModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         issue = patchModel.get(0);
         assertThat(issue.author.id()).isEqualTo(issues.get(1).author.id());
@@ -170,7 +170,7 @@ public class IssueListPanelTest extends AbstractIT {
         filterWithSearch.state = RadPatch.State.MERGED.status;
         listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getIssueModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
     }
 
@@ -200,7 +200,7 @@ public class IssueListPanelTest extends AbstractIT {
         filterWithSearch.tag = "tag1";
         var listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
-        var patchModel = listPanel.getIssueModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var issue = patchModel.get(0);
         assertThat(issue.author.id()).isEqualTo(issues.get(0).author.id());
@@ -208,7 +208,7 @@ public class IssueListPanelTest extends AbstractIT {
         filterWithSearch.tag = "firstTag";
         listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getIssueModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
     }
 

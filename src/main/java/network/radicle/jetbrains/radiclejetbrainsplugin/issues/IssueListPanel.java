@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import git4idea.repo.GitRepository;
@@ -16,7 +15,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import javax.accessibility.AccessibleContext;
 import javax.swing.ListCellRenderer;
-import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -30,20 +28,9 @@ import java.util.stream.Collectors;
 
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
+
     public IssueListPanel(IssueTabController controller, Project project, ProjectApi myApi) {
         super(controller, project, myApi);
-    }
-
-    public DefaultListModel<RadIssue> getIssueModel() {
-        return model;
-    }
-
-    public JBList<RadIssue> getIssueList() {
-        return list;
-    }
-
-    public IssueSearchPanelViewModel getSearchVm() {
-        return searchVm;
     }
 
     @Override
