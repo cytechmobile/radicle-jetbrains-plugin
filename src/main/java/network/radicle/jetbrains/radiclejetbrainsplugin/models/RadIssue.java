@@ -39,9 +39,7 @@ public class RadIssue {
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
         OPEN("Open"),
-        CLOSED("Closed"),
-        MERGED("Merged"),
-        ARCHIVED("Archived");
+        CLOSED("Closed");
 
         public final String status;
 
