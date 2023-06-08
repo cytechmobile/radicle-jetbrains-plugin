@@ -46,7 +46,13 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                         continuation1 -> this.viewModel.getTags(), projectName ->
                                 new ChooserPopupUtil.PopupItemPresentation.Simple((String) projectName, null, null), continuation));
 
-        return List.of(stateFilter, projectFilter, authorFilter, tagFilter);
+        var assigneesFilter = new DropDownComponentFactory<>(this.viewModel.assigneeFilter()).create(coroutineScope, RadicleBundle.message("assignees"), o -> o,
+                (relativePoint, jbPopupPopupState, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint, jbPopupPopupState,
+                        continuation1 -> this.viewModel.getAssignees(), projectName ->
+                                new ChooserPopupUtil.PopupItemPresentation.Simple((String) projectName, null, null), continuation));
+
+
+        return List.of(stateFilter, projectFilter, authorFilter, assigneesFilter, tagFilter);
     }
 
     @NotNull

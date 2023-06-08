@@ -13,7 +13,7 @@ public class RadIssue {
     public Author author;
     public String title;
     public State state;
-    public List<Object> assignees;
+    public List<String> assignees;
     public List<String> tags;
     public List<Discussion> discussion;
     public GitRepository repo;
@@ -23,7 +23,7 @@ public class RadIssue {
     }
 
     public RadIssue(String id, Author author, String title, State state,
-                    List<Object> assignees, List<String> tags, List<Discussion> discussion) {
+                    List<String> assignees, List<String> tags, List<Discussion> discussion) {
         this.id = id;
         this.author = author;
         this.title = title;

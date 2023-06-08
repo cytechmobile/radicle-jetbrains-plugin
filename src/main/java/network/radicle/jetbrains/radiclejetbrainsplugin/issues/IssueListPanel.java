@@ -76,6 +76,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
             var peerAuthorFilter = searchValue.author;
             var stateFilter = searchValue.state;
             var tagFilter = searchValue.tag;
+            var assigneeFilter = searchValue.assignee;
             var loadedRadIssues = loadedData;
             List<RadIssue> filteredPatches = loadedRadIssues.stream()
                     .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
@@ -84,6 +85,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                     .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
                     .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
                     .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
+                    .filter(p -> assigneeFilter == null || p.assignees.stream().anyMatch(tag -> tag.equals(assigneeFilter)))
                     .collect(Collectors.toList());
             model.addAll(filteredPatches);
         }

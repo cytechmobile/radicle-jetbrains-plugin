@@ -60,6 +60,15 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                 });
     }
 
+    public MutableStateFlow<String> assigneeFilter() {
+        return partialState(getSearchState(), IssueListSearchValue::getAssignee,
+                (Function2<IssueListSearchValue, Object, IssueListSearchValue>) (issueListSearchValue, assignee) -> {
+                    var copyIssueSearchValue = new IssueListSearchValue(issueListSearchValue);
+                    copyIssueSearchValue.assignee = (String) assignee;
+                    return copyIssueSearchValue;
+                });
+    }
+
     public MutableStateFlow<String> tagFilter() {
         return partialState(getSearchState(), IssueListSearchValue::getTag,
                 (Function2<IssueListSearchValue, Object, IssueListSearchValue>) (issueListSearchValue, tag) -> {
@@ -94,17 +103,39 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
             logger.warn("Unable to get rad tags", e);
             return tags;
         }
-        for (var p : myList) {
-            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
+        for (var issue : myList) {
+            if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
-            for (var tag : p.tags) {
+            for (var tag : issue.tags) {
                 if (!tags.contains(tag)) {
                     tags.add(tag);
                 }
             }
         }
         return tags;
+    }
+
+    public List<String> getAssignees() {
+        var selectedProjectFilter = this.getSearchState().getValue().project;
+        List<String> assigness = new ArrayList<>();
+        try {
+            countDown.await();
+        } catch (Exception e) {
+            logger.warn("Unable to get rad tags", e);
+            return assigness;
+        }
+        for (var issue : myList) {
+            if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                continue;
+            }
+            for (var assignee : issue.assignees) {
+                if (!assigness.contains(assignee)) {
+                    assigness.add(assignee);
+                }
+            }
+        }
+        return assigness;
     }
 
     public List<String> getAuthors() {
@@ -116,12 +147,12 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
             logger.warn("Unable to get rad patches", e);
             return peersIds;
         }
-        for (var p : myList) {
-            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
+        for (var issue : myList) {
+            if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
-            if (!peersIds.contains(p.author.id())) {
-                peersIds.add(p.author.id());
+            if (!peersIds.contains(issue.author.id())) {
+                peersIds.add(issue.author.id());
             }
         }
         return peersIds;
