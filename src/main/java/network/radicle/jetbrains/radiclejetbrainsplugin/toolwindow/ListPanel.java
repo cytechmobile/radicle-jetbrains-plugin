@@ -44,7 +44,7 @@ import java.util.concurrent.CountDownLatch;
 import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 
 public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends SearchViewModelBase<Q, ?, P>> {
-    protected final TabController controller;
+    protected final TabController<P, Q, S> controller;
     protected final Project project;
     protected final ProjectApi myApi;
     protected final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
@@ -54,7 +54,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     protected DefaultListModel<P> model;
     protected S searchVm;
 
-    public ListPanel(TabController controller, Project project, ProjectApi myApi) {
+    public ListPanel(TabController<P, Q, S> controller, Project project, ProjectApi myApi) {
         this.controller = controller;
         this.project = project;
         this.myApi = myApi;
@@ -191,6 +191,17 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     public abstract void filterList(Q searchValue);
 
     public abstract Q getEmptySearchValueModel();
+
+    public DefaultListModel<P> getModel() {
+        return model;
+    }
+    public S getSearchVm() {
+        return searchVm;
+    }
+
+    public JBList<P> getList() {
+        return list;
+    }
 
     private void resetFilters() {
         searchVm.getSearchState().setValue(getEmptySearchValueModel());
