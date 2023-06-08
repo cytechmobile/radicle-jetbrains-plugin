@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListUiUtil;
 import git4idea.repo.GitRepository;
@@ -21,7 +20,6 @@ import javax.swing.JComponent;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
-import javax.swing.DefaultListModel;
 import java.awt.Component;
 import java.awt.BorderLayout;
 import java.text.SimpleDateFormat;
@@ -151,17 +149,5 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 return ac;
             }
         }
-    }
-
-    public DefaultListModel<RadPatch> getPatchModel() {
-        return model;
-    }
-
-    public PatchSearchPanelViewModel getSearchVm() {
-        return searchVm;
-    }
-
-    public JBList<RadPatch> getPatchesList() {
-        return list;
     }
 }
