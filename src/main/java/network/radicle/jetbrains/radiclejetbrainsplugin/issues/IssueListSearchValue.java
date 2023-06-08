@@ -1,12 +1,13 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.AbstractReviewListSearchValue;
 
-import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
-import org.jetbrains.annotations.Nullable;
+public class IssueListSearchValue extends AbstractReviewListSearchValue {
 
-public class IssueListSearchValue implements ReviewListSearchValue {
-    @Nullable
-    @Override
-    public String getSearchQuery() {
-        return "";
+    public IssueListSearchValue(IssueListSearchValue searchValue) {
+        super(searchValue.project, searchValue.searchQuery, searchValue.author, searchValue.state, searchValue.tag);
+    }
+
+    public IssueListSearchValue() {
+
     }
 }
