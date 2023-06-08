@@ -10,6 +10,7 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
@@ -27,6 +28,7 @@ import java.awt.BorderLayout;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
@@ -65,6 +67,29 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public void filterList(IssueListSearchValue searchValue) {
+        model.clear();
+        if (loadedData == null) {
+            return;
+        }
+        if (searchValue.getFilterCount() == 0) {
+            model.addAll(loadedData);
+        } else {
+            var projectFilter = searchValue.project;
+            var searchFilter = searchValue.searchQuery;
+            var peerAuthorFilter = searchValue.author;
+            var stateFilter = searchValue.state;
+            var tagFilter = searchValue.tag;
+            var loadedRadIssues = loadedData;
+            List<RadIssue> filteredPatches = loadedRadIssues.stream()
+                    .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
+                            p.title.contains(searchFilter))
+                    .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
+                    .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
+                    .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
+                    .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
+                    .collect(Collectors.toList());
+            model.addAll(filteredPatches);
+        }
     }
 
     @Override
