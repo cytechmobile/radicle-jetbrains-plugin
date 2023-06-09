@@ -106,7 +106,7 @@ public class PatchProposalPanel {
     protected JComponent createReturnToListSideComponent() {
         return ReturnToListComponent.INSTANCE.createReturnToListSideComponent(RadicleBundle.message("backToList"),
                 () -> {
-                    controller.createPatchesPanel();
+                    controller.createPanel();
                     return Unit.INSTANCE;
                 });
     }

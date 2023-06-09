@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -10,34 +9,19 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
 import javax.swing.JComponent;
 import java.awt.BorderLayout;
 import java.util.Arrays;
 
-public class PatchTabController {
-    private Project project;
-    private Content tab;
-    private PatchListPanel patchListPanel;
-    private PatchProposalPanel patchProposalPanel;
-    private ProjectApi myApi;
+public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
+    private final PatchListPanel patchListPanel;
 
     public PatchTabController(Content tab, Project project, ProjectApi myApi) {
-        this.tab = tab;
-        this.project = project;
-        this.myApi = myApi;
-    }
-
-    public void createPatchesPanel() {
-        tab.setDisplayName(RadicleBundle.message("patchTabName"));
-        var mainPanel = tab.getComponent();
+        super(project, tab, myApi);
         patchListPanel = new PatchListPanel(this, project, myApi);
-        var createdPanel = patchListPanel.create();
-        mainPanel.setLayout(new BorderLayout(5, 10));
-        mainPanel.removeAll();
-        mainPanel.add(createdPanel, BorderLayout.CENTER);
-        mainPanel.revalidate();
-        mainPanel.repaint();
     }
 
     public void createPatchProposalPanel(RadPatch patch) {
@@ -55,7 +39,7 @@ public class PatchTabController {
 
     protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {
         tab.setDisplayName("Patch Proposal from: " + patch.getValue().author);
-        patchProposalPanel = new PatchProposalPanel(this, patch);
+        var patchProposalPanel = new PatchProposalPanel(this, patch);
         var panel = patchProposalPanel.createViewPatchProposalPanel();
         mainPanel.removeAll();
         mainPanel.add(panel, BorderLayout.CENTER);
@@ -82,8 +66,14 @@ public class PatchTabController {
         }
     }
 
-    public Disposable getDisposer() {
-        return tab.getDisposer();
+    @Override
+    public String getTabName() {
+        return RadicleBundle.message("patchTabName");
+    }
+
+    @Override
+    public ListPanel<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> getPanel() {
+        return patchListPanel;
     }
 
     public PatchListPanel getPatchListPanel() {
