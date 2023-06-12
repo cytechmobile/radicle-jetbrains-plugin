@@ -4,22 +4,27 @@ import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.InlineIconButton;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponent;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.JComponent;
+import java.awt.event.ActionEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,9 +35,11 @@ public class TimelineTest extends AbstractIT {
     private static String dummyComment = "Hello";
     private TimelineComponent patchEditorComponent;
     private RadPatch patch;
+    private RadicleProjectApi api;
 
     @Before
     public void beforeTest() {
+        api = replaceApiService();
         patch = createPatch();
         var gitRepoManager = GitRepositoryManager.getInstance(getProject());
         var repos = gitRepoManager.getRepositories();
@@ -50,12 +57,40 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
+    public void testChangeTitle() throws Exception {
+        final var titlePanel = patchEditorComponent.getHeaderPanel();
+        var btns = findElements(titlePanel, InlineIconButton.class, new ArrayList<>());
+        assertThat(btns).hasSize(1);
+        var editBtn = btns.get(0);
+        //send event that we clicked edit
+        //TODO fix
+        editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
+        //editListener.mouseClicked(new MouseEvent(editBtn, 0, 0, 0, 0, 0, 1, false, 1));
+        // now we should be able to see the BaseHtmlEditorPane in the header panel
+        var efs = findElements(titlePanel, EditorTextField.class, new ArrayList<>());
+        for (int i=0; i<10 && efs.size() <= 0; i++) {
+            Thread.sleep(100);
+            efs = findElements(titlePanel, EditorTextField.class, new ArrayList<>());
+        }
+        assertThat(efs).hasSize(1);
+        var ef = efs.get(0);
+        assertThat(ef.getText()).isEqualTo(patch.title);
+        final var editedTitle = "Edited title to " + UUID.randomUUID();
+        ef.setText(editedTitle);
+        // title edited, now we need to find the primary button, which is expected to be a JOptionButton
+        final var prBtns = findElements(titlePanel, JButton.class, new ArrayList<>());
+        assertThat(prBtns).hasSize(1);
+        final var prBtn = prBtns.get(0);
+        prBtn.doClick();
+    }
+
+    @Test
     public void testDescSection() {
         var descSection = patchEditorComponent.getComponentsFactory().getDescSection();
-        var elements = findElement((JPanel) descSection, new BaseHtmlEditorPane(), new ArrayList<>());
+        var elements = findElements((JPanel) descSection, BaseHtmlEditorPane.class, new ArrayList<>());
         var timeline = "";
         for (var el : elements) {
-            timeline += ((BaseHtmlEditorPane) el).getText();
+            timeline += el.getText();
         }
         assertThat(timeline).contains(patch.description);
         assertThat(timeline).contains(patch.author.id());
@@ -86,13 +121,13 @@ public class TimelineTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + dummyComment);
     }
 
-    public List<JComponent> findElement(JPanel panel, JComponent el, ArrayList<JComponent> components) {
+    public <T> List<T> findElements(JPanel panel, Class<T> el, ArrayList<T> components) {
         for (var element : panel.getComponents()) {
             if (element instanceof JPanel) {
-                findElement((JPanel) element, el, components);
+                findElements((JPanel) element, el, components);
             } else {
-                if (element.getClass().equals(el.getClass())) {
-                    components.add((JComponent) element);
+                if (el.isAssignableFrom(element.getClass())) {
+                    components.add((T) element);
                 }
             }
         }

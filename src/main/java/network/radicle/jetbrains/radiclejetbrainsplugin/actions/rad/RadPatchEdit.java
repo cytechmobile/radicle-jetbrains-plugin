@@ -6,12 +6,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectS
 
 public class RadPatchEdit extends RadAction {
     private final String patchId;
-    public final String message;
+    public final String title;
+    public final String description;
 
-    public RadPatchEdit(GitRepository repo, String patchId, String message) {
+    public RadPatchEdit(GitRepository repo, String patchId, String title, String description) {
         super(repo);
         this.patchId = patchId;
-        this.message = message;
+        this.title = title;
+        this.description = description;
     }
 
     @Override
@@ -27,6 +29,6 @@ public class RadPatchEdit extends RadAction {
     @Override
     public ProcessOutput run() {
         var rad = repo.getProject().getService(RadicleProjectService.class);
-        return rad.patchEdit(repo, patchId, message);
+        return rad.patchEdit(repo, patchId, title, description);
     }
 }

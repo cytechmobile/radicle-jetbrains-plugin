@@ -29,14 +29,14 @@ public class PublishDialogTest extends AbstractIT {
         assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
 
         publishDialog.getSeedNodeSelect().setSelectedIndex(0);
-        Thread.sleep(1000);
+        Thread.sleep(100);
         publishDialog.doOKAction();
 
          var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
          assertCmd(cmd);
          assertThat(cmd.getCommandLineString()).contains("init");
 
-         cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+         cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
          assertThat(cmd).isNull();
 
          var not = notificationsQueue.poll(10, TimeUnit.SECONDS);

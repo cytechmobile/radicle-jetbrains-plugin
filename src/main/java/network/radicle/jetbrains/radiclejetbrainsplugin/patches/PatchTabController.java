@@ -8,7 +8,7 @@ import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
@@ -19,9 +19,9 @@ import java.util.Arrays;
 public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchListPanel patchListPanel;
 
-    public PatchTabController(Content tab, Project project, ProjectApi myApi) {
-        super(project, tab, myApi);
-        patchListPanel = new PatchListPanel(this, project, myApi);
+    public PatchTabController(Content tab, Project project) {
+        super(project, tab);
+        patchListPanel = new PatchListPanel(this, project);
     }
 
     public void createPatchProposalPanel(RadPatch patch) {
@@ -29,7 +29,7 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
         final var patchModel = new SingleValueModel<>(patch);
         createInternalPatchProposalPanel(patchModel, mainPanel);
         patchModel.addListener(p -> {
-            var fetched = myApi.fetchPatch(patch.seedNode, patch.projectId, patch.repo, patch.id);
+            var fetched = api.fetchPatch(patch.projectId, patch.repo, patch.id);
             if (fetched != null) {
                 ApplicationManager.getApplication().invokeLater(() -> createPatchProposalPanel(fetched));
             }

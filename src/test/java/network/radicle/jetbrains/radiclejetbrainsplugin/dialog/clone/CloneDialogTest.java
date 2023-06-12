@@ -5,7 +5,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
@@ -31,6 +31,7 @@ public class CloneDialogTest extends AbstractIT {
 
     private RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private CloneRadDialog cloneDialog;
+    private RadicleProjectApi api;
     private HttpClient httpClient;
     private HttpResponse httpResponse;
     private StatusLine statusLine;
@@ -39,10 +40,11 @@ public class CloneDialogTest extends AbstractIT {
     public void beforeTest() {
         radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
         radicleProjectSettingsHandler.savePath("");
-        httpClient = mock(HttpClient.class);
+        api = replaceApiService();
+        httpClient = api.getClient();
         httpResponse = mock(HttpResponse.class);
         statusLine = mock(StatusLine.class);
-        cloneDialog = new CloneRadDialog(super.myProject, new ProjectApi(httpClient));
+        cloneDialog = new CloneRadDialog(myProject);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
     }
 
@@ -58,7 +60,7 @@ public class CloneDialogTest extends AbstractIT {
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
         radicleProjectSettingsHandler.savePath(RAD_PATH);
-        cloneDialog = new CloneRadDialog(super.myProject, new ProjectApi(httpClient));
+        cloneDialog = new CloneRadDialog(super.myProject);
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
@@ -89,7 +91,6 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void testSuccessRequest() throws IOException {
-
         StringEntity se = new StringEntity("");
         se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
 
@@ -112,7 +113,7 @@ public class CloneDialogTest extends AbstractIT {
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());
         /* remove self profile first */
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        radStub.commands.poll(100, TimeUnit.MILLISECONDS);
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliPathMissing"));
@@ -136,7 +137,7 @@ public class CloneDialogTest extends AbstractIT {
         assertThat(not).isNotNull();
     }
 
-    private class CheckoutProvider implements com.intellij.openapi.vcs.CheckoutProvider.Listener {
+    public static class CheckoutProvider implements com.intellij.openapi.vcs.CheckoutProvider.Listener {
         @Override
         public void directoryCheckedOut(File directory, VcsKey vcs) {
             assertThat(directory.getName()).contains("testName");

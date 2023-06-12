@@ -9,12 +9,19 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitCommit;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import org.apache.http.client.HttpClient;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
@@ -28,6 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
@@ -168,4 +176,23 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         }
     }
 
+    public RadicleProjectApi replaceApiService() {
+        var client = mock(HttpClient.class);
+        var api = new RadicleProjectApi(myProject, client);
+        ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
+        return api;
+    }
+
+    public static class NoopContinuation<T> implements Continuation<T> {
+        public static final NoopContinuation<kotlin.Unit> NOOP = new NoopContinuation<>();
+        @NotNull
+        @Override
+        public CoroutineContext getContext() {
+            return EmptyCoroutineContext.INSTANCE;
+        }
+
+        @Override
+        public void resumeWith(@NotNull Object o) {
+        }
+    }
 }

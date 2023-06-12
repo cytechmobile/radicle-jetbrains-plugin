@@ -118,6 +118,10 @@ public class RadicleProjectService {
         return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
     }
 
+    public ProcessOutput radWebJson(GitRepository repo) {
+        return executeCommand(repo.getRoot().getPath(), List.of("web", "--json"), repo);
+    }
+
     public ProcessOutput remoteList(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("remote", "list"), root);
     }
@@ -137,11 +141,11 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("comment", patchId, "--message", message), root);
     }
 
-    public ProcessOutput patchEdit(GitRepository root, String patchId, String message) {
+    public ProcessOutput patchEdit(GitRepository root, String patchId, String message, String description) {
         if (SystemInfo.isWindows) {
             message = "'" + message + "'";
         }
-        return executeCommand(root.getRoot().getPath(), List.of("patch", "edit", patchId, "--message", message), root);
+        return executeCommand(root.getRoot().getPath(), List.of("patch", "edit", patchId, "--message", message, "--message", description), root);
     }
 
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,

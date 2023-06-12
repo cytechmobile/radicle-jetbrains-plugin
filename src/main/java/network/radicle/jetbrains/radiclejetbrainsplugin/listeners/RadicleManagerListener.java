@@ -3,18 +3,23 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.listeners;
 import com.google.common.base.Strings;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.startup.ProjectActivity;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class RadicleManagerListener implements StartupActivity {
+public class RadicleManagerListener implements ProjectActivity {
+    @Nullable
     @Override
-    public void runActivity(@NotNull Project project) {
+    public Object execute(@NotNull Project project, @NotNull Continuation<? super Unit> continuation) {
         showSuccessNotification(project);
+        return null;
     }
 
     private void showSuccessNotification(Project project) {

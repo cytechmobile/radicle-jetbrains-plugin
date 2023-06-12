@@ -25,16 +25,15 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
 import javax.swing.DefaultListModel;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
 import javax.swing.ListCellRenderer;
+import javax.swing.ListSelectionModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends SearchViewModelBase<Q, ?, P>> {
     protected final TabController<P, Q, S> controller;
     protected final Project project;
-    protected final ProjectApi myApi;
+    protected final RadicleProjectApi api;
     protected final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     protected ProgressStripe progressStripe;
     protected List<P> loadedData;
@@ -54,10 +53,10 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     protected DefaultListModel<P> model;
     protected S searchVm;
 
-    public ListPanel(TabController<P, Q, S> controller, Project project, ProjectApi myApi) {
+    public ListPanel(TabController<P, Q, S> controller, Project project) {
         this.controller = controller;
         this.project = project;
-        this.myApi = myApi;
+        this.api = project.getService(RadicleProjectApi.class);
         this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         this.model = new DefaultListModel<>();
     }
@@ -168,8 +167,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
             var output = radInspect.perform();
             if (RadAction.isSuccess(output)) {
                 var radProjectId = output.getStdout().trim();
-                var seedNode =  this.radicleProjectSettingsHandler.loadSettings().getSeedNode();
-                var data = fetchData(seedNode, radProjectId, repo);
+                var data = fetchData(radProjectId, repo);
                 if (!data.isEmpty()) {
                     outputs.addAll(data);
                 }
@@ -178,7 +176,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
         return outputs;
     }
 
-    public abstract List<P> fetchData(SeedNode seedNode, String projectId, GitRepository repo);
+    public abstract List<P> fetchData(String projectId, GitRepository repo);
 
     public abstract ListCellRenderer<P> getCellRenderer();
 

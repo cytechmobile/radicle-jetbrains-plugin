@@ -6,11 +6,10 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
@@ -39,19 +38,20 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Before
     public void setUpToolWindow() throws InterruptedException, IOException {
-        final var httpClient = mock(HttpClient.class);
+        var api = replaceApiService();
+        final var httpClient = api.getClient();
         patches = getTestPatches();
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = (HttpGet) i.getArgument(0);
             final StringEntity se;
             if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestProjects()));
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
             } else if (req.getURI().getPath().endsWith("/patches")) {
                 // request to fetch patches
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
             } else {
                 // request to fetch specific project
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
             }
             se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
             final var resp = mock(HttpResponse.class);
@@ -62,12 +62,12 @@ public class RadicleToolWindowTest extends AbstractIT {
             return resp;
         });
 
-        radicleToolWindow = new RadicleToolWindow(new ProjectApi(httpClient));
+        radicleToolWindow = new RadicleToolWindow();
         var toolWindow = new MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), toolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
         //Wait to load the patch proposals
-        Thread.sleep(2000);
+        Thread.sleep(100);
     }
 
     @Test

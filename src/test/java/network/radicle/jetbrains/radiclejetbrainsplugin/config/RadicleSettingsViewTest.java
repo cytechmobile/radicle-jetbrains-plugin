@@ -9,6 +9,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,6 +18,8 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.assert
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
+    private static final Logger logger = LoggerFactory.getLogger(RadicleSettingsViewTest.class);
+
     private RadicleSettingsView radicleSettingsView;
     private RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private RadicleProjectSettingsHandler radicleSettingsHandler;
@@ -30,8 +34,9 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
         radicleSettingsHandler.saveSeedNode("http://localhost:8080");
         radicleSettingsView = new RadicleSettingsView(getProject());
+        boolean ok = radicleSettingsView.init.await(10, TimeUnit.SECONDS);
         /* pop previous commands from queue ( Checking for compatible version ) */
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        radStub.commands.clear();
     }
 
     @Test
@@ -88,8 +93,13 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         radStub.commands.poll(10, TimeUnit.SECONDS);
-        radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
+        for (int i = 0 ; i < 10; i++) {
+            if (radicleSettingsView.getRadDetails() == null) {
+                Thread.sleep(100);
+            }
+        }
+        logger.warn("checking for rad details: " + radicleSettingsView.getRadDetails());
         assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.did);
     }
 
@@ -108,7 +118,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var identityUnlockedCmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
         assertThat(radSelfCmd).isNotNull();
         if (SystemInfo.isWindows) {
             assertThat(radSelfCmd.getCommandLineString()).contains("export RAD_HOME=/lakis");

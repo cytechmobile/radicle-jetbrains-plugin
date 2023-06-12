@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadSelf extends RadAction {
@@ -42,6 +43,14 @@ public class RadSelf extends RadAction {
     @Override
     public String getActionName() {
         return "Self";
+    }
+
+    public RadDetails getRadSelfDetails() {
+        var output = this.perform();
+        if (RadAction.isSuccess(output)) {
+            return new RadDetails(output.getStdoutLines(true));
+        }
+        return null;
     }
 
     @Override
