@@ -4,6 +4,7 @@ import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.InlineIconButton;
 import git4idea.GitCommit;
@@ -45,6 +46,7 @@ public class TimelineTest extends AbstractIT {
         var repos = gitRepoManager.getRepositories();
         patch.repo = repos.get(0);
         var patchModel = new SingleValueModel<>(patch);
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         patchEditorComponent = new TimelineComponent(patchModel, null);
         patchEditorComponent.create();
     }
@@ -57,7 +59,7 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
-    public void testChangeTitle() throws Exception {
+    public void testChangeTitle() {
         final var titlePanel = patchEditorComponent.getHeaderPanel();
         var btns = findElements(titlePanel, InlineIconButton.class, new ArrayList<>());
         assertThat(btns).hasSize(1);
@@ -68,16 +70,23 @@ public class TimelineTest extends AbstractIT {
         //editListener.mouseClicked(new MouseEvent(editBtn, 0, 0, 0, 0, 0, 1, false, 1));
         // now we should be able to see the BaseHtmlEditorPane in the header panel
         var efs = findElements(titlePanel, EditorTextField.class, new ArrayList<>());
+        /*
         for (int i=0; i<10 && efs.size() <= 0; i++) {
             Thread.sleep(100);
             efs = findElements(titlePanel, EditorTextField.class, new ArrayList<>());
-        }
+        } */
         assertThat(efs).hasSize(1);
         var ef = efs.get(0);
         assertThat(ef.getText()).isEqualTo(patch.title);
         final var editedTitle = "Edited title to " + UUID.randomUUID();
         ef.setText(editedTitle);
         // title edited, now we need to find the primary button, which is expected to be a JOptionButton
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+        /*  Now we can get the editor , but there is a problem with buttons because attachActions
+            runs in a coroutine (different thread).So editor.getComponents() doesnt return
+            the buttons. To check this you can add a breakpoint inside EditablePanelHandler line 80 and inspect
+            the components of the editor, there you will find the buttons */
+        var editor = patchEditorComponent.getEditor();
         final var prBtns = findElements(titlePanel, JButton.class, new ArrayList<>());
         assertThat(prBtns).hasSize(1);
         final var prBtn = prBtns.get(0);
@@ -123,7 +132,7 @@ public class TimelineTest extends AbstractIT {
 
     public <T> List<T> findElements(JPanel panel, Class<T> el, ArrayList<T> components) {
         for (var element : panel.getComponents()) {
-            if (element instanceof JPanel) {
+            if ((element instanceof JPanel) && !el.isAssignableFrom(element.getClass())) {
                 findElements((JPanel) element, el, components);
             } else {
                 if (el.isAssignableFrom(element.getClass())) {
