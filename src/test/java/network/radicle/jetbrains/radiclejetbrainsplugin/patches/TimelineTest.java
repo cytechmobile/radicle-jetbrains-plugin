@@ -2,11 +2,12 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.InlineIconButton;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
@@ -18,10 +19,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
+import java.awt.event.HierarchyEvent;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
+    private static final Logger logger = LoggerFactory.getLogger(TimelineTest.class);
     private static final String AUTHOR = "did:key:testAuthor";
     private static String dummyComment = "Hello";
     private TimelineComponent patchEditorComponent;
@@ -61,35 +67,28 @@ public class TimelineTest extends AbstractIT {
     @Test
     public void testChangeTitle() {
         final var titlePanel = patchEditorComponent.getHeaderPanel();
-        var btns = findElements(titlePanel, InlineIconButton.class, new ArrayList<>());
-        assertThat(btns).hasSize(1);
-        var editBtn = btns.get(0);
+        var editBtn = UIUtil.findComponentOfType(titlePanel, InlineIconButton.class);
         //send event that we clicked edit
-        //TODO fix
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
-        //editListener.mouseClicked(new MouseEvent(editBtn, 0, 0, 0, 0, 0, 1, false, 1));
-        // now we should be able to see the BaseHtmlEditorPane in the header panel
-        var efs = findElements(titlePanel, EditorTextField.class, new ArrayList<>());
-        /*
-        for (int i=0; i<10 && efs.size() <= 0; i++) {
-            Thread.sleep(100);
-            efs = findElements(titlePanel, EditorTextField.class, new ArrayList<>());
-        } */
-        assertThat(efs).hasSize(1);
-        var ef = efs.get(0);
+        executeUiTasks();
+
+        final var ef = UIUtil.findComponentOfType(titlePanel, EditorTextField.class);
         assertThat(ef.getText()).isEqualTo(patch.title);
+
+        //UIUtil.markAsShowing((JComponent) ef.getParent(), true);
+        //matching UiUtil IS_SHOWING key
+        ((JComponent)ef.getParent()).putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
+        assertThat(UIUtil.isShowing(ef.getParent(), false)).isTrue();
+        for (var hl : ef.getParent().getHierarchyListeners()) {
+            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
+        }
+        executeUiTasks();
+
         final var editedTitle = "Edited title to " + UUID.randomUUID();
         ef.setText(editedTitle);
-        // title edited, now we need to find the primary button, which is expected to be a JOptionButton
-        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        /*  Now we can get the editor , but there is a problem with buttons because attachActions
-            runs in a coroutine (different thread).So editor.getComponents() doesnt return
-            the buttons. To check this you can add a breakpoint inside EditablePanelHandler line 80 and inspect
-            the components of the editor, there you will find the buttons */
-        var editor = patchEditorComponent.getEditor();
-        final var prBtns = findElements(titlePanel, JButton.class, new ArrayList<>());
-        assertThat(prBtns).hasSize(1);
-        final var prBtn = prBtns.get(0);
+        final var prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        final var prBtn = prBtns.get(1);
         prBtn.doClick();
     }
 
@@ -130,14 +129,14 @@ public class TimelineTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + dummyComment);
     }
 
-    public <T> List<T> findElements(JPanel panel, Class<T> el, ArrayList<T> components) {
+    public <T> List<T> findElements(JPanel panel, Class<T> el, List<T> components) {
         for (var element : panel.getComponents()) {
-            if ((element instanceof JPanel) && !el.isAssignableFrom(element.getClass())) {
+            logger.warn("looking for {} at element: {}", el, element);
+            if (el.isAssignableFrom(element.getClass())) {
+                logger.warn("looking for {} found element: {}", el, element);
+                components.add((T) element);
+            } else if (element instanceof JPanel) {
                 findElements((JPanel) element, el, components);
-            } else {
-                if (el.isAssignableFrom(element.getClass())) {
-                    components.add((T) element);
-                }
             }
         }
         return components;

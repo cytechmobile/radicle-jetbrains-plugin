@@ -122,7 +122,7 @@ public abstract class RadAction {
                         RadicleBundle.message("unlockIdentity");
                 var myDialog = dialog == null ? new IdentityDialog() : dialog;
                 myDialog.setTitle(title);
-                myDialog.setModal(true);
+
                 okButton.set(myDialog.showAndGet());
                 latch.countDown();
                 passphrase.set(myDialog.getPassword());

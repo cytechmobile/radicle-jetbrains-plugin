@@ -8,7 +8,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitCommit;
@@ -181,6 +183,12 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         var api = new RadicleProjectApi(myProject, client);
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
+    }
+
+    public void executeUiTasks() {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
 
     public static class NoopContinuation<T> implements Continuation<T> {
