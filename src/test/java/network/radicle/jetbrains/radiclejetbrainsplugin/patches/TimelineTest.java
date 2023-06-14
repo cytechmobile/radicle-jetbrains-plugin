@@ -5,16 +5,21 @@ import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
+import network.radicle.jetbrains.radiclejetbrainsplugin.SettingsStub;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponent;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +39,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.co.wilson.xml.MinML.change;
 
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
@@ -48,9 +54,7 @@ public class TimelineTest extends AbstractIT {
     public void beforeTest() {
         api = replaceApiService();
         patch = createPatch();
-        var gitRepoManager = GitRepositoryManager.getInstance(getProject());
-        var repos = gitRepoManager.getRepositories();
-        patch.repo = repos.get(0);
+        patch.repo = firstRepo;
         var patchModel = new SingleValueModel<>(patch);
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         patchEditorComponent = new TimelineComponent(patchModel, null);
@@ -89,6 +93,8 @@ public class TimelineTest extends AbstractIT {
         final var prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         final var prBtn = prBtns.get(1);
+        /* unable to stub radWeb action , the problem is in unlockIdentity function line : 112 (projectSettings.getPassword(radDetails.nodeId);)
+        If I replace this with a random string then it works */
         prBtn.doClick();
     }
 

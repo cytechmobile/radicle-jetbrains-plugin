@@ -6,6 +6,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,6 +43,17 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("inspect");
         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
+    }
+
+    @Test
+    public void radWebAction() {
+        // Here the stubbing works
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        var patch = new RadPatch();
+        patch.repo = firstRepo;
+        var api = patch.repo.getProject().getService(RadicleProjectApi.class);
+        var edited = api.changePatchTitle(patch);
+
     }
 
     @Test
