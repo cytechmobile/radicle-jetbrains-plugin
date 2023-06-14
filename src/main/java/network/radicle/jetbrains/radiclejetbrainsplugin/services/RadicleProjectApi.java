@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class RadicleProjectApi {
     private final HttpClient client;
     private final Project project;
 
-    protected Map<String, Session> sessions;
+    protected Map<String, Session> sessions = new HashMap<>();
     protected SeedNode seedNode;
 
     public RadicleProjectApi(Project project) {
@@ -59,7 +60,9 @@ public class RadicleProjectApi {
             var res = client.execute(new HttpGet(url));
             String response = "";
             if (res != null) {
-                response = EntityUtils.toString(res.getEntity());
+                var entity = res.getEntity();
+                response = EntityUtils.toString(entity);
+                EntityUtils.consume(entity);
             }
 
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
@@ -87,7 +90,9 @@ public class RadicleProjectApi {
             var res = client.execute(new HttpGet(url));
             String response = "";
             if (res != null) {
-                response = EntityUtils.toString(res.getEntity());
+                var entity = res.getEntity();
+                response = EntityUtils.toString(entity);
+                EntityUtils.consume(entity);
             }
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
                 var patches = MAPPER.readValue(response, new TypeReference<List<RadPatch>>() { });
@@ -117,7 +122,9 @@ public class RadicleProjectApi {
             var res = client.execute(new HttpGet(url));
             String response = "";
             if (res != null) {
-                response = EntityUtils.toString(res.getEntity());
+                var entity = res.getEntity();
+                response = EntityUtils.toString(entity);
+                EntityUtils.consume(entity);
             }
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
                 var patch = MAPPER.readValue(response, RadPatch.class);
@@ -139,7 +146,9 @@ public class RadicleProjectApi {
         try {
             var res = client.execute(new HttpGet(url));
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                String response = EntityUtils.toString(res.getEntity());
+                var entity = res.getEntity();
+                String response = EntityUtils.toString(entity);
+                EntityUtils.consume(entity);
                 if (Strings.isNullOrEmpty(response)) {
                     return new ArrayList<>();
                 }
@@ -157,7 +166,9 @@ public class RadicleProjectApi {
         try {
             var res = client.execute(new HttpGet(url));
             if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                String response = EntityUtils.toString(res.getEntity());
+                var entity = res.getEntity();
+                String response = EntityUtils.toString(entity);
+                EntityUtils.consume(entity);
                 return MAPPER.readValue(response, RadProject.class);
             }
             return null;
@@ -175,7 +186,8 @@ public class RadicleProjectApi {
         try {
             var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchEditData = Map.of("type", "edit", "target", "delegates", "title", patch.title);
+            var patchEditData = Map.of("type", "edit", "target", "delegates", "title",
+                    patch.title, "description", patch.description);
             var json = MAPPER.writeValueAsString(patchEditData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = client.execute(patchReq);
@@ -183,6 +195,8 @@ public class RadicleProjectApi {
                 logger.warn("received invalid response with status:{} and body:{} while editing patch: {}",
                         resp == null ? "null resp" : resp.getStatusLine().getStatusCode(),
                         resp == null ? "null" : EntityUtils.toString(resp.getEntity()), patch);
+            } else {
+                EntityUtils.consume(resp.getEntity());
             }
             return patch;
         } catch (Exception e) {
@@ -217,6 +231,7 @@ public class RadicleProjectApi {
             put.setEntity(new StringEntity(jsonEntity, ContentType.APPLICATION_JSON));
             var res = client.execute(put);
             var status = res.getStatusLine().getStatusCode();
+            EntityUtils.consume(res.getEntity());
             if (status >= 200 && status < 300) {
                 logger.info("created authenticated session: {}", s.sessionId);
                 addSession(s);
@@ -233,6 +248,7 @@ public class RadicleProjectApi {
 
     protected RadDetails getCurrentIdentity() {
         var radSelf = new RadSelf(project);
+        radSelf.askForIdentity(false);
         return radSelf.getRadSelfDetails();
     }
 
@@ -241,7 +257,7 @@ public class RadicleProjectApi {
     }
 
     protected Session getCurrentSession(RadDetails rd) {
-        if (rd == null) {
+        if (rd == null || sessions.isEmpty()) {
             return null;
         }
         return sessions.get(rd.nodeId);

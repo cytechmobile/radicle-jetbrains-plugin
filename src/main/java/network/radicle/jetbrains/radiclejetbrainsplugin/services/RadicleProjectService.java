@@ -119,7 +119,9 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput radWebJson(GitRepository repo) {
-        return executeCommand(repo.getRoot().getPath(), List.of("web", "--json"), repo);
+        final var projectSettings = projectSettingsHandler.loadSettings();
+        final var httpdApiUrl = projectSettings.getSeedNode().url;
+        return executeCommand(repo.getRoot().getPath(), List.of("web", "-b", httpdApiUrl , "--json"), repo);
     }
 
     public ProcessOutput remoteList(GitRepository root) {
