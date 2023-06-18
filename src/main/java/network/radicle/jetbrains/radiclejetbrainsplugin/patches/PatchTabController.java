@@ -8,7 +8,6 @@ import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
@@ -18,6 +17,7 @@ import java.util.Arrays;
 
 public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchListPanel patchListPanel;
+    private  SingleValueModel<RadPatch> patchModel;
 
     public PatchTabController(Content tab, Project project) {
         super(project, tab);
@@ -26,7 +26,7 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
 
     public void createPatchProposalPanel(RadPatch patch) {
         final var mainPanel = tab.getComponent();
-        final var patchModel = new SingleValueModel<>(patch);
+        patchModel = new SingleValueModel<>(patch);
         createInternalPatchProposalPanel(patchModel, mainPanel);
         patchModel.addListener(p -> {
             var fetched = api.fetchPatch(patch.projectId, patch.repo, patch.id);
@@ -48,10 +48,10 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
         openPatchTimelineOnEditor(patch, patchProposalPanel, true);
     }
 
-    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> patchModel, PatchProposalPanel proposalPanel, boolean force) {
+    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> myPatchModel, PatchProposalPanel proposalPanel, boolean force) {
         var editorManager = FileEditorManager.getInstance(project);
-        final var patch = patchModel.getValue();
-        var file = new PatchVirtualFile(patchModel, proposalPanel);
+        final var patch = myPatchModel.getValue();
+        var file = new PatchVirtualFile(myPatchModel, proposalPanel);
         var editorTabs = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
                 ed.getFile() instanceof PatchVirtualFile &&
                         ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).toList();
@@ -64,6 +64,10 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
         if (force || editorTabs.isEmpty()) {
             editorManager.openFile(file, true);
         }
+    }
+
+    public SingleValueModel<RadPatch> getPatchModel() {
+        return patchModel;
     }
 
     @Override

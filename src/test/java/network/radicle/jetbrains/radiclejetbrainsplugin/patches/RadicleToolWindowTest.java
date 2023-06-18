@@ -34,7 +34,7 @@ public class RadicleToolWindowTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String AUTHOR1 = "did:key:testAuthor1";
     private RadicleToolWindow radicleToolWindow;
-    private List<RadPatch> patches;
+    private static List<RadPatch> patches;
 
     @Before
     public void setUpToolWindow() throws InterruptedException, IOException {
@@ -227,12 +227,12 @@ public class RadicleToolWindowTest extends AbstractIT {
         assertThat(patchModel.getSize()).isEqualTo(0);
     }
 
-    private List<RadProject> getTestProjects() {
+    public static List<RadProject> getTestProjects() {
         return List.of(new RadProject("test-rad-project", "test project", "test project description", "main"),
                 new RadProject("test-rad-project-second", "test project 2", "test project 2 description", "main"));
     }
 
-    private List<RadPatch> getTestPatches() {
+    public static List<RadPatch> getTestPatches() {
         var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
                 List.of(), List.of(), Instant.now(), List.of(), List.of());
 

@@ -27,6 +27,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
+import java.util.concurrent.CountDownLatch;
+
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getHorizontalPanel;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getVerticalPanel;
@@ -36,9 +38,10 @@ public class TimelineComponent {
     private final RadPatch radPatch;
     private final SingleValueModel<RadPatch> radPatchModel;
 
-    private BaseHtmlEditorPane headerTitle;
     private JPanel headerPanel;
-    private EditablePanelHandler editablePanelHandler;
+    private JComponent commentPanel;
+    private CountDownLatch latch = new CountDownLatch(1);
+    private JComponent revisionSection;
 
     public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
         this.radPatchModel = radPatchModel;
@@ -58,7 +61,8 @@ public class TimelineComponent {
         timelinePanel.setOpaque(false);
         timelinePanel.add(header);
         timelinePanel.add(descriptionWrapper);
-        timelinePanel.add(componentsFactory.createRevisionSection());
+        revisionSection = componentsFactory.createRevisionSection();
+        timelinePanel.add(revisionSection);
 
         var horizontalPanel = getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -66,6 +70,7 @@ public class TimelineComponent {
             if (radDetails != null) {
                 ApplicationManager.getApplication().invokeLater(() -> {
                     var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                    commentPanel = commentSection;
                     timelinePanel.add(commentSection);
                 }, ModalityState.any());
             }
@@ -109,14 +114,13 @@ public class TimelineComponent {
                 .closeEditorAfterSubmit(false)
                 .build();
         panelHandle.showAndFocusEditor();
-        editablePanelHandler = panelHandle;
         return panelHandle;
     }
 
     private JComponent getHeader() {
         final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radPatch.title, radPatch.id, "", "");
 
-        headerTitle = new BaseHtmlEditorPane();
+        var headerTitle = new BaseHtmlEditorPane();
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
 
@@ -129,6 +133,7 @@ public class TimelineComponent {
             final boolean success = edited != null;
             if (success) {
                 radPatchModel.setValue(edited);
+                latch.countDown();
             }
             return success;
         }).build();
@@ -146,12 +151,12 @@ public class TimelineComponent {
         return headerPanel;
     }
 
-    public BaseHtmlEditorPane getHeaderTitle() {
-        return headerTitle;
+    public JComponent getRevisionSection() {
+        return revisionSection;
     }
 
-    public JComponent getEditor() {
-        return editablePanelHandler.editor;
+    public JComponent getCommentPanel() {
+        return commentPanel;
     }
 
     public JPanel getHeaderPanel() {
@@ -160,5 +165,9 @@ public class TimelineComponent {
 
     public TimelineComponentFactory getComponentsFactory() {
         return componentsFactory;
+    }
+
+    public CountDownLatch getLatch() {
+        return latch;
     }
 }

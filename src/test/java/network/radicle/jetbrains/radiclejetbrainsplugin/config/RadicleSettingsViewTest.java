@@ -94,7 +94,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
-        for (int i = 0 ; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             if (radicleSettingsView.getRadDetails() == null) {
                 Thread.sleep(100);
             }

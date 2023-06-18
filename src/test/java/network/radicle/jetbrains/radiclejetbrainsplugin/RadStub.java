@@ -32,6 +32,9 @@ public class RadStub extends RadicleProjectService {
             "│   └── " + SECOND_BRANCH_NAME + " " + SECOND_COMMIT_HASH + " \n" +
             "│\n" +
             ", stderr=}";
+    public static final String SESSION_RESP = "{\"sessionId\":\"mySession\"," +
+            "\"publicKey\":\"myPrivateKey\"," +
+            "\"signature\":\"mySignature\"}";
     public String keyHash = "SHA256:myFakeHash";
     public static String did =  "did:key:fakeDid";
     public static String nodeId = "fakeDid";
@@ -75,6 +78,8 @@ public class RadStub extends RadicleProjectService {
             return new ProcessOutput(-1);
         } else if (cmdLine.getCommandLineString().contains("ssh-add")) {
             stdout = keyHash;
+        } else if (cmdLine.getCommandLineString().contains("web")) {
+            stdout = SESSION_RESP;
         } else if (cmdLine.getCommandLineString().contains("self")) {
             var envRadHome = cmdLine.getEnvironment().get("RAD_HOME");
             if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome) &&
