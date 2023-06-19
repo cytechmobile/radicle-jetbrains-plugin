@@ -212,9 +212,8 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testComment() throws InterruptedException {
-        radStub.commands.poll(10, TimeUnit.SECONDS);
-        radStub.commands.poll(10, TimeUnit.SECONDS);
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        // Clear previous commands
+        radStub.commands.clear();
         executeUiTasks();
         var timelineComponent = patchEditorProvider.getTimelineComponent();
         var commentPanel = timelineComponent.getCommentPanel();

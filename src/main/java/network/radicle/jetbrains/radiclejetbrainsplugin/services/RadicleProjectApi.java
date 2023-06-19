@@ -202,6 +202,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch changePatchTitle(RadPatch patch) {
+        //TODO check for expiration
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;

@@ -40,7 +40,7 @@ public class TimelineComponent {
 
     private JPanel headerPanel;
     private JComponent commentPanel;
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
     private JComponent revisionSection;
 
     public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
