@@ -9,13 +9,13 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JPanel;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-import javax.swing.JComponent;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.Component;
 
@@ -65,6 +65,7 @@ public class TrackDialog extends DialogWrapper {
         super.doCancelAction();
     }
 
+    @Override
     protected void init() {
         super.init();
         setTitle(RadicleBundle.message("track"));

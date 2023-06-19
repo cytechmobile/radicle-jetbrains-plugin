@@ -19,18 +19,18 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTextField;
-import javax.swing.JPanel;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -65,6 +65,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private IdentityDialog identityDialog;
     private RadDetails radDetails;
     private final Project myProject;
+    protected CountDownLatch init = new CountDownLatch(1);
 
     public RadicleSettingsView(Project project) {
         super();
@@ -137,6 +138,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var output = radSelf.perform(radHome, radPath, dialog);
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
+            logger.warn("got rad details: " + radDetails.did);
             ApplicationManager.getApplication().invokeLater(() -> {
                 var isSuccess = RadAction.isSuccess(output);
                 var msg = isSuccess ? radDetails.did : output.getStderr();
@@ -161,13 +163,13 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private boolean isValidNodeApi() {
-        var api = new ProjectApi();
+        var api = myProject.getService(RadicleProjectApi.class);
         var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
         return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
     }
 
     private void checkSeedNodeApiUrl() {
-        var api = new ProjectApi();
+        var api = myProject.getService(RadicleProjectApi.class);
         var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
         if (!isValidNodeApi()) {
             seedNodeApiUrlMsgLabel.setText("<html>" +
@@ -300,7 +302,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         enforceVersionLabel.setVisible(false);
         enforceVersionLabel.setText(RadicleBundle.message("unSupportedCliVer"));
         enforceVersionLabel.setFont(enforceVersionLabel.getFont().deriveFont(Font.BOLD));
-        /* Try to autodetect RAD_HOME and RAD PATH */
+        // Try to autodetect RAD_HOME and RAD PATH
         var hasRadPath = !Strings.isNullOrEmpty(getPathFromTextField(radPathField));
         var hasRadHome = !Strings.isNullOrEmpty(getPathFromTextField(radHomeField));
         var latch = new CountDownLatch(!hasRadPath ? 1 : 0);
@@ -331,9 +333,10 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         }
         seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
         initListeners();
-        /* Show a warning label if the rad version is incompatible */
+        // Show a warning label if the rad version is incompatible
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var version = getRadVersion();
+            init.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 showHideEnforceLabel(version);
             }, ModalityState.any());

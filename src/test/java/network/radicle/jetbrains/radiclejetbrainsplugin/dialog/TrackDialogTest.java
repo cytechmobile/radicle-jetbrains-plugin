@@ -30,20 +30,6 @@ public class TrackDialogTest extends AbstractIT {
         testFields(trackDialog, false);
     }
 
-    private void testFields(TrackDialog trackDialog, boolean isVisible) {
-        assertThat(trackDialog.getTrackActionSelect().isVisible()).isTrue();
-
-        assertThat(trackDialog.getPeerIdLabel().isVisible()).isEqualTo(isVisible);
-        assertThat(trackDialog.getPeerIdField().isVisible()).isEqualTo(isVisible);
-        assertThat(trackDialog.getAlliasLabel().isVisible()).isEqualTo(isVisible);
-        assertThat(trackDialog.getAliasField().isVisible()).isEqualTo(isVisible);
-
-        assertThat(trackDialog.getRepositoryIdLabel().isVisible()).isEqualTo(!isVisible);
-        assertThat(trackDialog.getRepositoryField().isVisible()).isEqualTo(!isVisible);
-        assertThat(trackDialog.getScopeLabel().isVisible()).isEqualTo(!isVisible);
-        assertThat(trackDialog.getScopeSelect().isVisible()).isEqualTo(!isVisible);
-    }
-
     @Test
     public void testPeer() throws InterruptedException {
         var trackDialog = new TrackDialog(getProject());
@@ -81,8 +67,19 @@ public class TrackDialogTest extends AbstractIT {
         assertCmd(cmd);
         var selected = ((RadTrack.Scope) Objects.requireNonNull(trackDialog.getScopeSelect().getSelectedItem())).value;
         assertThat(cmd.getCommandLineString()).contains("track " + REPO_ID + " --scope " + selected);
-
     }
 
+    private void testFields(TrackDialog trackDialog, boolean isVisible) {
+        assertThat(trackDialog.getTrackActionSelect().isVisible()).isTrue();
 
+        assertThat(trackDialog.getPeerIdLabel().isVisible()).isEqualTo(isVisible);
+        assertThat(trackDialog.getPeerIdField().isVisible()).isEqualTo(isVisible);
+        assertThat(trackDialog.getAlliasLabel().isVisible()).isEqualTo(isVisible);
+        assertThat(trackDialog.getAliasField().isVisible()).isEqualTo(isVisible);
+
+        assertThat(trackDialog.getRepositoryIdLabel().isVisible()).isEqualTo(!isVisible);
+        assertThat(trackDialog.getRepositoryField().isVisible()).isEqualTo(!isVisible);
+        assertThat(trackDialog.getScopeLabel().isVisible()).isEqualTo(!isVisible);
+        assertThat(trackDialog.getScopeSelect().isVisible()).isEqualTo(!isVisible);
+    }
 }

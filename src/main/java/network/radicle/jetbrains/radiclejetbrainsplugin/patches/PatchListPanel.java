@@ -10,18 +10,16 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.ListCellRenderer;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JLabel;
-import java.awt.Component;
+import javax.swing.ListCellRenderer;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -31,14 +29,14 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
     private final PatchTabController controller;
     private final ListCellRenderer<RadPatch> patchListCellRenderer = new PatchListCellRenderer();
 
-    public PatchListPanel(PatchTabController ctrl, Project project, ProjectApi api) {
-        super(ctrl, project, api);
+    public PatchListPanel(PatchTabController ctrl, Project project) {
+        super(ctrl, project);
         this.controller = ctrl;
     }
 
     @Override
-    public List<RadPatch> fetchData(SeedNode seedNode, String projectId, GitRepository repo) {
-        return myApi.fetchPatches(seedNode, projectId, repo);
+    public List<RadPatch> fetchData(String projectId, GitRepository repo) {
+        return api.fetchPatches(projectId, repo);
     }
 
     @Override

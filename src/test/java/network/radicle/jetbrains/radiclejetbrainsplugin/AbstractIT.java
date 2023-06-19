@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
-import com.google.common.base.Strings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
@@ -9,24 +8,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import git4idea.GitCommit;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
-import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
@@ -39,12 +36,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
@@ -61,7 +54,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     protected String remoteRepoPath1;
     protected GitRepository firstRepo;
     protected GitRepository secondRepo;
-    protected HttpClient httpClient;
+
     private MessageBusConnection mbc;
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
@@ -124,32 +117,6 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         applicationMbc.subscribe(Notifications.TOPIC);
         mbc.subscribe(Notifications.TOPIC);
         logger.warn("created message bus connection and subscribed to notifications: {}" + mbc);
-
-        httpClient = mock(HttpClient.class);
-        when(httpClient.execute(any())).thenAnswer((i) -> {
-            var req = (HttpGet) i.getArgument(0);
-            final StringEntity se;
-            if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestProjects()));
-            } else if (req.getURI().getPath().endsWith(IssueListPanelTest.URL)) {
-                // request to fetch patches
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestIssues()));
-            } else if (req.getURI().getPath().endsWith(PatchListPanelTest.URL)) {
-                // request to fetch patches
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestPatches()));
-            } else {
-                // request to fetch specific project
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
-            }
-            se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            final var resp = mock(HttpResponse.class);
-            when(resp.getEntity()).thenReturn(se);
-            final var statusLine = mock(StatusLine.class);
-            when(resp.getStatusLine()).thenReturn(statusLine);
-            when(statusLine.getStatusCode()).thenReturn(200);
-            return resp;
-        });
-
     }
 
     @After
@@ -203,9 +170,29 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         }
     }
 
-    private  List<RadProject> getTestProjects() {
-        return List.of(new RadProject("test-rad-project", "test project", "test project description", "main"),
-                new RadProject("test-rad-project-second", "test project 2", "test project 2 description", "main"));
+    public RadicleProjectApi replaceApiService() {
+        var client = mock(HttpClient.class);
+        var api = new RadicleProjectApi(myProject, client);
+        ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
+        return api;
     }
 
+    public void executeUiTasks() {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    }
+
+    public static class NoopContinuation<T> implements Continuation<T> {
+        public static final NoopContinuation<kotlin.Unit> NOOP = new NoopContinuation<>();
+        @NotNull
+        @Override
+        public CoroutineContext getContext() {
+            return EmptyCoroutineContext.INSTANCE;
+        }
+
+        @Override
+        public void resumeWith(@NotNull Object o) {
+        }
+    }
 }
