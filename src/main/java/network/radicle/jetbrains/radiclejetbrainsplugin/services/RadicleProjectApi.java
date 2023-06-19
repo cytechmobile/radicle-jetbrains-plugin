@@ -286,10 +286,6 @@ public class RadicleProjectApi {
         return sessions.get(rd.nodeId);
     }
 
-    protected Map<String, Session> getSessions() {
-        return sessions;
-    }
-
     protected void addSession(Session session) {
         sessions.put(session.publicKey, session);
     }

@@ -46,17 +46,6 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
-    public void radWebAction() {
-        // Here the stubbing works
-        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
-        var patch = new RadPatch();
-        patch.repo = firstRepo;
-        var api = patch.repo.getProject().getService(RadicleProjectApi.class);
-        var edited = api.changePatchTitle(patch);
-
-    }
-
-    @Test
     public void radFetchAction() throws InterruptedException {
         var rfa = new RadicleSyncAction();
         rfa.performAction(getProject());

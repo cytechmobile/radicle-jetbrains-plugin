@@ -143,13 +143,6 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("comment", patchId, "--message", message), root);
     }
 
-    public ProcessOutput patchEdit(GitRepository root, String patchId, String message, String description) {
-        if (SystemInfo.isWindows) {
-            message = "'" + message + "'";
-        }
-        return executeCommand(root.getRoot().getPath(), List.of("patch", "edit", patchId, "--message", message, "--message", description), root);
-    }
-
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
                                                  @Nullable GitRepository repo, String stdin) {
         final var projectSettings = projectSettingsHandler.loadSettings();
