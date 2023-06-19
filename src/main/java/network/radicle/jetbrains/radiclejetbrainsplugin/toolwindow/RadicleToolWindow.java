@@ -19,17 +19,8 @@ import java.util.List;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
     public ToolWindowManagerListener toolWindowManagerListener;
-    public TabController patchTabController;
-    public TabController issueTabController;
-    protected ProjectApi myApi;
-
-    public RadicleToolWindow() {
-        myApi = new ProjectApi();
-    }
-
-    public RadicleToolWindow(ProjectApi api) {
-        myApi = api;
-    }
+    public PatchTabController patchTabController;
+    public IssueTabController issueTabController;
 
     @Override
     public void init(@NotNull ToolWindow window) {
@@ -55,7 +46,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                     contentManager.setSelectedContent(patchContent, true);
                     patchTabController = new PatchTabController(patchContent, project);
                     patchTabController.createPanel();
-                    issueTabController = new IssueTabController(issueContent, project, myApi);
+                    issueTabController = new IssueTabController(issueContent, project);
                     issueTabController.createPanel();
                 }
             }

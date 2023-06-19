@@ -1,12 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -20,10 +20,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class PatchListPanelTest extends AbstractIT {
@@ -43,7 +47,7 @@ public class PatchListPanelTest extends AbstractIT {
             final StringEntity se;
             if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
-            } else if (req.getURI().getPath().endsWith("/patches")) {
+            } else if (req.getURI().getPath().endsWith(URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
             } else {

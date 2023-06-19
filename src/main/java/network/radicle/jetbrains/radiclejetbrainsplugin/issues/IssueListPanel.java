@@ -10,8 +10,6 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
 import javax.accessibility.AccessibleContext;
@@ -29,13 +27,13 @@ import java.util.List;
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
 
-    public IssueListPanel(IssueTabController controller, Project project, ProjectApi myApi) {
-        super(controller, project, myApi);
+    public IssueListPanel(IssueTabController controller, Project project) {
+        super(controller, project);
     }
 
     @Override
-    public List<RadIssue> fetchData(SeedNode seedNode, String projectId, GitRepository repo) {
-        return myApi.fetchIssues(seedNode, projectId, repo);
+    public List<RadIssue> fetchData(String projectId, GitRepository repo) {
+        return api.fetchIssues(projectId, repo);
     }
 
     @Override

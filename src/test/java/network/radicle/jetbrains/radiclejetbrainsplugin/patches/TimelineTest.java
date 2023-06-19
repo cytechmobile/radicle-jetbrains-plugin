@@ -12,6 +12,7 @@ import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -31,8 +32,8 @@ import org.junit.runners.JUnit4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
@@ -43,8 +44,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.RadicleToolWindowTest.getTestPatches;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.RadicleToolWindowTest.getTestProjects;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestProjects;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -79,6 +81,9 @@ public class TimelineTest extends AbstractIT {
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(IssueListPanelTest.URL)) {
+                // request to fetch patches
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
             } else if ((req instanceof HttpGet)) {
                 // request to fetch specific project
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
@@ -99,10 +104,10 @@ public class TimelineTest extends AbstractIT {
     public void setupWindow() throws InterruptedException {
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         RadicleToolWindow radicleToolWindow = new RadicleToolWindow();
-        var mockToolWindow = new RadicleToolWindowTest.MockToolWindow(super.getProject());
+        var mockToolWindow = new PatchListPanelTest.MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), mockToolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(mockToolWindow);
-        patchTabController = (PatchTabController) radicleToolWindow.patchTabController;
+        patchTabController = radicleToolWindow.patchTabController;
         patchTabController.createPatchProposalPanel(patch);
         var editorManager = FileEditorManager.getInstance(getProject());
         var allEditors = editorManager.getAllEditors();
@@ -207,6 +212,7 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testComment() throws InterruptedException {
+        radStub.commands.poll(10, TimeUnit.SECONDS);
         radStub.commands.poll(10, TimeUnit.SECONDS);
         radStub.commands.poll(10, TimeUnit.SECONDS);
         executeUiTasks();
