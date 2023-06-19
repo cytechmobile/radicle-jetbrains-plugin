@@ -246,8 +246,6 @@ public class PatchProposalPanel {
 
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            // TODO fetch first and then show the changes, maybe i have to add the did to the remotes
-            // calculate file changes for each revision and gather them all
             List<Change> changes = new ArrayList<>();
             for (var rev : patch.revisions) {
                 final var diff = GitChangeUtils.getDiff(patch.repo, rev.base(), rev.oid(), true);
@@ -266,7 +264,6 @@ public class PatchProposalPanel {
 
     protected void calculatePatchCommits() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            //TODO fetch first and then show the changes, maybe i have to add the did to the remotes
             try {
                 List<GitCommit> history = new ArrayList<>();
                 for (var rev : patch.revisions) {
