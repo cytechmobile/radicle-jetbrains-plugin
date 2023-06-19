@@ -20,6 +20,8 @@ import javax.swing.JComponent;
 import javax.swing.Icon;
 
 public class PatchEditorProvider implements FileEditorProvider, DumbAware {
+    private PatchEditor patchEditor;
+
     @Override
     public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
         return file instanceof PatchVirtualFile;
@@ -28,6 +30,7 @@ public class PatchEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
         var editor = new PatchEditor((PatchVirtualFile) file);
+        patchEditor = editor;
         Disposer.register(editor, Disposer.newDisposable());
         return editor;
     }
@@ -42,9 +45,14 @@ public class PatchEditorProvider implements FileEditorProvider, DumbAware {
         return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
     }
 
+    public TimelineComponent getTimelineComponent() {
+        return patchEditor.getTimelineComponent();
+    }
+
     public static class PatchEditor extends FileEditorBase {
         private final PatchVirtualFile file;
         private JComponent panel;
+        private TimelineComponent timelineComponent;
 
         public PatchEditor(PatchVirtualFile file) {
             this.file = file;
@@ -52,7 +60,8 @@ public class PatchEditorProvider implements FileEditorProvider, DumbAware {
         }
 
         public void initPanel() {
-            panel = new TimelineComponent(file.getPatchModel(), file.getProposalPanel()).create();
+            timelineComponent = new TimelineComponent(file.getPatchModel(), file.getProposalPanel());
+            panel = timelineComponent.create();
             panel.setOpaque(true);
             panel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
         }
@@ -75,6 +84,10 @@ public class PatchEditorProvider implements FileEditorProvider, DumbAware {
         @Override
         public VirtualFile getFile() {
             return file;
+        }
+
+        public TimelineComponent getTimelineComponent() {
+            return timelineComponent;
         }
     }
 

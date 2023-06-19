@@ -40,6 +40,22 @@ public class RadPatch {
         this.revisions = revisions;
     }
 
+    public RadPatch(RadPatch other) {
+        this.seedNode = other.seedNode;
+        this.repo = other.repo;
+        this.project = other.project;
+        this.defaultBranch = other.defaultBranch;
+        this.projectId = other.projectId;
+        this.id = other.id;
+        this.title = other.title;
+        this.author = other.author;
+        this.description = other.description;
+        this.target = other.target;
+        this.tags = other.tags;
+        this.state = other.state;
+        this.revisions = other.revisions;
+    }
+
     public record Revision(
             String id, String description, String base, String oid, List<String> refs,
             List<Merge> merges, Instant timestamp, List<Discussion> discussions, List<Object> reviews) { }

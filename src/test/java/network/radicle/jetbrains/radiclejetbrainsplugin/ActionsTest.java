@@ -1,9 +1,10 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class ActionsTest extends AbstractIT {
@@ -36,7 +39,7 @@ public class ActionsTest extends AbstractIT {
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("inspect");
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
     }
 
@@ -49,22 +52,24 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("sync -f");
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(new RadSync(null).getNotificationSuccessMessage());
+        var repo = mock(GitRepository.class);
+        when(repo.getProject()).thenReturn(getProject());
+        assertThat(not.getContent()).contains(new RadSync(repo).getNotificationSuccessMessage());
     }
 
     @Test
     public void testSuccessNotificationAfterInstalled() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("");
         var rm = new RadicleManagerListener();
-        rm.runActivity(getProject());
+        rm.execute(getProject(), NoopContinuation.NOOP);
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
 
         radicleProjectSettingsHandler.savePath(RAD_PATH);
-        rm.runActivity(getProject());
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        rm.execute(getProject(), NoopContinuation.NOOP);
+        not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
     }
 
