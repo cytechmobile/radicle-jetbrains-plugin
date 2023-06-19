@@ -6,8 +6,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
