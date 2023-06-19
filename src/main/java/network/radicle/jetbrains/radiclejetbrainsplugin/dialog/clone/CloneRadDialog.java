@@ -117,6 +117,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSelf = new RadSelf(project);
+            radSelf.askForIdentity(false);
             var radDetails = radSelf.getRadSelfDetails();
             String activeNodeId = radDetails == null ? "" : radDetails.nodeId;
             ApplicationManager.getApplication().invokeLater(() ->
