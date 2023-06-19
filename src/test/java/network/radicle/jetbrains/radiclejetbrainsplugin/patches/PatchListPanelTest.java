@@ -1,12 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -20,17 +20,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
-public class RadicleToolWindowTest extends AbstractIT {
+public class PatchListPanelTest extends AbstractIT {
+    public static final String URL = "/patches";
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String AUTHOR1 = "did:key:testAuthor1";
     private RadicleToolWindow radicleToolWindow;

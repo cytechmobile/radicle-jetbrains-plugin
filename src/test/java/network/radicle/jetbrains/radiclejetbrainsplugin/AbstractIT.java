@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.google.common.base.Strings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
@@ -36,6 +37,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -159,14 +162,6 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "rad://hrrkbjxncopa15doj7qobxip8fotbcemjro4o.git");
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
-        }
-    }
-
-    protected void removeSeedNodeFromConfig(GitRepository repo) {
-        try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "");
-        } catch (Exception e) {
-            logger.warn("unable to remove seed node from config file");
         }
     }
 
