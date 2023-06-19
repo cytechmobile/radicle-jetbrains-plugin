@@ -1,8 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.google.common.base.Strings;
-import com.intellij.openapi.project.Project;
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
@@ -14,7 +12,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -245,21 +242,5 @@ public class PatchListPanelTest extends AbstractIT {
                 RadPatch.State.CLOSED, List.of(revision));
         patches = List.of(radPatch, radPatch2);
         return patches;
-    }
-
-    public static class MockToolWindow extends ToolWindowHeadlessManagerImpl.MockToolWindow {
-        public MockToolWindow(@NotNull Project project) {
-            super(project);
-        }
-
-        @Override
-        public boolean isAvailable() {
-            return false;
-        }
-
-        @Override
-        public boolean isVisible() {
-            return true;
-        }
     }
 }

@@ -1,12 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
 import com.google.common.base.Strings;
-import com.intellij.openapi.project.Project;
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
@@ -16,7 +13,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -266,21 +262,5 @@ public class IssueListPanelTest extends AbstractIT {
 
     private static RadIssue.Discussion createDiscussion(String id, String authorId, String body) {
         return new RadIssue.Discussion(id, new RadIssue.Author(authorId), body, Instant.now(), "", List.of());
-    }
-
-    public static class MockToolWindow extends ToolWindowHeadlessManagerImpl.MockToolWindow {
-        public MockToolWindow(@NotNull Project project) {
-            super(project);
-        }
-
-        @Override
-        public boolean isAvailable() {
-            return false;
-        }
-
-        @Override
-        public boolean isVisible() {
-            return true;
-        }
     }
 }
