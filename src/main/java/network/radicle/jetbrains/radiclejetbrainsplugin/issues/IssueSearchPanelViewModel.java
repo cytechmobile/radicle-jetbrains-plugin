@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.jvm.functions.Function2;
@@ -18,7 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSearchValue, IssueSearchPanelViewModel.IssueListQuickFilter, RadIssue> {
@@ -78,84 +78,92 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                 });
     }
 
-    public List<String> getProjectNames() {
-        try {
-            var isFinished = new CountDownLatch(1);
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var gitRepoManager = GitRepositoryManager.getInstance(project);
-                projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
-                        .stream().map(e -> e.getRoot().getName()).collect(Collectors.toList());
-                isFinished.countDown();
-            });
-            isFinished.await();
-        } catch (Exception e) {
-            logger.warn("Unable to get project names", e);
-        }
-        return projectNames;
+    public CompletableFuture<List<String>> getProjectNames() {
+        return CompletableFuture.supplyAsync(() -> {
+            var gitRepoManager = GitRepositoryManager.getInstance(project);
+            projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
+                    .stream().map(e -> e.getRoot().getName()).collect(Collectors.toList());
+            return projectNames;
+        });
     }
 
-    public List<String> getTags() {
-        List<String> tags = new ArrayList<>();
-        try {
-            countDown.await();
-            var selectedProjectFilter = this.getSearchState().getValue().project;
-            for (var issue : myList) {
-                if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                    continue;
+    public CompletableFuture<List<String>> getTags() {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                var res = countDown.await(5, TimeUnit.SECONDS);
+                if (!res) {
+                    return List.of();
                 }
-                for (var tag : issue.tags) {
-                    if (!tags.contains(tag)) {
-                        tags.add(tag);
+                List<String> tags = new ArrayList<>();
+                var selectedProjectFilter = this.getSearchState().getValue().project;
+                for (var issue : myList) {
+                    if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                        continue;
+                    }
+                    for (var tag : issue.tags) {
+                        if (!tags.contains(tag)) {
+                            tags.add(tag);
+                        }
                     }
                 }
+                return tags;
+            } catch (Exception e) {
+                logger.warn("Unable to get rad tags", e);
+                return List.of();
             }
-        } catch (Exception e) {
-            logger.warn("Unable to get rad tags", e);
-            return tags;
-        }
-        return tags;
+        });
     }
 
-    public List<String> getAssignees() {
-        List<String> assigness = new ArrayList<>();
-        try {
-            countDown.await();
-            var selectedProjectFilter = this.getSearchState().getValue().project;
-            for (var issue : myList) {
-                if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                    continue;
+    public CompletableFuture<List<String>> getAssignees() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<String> assigness = new ArrayList<>();
+            try {
+                var res = countDown.await(5, TimeUnit.SECONDS);
+                if (!res) {
+                    return List.of();
                 }
-                for (var assignee : issue.assignees) {
-                    if (!assigness.contains(assignee)) {
-                        assigness.add(assignee);
+                var selectedProjectFilter = this.getSearchState().getValue().project;
+                for (var issue : myList) {
+                    if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                        continue;
+                    }
+                    for (var assignee : issue.assignees) {
+                        if (!assigness.contains(assignee)) {
+                            assigness.add(assignee);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                logger.warn("Unable to get assignees", e);
+                return assigness;
             }
-        } catch (Exception e) {
-            logger.warn("Unable to get rad tags", e);
             return assigness;
-        }
-        return assigness;
+        });
     }
 
-    public List<String> getAuthors() {
-        List<String> peersIds = new ArrayList<>();
-        try {
-            countDown.await();
-            var selectedProjectFilter = this.getSearchState().getValue().project;
-            for (var issue : myList) {
-                if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                    continue;
+    public CompletableFuture<List<String>> getAuthors() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<String> peersIds = new ArrayList<>();
+            try {
+                var res = countDown.await(5, TimeUnit.SECONDS);
+                if (!res) {
+                    return List.of();
                 }
-                if (!peersIds.contains(issue.author.id())) {
-                    peersIds.add(issue.author.id());
+                var selectedProjectFilter = this.getSearchState().getValue().project;
+                for (var issue : myList) {
+                    if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                        continue;
+                    }
+                    if (!peersIds.contains(issue.author.id())) {
+                        peersIds.add(issue.author.id());
+                    }
                 }
+            } catch (Exception e) {
+                logger.warn("Unable to get authors ids", e);
+                return peersIds;
             }
-        } catch (Exception e) {
-            logger.warn("Unable to get rad patches", e);
             return peersIds;
-        }
-        return peersIds;
+        });
     }
 
     @NotNull

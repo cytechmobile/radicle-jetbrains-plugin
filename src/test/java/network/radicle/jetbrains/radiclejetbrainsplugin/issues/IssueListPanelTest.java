@@ -21,6 +21,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestProjects;
@@ -132,13 +133,13 @@ public class IssueListPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testFilterByProject() {
+    public void testFilterByProject() throws ExecutionException, InterruptedException {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
         var filter = new IssueListSearchValue();
         var searchVm = listPanel.getSearchVm();
         var projectNames = searchVm.getProjectNames();
-        filter.project = projectNames.get(0);
+        filter.project = projectNames.get().get(0);
         listPanel.filterList(filter);
 
         var issueModel = listPanel.getModel();
@@ -211,20 +212,20 @@ public class IssueListPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testTagDuplicates() {
+    public void testTagDuplicates() throws ExecutionException, InterruptedException {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
         var searchVm = listPanel.getSearchVm();
-        var tags = searchVm.getTags();
+        var tags = searchVm.getTags().get();
         assertThat(tags.size()).isEqualTo(4);
     }
 
     @Test
-    public void testAssigneesDuplicates() {
+    public void testAssigneesDuplicates() throws ExecutionException, InterruptedException {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
         var searchVm = listPanel.getSearchVm();
-        var tags = searchVm.getAssignees();
+        var tags = searchVm.getAssignees().get();
         assertThat(tags.size()).isEqualTo(3);
     }
 
