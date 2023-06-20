@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSearchValue,
@@ -99,14 +100,17 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                         //Get popup
                         var popUp = event.asPopup().getContent();
                         var jbList = UIUtil.findComponentOfType(popUp, JBList.class);
+                        if (jbList == null) {
+                            return;
+                        }
                         //Find model
-                        var listModel = (NameFilteringListModel) jbList.getModel();
+                        var listModel = (NameFilteringListModel<String>) jbList.getModel();
                         ApplicationManager.getApplication().executeOnPooledThread(() -> {
                             try {
                                 //Start loading indicator
                                 jbList.setPaintBusy(true);
                                 // Wait for CompletableFuture to finished
-                                var data = list.get();
+                                var data = list.get(5, TimeUnit.SECONDS);
                                 //Stop loading indicator
                                 jbList.setPaintBusy(false);
                                 ApplicationManager.getApplication().invokeLater(() -> {
