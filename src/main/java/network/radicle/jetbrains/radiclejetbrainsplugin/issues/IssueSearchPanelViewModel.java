@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSearchValue, IssueSearchPanelViewModel.IssueListQuickFilter, RadIssue> {
@@ -89,53 +88,35 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
 
     public CompletableFuture<List<String>> getTags() {
         return CompletableFuture.supplyAsync(() -> {
-            try {
-                var res = countDown.await(5, TimeUnit.SECONDS);
-                if (!res) {
-                    return List.of();
+            List<String> tags = new ArrayList<>();
+            var selectedProjectFilter = this.getSearchState().getValue().project;
+            for (var issue : myList) {
+                if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                    continue;
                 }
-                List<String> tags = new ArrayList<>();
-                var selectedProjectFilter = this.getSearchState().getValue().project;
-                for (var issue : myList) {
-                    if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                        continue;
-                    }
-                    for (var tag : issue.tags) {
-                        if (!tags.contains(tag)) {
-                            tags.add(tag);
-                        }
+                for (var tag : issue.tags) {
+                    if (!tags.contains(tag)) {
+                        tags.add(tag);
                     }
                 }
-                return tags;
-            } catch (Exception e) {
-                logger.warn("Unable to get rad tags", e);
-                return List.of();
             }
+            return tags;
         });
     }
 
     public CompletableFuture<List<String>> getAssignees() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> assigness = new ArrayList<>();
-            try {
-                var res = countDown.await(5, TimeUnit.SECONDS);
-                if (!res) {
-                    return List.of();
+            var selectedProjectFilter = this.getSearchState().getValue().project;
+            for (var issue : myList) {
+                if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                    continue;
                 }
-                var selectedProjectFilter = this.getSearchState().getValue().project;
-                for (var issue : myList) {
-                    if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                        continue;
-                    }
-                    for (var assignee : issue.assignees) {
-                        if (!assigness.contains(assignee)) {
-                            assigness.add(assignee);
-                        }
+                for (var assignee : issue.assignees) {
+                    if (!assigness.contains(assignee)) {
+                        assigness.add(assignee);
                     }
                 }
-            } catch (Exception e) {
-                logger.warn("Unable to get assignees", e);
-                return assigness;
             }
             return assigness;
         });
@@ -144,23 +125,14 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     public CompletableFuture<List<String>> getAuthors() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> peersIds = new ArrayList<>();
-            try {
-                var res = countDown.await(5, TimeUnit.SECONDS);
-                if (!res) {
-                    return List.of();
+            var selectedProjectFilter = this.getSearchState().getValue().project;
+            for (var issue : myList) {
+                if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
+                    continue;
                 }
-                var selectedProjectFilter = this.getSearchState().getValue().project;
-                for (var issue : myList) {
-                    if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                        continue;
-                    }
-                    if (!peersIds.contains(issue.author.id())) {
-                        peersIds.add(issue.author.id());
-                    }
+                if (!peersIds.contains(issue.author.id())) {
+                    peersIds.add(issue.author.id());
                 }
-            } catch (Exception e) {
-                logger.warn("Unable to get authors ids", e);
-                return peersIds;
             }
             return peersIds;
         });

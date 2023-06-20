@@ -109,6 +109,11 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                         jbList.setPaintBusy(true);
                         ApplicationManager.getApplication().executeOnPooledThread(() -> {
                             try {
+                                //Wait for the data to be ready
+                                var isFinished = viewModel.getCountDown().await(5, TimeUnit.SECONDS);
+                                if (!isFinished) {
+                                    return;
+                                }
                                 var data = list.get(5, TimeUnit.SECONDS);
                                 ApplicationManager.getApplication().invokeLater(() -> {
                                     // Stop loading indicator
