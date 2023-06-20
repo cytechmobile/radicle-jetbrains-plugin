@@ -109,18 +109,19 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                         jbList.setPaintBusy(true);
                         ApplicationManager.getApplication().executeOnPooledThread(() -> {
                             try {
-                                // Wait for CompletableFuture to finished
                                 var data = list.get(5, TimeUnit.SECONDS);
                                 ApplicationManager.getApplication().invokeLater(() -> {
-                                    //Stop loading indicator
+                                    // Stop loading indicator
                                     jbList.setPaintBusy(false);
-                                    //Update the model with the new data
+                                    // Update the model with the new data
                                     listModel.replaceAll(data);
                                     event.asPopup().pack(true, true);
                                 }, ModalityState.any());
                             } catch (Exception e) {
-                                jbList.setPaintBusy(false);
                                 logger.warn("Unable to load filters");
+                                ApplicationManager.getApplication().invokeLater(() -> {
+                                    jbList.setPaintBusy(false);
+                                }, ModalityState.any());
                             }
                         });
                     }
