@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -108,9 +107,7 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                         var listModel = (NameFilteringListModel<String>) jbList.getModel();
                         //Start loading indicator
                         jbList.setPaintBusy(true);
-                        // Get a single thread for our operation
-                        var executor = Executors.newSingleThreadExecutor();
-                        executor.execute(() -> {
+                        ApplicationManager.getApplication().executeOnPooledThread(() -> {
                             try {
                                 //Wait for the data to be ready
                                 var isFinished = viewModel.getCountDown().await(5, TimeUnit.SECONDS);
@@ -119,14 +116,14 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                                 }
                                 var data = list.get(5, TimeUnit.SECONDS);
                                 ApplicationManager.getApplication().invokeLater(() -> {
-                                    // Stop loading indicator
-                                    jbList.setPaintBusy(false);
                                     // Update the model with the new data
                                     listModel.replaceAll(data);
                                     event.asPopup().pack(true, true);
                                 }, ModalityState.any());
                             } catch (Exception e) {
                                 logger.warn("Unable to load filters");
+                            } finally {
+                                // Stop loading indicator
                                 ApplicationManager.getApplication().invokeLater(() ->
                                         jbList.setPaintBusy(false), ModalityState.any());
                             }
