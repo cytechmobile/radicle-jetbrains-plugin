@@ -22,7 +22,7 @@ import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -59,6 +59,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
     public List<GitCommit> commitHistory;
+
     @Before
     public void before() throws IOException, VcsException {
         /* initialize a git repository */
@@ -171,7 +172,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     public RadicleProjectApi replaceApiService() {
-        var client = mock(HttpClient.class);
+        var client = mock(CloseableHttpClient.class);
         var api = new RadicleProjectApi(myProject, client);
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
