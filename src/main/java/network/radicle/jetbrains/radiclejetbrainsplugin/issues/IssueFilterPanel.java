@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -107,7 +108,9 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                         var listModel = (NameFilteringListModel<String>) jbList.getModel();
                         //Start loading indicator
                         jbList.setPaintBusy(true);
-                        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                        // Get a single thread for our operation
+                        var executor = Executors.newSingleThreadExecutor();
+                        executor.execute(() -> {
                             try {
                                 //Wait for the data to be ready
                                 var isFinished = viewModel.getCountDown().await(5, TimeUnit.SECONDS);
@@ -124,9 +127,8 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                                 }, ModalityState.any());
                             } catch (Exception e) {
                                 logger.warn("Unable to load filters");
-                                ApplicationManager.getApplication().invokeLater(() -> {
-                                    jbList.setPaintBusy(false);
-                                }, ModalityState.any());
+                                ApplicationManager.getApplication().invokeLater(() ->
+                                        jbList.setPaintBusy(false), ModalityState.any());
                             }
                         });
                     }
