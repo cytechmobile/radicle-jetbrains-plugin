@@ -26,9 +26,11 @@ import java.util.List;
 
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
+    private final IssueTabController cntrl;
 
-    public IssueListPanel(IssueTabController controller, Project project) {
+    public IssueListPanel(IssueTabController controller, Project project, IssueTabController cntrl) {
         super(controller, project);
+        this.cntrl = cntrl;
     }
 
     @Override
@@ -48,7 +50,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public void onItemClick(RadIssue obj) {
-
+        this.cntrl.createIssuePanel(obj);
     }
 
     @Override
@@ -106,9 +108,9 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                 title = new JLabel(issue.title);
                 issuePanel.add(title, BorderLayout.NORTH);
                 var firstDiscussion = issue.discussion.get(0);
-                var date = Date.from(firstDiscussion.timestamp());
+                var date = Date.from(firstDiscussion.timestamp);
                 var formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(date);
-                var info = new JLabel("Created : " + formattedDate + " by " + issue.author.id());
+                var info = new JLabel("Created : " + formattedDate + " by " + issue.author.id);
                 info.setForeground(JBColor.GRAY);
                 if (!issue.tags.isEmpty()) {
                     var tags = new JLabel("Tags : " + String.join(", ", issue.tags));
