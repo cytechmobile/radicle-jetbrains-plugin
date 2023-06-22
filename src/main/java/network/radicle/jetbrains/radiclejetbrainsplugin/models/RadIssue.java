@@ -3,27 +3,30 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 
-import java.time.Instant;
 import java.util.List;
 
 public class RadIssue {
     public String id;
-    public Author author;
+    public RadAuthor author;
     public String title;
     public State state;
     public List<Object> assignees;
     public List<String> tags;
-    public List<Discussion> discussion;
+    public List<RadDiscussion> discussion;
     public GitRepository repo;
+    public Project project;
+    public String projectId;
+    public SeedNode seedNode;
 
     public RadIssue() {
         // for json
     }
 
-    public RadIssue(String id, Author author, String title, State state,
-                    List<Object> assignees, List<String> tags, List<Discussion> discussion) {
+    public RadIssue(String id, RadAuthor author, String title, State state,
+                    List<Object> assignees, List<String> tags, List<RadDiscussion> discussion) {
         this.id = id;
         this.author = author;
         this.title = title;
@@ -33,8 +36,19 @@ public class RadIssue {
         this.discussion = discussion;
     }
 
-    public record Discussion(String id, RadIssue.Author author, String body, Instant timestamp, String replyTo, List<String> reactions) { }
-    public record Author(String id) { }
+    public RadIssue(RadIssue other) {
+        this.id = other.id;
+        this.author = other.author;
+        this.title = other.title;
+        this.state = other.state;
+        this.assignees = other.assignees;
+        this.tags = other.tags;
+        this.discussion = other.discussion;
+        this.repo = other.repo;
+        this.project = other.project;
+        this.projectId = other.projectId;
+        this.seedNode = other.seedNode;
+    }
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {

@@ -121,8 +121,8 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
             if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
                 continue;
             }
-            if (!peersIds.contains(p.author.id())) {
-                peersIds.add(p.author.id());
+            if (!peersIds.contains(p.author.id)) {
+                peersIds.add(p.author.id);
             }
         }
         return peersIds;

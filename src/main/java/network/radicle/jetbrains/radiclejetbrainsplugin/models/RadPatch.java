@@ -17,7 +17,7 @@ public class RadPatch {
     public String projectId;
     public String id;
     public String title;
-    public Author author;
+    public RadAuthor author;
     public String description;
     public String target;
     public List<String> tags;
@@ -29,7 +29,7 @@ public class RadPatch {
     }
 
     public RadPatch(
-            String id, String title, Author author, String description, String target, List<String> tags, State state, List<Revision> revisions) {
+            String id, String title, RadAuthor author, String description, String target, List<String> tags, State state, List<Revision> revisions) {
         this.id = id;
         this.title = title;
         this.author = author;
@@ -58,13 +58,10 @@ public class RadPatch {
 
     public record Revision(
             String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<Discussion> discussions, List<Object> reviews) { }
+            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews) { }
 
     public record Merge(String node, String commit, Instant timestamp) { }
 
-    public record Discussion(String id, Author author, String body, Instant timestamp, String replyTo, List<String> reactions) { }
-
-    public record Author(String id) { }
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {

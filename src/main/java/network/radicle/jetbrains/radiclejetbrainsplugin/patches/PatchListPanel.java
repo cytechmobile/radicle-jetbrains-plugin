@@ -75,10 +75,10 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
              var tagFilter = patchListSearchValue.tag;
              var loadedRadPatches = loadedData;
              List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                     .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
+                     .filter(p -> searchFilter == null || p.author.id.contains(searchFilter) ||
                              p.title.contains(searchFilter) || p.description.contains(searchFilter))
                      .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                     .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
+                     .filter(p -> peerAuthorFilter == null || p.author.id.equals(peerAuthorFilter))
                      .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
                      .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
                      .collect(Collectors.toList());
@@ -134,7 +134,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 var revision = patch.revisions.get(patch.revisions.size() - 1);
                 var date = Date.from(revision.timestamp());
                 var formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(date);
-                var info = new JLabel("Created : " + formattedDate + " by " + patch.author.id());
+                var info = new JLabel("Created : " + formattedDate + " by " + patch.author.id);
                 info.setForeground(JBColor.GRAY);
                 patchPanel.add(info, BorderLayout.SOUTH);
                 add(patchPanel, new CC().minWidth("0").gapAfter("push"));
