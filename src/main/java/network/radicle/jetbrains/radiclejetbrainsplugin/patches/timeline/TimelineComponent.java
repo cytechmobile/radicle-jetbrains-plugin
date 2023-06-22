@@ -23,6 +23,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -30,8 +31,6 @@ import javax.swing.JPanel;
 import java.util.concurrent.CountDownLatch;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getHorizontalPanel;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getVerticalPanel;
 
 public class TimelineComponent {
     private final TimelineComponentFactory componentsFactory;
@@ -55,7 +54,7 @@ public class TimelineComponent {
         descriptionWrapper.setOpaque(false);
         descriptionWrapper.setContent(componentsFactory.createDescSection());
 
-        var timelinePanel = getVerticalPanel(0);
+        var timelinePanel = Utils.getVerticalPanel(0);
         timelinePanel.setBorder(JBUI.Borders.empty(CodeReviewTimelineUIUtil.VERT_PADDING, 0));
 
         timelinePanel.setOpaque(false);
@@ -64,7 +63,7 @@ public class TimelineComponent {
         revisionSection = componentsFactory.createRevisionSection();
         timelinePanel.add(revisionSection);
 
-        var horizontalPanel = getHorizontalPanel(8);
+        var horizontalPanel = Utils.getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radDetails = getCurrentRadDetails();
             if (radDetails != null) {

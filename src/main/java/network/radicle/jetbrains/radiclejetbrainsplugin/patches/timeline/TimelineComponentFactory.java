@@ -14,7 +14,6 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -22,7 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
-import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchUtils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -61,18 +60,18 @@ public class TimelineComponentFactory {
         textHtmlEditor.setBody(description);
         contentPanel.add(textHtmlEditor);
         contentPanel.setOpaque(false);
-        var horizontalPanel = getHorizontalPanel(8);
+        var horizontalPanel = Utils.getHorizontalPanel(8);
         horizontalPanel.setOpaque(false);
-        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id(), null);
+        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id, null);
         return descSection;
     }
 
     public JComponent createRevisionSection() {
-        var mainPanel = getVerticalPanel(0);
+        var mainPanel = Utils.getVerticalPanel(0);
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var patchUtils = new PatchUtils(patch);
+            var patchUtils = new Utils(patch);
             groupedCommits = patchUtils.calculateCommits();
             latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -84,7 +83,7 @@ public class TimelineComponentFactory {
                     return;
                 }
                 for (var rev : patch.revisions) {
-                    var contentPanel = getVerticalPanel(4);
+                    var contentPanel = Utils.getVerticalPanel(4);
                     var textHtmlEditor = new BaseHtmlEditorPane();
                     var description = !Strings.isNullOrEmpty(rev.description()) ? rev.description() :
                             RadicleBundle.message("noDescription");
@@ -94,51 +93,15 @@ public class TimelineComponentFactory {
                     Collections.reverse(patchCommits);
                     contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(createCommitsSection(patchCommits), StatusMessageType.INFO));
                     contentPanel.setOpaque(false);
-                    var horizontalPanel = getHorizontalPanel(8);
+                    var horizontalPanel = Utils.getHorizontalPanel(8);
                     horizontalPanel.setOpaque(false);
                     var item = createTimeLineItem(contentPanel, horizontalPanel, "Revision " + rev.id() + " was published",
                             rev.timestamp());
                     mainPanel.add(item);
-                    mainPanel.add(createCommentSection(List.of(rev)));
+                    mainPanel.add(Utils.createCommentSection(rev.discussions()));
                 }
             });
         });
-        return mainPanel;
-    }
-
-    private String findMessage(String replyTo) {
-        for (var rev : patch.revisions) {
-            for (var com : rev.discussions()) {
-                if (com.id().equals(replyTo)) {
-                    return com.body();
-                }
-            }
-        }
-        return "";
-    }
-
-    private JComponent createCommentSection(List<RadPatch.Revision> revisions) {
-        var mainPanel = getVerticalPanel(0);
-        for (var rev : revisions) {
-            for (var com : rev.discussions()) {
-                var textHtmlEditor = new BaseHtmlEditorPane();
-                textHtmlEditor.setOpaque(false);
-                var message = com.body();
-                if (!Strings.isNullOrEmpty(com.replyTo())) {
-                    var replyToMessage = findMessage(com.replyTo());
-                    message = "<div><div style=\"border-left: 2px solid black;\">" +
-                            " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
-                            "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
-                }
-                textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
-                var horizontalPanel = getHorizontalPanel(8);
-                horizontalPanel.setOpaque(false);
-                var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
-                contentPanel.setOpaque(false);
-                contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
-                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author().id(), com.timestamp()));
-            }
-        }
         return mainPanel;
     }
 
@@ -183,23 +146,9 @@ public class TimelineComponentFactory {
                 .withHeader(titleTextPane, actionsPanel).build();
     }
 
-    public static JComponent getVerticalPanel(int gap) {
-        return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
-    }
-
-    public static JComponent getHorizontalPanel(int gap) {
-        return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
-    }
 
     public JComponent getDescSection() {
         return descSection;
     }
 
-    public CountDownLatch getLatch() {
-        return latch;
-    }
-
-    public Map<String, List<GitCommit>> getGroupedCommits() {
-        return groupedCommits;
-    }
 }

@@ -13,6 +13,8 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -180,7 +182,7 @@ public class TimelineTest extends AbstractIT {
             timeline += el.getText();
         }
         assertThat(timeline).contains(patch.description);
-        assertThat(timeline).contains(patch.author.id());
+        assertThat(timeline).contains(patch.author.id);
     }
 
     @Test
@@ -205,8 +207,8 @@ public class TimelineTest extends AbstractIT {
         for (var el : elements) {
             comments += el.getText();
         }
-        assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body());
-        assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body());
+        assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
+        assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(1).id());
     }
 
@@ -246,8 +248,8 @@ public class TimelineTest extends AbstractIT {
         for (var el : elements) {
             comments += el.getText();
         }
-        assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body());
-        assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body());
+        assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
+        assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(1).id());
 
     }
@@ -272,7 +274,7 @@ public class TimelineTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", "hello back");
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
-        var myPatch = new RadPatch("c5df12", "testPatch", new RadPatch.Author(AUTHOR), "testDesc",
+        var myPatch = new RadPatch("c5df12", "testPatch", new RadAuthor(AUTHOR), "testDesc",
                 "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
         myPatch.project = getProject();
         myPatch.repo = firstRepo;
@@ -280,7 +282,7 @@ public class TimelineTest extends AbstractIT {
     }
 
     private RadPatch.Revision createRevision(String id, String description, GitCommit commit,
-                                             RadPatch.Discussion discussion) {
+                                             RadDiscussion discussion) {
         var fistCommitChanges = (ArrayList) commit.getChanges();
         var firstChange = (Change) fistCommitChanges.get(0);
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
@@ -288,8 +290,8 @@ public class TimelineTest extends AbstractIT {
                 List.of("branch"), List.of(), Instant.now(), List.of(discussion), List.of());
     }
 
-    private RadPatch.Discussion createDiscussion(String id, String authorId, String body) {
-        return new RadPatch.Discussion(id, new RadPatch.Author(authorId), body, Instant.now(), "", List.of());
+    private RadDiscussion createDiscussion(String id, String authorId, String body) {
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of());
     }
 
 }
