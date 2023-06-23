@@ -6,10 +6,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.junit.Before;
@@ -32,8 +32,8 @@ public class CloneDialogTest extends AbstractIT {
     private RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private CloneRadDialog cloneDialog;
     private RadicleProjectApi api;
-    private HttpClient httpClient;
-    private HttpResponse httpResponse;
+    private CloseableHttpClient httpClient;
+    private CloseableHttpResponse httpResponse;
     private StatusLine statusLine;
 
     @Before
@@ -42,7 +42,7 @@ public class CloneDialogTest extends AbstractIT {
         radicleProjectSettingsHandler.savePath("");
         api = replaceApiService();
         httpClient = api.getClient();
-        httpResponse = mock(HttpResponse.class);
+        httpResponse = mock(CloseableHttpResponse.class);
         statusLine = mock(StatusLine.class);
         cloneDialog = new CloneRadDialog(myProject);
         when(httpResponse.getStatusLine()).thenReturn(statusLine);
