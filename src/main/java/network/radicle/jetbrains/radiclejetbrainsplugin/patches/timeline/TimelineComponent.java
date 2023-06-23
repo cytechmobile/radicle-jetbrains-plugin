@@ -41,11 +41,13 @@ public class TimelineComponent {
     private JComponent commentPanel;
     private final CountDownLatch latch = new CountDownLatch(1);
     private JComponent revisionSection;
+    private final RadicleProjectApi api;
 
     public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
         this.radPatchModel = radPatchModel;
         this.radPatch = radPatchModel.getValue();
         componentsFactory = new TimelineComponentFactory(radPatch, patchProposalPanel);
+        api = radPatch.project.getService(RadicleProjectApi.class);
     }
 
     public JComponent create() {
@@ -127,7 +129,6 @@ public class TimelineComponent {
                 RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (editedTitle) -> {
             var edit = new RadPatch(radPatch);
             edit.title = editedTitle;
-            var api = radPatch.project.getService(RadicleProjectApi.class);
             var edited = api.changePatchTitle(edit);
             final boolean success = edited != null;
             if (success) {

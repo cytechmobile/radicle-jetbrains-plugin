@@ -36,6 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getVerticalPanel;
+
 public class TimelineComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     private static final String COMMIT_HASH = "commit://";
@@ -60,14 +63,14 @@ public class TimelineComponentFactory {
         textHtmlEditor.setBody(description);
         contentPanel.add(textHtmlEditor);
         contentPanel.setOpaque(false);
-        var horizontalPanel = Utils.getHorizontalPanel(8);
+        var horizontalPanel = getHorizontalPanel(8);
         horizontalPanel.setOpaque(false);
         descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id, null);
         return descSection;
     }
 
     public JComponent createRevisionSection() {
-        var mainPanel = Utils.getVerticalPanel(0);
+        var mainPanel = getVerticalPanel(0);
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -83,7 +86,7 @@ public class TimelineComponentFactory {
                     return;
                 }
                 for (var rev : patch.revisions) {
-                    var contentPanel = Utils.getVerticalPanel(4);
+                    var contentPanel = getVerticalPanel(4);
                     var textHtmlEditor = new BaseHtmlEditorPane();
                     var description = !Strings.isNullOrEmpty(rev.description()) ? rev.description() :
                             RadicleBundle.message("noDescription");
@@ -93,15 +96,51 @@ public class TimelineComponentFactory {
                     Collections.reverse(patchCommits);
                     contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(createCommitsSection(patchCommits), StatusMessageType.INFO));
                     contentPanel.setOpaque(false);
-                    var horizontalPanel = Utils.getHorizontalPanel(8);
+                    var horizontalPanel = getHorizontalPanel(8);
                     horizontalPanel.setOpaque(false);
                     var item = createTimeLineItem(contentPanel, horizontalPanel, "Revision " + rev.id() + " was published",
                             rev.timestamp());
                     mainPanel.add(item);
-                    mainPanel.add(Utils.createCommentSection(rev.discussions()));
+                    mainPanel.add(createCommentSection(List.of(rev)));
                 }
             });
         });
+        return mainPanel;
+    }
+
+    private String findMessage(String replyTo) {
+        for (var rev : patch.revisions) {
+            for (var com : rev.discussions()) {
+                if (com.id.equals(replyTo)) {
+                    return com.body;
+                }
+            }
+        }
+        return "";
+    }
+
+    private JComponent createCommentSection(List<RadPatch.Revision> revisions) {
+        var mainPanel = getVerticalPanel(0);
+        for (var rev : revisions) {
+            for (var com : rev.discussions()) {
+                var textHtmlEditor = new BaseHtmlEditorPane();
+                textHtmlEditor.setOpaque(false);
+                var message = com.body;
+                if (!Strings.isNullOrEmpty(com.replyTo)) {
+                    var replyToMessage = findMessage(com.replyTo);
+                    message = "<div><div style=\"border-left: 2px solid black;\">" +
+                            " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
+                            "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
+                }
+                textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
+                var horizontalPanel = getHorizontalPanel(8);
+                horizontalPanel.setOpaque(false);
+                var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
+                contentPanel.setOpaque(false);
+                contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
+                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.id, com.timestamp));
+            }
+        }
         return mainPanel;
     }
 

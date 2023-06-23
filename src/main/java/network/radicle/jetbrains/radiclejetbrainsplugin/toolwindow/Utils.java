@@ -55,37 +55,6 @@ public class Utils {
         return RadAction.isSuccess(output);
     }
 
-    public static String findMessage(String replyTo, List<RadDiscussion> discussionList) {
-        for (var com : discussionList) {
-            if (com.id.equals(replyTo)) {
-                return com.body;
-            }
-        }
-        return "";
-    }
-
-    public static JComponent createCommentSection(List<RadDiscussion> discussionList) {
-        var mainPanel = getVerticalPanel(0);
-        for (var com : discussionList) {
-            var textHtmlEditor = new BaseHtmlEditorPane();
-            textHtmlEditor.setOpaque(false);
-            var message = com.body;
-            if (!Strings.isNullOrEmpty(com.replyTo)) {
-                var replyToMessage = Utils.findMessage(com.replyTo, discussionList);
-                message = "<div><div style=\"border-left: 2px solid black;\">" +
-                        " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
-                        "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
-            }
-            textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
-            var horizontalPanel = getHorizontalPanel(8);
-            horizontalPanel.setOpaque(false);
-            var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
-            contentPanel.setOpaque(false);
-            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
-            mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.id, com.timestamp));
-        }
-        return mainPanel;
-    }
 
     public static JComponent getVerticalPanel(int gap) {
         return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));

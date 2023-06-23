@@ -51,6 +51,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
 
     @Override
     public void onItemClick(RadPatch ob) {
+        super.onItemClick(ob);
         controller.createPatchProposalPanel(ob);
     }
 
