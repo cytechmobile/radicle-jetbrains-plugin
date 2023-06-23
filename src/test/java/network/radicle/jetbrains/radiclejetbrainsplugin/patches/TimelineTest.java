@@ -226,7 +226,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
         String comments = "";
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
             comments = "";
             for (var el : elements) {
