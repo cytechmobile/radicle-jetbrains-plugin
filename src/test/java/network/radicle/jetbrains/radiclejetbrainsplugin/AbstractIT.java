@@ -5,6 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
@@ -13,6 +14,7 @@ import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
@@ -206,6 +208,22 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         @Override
         public void resumeWith(@NotNull Object o) {
+        }
+    }
+
+    public static class MockToolWindow extends ToolWindowHeadlessManagerImpl.MockToolWindow {
+        public MockToolWindow(@NotNull Project project) {
+            super(project);
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
+
+        @Override
+        public boolean isVisible() {
+            return true;
         }
     }
 }
