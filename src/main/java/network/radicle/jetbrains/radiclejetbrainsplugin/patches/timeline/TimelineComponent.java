@@ -16,7 +16,6 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
@@ -26,7 +25,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-
 import java.util.concurrent.CountDownLatch;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
@@ -96,15 +94,15 @@ public class TimelineComponent {
 
     public boolean createComment(String comment) {
         if (Strings.isNullOrEmpty(comment)) {
+            return false;
+        }
+        var api = radPatch.project.getService(RadicleProjectApi.class);
+        var ok = api.addPatchComment(radPatch, comment);
+        if (ok != null) {
+            radPatchModel.setValue(ok);
             return true;
         }
-        var patchComment = new RadPatchComment(radPatch.repo, radPatch.id, comment);
-        var out = patchComment.perform();
-        final boolean success = RadAction.isSuccess(out);
-        if (success) {
-            radPatchModel.setValue(radPatch);
-        }
-        return true;
+        return false;
     }
 
     private EditablePanelHandler getCommentField() {
