@@ -13,7 +13,7 @@ public class RadIssue {
     public RadAuthor author;
     public String title;
     public State state;
-    public List<String> assignees;
+    public List<Object> assignees;
     public List<String> tags;
     public List<RadDiscussion> discussion;
     public GitRepository repo;

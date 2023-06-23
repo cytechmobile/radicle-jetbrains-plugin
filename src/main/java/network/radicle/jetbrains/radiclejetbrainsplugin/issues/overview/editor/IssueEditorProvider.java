@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 public class IssueEditorProvider implements FileEditorProvider, DumbAware {
     private IssueEditor issueEditor;

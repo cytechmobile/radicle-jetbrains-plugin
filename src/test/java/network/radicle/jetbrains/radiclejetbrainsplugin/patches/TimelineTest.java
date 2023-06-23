@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -25,12 +26,11 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.JButton;
 import java.awt.event.ActionEvent;
@@ -38,7 +38,9 @@ import java.awt.event.HierarchyEvent;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
@@ -51,7 +53,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
-    private static final Logger logger = LoggerFactory.getLogger(TimelineTest.class);
     private static final String AUTHOR = "did:key:testAuthor";
     private static String dummyComment = "Hello";
     private RadPatch patch;
@@ -70,6 +71,25 @@ public class TimelineTest extends AbstractIT {
             if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains("/sessions")) {
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains("/patches/" + patch.id)) {
+                var obj = EntityUtils.toString(((HttpPatch) req).getEntity());
+                var mapper = new ObjectMapper();
+                Map<String, Object> map = mapper.readValue(obj, Map.class);
+                var action = (HashMap<String, String>) map.get("action");
+                if (map.get("type").equals("thread")) {
+                    //Comment
+                    assertThat(map.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
+                    assertThat(map.get("type")).isEqualTo("thread");
+                    assertThat(action.get("type")).isEqualTo("comment");
+                    assertThat(action.get("body")).isEqualTo(dummyComment);
+                    var discussion = new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of());
+                    patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
+                } else if (map.get("type").equals("edit")) {
+                    //patch
+                    assertThat(map.get("target")).isEqualTo("delegates");
+                    assertThat(map.get("description")).isEqualTo(patch.description);
+                    assertThat(map.get("type")).isEqualTo("edit");
+                    assertThat(map.get("title")).isEqualTo(patch.title);
+                }
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches/" + patch.id)) {
                 patch.repo = null;
@@ -224,25 +244,26 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         final var prBtn = prBtns.get(1);
         prBtn.doClick();
-        //assertThat(cmd.getCommandLineString()).contains("comment " + patch.id + " --message " + dummyComment);
-        // Check that the comment is visible in the editor
+
+        timelineComponent.getLatch().await();
+        // Open createEditor
+        patch.repo = firstRepo;
+        patch.project = getProject();
+        patchEditorProvider.createEditor(getProject(), editorFile);
+        radStub.commands.clear();
         executeUiTasks();
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
-        String comments = "";
-        for (int i = 0; i < 10; i++) {
-            var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
-            comments = "";
-            for (var el : elements) {
-                comments += el.getText();
-            }
-            if (comments.contains(dummyComment)) {
-                break;
-            }
-            Thread.sleep(200);
+        var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
+        var comments = "";
+        for (var el : elements) {
+            comments += el.getText();
         }
         assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
+        assertThat(comments).contains(patch.revisions.get(0).id());
         assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(1).id());
+        // Assert that the new comment exists
+        assertThat(comments).contains(patch.revisions.get(1).discussions().get(1).body);
     }
 
     private RadPatch createPatch() {
@@ -264,8 +285,10 @@ public class TimelineTest extends AbstractIT {
         var fistCommitChanges = (ArrayList) commit.getChanges();
         var firstChange = (Change) fistCommitChanges.get(0);
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
+        var discussions = new ArrayList<RadDiscussion>();
+        discussions.add(discussion);
         return new RadPatch.Revision(id, description, base, commit.getId().asString(),
-                List.of("branch"), List.of(), Instant.now(), List.of(discussion), List.of());
+                List.of("branch"), List.of(), Instant.now(), discussions, List.of());
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {

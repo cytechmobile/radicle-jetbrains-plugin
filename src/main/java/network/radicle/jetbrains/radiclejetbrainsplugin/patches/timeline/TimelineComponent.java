@@ -97,10 +97,10 @@ public class TimelineComponent {
         if (Strings.isNullOrEmpty(comment)) {
             return false;
         }
-        var api = radPatch.project.getService(RadicleProjectApi.class);
         var ok = api.addPatchComment(radPatch, comment);
         if (ok != null) {
             radPatchModel.setValue(ok);
+            latch.countDown();
             return true;
         }
         return false;

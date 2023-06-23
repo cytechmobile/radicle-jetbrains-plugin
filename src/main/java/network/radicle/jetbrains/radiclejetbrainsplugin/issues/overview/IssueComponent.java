@@ -20,10 +20,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-
-
-import javax.swing.*;
-
+import javax.swing.JPanel;
+import javax.swing.JComponent;
+import javax.swing.ImageIcon;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -37,7 +36,7 @@ public class IssueComponent {
     private BaseHtmlEditorPane headerTitle;
     private JPanel headerPanel;
     private JPanel descPanel;
-    private JComponent commentPanel;
+    private JComponent commentFieldPanel;
     private JComponent commentSection;
     private final RadicleProjectApi api;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -62,9 +61,8 @@ public class IssueComponent {
            var radDetails = api.getCurrentIdentity();
            if (radDetails != null) {
                ApplicationManager.getApplication().invokeLater(() -> {
-                   var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
-                   commentPanel = commentSection;
-                   issueContainer.add(commentSection);
+                   this.commentFieldPanel = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                   issueContainer.add(commentFieldPanel);
                }, ModalityState.any());
            }
         });
@@ -190,8 +188,8 @@ public class IssueComponent {
         return descPanel;
     }
 
-    public JComponent getCommentPanel() {
-        return commentPanel;
+    public JComponent getCommentFieldPanel() {
+        return commentFieldPanel;
     }
 
     public JComponent getCommentSection() {

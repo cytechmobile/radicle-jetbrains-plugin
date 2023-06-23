@@ -229,7 +229,7 @@ public class RadicleProjectApi {
                         resp == null ? "null resp" : resp.getStatusLine().getStatusCode(),
                         resp == null ? "null" : EntityUtils.toString(resp.getEntity()), issueReq);
                 ApplicationManager.getApplication().invokeLater(() ->
-                        showNotification(issue.project, RadicleBundle.message("commentError"),"",
+                        showNotification(issue.project, RadicleBundle.message("commentError"), "",
                                 NotificationType.ERROR, List.of()));
             } else {
                 EntityUtils.consume(resp.getEntity());
@@ -238,7 +238,7 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("error creating issue comment: {}", issue, e);
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(issue.project, RadicleBundle.message("commentError"),"",
+                    showNotification(issue.project, RadicleBundle.message("commentError"),  "",
                             NotificationType.ERROR, List.of()));
         }
 
@@ -263,7 +263,7 @@ public class RadicleProjectApi {
                         resp == null ? "null resp" : resp.getStatusLine().getStatusCode(),
                         resp == null ? "null" : EntityUtils.toString(resp.getEntity()), issueReq);
                 ApplicationManager.getApplication().invokeLater(() ->
-                        showNotification(issue.project, RadicleBundle.message("issueTitleError"),"",
+                        showNotification(issue.project, RadicleBundle.message("issueTitleError"), "",
                                 NotificationType.ERROR, List.of()));
             } else {
                 EntityUtils.consume(resp.getEntity());
@@ -272,7 +272,7 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("error changing issue title: {}", issue, e);
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(issue.project, RadicleBundle.message("issueTitleError"),"",
+                    showNotification(issue.project, RadicleBundle.message("issueTitleError"), "",
                             NotificationType.ERROR, List.of()));
         }
         return null;
@@ -300,7 +300,7 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("error changing patch title: {}", patch, e);
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(patch.project, RadicleBundle.message("patchTitleError"),"",
+                    showNotification(patch.project, RadicleBundle.message("patchTitleError"), "",
                             NotificationType.ERROR, List.of()));
         }
 
@@ -316,7 +316,8 @@ public class RadicleProjectApi {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
             //"replyTo", ""
-            var data = Map.of("type", "thread", "action", Map.of("type", "comment", "body", comment));
+            var data = Map.of("type", "thread", "revision",
+                    patch.revisions.get(patch.revisions.size() - 1).id(), "action", Map.of("type", "comment", "body", comment));
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(commentReq);
@@ -392,7 +393,7 @@ public class RadicleProjectApi {
         }
     }
 
-    protected RadDetails getCurrentIdentity() {
+    public RadDetails getCurrentIdentity() {
         var radSelf = new RadSelf(project);
         radSelf.askForIdentity(false);
         return radSelf.getRadSelfDetails();

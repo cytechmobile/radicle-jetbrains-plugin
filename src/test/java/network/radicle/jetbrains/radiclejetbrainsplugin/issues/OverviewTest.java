@@ -15,11 +15,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
-import network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
-import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
@@ -31,10 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JButton;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.IOException;
@@ -55,7 +52,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class OverviewTest extends AbstractIT {
-    private static final Logger logger = LoggerFactory.getLogger(TimelineTest.class);
     private static final String AUTHOR = "did:key:testAuthor";
     private static String dummyComment = "Hello";
     private RadIssue issue;
@@ -84,7 +80,7 @@ public class OverviewTest extends AbstractIT {
                     assertThat(map.get("type")).isEqualTo("thread");
                     assertThat(action.get("type")).isEqualTo("comment");
                     assertThat(action.get("body")).isEqualTo(dummyComment);
-                    issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"),dummyComment, Instant.now(), "", List.of()));
+                    issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of()));
                 } else if (map.get("type").equals("edit")) {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
@@ -108,7 +104,7 @@ public class OverviewTest extends AbstractIT {
                 se = new StringEntity("");
             }
             se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            final var resp = mock(HttpResponse.class);
+            final var resp = mock(CloseableHttpResponse.class);
             when(resp.getEntity()).thenReturn(se);
             final var statusLine = mock(StatusLine.class);
             when(resp.getStatusLine()).thenReturn(statusLine);
@@ -172,9 +168,9 @@ public class OverviewTest extends AbstractIT {
         prBtn.doClick();
         /* Wait for the reload */
         issueComponent.getLatch().await();
-        var updatedPatchModel = issueTabController.getIssueModel();
-        var updatedPatch = updatedPatchModel.getValue();
-        assertThat(editedTitle).isEqualTo(updatedPatch.title);
+        var updatedIssueModel = issueTabController.getIssueModel();
+        var updatedIssue = updatedIssueModel.getValue();
+        assertThat(editedTitle).isEqualTo(updatedIssue.title);
 
         // Open createEditor
         issueEditorProvider.createEditor(getProject(), editorFile);
@@ -191,7 +187,7 @@ public class OverviewTest extends AbstractIT {
     @Test
     public void testDescSection() {
         var descSection = issueEditorProvider.getIssueComponent().getDescPanel();
-        var elements = findElements(descSection, BaseHtmlEditorPane.class, new ArrayList<>());
+        var elements = UIUtil.findComponentsOfType(descSection, BaseHtmlEditorPane.class);
         var timeline = "";
         for (var el : elements) {
             timeline += el.getText();
@@ -207,7 +203,7 @@ public class OverviewTest extends AbstractIT {
         radStub.commands.clear();
         executeUiTasks();
         var timelineComponent = issueEditorProvider.getIssueComponent();
-        var commentPanel = timelineComponent.getCommentPanel();
+        var commentPanel = timelineComponent.getCommentFieldPanel();
         var ef = UIUtil.findComponentOfType(commentPanel, EditorTextField.class);
         UIUtil.markAsShowing((JComponent) ef.getParent(), true);
         //matching UiUtil IS_SHOWING key
@@ -232,7 +228,7 @@ public class OverviewTest extends AbstractIT {
         radStub.commands.clear();
         executeUiTasks();
         var commentSection = issueEditorProvider.getIssueComponent().getCommentSection();
-        var elements = findElements((JPanel) commentSection, BaseHtmlEditorPane.class, new ArrayList<>());
+        var elements = UIUtil.findComponentsOfType(commentSection, BaseHtmlEditorPane.class);
         var comments = "";
         for (var el : elements) {
             comments += el.getText();
@@ -249,7 +245,7 @@ public class OverviewTest extends AbstractIT {
     public void testCommentsExists() {
         executeUiTasks();
         var commentSection = issueEditorProvider.getIssueComponent().getCommentSection();
-        var elements = findElements((JPanel) commentSection, BaseHtmlEditorPane.class, new ArrayList<>());
+        var elements = UIUtil.findComponentsOfType(commentSection, BaseHtmlEditorPane.class);
         var comments = "";
         for (var el : elements) {
             comments += el.getText();
@@ -266,11 +262,11 @@ public class OverviewTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", "My Second Comment");
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
-        var issue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
+        var myIssue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
                 RadIssue.State.OPEN, List.of(), List.of(), discussions);
-        issue.project = getProject();
-        issue.repo = firstRepo;
-        return issue;
+        myIssue.project = getProject();
+        myIssue.repo = firstRepo;
+        return myIssue;
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {

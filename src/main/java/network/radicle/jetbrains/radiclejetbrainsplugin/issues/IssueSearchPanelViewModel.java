@@ -114,7 +114,7 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                 }
                 for (var assignee : issue.assignees) {
                     if (!assigness.contains(assignee)) {
-                        assigness.add(assignee);
+                        assigness.add((String) assignee);
                     }
                 }
             }
@@ -130,8 +130,8 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                 if (selectedProjectFilter != null && !issue.repo.getRoot().getName().equals(selectedProjectFilter)) {
                     continue;
                 }
-                if (!peersIds.contains(issue.author.id())) {
-                    peersIds.add(issue.author.id());
+                if (!peersIds.contains(issue.author.id)) {
+                    peersIds.add(issue.author.id);
                 }
             }
             return peersIds;
