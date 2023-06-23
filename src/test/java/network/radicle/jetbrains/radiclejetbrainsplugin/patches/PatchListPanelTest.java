@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -98,7 +99,7 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
         filter.author = AUTHOR1;
         listPanel.filterList(filter);
@@ -106,7 +107,7 @@ public class PatchListPanelTest extends AbstractIT {
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(1).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
     }
 
     @Test
@@ -123,7 +124,7 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(patchModel.getSize()).isEqualTo(2);
 
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
     }
 
     @Test
@@ -139,14 +140,14 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
         filterWithSearch.searchQuery = patches.get(0).title;
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
     }
 
     @Test
@@ -160,7 +161,7 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(projectNames.size()).isEqualTo(1);
         assertThat(projectNames.size()).isEqualTo(1);
         assertThat(projectNames.get(0)).contains("testRemote");
-        assertThat(filterAuthors.get(0)).isEqualTo(patches.get(0).author.id());
+        assertThat(filterAuthors.get(0)).isEqualTo(patches.get(0).author.id);
     }
 
     @Test
@@ -174,7 +175,7 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
         filterWithSearch.state = RadPatch.State.CLOSED.status;
         listPanel = controller.getPatchListPanel();
@@ -182,7 +183,7 @@ public class PatchListPanelTest extends AbstractIT {
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(1).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
         filterWithSearch.state = RadPatch.State.MERGED.status;
         listPanel = controller.getPatchListPanel();
@@ -211,7 +212,7 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
         filterWithSearch.tag = "firstTag";
         listPanel = controller.getPatchListPanel();
@@ -219,7 +220,7 @@ public class PatchListPanelTest extends AbstractIT {
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id()).isEqualTo(patches.get(1).author.id());
+        assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
         filterWithSearch.tag = "unknownTag";
         listPanel = controller.getPatchListPanel();
@@ -237,10 +238,10 @@ public class PatchListPanelTest extends AbstractIT {
         var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
                 List.of(), List.of(), Instant.now(), List.of(), List.of());
 
-        var radPatch = new RadPatch("c5df12", "testPatch", new RadPatch.Author(AUTHOR), "testDesc", "testTarget",
+        var radPatch = new RadPatch("c5df12", "testPatch", new RadAuthor(AUTHOR), "testDesc", "testTarget",
                 List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
 
-        var radPatch2 = new RadPatch("c4d12", "secondProposal", new RadPatch.Author(AUTHOR1),
+        var radPatch2 = new RadPatch("c4d12", "secondProposal", new RadAuthor(AUTHOR1),
                 "My description", "testTarget", List.of("firstTag", "secondTag", "tag1"),
                 RadPatch.State.CLOSED, List.of(revision));
         patches = List.of(radPatch, radPatch2);

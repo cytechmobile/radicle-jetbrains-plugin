@@ -52,7 +52,7 @@ public class IssueListPanelTest extends AbstractIT {
             if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
             } else if (req.getURI().getPath().endsWith(IssueListPanelTest.URL)) {
-                // request to fetch patches
+                // request to fetch issues
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
             } else if (req.getURI().getPath().endsWith(PatchListPanelTest.URL)) {
                 // request to fetch patches

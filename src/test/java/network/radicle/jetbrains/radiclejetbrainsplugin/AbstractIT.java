@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -181,6 +182,19 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    }
+
+    public <T> List<T> findElements(JPanel panel, Class<T> el, List<T> components) {
+        for (var element : panel.getComponents()) {
+           // logger.warn("looking for {} at element: {}", el, element);
+            if (el.isAssignableFrom(element.getClass())) {
+            //    logger.warn("looking for {} found element: {}", el, element);
+                components.add((T) element);
+            } else if (element instanceof JPanel) {
+                findElements((JPanel) element, el, components);
+            }
+        }
+        return components;
     }
 
     public static class NoopContinuation<T> implements Continuation<T> {
