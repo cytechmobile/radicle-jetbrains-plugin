@@ -1,26 +1,21 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
-import com.google.common.base.Strings;
-import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
-import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
-import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
+
 import com.intellij.ui.components.panels.ListLayout;
 import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 
 public class Utils {
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
