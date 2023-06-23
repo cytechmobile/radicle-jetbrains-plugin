@@ -7,8 +7,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Strings;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -20,19 +21,21 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,11 +46,11 @@ public class RadicleProjectApi {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectApi.class);
     private static final int PER_PAGE = 10;
-    private static final Key<Map<String, Session>> RADICLE_SESSIONS_KEY = new Key<>("RadicleHttpSessions");
-    private final HttpClient client;
+
+    private final CloseableHttpClient client;
     private final Project project;
 
-    protected Map<String, Session> sessions = new HashMap<>();
+    protected Cache<String, Session> sessions;
     protected SeedNode seedNode;
 
     public RadicleProjectApi(Project project) {
@@ -55,30 +58,23 @@ public class RadicleProjectApi {
     }
 
     @NonInjectable
-    public RadicleProjectApi(Project project, HttpClient client) {
+    public RadicleProjectApi(Project project, CloseableHttpClient client) {
         this.project = project;
         this.client = client;
+        this.sessions = CacheBuilder.newBuilder().expireAfterWrite(Duration.ofHours(1)).build();
     }
 
     public SeedNodeInfo checkApi(SeedNode node) {
         var url = node.url + "/api/v1";
         try {
-            var res = client.execute(new HttpGet(url));
-            String response = "";
-            if (res != null) {
-                var entity = res.getEntity();
-                response = EntityUtils.toString(entity);
-                EntityUtils.consume(entity);
-            }
-
-            if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var json = new ObjectMapper().readTree(response);
+            var res = makeRequest(new HttpGet(url));
+            if (res.isSuccess()) {
+                var json = new ObjectMapper().readTree(res.body);
                 String version = json.get("version").asText("");
                 String id = json.get("node").get("id").asText("");
                 return new SeedNodeInfo(id, version, null);
             }
-            var statusCode = res != null  ? res.getStatusLine().getStatusCode() : "";
-            return new SeedNodeInfo(null, null, "HTTP Status code: " + statusCode + " " + response);
+            return new SeedNodeInfo(null, null, "HTTP Status code: " + res.status + " " + res.body);
         } catch (Exception e) {
             logger.warn("http request exception {}", url, e);
             return new SeedNodeInfo(null, null, "Exception: " + e.getMessage());
@@ -89,13 +85,9 @@ public class RadicleProjectApi {
         var node = getSeedNode();
         var url = node.url + "/api/v1/projects/" + projectId + "/issues";
         try {
-            var res = client.execute(new HttpGet(url));
-            String response = "";
-            if (res != null) {
-                response = EntityUtils.toString(res.getEntity());
-            }
-            if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var issues = MAPPER.readValue(response, new TypeReference<List<RadIssue>>() { });
+            var res = makeRequest(new HttpGet(url));
+            if (res.isSuccess()) {
+                var issues = MAPPER.readValue(res.body, new TypeReference<List<RadIssue>>() { });
                 for (var issue : issues) {
                     issue.repo = repo;
                     issue.projectId = projectId;
@@ -118,15 +110,9 @@ public class RadicleProjectApi {
         var node = getSeedNode();
         var url = node.url + "/api/v1/projects/" + projectId + "/patches";
         try {
-            var res = client.execute(new HttpGet(url));
-            String response = "";
-            if (res != null) {
-                var entity = res.getEntity();
-                response = EntityUtils.toString(entity);
-                EntityUtils.consume(entity);
-            }
-            if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var patches = MAPPER.readValue(response, new TypeReference<List<RadPatch>>() { });
+            var res = makeRequest(new HttpGet(url));
+            if (res.isSuccess()) {
+                var patches = MAPPER.readValue(res.body, new TypeReference<List<RadPatch>>() { });
                 for (var patch : patches) {
                     patch.seedNode = node;
                     patch.project = repo.getProject();
@@ -150,15 +136,9 @@ public class RadicleProjectApi {
         var node = getSeedNode();
         final var url = node.url + "/api/v1/projects/" + projectId + "/patches/" + patchId;
         try {
-            var res = client.execute(new HttpGet(url));
-            String response = "";
-            if (res != null) {
-                var entity = res.getEntity();
-                response = EntityUtils.toString(entity);
-                EntityUtils.consume(entity);
-            }
-            if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var patch = MAPPER.readValue(response, RadPatch.class);
+            var res = makeRequest(new HttpGet(url));
+            if (res.isSuccess()) {
+                var patch = MAPPER.readValue(res.body, RadPatch.class);
                 patch.seedNode = node;
                 patch.project = repo.getProject();
                 patch.projectId = projectId;
@@ -175,15 +155,12 @@ public class RadicleProjectApi {
     public List<RadProject> fetchRadProjects(int page) {
         var url = getHttpNodeUrl() + "/api/v1/projects?per-page=" + PER_PAGE + "&page=" + page;
         try {
-            var res = client.execute(new HttpGet(url));
-            if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var entity = res.getEntity();
-                String response = EntityUtils.toString(entity);
-                EntityUtils.consume(entity);
-                if (Strings.isNullOrEmpty(response)) {
+            var res = makeRequest(new HttpGet(url));
+            if (res.isSuccess()) {
+                if (Strings.isNullOrEmpty(res.body)) {
                     return new ArrayList<>();
                 }
-                return MAPPER.readValue(response, new TypeReference<>() { });
+                return MAPPER.readValue(res.body, new TypeReference<>() { });
             }
             return null;
         } catch (Exception e) {
@@ -195,12 +172,9 @@ public class RadicleProjectApi {
     public RadProject fetchRadProject(String projectId) {
         var url = getHttpNodeUrl() + "/api/v1/projects/" + projectId;
         try {
-            var res = client.execute(new HttpGet(url));
-            if (res != null && res.getStatusLine().getStatusCode() == 200) {
-                var entity = res.getEntity();
-                String response = EntityUtils.toString(entity);
-                EntityUtils.consume(entity);
-                return MAPPER.readValue(response, RadProject.class);
+            var res = makeRequest(new HttpGet(url));
+            if (res.isSuccess()) {
+                return MAPPER.readValue(res.body, RadProject.class);
             }
             return null;
         } catch (Exception e) {
@@ -305,7 +279,6 @@ public class RadicleProjectApi {
     }
 
     public RadPatch changePatchTitle(RadPatch patch) {
-        //TODO check for expiration
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -317,16 +290,11 @@ public class RadicleProjectApi {
                     patch.title, "description", patch.description);
             var json = MAPPER.writeValueAsString(patchEditData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = client.execute(patchReq);
-            if (resp == null || resp.getStatusLine().getStatusCode() < 200 || resp.getStatusLine().getStatusCode() >= 300) {
+            var resp = makeRequest(patchReq);
+            if (!resp.isSuccess()) {
                 logger.warn("received invalid response with status:{} and body:{} while editing patch: {}",
-                        resp == null ? "null resp" : resp.getStatusLine().getStatusCode(),
-                        resp == null ? "null" : EntityUtils.toString(resp.getEntity()), patch);
-                ApplicationManager.getApplication().invokeLater(() ->
-                        showNotification(patch.project, RadicleBundle.message("patchTitleError"),"",
-                                NotificationType.ERROR, List.of()));
-            } else {
-                EntityUtils.consume(resp.getEntity());
+                        resp.status, resp.body, patch);
+                return null;
             }
             return patch;
         } catch (Exception e) {
@@ -336,6 +304,30 @@ public class RadicleProjectApi {
                             NotificationType.ERROR, List.of()));
         }
 
+        return null;
+    }
+
+    public RadPatch addPatchComment(RadPatch patch, String comment) {
+        var session = createAuthenticatedSession(patch.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            //"replyTo", ""
+            var data = Map.of("type", "thread", "action", Map.of("type", "comment", "body", comment));
+            var json = MAPPER.writeValueAsString(data);
+            commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(commentReq);
+            if (!resp.isSuccess()) {
+                logger.warn("error adding comment: {} to patch:{} resp:{}", comment, patch, resp);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error adding comment to patch: {} - {}", patch, comment, e);
+        }
         return null;
     }
 
@@ -379,7 +371,28 @@ public class RadicleProjectApi {
         }
     }
 
-    public RadDetails getCurrentIdentity() {
+    protected HttpResponseStatusBody makeRequest(HttpRequestBase req) {
+        CloseableHttpResponse resp = null;
+        try {
+            resp = client.execute(req);
+            String body = EntityUtils.toString(resp.getEntity());
+            int status = resp.getStatusLine().getStatusCode();
+            return new HttpResponseStatusBody(status, body);
+        } catch (Exception e) {
+            logger.warn("error executing request", e);
+            return new HttpResponseStatusBody(-1, "");
+        } finally {
+            if (resp != null) {
+                try {
+                    resp.close();
+                } catch (Exception e) {
+                    logger.warn("error closing response", e);
+                }
+            }
+        }
+    }
+
+    protected RadDetails getCurrentIdentity() {
         var radSelf = new RadSelf(project);
         radSelf.askForIdentity(false);
         return radSelf.getRadSelfDetails();
@@ -390,10 +403,10 @@ public class RadicleProjectApi {
     }
 
     protected Session getCurrentSession(RadDetails rd) {
-        if (rd == null || sessions.isEmpty()) {
+        if (rd == null || sessions.asMap().isEmpty()) {
             return null;
         }
-        return sessions.get(rd.nodeId);
+        return sessions.getIfPresent(rd.nodeId);
     }
 
     protected void addSession(Session session) {
@@ -414,7 +427,7 @@ public class RadicleProjectApi {
         return getSeedNode().url;
     }
 
-    public HttpClient getClient() {
+    public CloseableHttpClient getClient() {
         return client;
     }
 
@@ -425,4 +438,10 @@ public class RadicleProjectApi {
     public record SeedNodeInfo(String id, String version, String errorMessage) { }
 
     public record Session(String sessionId, String publicKey, String signature) { }
+
+    public record HttpResponseStatusBody(int status, String body) {
+        public boolean isSuccess() {
+            return status >= 200 && status < 300;
+        }
+    }
 }

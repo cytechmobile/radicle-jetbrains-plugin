@@ -5,6 +5,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -12,7 +14,9 @@ import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
@@ -22,12 +26,13 @@ import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,6 +65,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
     public List<GitCommit> commitHistory;
+
     @Before
     public void before() throws IOException, VcsException {
         /* initialize a git repository */
@@ -172,7 +178,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     public RadicleProjectApi replaceApiService() {
-        var client = mock(HttpClient.class);
+        var client = mock(CloseableHttpClient.class);
         var api = new RadicleProjectApi(myProject, client);
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
@@ -184,17 +190,12 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
 
-    public <T> List<T> findElements(JPanel panel, Class<T> el, List<T> components) {
-        for (var element : panel.getComponents()) {
-           // logger.warn("looking for {} at element: {}", el, element);
-            if (el.isAssignableFrom(element.getClass())) {
-            //    logger.warn("looking for {} found element: {}", el, element);
-                components.add((T) element);
-            } else if (element instanceof JPanel) {
-                findElements((JPanel) element, el, components);
-            }
-        }
-        return components;
+    public static void markAsShowing(Component c) {
+        var jc = (JComponent) c;
+        UIUtil.markAsShowing(jc, true);
+        //matching UiUtil IS_SHOWING key
+        jc.putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
+        assertThat(UIUtil.isShowing(jc, false)).isTrue();
     }
 
     public static class NoopContinuation<T> implements Continuation<T> {
@@ -207,6 +208,22 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         @Override
         public void resumeWith(@NotNull Object o) {
+        }
+    }
+
+    public static class MockToolWindow extends ToolWindowHeadlessManagerImpl.MockToolWindow {
+        public MockToolWindow(@NotNull Project project) {
+            super(project);
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
+
+        @Override
+        public boolean isVisible() {
+            return true;
         }
     }
 }

@@ -29,6 +29,10 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
         this.countDown = countdown;
     }
 
+    public CountDownLatch getCountDown() {
+        return countDown;
+    }
+
     public ReviewListSearchValue getValue() {
         return this.getSearchState().getValue();
     }

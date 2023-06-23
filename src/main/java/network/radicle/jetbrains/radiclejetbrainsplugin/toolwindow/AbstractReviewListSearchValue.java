@@ -1,9 +1,10 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
-import groovyjarjarantlr4.v4.runtime.misc.Nullable;
+import org.jetbrains.annotations.Nullable;
 
-public class AbstractReviewListSearchValue implements ReviewListSearchValue {
+public abstract class AbstractReviewListSearchValue implements ReviewListSearchValue {
+
     public String project;
     public String searchQuery;
     public String author;
