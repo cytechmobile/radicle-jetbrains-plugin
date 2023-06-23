@@ -15,6 +15,7 @@ import java.util.Arrays;
 
 public class IssueTabController extends TabController<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final IssueListPanel issueListPanel;
+    private SingleValueModel<RadIssue> issueModel;
 
     public IssueTabController(Content tab, Project project) {
         super(project, tab);
@@ -23,6 +24,10 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
 
     public IssueListPanel getIssueListPanel() {
         return issueListPanel;
+    }
+
+    public SingleValueModel<RadIssue> getIssueModel() {
+        return issueModel;
     }
 
     @Override
@@ -37,6 +42,7 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
 
     public void createIssuePanel(RadIssue myIssue) {
         final var issueModel = new SingleValueModel<>(myIssue);
+        this.issueModel = issueModel;
         createInternalIssuePanel(issueModel);
         issueModel.addListener(issue -> {
             var fetched = api.fetchIssue(myIssue.projectId, myIssue.repo, myIssue.id);

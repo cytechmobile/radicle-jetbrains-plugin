@@ -134,7 +134,6 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
                     return;
                 }
                 final var selected = list.getSelectedValue();
-                model.clear();
                 onItemClick(selected);
             }
         });
@@ -181,8 +180,10 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     public abstract ListCellRenderer<P> getCellRenderer();
 
     public abstract S getViewModel(CoroutineScope scope);
-
-    public abstract void onItemClick(P obj);
+    //Revert to abstract later
+    public void onItemClick(P obj) {
+        model.clear();
+    };
 
     public abstract JComponent getFilterPanel(S searchViewModel, CoroutineScope scope);
 

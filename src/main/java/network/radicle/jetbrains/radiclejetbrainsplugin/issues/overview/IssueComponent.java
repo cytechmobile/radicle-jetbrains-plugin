@@ -7,54 +7,106 @@ import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
+import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
+import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+
 
 import javax.swing.*;
 
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.createCommentSection;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getVerticalPanel;
 
 public class IssueComponent {
     private final RadIssue radIssue;
     private final SingleValueModel<RadIssue> issueModel;
     private BaseHtmlEditorPane headerTitle;
+    private JPanel headerPanel;
+    private JPanel descPanel;
+    private JComponent commentPanel;
+    private JComponent commentSection;
     private final RadicleProjectApi api;
+    private final CountDownLatch latch = new CountDownLatch(1);
 
     public IssueComponent(SingleValueModel<RadIssue> issueModel) {
         this.radIssue = issueModel.getValue();
         this.issueModel = issueModel;
-        api = radIssue.project.getService(RadicleProjectApi.class);
+        this.api = radIssue.project.getService(RadicleProjectApi.class);
     }
 
     public JComponent create() {
         var mainPanel = new Wrapper();
-        var issueContainer = Utils.getVerticalPanel(2);
+        var issueContainer = getVerticalPanel(2);
 
         issueContainer.add(getHeader());
         issueContainer.add(getDescription());
-        issueContainer.add(createCommentSection(radIssue.discussion));
+        commentSection = createCommentSection(radIssue.discussion);
+        issueContainer.add(commentSection);
 
-        var horizontalPanel = Utils.getHorizontalPanel(8);
+        var horizontalPanel = getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radDetails = api.getCurrentIdentity();
-            if (radDetails != null) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
-                    issueContainer.add(commentSection);
-                }, ModalityState.any());
-            }
+           var radDetails = api.getCurrentIdentity();
+           if (radDetails != null) {
+               ApplicationManager.getApplication().invokeLater(() -> {
+                   var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                   commentPanel = commentSection;
+                   issueContainer.add(commentSection);
+               }, ModalityState.any());
+           }
         });
 
         mainPanel.add(issueContainer);
+        return mainPanel;
+    }
+
+    public static String findMessage(String replyTo, List<RadDiscussion> discussionList) {
+        for (var com : discussionList) {
+            if (com.id.equals(replyTo)) {
+                return com.body;
+            }
+        }
+        return "";
+    }
+
+    public static JComponent createCommentSection(List<RadDiscussion> discussionList) {
+        var mainPanel = getVerticalPanel(0);
+        /* The first discussion is the description of the issue */
+        if (discussionList.size() == 1) {
+            return mainPanel;
+        }
+        for (var i = 1; i < discussionList.size(); i++) {
+            var com = discussionList.get(i);
+            var textHtmlEditor = new BaseHtmlEditorPane();
+            textHtmlEditor.setOpaque(false);
+            var message = com.body;
+            if (!Strings.isNullOrEmpty(com.replyTo)) {
+                var replyToMessage = findMessage(com.replyTo, discussionList);
+                message = "<div><div style=\"border-left: 2px solid black;\">" +
+                        " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
+                        "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
+            }
+            textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
+            var horizontalPanel = getHorizontalPanel(8);
+            horizontalPanel.setOpaque(false);
+            var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
+            contentPanel.setOpaque(false);
+            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
+            mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.id, com.timestamp));
+        }
         return mainPanel;
     }
 
@@ -76,6 +128,7 @@ public class IssueComponent {
         final boolean success = edited != null;
         if (success) {
             issueModel.setValue(edited);
+            latch.countDown();
         }
         return true;
     }
@@ -93,7 +146,8 @@ public class IssueComponent {
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(new ImageIcon()), contentPanel);
         b.withHeader(contentPanel, null);
-        return b.build();
+        descPanel = (JPanel) b.build();
+        return descPanel;
     }
 
     private JComponent getHeader() {
@@ -110,6 +164,7 @@ public class IssueComponent {
             final boolean success = edited != null;
             if (success) {
                 issueModel.setValue(edited);
+                latch.countDown();
             }
             return success;
         }).build();
@@ -123,6 +178,26 @@ public class IssueComponent {
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel);
         b.withHeader(contentPanel, actionsPanel);
-        return b.build();
+        headerPanel =(JPanel) b.build();
+        return headerPanel;
+    }
+
+    public JPanel getHeaderPanel() {
+        return headerPanel;
+    }
+
+    public JPanel getDescPanel() {
+        return descPanel;
+    }
+
+    public JComponent getCommentPanel() {
+        return commentPanel;
+    }
+
+    public JComponent getCommentSection() {
+        return commentSection;
+    }
+    public CountDownLatch getLatch() {
+        return latch;
     }
 }

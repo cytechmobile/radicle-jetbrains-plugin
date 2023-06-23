@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class IssueEditorProvider implements FileEditorProvider, DumbAware {
+    private IssueEditor issueEditor;
 
     @Override
     public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -28,8 +29,13 @@ public class IssueEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
         var editor = new IssueEditor((IssueVirtualFile) file);
+        issueEditor = editor;
         Disposer.register(editor, Disposer.newDisposable());
         return editor;
+    }
+
+    public IssueComponent getIssueComponent() {
+        return issueEditor.getIssueComponent();
     }
 
     @Override
@@ -45,6 +51,7 @@ public class IssueEditorProvider implements FileEditorProvider, DumbAware {
     public static class IssueEditor extends FileEditorBase {
         private final IssueVirtualFile file;
         private JComponent panel;
+        private IssueComponent issueComponent;
 
         public IssueEditor(IssueVirtualFile file) {
             this.file = file;
@@ -52,9 +59,14 @@ public class IssueEditorProvider implements FileEditorProvider, DumbAware {
         }
 
         public void initPanel() {
-            panel = new IssueComponent(file.getIssueModel()).create();
+            issueComponent = new IssueComponent(file.getIssueModel());
+            panel = issueComponent.create();
             panel.setOpaque(true);
             panel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        }
+
+        public IssueComponent getIssueComponent() {
+            return issueComponent;
         }
 
         @Override
