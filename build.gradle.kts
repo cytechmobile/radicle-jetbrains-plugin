@@ -78,6 +78,14 @@ qodana {
 }
 
 tasks {
+    // Set the JVM compatibility versions
+    properties("javaVersion").get().let {
+        withType<JavaCompile> {
+            sourceCompatibility = it
+            targetCompatibility = it
+        }
+    }
+
     wrapper {
         gradleVersion = properties("gradleVersion").get()
     }
@@ -88,7 +96,7 @@ tasks {
         untilBuild = properties("pluginUntilBuild")
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
-        pluginDescription =  providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
+        pluginDescription = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
             val start = "<!-- Plugin description -->"
             val end = "<!-- Plugin description end -->"
             with(it.lines()) {
@@ -148,9 +156,7 @@ tasks {
 
         // enable encryption on test side when use remote machine
         // systemProperty "robot.encryption.password", "my super secret"
-        useJUnitPlatform{
-            excludeTags("video")
-        }
+        exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
     }
 
 
@@ -171,11 +177,10 @@ tasks {
 }
 
 val uiTestTask = tasks.register<Test>("uiTest") {
-    useJUnitPlatform {
-        includeTags("video")
-    }
+    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
 }
 
+/*
 tasks.check {
     //dependsOn(uiTestTask)
-}
+}*/

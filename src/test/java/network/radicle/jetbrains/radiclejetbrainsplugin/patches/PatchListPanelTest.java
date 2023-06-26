@@ -69,18 +69,22 @@ public class PatchListPanelTest extends AbstractIT {
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
         //Wait to load the patch proposals
         Thread.sleep(100);
+        executeUiTasks();
     }
 
     @Test
     public void testFilterEmptyResults() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
-        var filterWithSearch = new PatchListSearchValue();
+        var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
 
         //Filter with search (peer id)
+        var filterWithSearch = new PatchListSearchValue();
         filterWithSearch.searchQuery = "lala";
-        var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
+        executeUiTasks();
         listPanel.updateListEmptyText(filterWithSearch);
+
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
         var emptyText = listPanel.getList().getEmptyText();
@@ -91,9 +95,12 @@ public class PatchListPanelTest extends AbstractIT {
     public void testFilterByAuthor() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
+
         var filter = new PatchListSearchValue();
         filter.author = AUTHOR;
         listPanel.filterList(filter);
+        executeUiTasks();
 
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
@@ -102,6 +109,7 @@ public class PatchListPanelTest extends AbstractIT {
 
         filter.author = AUTHOR1;
         listPanel.filterList(filter);
+        executeUiTasks();
 
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
@@ -113,11 +121,14 @@ public class PatchListPanelTest extends AbstractIT {
     public void testFilterByProject() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
+
         var filter = new PatchListSearchValue();
         var searchVm = listPanel.getSearchVm();
         var projectNames = searchVm.getProjectNames();
         filter.project = projectNames.get(0);
         listPanel.filterList(filter);
+        executeUiTasks();
 
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
@@ -129,12 +140,14 @@ public class PatchListPanelTest extends AbstractIT {
     @Test
     public void testSearch() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
-        var filterWithSearch = new PatchListSearchValue();
+        var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
 
         //Filter with search (peer id)
+        var filterWithSearch = new PatchListSearchValue();
         filterWithSearch.searchQuery = AUTHOR;
-        var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
+        executeUiTasks();
 
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
@@ -153,6 +166,8 @@ public class PatchListPanelTest extends AbstractIT {
     public void testFiltersData() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
+
         var searchVm = listPanel.getSearchVm();
         var filterAuthors = searchVm.getAuthors();
         var projectNames = searchVm.getProjectNames();
@@ -166,11 +181,14 @@ public class PatchListPanelTest extends AbstractIT {
     @Test
     public void testState() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
-        var filterWithSearch = new PatchListSearchValue();
-
-        filterWithSearch.state = RadPatch.State.OPEN.status;
         var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
+
+        var filterWithSearch = new PatchListSearchValue();
+        filterWithSearch.state = RadPatch.State.OPEN.status;
         listPanel.filterList(filterWithSearch);
+        executeUiTasks();
+
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
@@ -195,6 +213,7 @@ public class PatchListPanelTest extends AbstractIT {
     public void testTagDuplicates() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
         var searchVm = listPanel.getSearchVm();
         var tags = searchVm.getTags();
         assertThat(tags.size()).isEqualTo(4);
@@ -203,11 +222,14 @@ public class PatchListPanelTest extends AbstractIT {
     @Test
     public void testTag() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var listPanel = controller.getPatchListPanel();
+        executeUiTasks();
+
         var filterWithSearch = new PatchListSearchValue();
 
         filterWithSearch.tag = "tag1";
-        var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
+        executeUiTasks();
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
