@@ -282,7 +282,6 @@ public class OverviewTest extends AbstractIT {
         }
         executeUiTasks();
         dummyComment = "break";
-        dummyComment = "break";
         ef.setText(dummyComment);
         prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);

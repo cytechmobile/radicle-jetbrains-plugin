@@ -214,7 +214,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("patchTitleError"));
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("patchTitleError"));
     }
 
     @Test
@@ -314,7 +314,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("commentError"));
     }
 
     private RadPatch createPatch() {
