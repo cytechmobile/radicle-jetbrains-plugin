@@ -50,7 +50,7 @@ public abstract class RadAction {
     }
 
     public RadAction(GitRepository repo) {
-        this(null, repo);
+        this(repo.getProject(), repo);
     }
 
     public RadAction(Project project, GitRepository repo) {
@@ -122,6 +122,7 @@ public abstract class RadAction {
                         RadicleBundle.message("unlockIdentity");
                 var myDialog = dialog == null ? new IdentityDialog() : dialog;
                 myDialog.setTitle(title);
+
                 okButton.set(myDialog.showAndGet());
                 latch.countDown();
                 passphrase.set(myDialog.getPassword());

@@ -3,11 +3,11 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone;
 import com.google.common.base.Strings;
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -31,38 +31,36 @@ import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettings;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.DefaultListModel;
-import javax.swing.JList;
-import javax.swing.JLabel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.BorderLayout;
-import java.awt.Font;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -90,7 +88,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     protected ComboBox<SeedNode> seedNodeComboBox;
     private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private RadicleProjectSettings settings;
-    private final ProjectApi projectApi;
+    private final RadicleProjectApi api;
     private SeedNode selectedSeedNode;
     private final List<RadProject> loadedProjects;
     private final Project project;
@@ -102,19 +100,15 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         SEARCH_FIELD, BROWSE_FIELD
     }
 
-    public CloneRadDialog(@NotNull Project project, ProjectApi api) {
+    public CloneRadDialog(@NotNull Project project) {
         this.loadedProjects = new ArrayList<>();
         this.project = project;
-        this.projectApi = api;
+        this.api = project.getService(RadicleProjectApi.class);
         this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         this.settings = this.radicleProjectSettingsHandler.loadSettings();
         initializeIdentityPanel();
         initializeProjectPanel();
         initializeMainPanel();
-    }
-
-    public CloneRadDialog(@NotNull Project project) {
-        this(project, new ProjectApi());
     }
 
     private void setActiveProfile() {
@@ -123,14 +117,9 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var radSelf = new RadSelf(project);
-            var output = radSelf.perform();
-            String activeNodeId;
-            if (RadAction.isSuccess(output)) {
-                var radDetails = new RadDetails(output.getStdoutLines(true));
-                activeNodeId = radDetails.nodeId;
-            } else {
-                activeNodeId = "";
-            }
+            radSelf.askForIdentity(false);
+            var radDetails = radSelf.getRadSelfDetails();
+            String activeNodeId = radDetails == null ? "" : radDetails.nodeId;
             ApplicationManager.getApplication().invokeLater(() ->
                     activeProfileLabel.setText(RadicleBundle.message("activeIdentity") + activeNodeId), ModalityState.any());
         });
@@ -272,7 +261,7 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
             bar.setValue(bar.getMaximum());
         });
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radProjects = projectApi.fetchRadProjects(selectedSeedNode, page);
+            var radProjects = api.fetchRadProjects(page);
             if (radProjects == null) {
                 errorMsg.setVisible(true);
             }

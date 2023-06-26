@@ -5,19 +5,34 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
+import kotlin.coroutines.Continuation;
+import kotlin.coroutines.CoroutineContext;
+import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 
+import javax.swing.JComponent;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +43,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(ActionsTest.class);
@@ -49,6 +65,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
     public List<GitCommit> commitHistory;
+
     @Before
     public void before() throws IOException, VcsException {
         /* initialize a git repository */
@@ -152,14 +169,6 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         }
     }
 
-    protected void removeSeedNodeFromConfig(GitRepository repo) {
-        try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "");
-        } catch (Exception e) {
-            logger.warn("unable to remove seed node from config file");
-        }
-    }
-
     protected void addSeedNodeInConfig(GitRepository repo) {
         try {
             GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "https://maple.radicle.garden");
@@ -168,4 +177,53 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         }
     }
 
+    public RadicleProjectApi replaceApiService() {
+        var client = mock(CloseableHttpClient.class);
+        var api = new RadicleProjectApi(myProject, client);
+        ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
+        return api;
+    }
+
+    public void executeUiTasks() {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    }
+
+    public static void markAsShowing(Component c) {
+        var jc = (JComponent) c;
+        UIUtil.markAsShowing(jc, true);
+        //matching UiUtil IS_SHOWING key
+        jc.putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
+        assertThat(UIUtil.isShowing(jc, false)).isTrue();
+    }
+
+    public static class NoopContinuation<T> implements Continuation<T> {
+        public static final NoopContinuation<kotlin.Unit> NOOP = new NoopContinuation<>();
+        @NotNull
+        @Override
+        public CoroutineContext getContext() {
+            return EmptyCoroutineContext.INSTANCE;
+        }
+
+        @Override
+        public void resumeWith(@NotNull Object o) {
+        }
+    }
+
+    public static class MockToolWindow extends ToolWindowHeadlessManagerImpl.MockToolWindow {
+        public MockToolWindow(@NotNull Project project) {
+            super(project);
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
+
+        @Override
+        public boolean isVisible() {
+            return true;
+        }
+    }
 }

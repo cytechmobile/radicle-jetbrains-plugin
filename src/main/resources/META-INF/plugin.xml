@@ -12,9 +12,8 @@
     <resource-bundle>messages.RadicleBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceInterface="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"
-                        serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"
-                        />
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi"/>
         <projectConfigurable
                 parentId="project.propVCSSupport.Mappings"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
@@ -30,7 +29,7 @@
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
 
         <toolWindow icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_TOOL_WINDOW"
-                factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.patches.RadicleToolWindow" id="Radicle"/>
+                    factoryClass="network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow" id="Radicle"/>
         <postStartupActivity implementation="network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener"/>
     </extensions>
 

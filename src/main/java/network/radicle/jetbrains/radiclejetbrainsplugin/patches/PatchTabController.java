@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.intellij.collaboration.ui.SingleValueModel;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -9,43 +8,28 @@ import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
 import javax.swing.JComponent;
 import java.awt.BorderLayout;
 import java.util.Arrays;
 
-public class PatchTabController {
-    private Project project;
-    private Content tab;
-    private PatchListPanel patchListPanel;
-    private PatchProposalPanel patchProposalPanel;
-    private ProjectApi myApi;
+public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
+    private final PatchListPanel patchListPanel;
+    private  SingleValueModel<RadPatch> patchModel;
 
-    public PatchTabController(Content tab, Project project, ProjectApi myApi) {
-        this.tab = tab;
-        this.project = project;
-        this.myApi = myApi;
-    }
-
-    public void createPatchesPanel() {
-        tab.setDisplayName(RadicleBundle.message("patchTabName"));
-        var mainPanel = tab.getComponent();
-        patchListPanel = new PatchListPanel(this, project, myApi);
-        var createdPanel = patchListPanel.create();
-        mainPanel.setLayout(new BorderLayout(5, 10));
-        mainPanel.removeAll();
-        mainPanel.add(createdPanel, BorderLayout.CENTER);
-        mainPanel.revalidate();
-        mainPanel.repaint();
+    public PatchTabController(Content tab, Project project) {
+        super(project, tab);
+        patchListPanel = new PatchListPanel(this, project);
     }
 
     public void createPatchProposalPanel(RadPatch patch) {
         final var mainPanel = tab.getComponent();
-        final var patchModel = new SingleValueModel<>(patch);
+        patchModel = new SingleValueModel<>(patch);
         createInternalPatchProposalPanel(patchModel, mainPanel);
         patchModel.addListener(p -> {
-            var fetched = myApi.fetchPatch(patch.seedNode, patch.projectId, patch.repo, patch.id);
+            var fetched = api.fetchPatch(patch.projectId, patch.repo, patch.id);
             if (fetched != null) {
                 ApplicationManager.getApplication().invokeLater(() -> createPatchProposalPanel(fetched));
             }
@@ -55,7 +39,7 @@ public class PatchTabController {
 
     protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {
         tab.setDisplayName("Patch Proposal from: " + patch.getValue().author);
-        patchProposalPanel = new PatchProposalPanel(this, patch);
+        var patchProposalPanel = new PatchProposalPanel(this, patch);
         var panel = patchProposalPanel.createViewPatchProposalPanel();
         mainPanel.removeAll();
         mainPanel.add(panel, BorderLayout.CENTER);
@@ -64,10 +48,10 @@ public class PatchTabController {
         openPatchTimelineOnEditor(patch, patchProposalPanel, true);
     }
 
-    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> patchModel, PatchProposalPanel proposalPanel, boolean force) {
+    public void openPatchTimelineOnEditor(SingleValueModel<RadPatch> myPatchModel, PatchProposalPanel proposalPanel, boolean force) {
         var editorManager = FileEditorManager.getInstance(project);
-        final var patch = patchModel.getValue();
-        var file = new PatchVirtualFile(patchModel, proposalPanel);
+        final var patch = myPatchModel.getValue();
+        var file = new PatchVirtualFile(myPatchModel, proposalPanel);
         var editorTabs = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
                 ed.getFile() instanceof PatchVirtualFile &&
                         ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).toList();
@@ -82,8 +66,18 @@ public class PatchTabController {
         }
     }
 
-    public Disposable getDisposer() {
-        return tab.getDisposer();
+    public SingleValueModel<RadPatch> getPatchModel() {
+        return patchModel;
+    }
+
+    @Override
+    public String getTabName() {
+        return RadicleBundle.message("patchTabName");
+    }
+
+    @Override
+    public ListPanel<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> getPanel() {
+        return patchListPanel;
     }
 
     public PatchListPanel getPatchListPanel() {

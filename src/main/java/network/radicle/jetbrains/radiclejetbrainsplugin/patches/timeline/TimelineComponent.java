@@ -16,17 +16,17 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchComment;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchEdit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
-
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import java.util.concurrent.CountDownLatch;
+
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getHorizontalPanel;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.getVerticalPanel;
@@ -35,7 +35,11 @@ public class TimelineComponent {
     private final TimelineComponentFactory componentsFactory;
     private final RadPatch radPatch;
     private final SingleValueModel<RadPatch> radPatchModel;
-    private BaseHtmlEditorPane headerTitle;
+
+    private JPanel headerPanel;
+    private JComponent commentPanel;
+    private final CountDownLatch latch = new CountDownLatch(1);
+    private JComponent revisionSection;
 
     public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
         this.radPatchModel = radPatchModel;
@@ -55,7 +59,8 @@ public class TimelineComponent {
         timelinePanel.setOpaque(false);
         timelinePanel.add(header);
         timelinePanel.add(descriptionWrapper);
-        timelinePanel.add(componentsFactory.createRevisionSection());
+        revisionSection = componentsFactory.createRevisionSection();
+        timelinePanel.add(revisionSection);
 
         var horizontalPanel = getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -63,6 +68,7 @@ public class TimelineComponent {
             if (radDetails != null) {
                 ApplicationManager.getApplication().invokeLater(() -> {
                     var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                    commentPanel = commentSection;
                     timelinePanel.add(commentSection);
                 }, ModalityState.any());
             }
@@ -88,15 +94,15 @@ public class TimelineComponent {
 
     public boolean createComment(String comment) {
         if (Strings.isNullOrEmpty(comment)) {
+            return false;
+        }
+        var api = radPatch.project.getService(RadicleProjectApi.class);
+        var ok = api.addPatchComment(radPatch, comment);
+        if (ok != null) {
+            radPatchModel.setValue(ok);
             return true;
         }
-        var patchComment = new RadPatchComment(radPatch.repo, radPatch.id, comment);
-        var out = patchComment.perform();
-        final boolean success = RadAction.isSuccess(out);
-        if (success) {
-            radPatchModel.setValue(radPatch);
-        }
-        return true;
+        return false;
     }
 
     private EditablePanelHandler getCommentField() {
@@ -112,19 +118,22 @@ public class TimelineComponent {
     private JComponent getHeader() {
         final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radPatch.title, radPatch.id, "", "");
 
-        headerTitle = new BaseHtmlEditorPane();
+        var headerTitle = new BaseHtmlEditorPane();
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
 
         var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), headerTitle,
                 RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (editedTitle) -> {
-            var patchEdit = new RadPatchEdit(radPatch.repo, radPatch.id, editedTitle);
-            var out = patchEdit.perform();
-            final boolean success = RadAction.isSuccess(out);
+            var edit = new RadPatch(radPatch);
+            edit.title = editedTitle;
+            var api = radPatch.project.getService(RadicleProjectApi.class);
+            var edited = api.changePatchTitle(edit);
+            final boolean success = edited != null;
             if (success) {
-                radPatchModel.setValue(radPatch);
+                radPatchModel.setValue(edited);
+                latch.countDown();
             }
-            return true;
+            return success;
         }).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
@@ -136,14 +145,27 @@ public class TimelineComponent {
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel);
         b.withHeader(contentPanel, actionsPanel);
-        return b.build();
+        headerPanel = (JPanel) b.build();
+        return headerPanel;
     }
 
-    public BaseHtmlEditorPane getHeaderTitle() {
-        return headerTitle;
+    public JComponent getRevisionSection() {
+        return revisionSection;
+    }
+
+    public JComponent getCommentPanel() {
+        return commentPanel;
+    }
+
+    public JPanel getHeaderPanel() {
+        return headerPanel;
     }
 
     public TimelineComponentFactory getComponentsFactory() {
         return componentsFactory;
+    }
+
+    public CountDownLatch getLatch() {
+        return latch;
     }
 }

@@ -39,7 +39,7 @@ dependencies {
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
-    testImplementation("org.mockito:mockito-core:5.3.1")
+    testImplementation("org.mockito:mockito-core:5.4.0")
 
     // Deserialize timestamps to Instant
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")

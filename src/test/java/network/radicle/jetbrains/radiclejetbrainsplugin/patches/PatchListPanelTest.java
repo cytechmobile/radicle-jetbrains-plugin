@@ -1,20 +1,18 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.google.common.base.Strings;
-import com.intellij.openapi.project.Project;
-import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
-import network.radicle.jetbrains.radiclejetbrainsplugin.providers.ProjectApi;
-import org.apache.http.HttpResponse;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,30 +28,34 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
-public class RadicleToolWindowTest extends AbstractIT {
+public class PatchListPanelTest extends AbstractIT {
+    public static final String URL = "/patches";
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String AUTHOR1 = "did:key:testAuthor1";
     private RadicleToolWindow radicleToolWindow;
-    private List<RadPatch> patches;
+    private static List<RadPatch> patches;
 
     @Before
     public void setUpToolWindow() throws InterruptedException, IOException {
-        final var httpClient = mock(HttpClient.class);
+        var api = replaceApiService();
+        final var httpClient = api.getClient();
         patches = getTestPatches();
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = (HttpGet) i.getArgument(0);
             final StringEntity se;
             if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestProjects()));
-            } else if (req.getURI().getPath().endsWith("/patches")) {
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
+            } else if (req.getURI().getPath().endsWith(URL)) {
                 // request to fetch patches
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+            } else if (req.getURI().getPath().endsWith(IssueListPanelTest.URL)) {
+                se = new StringEntity("[]");
             } else {
                 // request to fetch specific project
-                se = new StringEntity(ProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
             }
             se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            final var resp = mock(HttpResponse.class);
+            final var resp = mock(CloseableHttpResponse.class);
             when(resp.getEntity()).thenReturn(se);
             final var statusLine = mock(StatusLine.class);
             when(resp.getStatusLine()).thenReturn(statusLine);
@@ -61,39 +63,39 @@ public class RadicleToolWindowTest extends AbstractIT {
             return resp;
         });
 
-        radicleToolWindow = new RadicleToolWindow(new ProjectApi(httpClient));
+        radicleToolWindow = new RadicleToolWindow();
         var toolWindow = new MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), toolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
         //Wait to load the patch proposals
-        Thread.sleep(2000);
+        Thread.sleep(100);
     }
 
     @Test
     public void testFilterEmptyResults() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         //Filter with search (peer id)
         filterWithSearch.searchQuery = "lala";
         var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-
-        var patchModel = listPanel.getPatchModel();
+        listPanel.updateListEmptyText(filterWithSearch);
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
-        var emptyText = listPanel.getPatchesList().getEmptyText();
+        var emptyText = listPanel.getList().getEmptyText();
         assertThat(emptyText.getText()).isEqualTo("Nothing found");
     }
 
     @Test
     public void testFilterByAuthor() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var filter = new PatchListSearchValue();
         filter.author = AUTHOR;
         listPanel.filterList(filter);
 
-        var patchModel = listPanel.getPatchModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
@@ -101,7 +103,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         filter.author = AUTHOR1;
         listPanel.filterList(filter);
 
-        patchModel = listPanel.getPatchModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(1).author.id());
@@ -109,7 +111,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testFilterByProject() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var filter = new PatchListSearchValue();
         var searchVm = listPanel.getSearchVm();
@@ -117,7 +119,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         filter.project = projectNames.get(0);
         listPanel.filterList(filter);
 
-        var patchModel = listPanel.getPatchModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
 
         var radPatch = patchModel.get(0);
@@ -126,7 +128,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testSearch() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         //Filter with search (peer id)
@@ -134,14 +136,14 @@ public class RadicleToolWindowTest extends AbstractIT {
         var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
 
-        var patchModel = listPanel.getPatchModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
 
         filterWithSearch.searchQuery = patches.get(0).title;
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getPatchModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
@@ -149,7 +151,7 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testFiltersData() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var searchVm = listPanel.getSearchVm();
         var filterAuthors = searchVm.getAuthors();
@@ -163,13 +165,13 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testState() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         filterWithSearch.state = RadPatch.State.OPEN.status;
         var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-        var patchModel = listPanel.getPatchModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
@@ -177,7 +179,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         filterWithSearch.state = RadPatch.State.CLOSED.status;
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getPatchModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(1).author.id());
@@ -185,13 +187,13 @@ public class RadicleToolWindowTest extends AbstractIT {
         filterWithSearch.state = RadPatch.State.MERGED.status;
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getPatchModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
     }
 
     @Test
     public void testTagDuplicates() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var searchVm = listPanel.getSearchVm();
         var tags = searchVm.getTags();
@@ -200,13 +202,13 @@ public class RadicleToolWindowTest extends AbstractIT {
 
     @Test
     public void testTag() {
-        var controller = radicleToolWindow.patchTabController;
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var filterWithSearch = new PatchListSearchValue();
 
         filterWithSearch.tag = "tag1";
         var listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-        var patchModel = listPanel.getPatchModel();
+        var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(0).author.id());
@@ -214,7 +216,7 @@ public class RadicleToolWindowTest extends AbstractIT {
         filterWithSearch.tag = "firstTag";
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getPatchModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id()).isEqualTo(patches.get(1).author.id());
@@ -222,16 +224,16 @@ public class RadicleToolWindowTest extends AbstractIT {
         filterWithSearch.tag = "unknownTag";
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
-        patchModel = listPanel.getPatchModel();
+        patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(0);
     }
 
-    private List<RadProject> getTestProjects() {
+    public static List<RadProject> getTestProjects() {
         return List.of(new RadProject("test-rad-project", "test project", "test project description", "main"),
                 new RadProject("test-rad-project-second", "test project 2", "test project 2 description", "main"));
     }
 
-    private List<RadPatch> getTestPatches() {
+    public static List<RadPatch> getTestPatches() {
         var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
                 List.of(), List.of(), Instant.now(), List.of(), List.of());
 
@@ -243,21 +245,5 @@ public class RadicleToolWindowTest extends AbstractIT {
                 RadPatch.State.CLOSED, List.of(revision));
         patches = List.of(radPatch, radPatch2);
         return patches;
-    }
-
-    public static class MockToolWindow extends ToolWindowHeadlessManagerImpl.MockToolWindow {
-        public MockToolWindow(@NotNull Project project) {
-            super(project);
-        }
-
-        @Override
-        public boolean isAvailable() {
-            return false;
-        }
-
-        @Override
-        public boolean isVisible() {
-            return true;
-        }
     }
 }

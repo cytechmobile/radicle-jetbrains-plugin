@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
@@ -106,7 +107,7 @@ public class PatchProposalPanel {
     protected JComponent createReturnToListSideComponent() {
         return ReturnToListComponent.INSTANCE.createReturnToListSideComponent(RadicleBundle.message("backToList"),
                 () -> {
-                    controller.createPatchesPanel();
+                    controller.createPanel();
                     return Unit.INSTANCE;
                 });
     }
@@ -157,7 +158,7 @@ public class PatchProposalPanel {
     private JComponent descriptionComponent() {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody(patch.description);
+        titlePane.setBody(Strings.nullToEmpty(patch.description));
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
         final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {
@@ -245,8 +246,6 @@ public class PatchProposalPanel {
 
     protected void calculatePatchChanges(CountDownLatch latch) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            // TODO fetch first and then show the changes, maybe i have to add the did to the remotes
-            // calculate file changes for each revision and gather them all
             List<Change> changes = new ArrayList<>();
             for (var rev : patch.revisions) {
                 final var diff = GitChangeUtils.getDiff(patch.repo, rev.base(), rev.oid(), true);
@@ -265,7 +264,6 @@ public class PatchProposalPanel {
 
     protected void calculatePatchCommits() {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            //TODO fetch first and then show the changes, maybe i have to add the did to the remotes
             try {
                 List<GitCommit> history = new ArrayList<>();
                 for (var rev : patch.revisions) {
