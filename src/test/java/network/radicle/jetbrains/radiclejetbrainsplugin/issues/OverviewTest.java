@@ -67,9 +67,9 @@ public class OverviewTest extends AbstractIT {
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = i.getArgument(0);
             StringEntity se;
-            if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains("/sessions")) {
+            if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains(SESSIONS_URL)) {
                 se = new StringEntity("{}");
-            }  else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains("/issues/" + issue.id)) {
+            }  else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains(ISSUES_URL + "/" + issue.id)) {
                 var obj = EntityUtils.toString(((HttpPatch) req).getEntity());
                 var mapper = new ObjectMapper();
                 Map<String, Object> map = mapper.readValue(obj, Map.class);
@@ -87,14 +87,14 @@ public class OverviewTest extends AbstractIT {
                     assertThat(map.get("title")).isEqualTo(issue.title);
                 }
                 se = new StringEntity("{}");
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/issues/" + issue.id)) {
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(ISSUES_URL + "/" + issue.id)) {
                 issue.repo = null;
                 issue.project = null;
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(issue));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(IssueListPanelTest.URL)) {
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
                 // request to fetch issues
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
             } else if ((req instanceof HttpGet)) {

@@ -11,7 +11,6 @@ import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
-import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -68,9 +67,9 @@ public class TimelineTest extends AbstractIT {
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = i.getArgument(0);
             StringEntity se;
-            if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains("/sessions")) {
+            if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains(SESSIONS_URL)) {
                 se = new StringEntity("{}");
-            } else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains("/patches/" + patch.id)) {
+            } else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
                 var obj = EntityUtils.toString(((HttpPatch) req).getEntity());
                 var mapper = new ObjectMapper();
                 Map<String, Object> map = mapper.readValue(obj, Map.class);
@@ -81,7 +80,7 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("type")).isEqualTo("thread");
                     assertThat(action.get("type")).isEqualTo("comment");
                     assertThat(action.get("body")).isEqualTo(dummyComment);
-                    var discussion = new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of());
+                    var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of());
                     patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
                 } else if (map.get("type").equals("edit")) {
                     //patch
@@ -91,14 +90,14 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("title")).isEqualTo(patch.title);
                 }
                 se = new StringEntity("{}");
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches/" + patch.id)) {
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
                 patch.repo = null;
                 patch.project = null;
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(patch));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(IssueListPanelTest.URL)) {
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
             } else if ((req instanceof HttpGet)) {

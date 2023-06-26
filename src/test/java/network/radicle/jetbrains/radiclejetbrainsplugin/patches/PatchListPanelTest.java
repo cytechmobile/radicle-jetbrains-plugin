@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.google.common.base.Strings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
-import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
@@ -30,7 +29,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class PatchListPanelTest extends AbstractIT {
-    public static final String URL = "/patches";
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String AUTHOR1 = "did:key:testAuthor1";
     private RadicleToolWindow radicleToolWindow;
@@ -46,10 +44,10 @@ public class PatchListPanelTest extends AbstractIT {
             final StringEntity se;
             if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
-            } else if (req.getURI().getPath().endsWith(URL)) {
+            } else if (req.getURI().getPath().endsWith(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
-            } else if (req.getURI().getPath().endsWith(IssueListPanelTest.URL)) {
+            } else if (req.getURI().getPath().endsWith(ISSUES_URL)) {
                 se = new StringEntity("[]");
             } else {
                 // request to fetch specific project
