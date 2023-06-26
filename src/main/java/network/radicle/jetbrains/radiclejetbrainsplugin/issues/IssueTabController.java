@@ -46,6 +46,8 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
         createInternalIssuePanel(issueModel);
         issueModel.addListener(issue -> {
             var fetched = api.fetchIssue(myIssue.projectId, myIssue.repo, myIssue.id);
+            // Reload whole panel
+            issueListPanel.updateListPanel();
             if (fetched != null) {
                 ApplicationManager.getApplication().invokeLater(() -> createIssuePanel(fetched));
             }

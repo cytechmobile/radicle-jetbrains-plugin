@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -33,7 +34,6 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.
 public class IssueComponent {
     private final RadIssue radIssue;
     private final SingleValueModel<RadIssue> issueModel;
-    private BaseHtmlEditorPane headerTitle;
     private JPanel headerPanel;
     private JPanel descPanel;
     private JComponent commentFieldPanel;
@@ -50,7 +50,6 @@ public class IssueComponent {
     public JComponent create() {
         var mainPanel = new Wrapper();
         var issueContainer = getVerticalPanel(2);
-
         issueContainer.add(getHeader());
         issueContainer.add(getDescription());
         commentSection = createCommentSection(radIssue.discussion);
@@ -67,7 +66,9 @@ public class IssueComponent {
            }
         });
 
-        mainPanel.add(issueContainer);
+        var scrollPanel = ScrollPaneFactory.createScrollPane(issueContainer, true);
+        scrollPanel.setOpaque(false);
+        mainPanel.setContent(scrollPanel);
         return mainPanel;
     }
 
@@ -150,7 +151,7 @@ public class IssueComponent {
 
     private JComponent getHeader() {
         final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radIssue.title, radIssue.id, "", "");
-        headerTitle = new BaseHtmlEditorPane();
+        var headerTitle = new BaseHtmlEditorPane();
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), headerTitle,
@@ -195,6 +196,7 @@ public class IssueComponent {
     public JComponent getCommentSection() {
         return commentSection;
     }
+
     public CountDownLatch getLatch() {
         return latch;
     }

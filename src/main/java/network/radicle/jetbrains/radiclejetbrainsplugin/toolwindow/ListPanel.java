@@ -93,7 +93,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
         return mainPanel;
     }
 
-    private void updateListPanel() {
+    public void updateListPanel() {
         var countDown = new CountDownLatch(1);
         searchVm.setCountDown(countDown);
         var settings =  radicleProjectSettingsHandler.loadSettings();
