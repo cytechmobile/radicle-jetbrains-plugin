@@ -163,8 +163,8 @@ public class IssueComponent {
             final boolean success = edited != null;
             if (success) {
                 issueModel.setValue(edited);
-                latch.countDown();
             }
+            latch.countDown();
             return success;
         }).build();
         var contentPanel = panelHandle.panel;

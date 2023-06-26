@@ -11,6 +11,7 @@ import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -41,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
@@ -64,9 +66,11 @@ public class TimelineTest extends AbstractIT {
         var api = replaceApiService();
         patch = createPatch();
         final var httpClient = api.getClient();
+        final int[] statusCode = {200};
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = i.getArgument(0);
             StringEntity se;
+            statusCode[0] = 200;
             if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains(SESSIONS_URL)) {
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
@@ -88,6 +92,10 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
+                }
+                // Return status code 400 in order to trigger the notification
+                if (dummyComment.equals("break") || patch.title.equals("break")) {
+                    statusCode[0] = 400;
                 }
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
@@ -111,7 +119,7 @@ public class TimelineTest extends AbstractIT {
             when(resp.getEntity()).thenReturn(se);
             final var statusLine = mock(StatusLine.class);
             when(resp.getStatusLine()).thenReturn(statusLine);
-            when(statusLine.getStatusCode()).thenReturn(200);
+            when(statusLine.getStatusCode()).thenReturn(statusCode[0]);
             return resp;
         });
        setupWindow();
@@ -158,11 +166,11 @@ public class TimelineTest extends AbstractIT {
             hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
         }
         executeUiTasks();
-        final var editedTitle = "Edited title to " + UUID.randomUUID();
+        var editedTitle = "Edited title to " + UUID.randomUUID();
         ef.setText(editedTitle);
-        final var prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
+        var prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        final var prBtn = prBtns.get(1);
+        var prBtn = prBtns.get(1);
         /* click the button to edit the patch */
         patch.title = editedTitle;
         prBtn.doClick();
@@ -173,6 +181,8 @@ public class TimelineTest extends AbstractIT {
         assertThat(editedTitle).isEqualTo(updatedPatch.title);
 
         // Open createEditor
+        patch.repo = firstRepo;
+        patch.project = getProject();
         patchEditorProvider.createEditor(getProject(), editorFile);
         timelineComponent = patchEditorProvider.getTimelineComponent();
         titlePanel = timelineComponent.getHeaderPanel();
@@ -182,6 +192,29 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         ef = UIUtil.findComponentOfType(titlePanel, EditorTextField.class);
         assertThat(ef.getText()).isEqualTo(editedTitle);
+
+        //Check that error notification exists
+        markAsShowing(ef.getParent());
+        for (var hl : ef.getParent().getHierarchyListeners()) {
+            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
+        }
+        executeUiTasks();
+
+        notificationsQueue.clear();
+        editedTitle = "break";
+        ef.setText(editedTitle);
+        prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        prBtn = prBtns.get(1);
+        /* click the button to edit the patch */
+        patch.title = editedTitle;
+        prBtn.doClick();
+        /* Wait for the reload */
+        timelineComponent.getLatch().await();
+        executeUiTasks();
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("patchTitleError"));
     }
 
     @Test
@@ -239,9 +272,9 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         assertThat(ef.getText()).isEmpty();
         ef.setText(dummyComment);
-        final var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
+        var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        final var prBtn = prBtns.get(1);
+        var prBtn = prBtns.get(1);
         prBtn.doClick();
 
         timelineComponent.getLatch().await();
@@ -263,6 +296,25 @@ public class TimelineTest extends AbstractIT {
         assertThat(comments).contains(patch.revisions.get(1).id());
         // Assert that the new comment exists
         assertThat(comments).contains(patch.revisions.get(1).discussions().get(1).body);
+
+        //Check that notification get triggered
+        markAsShowing(ef.getParent());
+        for (var hl : ef.getParent().getHierarchyListeners()) {
+            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
+        }
+        executeUiTasks();
+        dummyComment = "break";
+        ef.setText(dummyComment);
+        prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        prBtn = prBtns.get(1);
+        prBtn.doClick();
+        Thread.sleep(1000);
+        timelineComponent.getLatch().await();
+        executeUiTasks();
+        var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
     }
 
     private RadPatch createPatch() {

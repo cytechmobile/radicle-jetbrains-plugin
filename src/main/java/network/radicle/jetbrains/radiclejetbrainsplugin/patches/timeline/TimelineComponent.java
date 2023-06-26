@@ -131,8 +131,8 @@ public class TimelineComponent {
             final boolean success = edited != null;
             if (success) {
                 radPatchModel.setValue(edited);
-                latch.countDown();
             }
+            latch.countDown();
             return success;
         }).build();
         var contentPanel = panelHandle.panel;
