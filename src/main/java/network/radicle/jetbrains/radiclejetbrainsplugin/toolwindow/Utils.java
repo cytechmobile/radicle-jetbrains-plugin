@@ -1,5 +1,7 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
+package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+
+import com.intellij.ui.components.panels.ListLayout;
 import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
@@ -8,21 +10,23 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectS
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.JComponent;
+import javax.swing.JPanel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PatchUtils {
-    private static final Logger logger = LoggerFactory.getLogger(PatchUtils.class);
+
+public class Utils {
+    private static final Logger logger = LoggerFactory.getLogger(Utils.class);
     private final RadPatch patch;
 
-    public PatchUtils(RadPatch patch) {
+    public Utils(RadPatch patch) {
         this.patch = patch;
     }
 
     public Map<String, List<GitCommit>> calculateCommits() {
         var revisions = new HashMap<String, List<GitCommit>>();
-        //TODO maybe here i have to add the did to the remotes before fetching
         var success = fetchCommits();
         if (!success) {
             return null;
@@ -44,6 +48,15 @@ public class PatchUtils {
         var service = patch.repo.getProject().getService(RadicleProjectService.class);
         var output = service.fetchPeerChanges(patch);
         return RadAction.isSuccess(output);
+    }
+
+
+    public static JComponent getVerticalPanel(int gap) {
+        return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
+    }
+
+    public static JComponent getHorizontalPanel(int gap) {
+        return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
     }
 
 }

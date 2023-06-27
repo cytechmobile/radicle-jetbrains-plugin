@@ -1,14 +1,21 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
+import com.intellij.collaboration.ui.SingleValueModel;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
+import java.util.Arrays;
+
 public class IssueTabController extends TabController<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final IssueListPanel issueListPanel;
+    private SingleValueModel<RadIssue> myIssueModel;
 
     public IssueTabController(Content tab, Project project) {
         super(project, tab);
@@ -17,6 +24,10 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
 
     public IssueListPanel getIssueListPanel() {
         return issueListPanel;
+    }
+
+    public SingleValueModel<RadIssue> getIssueModel() {
+        return myIssueModel;
     }
 
     @Override
@@ -29,4 +40,40 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
         return issueListPanel;
     }
 
+    public void createIssuePanel(RadIssue myIssue) {
+        final var issueModel = new SingleValueModel<>(myIssue);
+        this.myIssueModel = issueModel;
+        createInternalIssuePanel(issueModel);
+        issueModel.addListener(issue -> {
+            var fetched = api.fetchIssue(myIssue.projectId, myIssue.repo, myIssue.id);
+            // Reload whole panel
+            issueListPanel.updateListPanel();
+            if (fetched != null) {
+                ApplicationManager.getApplication().invokeLater(() -> createIssuePanel(fetched));
+            }
+            return null;
+        });
+    }
+
+    protected void createInternalIssuePanel(SingleValueModel<RadIssue> issue) {
+        openIssueTimelineOnEditor(issue, true);
+    }
+
+    public void openIssueTimelineOnEditor(SingleValueModel<RadIssue> issueModel, boolean force) {
+        var editorManager = FileEditorManager.getInstance(project);
+        final var issue = issueModel.getValue();
+        var file = new IssueVirtualFile(issueModel);
+        var editorTabs = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
+                ed.getFile() instanceof IssueVirtualFile &&
+                        ((IssueVirtualFile) ed.getFile()).getIssue().id.equals(issue.id)).toList();
+        if (force) {
+            for (var et : editorTabs) {
+                editorManager.closeFile(et.getFile());
+            }
+        }
+
+        if (force || editorTabs.isEmpty()) {
+            editorManager.openFile(file, true);
+        }
+    }
 }

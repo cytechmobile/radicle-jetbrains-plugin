@@ -55,6 +55,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public static final String WSL = "wsl";
     protected static final String REMOTE_NAME = "testRemote";
     protected static final String REMOTE_NAME_1 = "testRemote1";
+    public static final String PATCHES_URL = "/patches";
+    public static final String ISSUES_URL = "/issues";
+    public static final String SESSIONS_URL = "/sessions";
     protected RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     protected String remoteRepoPath;
     protected String remoteRepoPath1;

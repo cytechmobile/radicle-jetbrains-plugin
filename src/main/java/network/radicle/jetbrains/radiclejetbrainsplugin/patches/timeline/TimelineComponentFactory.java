@@ -14,7 +14,6 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -22,7 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
-import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchUtils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -36,6 +35,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getVerticalPanel;
 
 public class TimelineComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
@@ -63,7 +65,7 @@ public class TimelineComponentFactory {
         contentPanel.setOpaque(false);
         var horizontalPanel = getHorizontalPanel(8);
         horizontalPanel.setOpaque(false);
-        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id(), null);
+        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id, null);
         return descSection;
     }
 
@@ -72,7 +74,7 @@ public class TimelineComponentFactory {
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var patchUtils = new PatchUtils(patch);
+            var patchUtils = new Utils(patch);
             groupedCommits = patchUtils.calculateCommits();
             latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -109,8 +111,8 @@ public class TimelineComponentFactory {
     private String findMessage(String replyTo) {
         for (var rev : patch.revisions) {
             for (var com : rev.discussions()) {
-                if (com.id().equals(replyTo)) {
-                    return com.body();
+                if (com.id.equals(replyTo)) {
+                    return com.body;
                 }
             }
         }
@@ -123,9 +125,9 @@ public class TimelineComponentFactory {
             for (var com : rev.discussions()) {
                 var textHtmlEditor = new BaseHtmlEditorPane();
                 textHtmlEditor.setOpaque(false);
-                var message = com.body();
-                if (!Strings.isNullOrEmpty(com.replyTo())) {
-                    var replyToMessage = findMessage(com.replyTo());
+                var message = com.body;
+                if (!Strings.isNullOrEmpty(com.replyTo)) {
+                    var replyToMessage = findMessage(com.replyTo);
                     message = "<div><div style=\"border-left: 2px solid black;\">" +
                             " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
                             "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
@@ -136,7 +138,7 @@ public class TimelineComponentFactory {
                 var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
                 contentPanel.setOpaque(false);
                 contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
-                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author().id(), com.timestamp()));
+                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.id, com.timestamp));
             }
         }
         return mainPanel;
@@ -183,23 +185,9 @@ public class TimelineComponentFactory {
                 .withHeader(titleTextPane, actionsPanel).build();
     }
 
-    public static JComponent getVerticalPanel(int gap) {
-        return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
-    }
-
-    public static JComponent getHorizontalPanel(int gap) {
-        return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
-    }
 
     public JComponent getDescSection() {
         return descSection;
     }
 
-    public CountDownLatch getLatch() {
-        return latch;
-    }
-
-    public Map<String, List<GitCommit>> getGroupedCommits() {
-        return groupedCommits;
-    }
 }

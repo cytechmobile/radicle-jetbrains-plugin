@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
 
@@ -103,6 +104,10 @@ public class RadStub extends RadicleProjectService {
         pr.appendStderr("stderr");
         pr.appendStdout(stdout);
         return pr;
+    }
+
+    public ProcessOutput fetchPeerChanges(RadPatch patch) {
+        return new ProcessOutput(0);
     }
 
     public static RadStub replaceRadicleProjectService(UsefulTestCase utc, String commitHash, Project project) {

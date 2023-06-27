@@ -27,9 +27,11 @@ import java.util.stream.Collectors;
 
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
+    private final IssueTabController cntrl;
 
     public IssueListPanel(IssueTabController controller, Project project) {
         super(controller, project);
+        this.cntrl = controller;
     }
 
     @Override
@@ -49,7 +51,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public void onItemClick(RadIssue obj) {
-
+        this.cntrl.createIssuePanel(obj);
     }
 
     @Override
@@ -74,10 +76,10 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
             var assigneeFilter = searchValue.assignee;
             var loadedRadIssues = loadedData;
             List<RadIssue> filteredPatches = loadedRadIssues.stream()
-                    .filter(p -> searchFilter == null || p.author.id().contains(searchFilter) ||
+                    .filter(p -> searchFilter == null || p.author.id.contains(searchFilter) ||
                             p.title.contains(searchFilter))
                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> peerAuthorFilter == null || p.author.id().equals(peerAuthorFilter))
+                    .filter(p -> peerAuthorFilter == null || p.author.id.equals(peerAuthorFilter))
                     .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
                     .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
                     .filter(p -> assigneeFilter == null || p.assignees.stream().anyMatch(tag -> tag.equals(assigneeFilter)))
@@ -132,9 +134,9 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                 title = new JLabel(issue.title);
                 issuePanel.add(title, BorderLayout.NORTH);
                 var firstDiscussion = issue.discussion.get(0);
-                var date = Date.from(firstDiscussion.timestamp());
+                var date = Date.from(firstDiscussion.timestamp);
                 var formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(date);
-                var info = new JLabel("Created : " + formattedDate + " by " + issue.author.id());
+                var info = new JLabel("Created : " + formattedDate + " by " + issue.author.id);
                 info.setForeground(JBColor.GRAY);
                 if (!issue.tags.isEmpty()) {
                     var tags = new JLabel("Tags : " + String.join(", ", issue.tags));
