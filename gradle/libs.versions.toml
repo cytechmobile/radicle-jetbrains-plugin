@@ -7,7 +7,7 @@ remoteRobot = "0.11.18"
 dokka = "1.8.10"
 kotlin = "1.8.22"
 changelog = "2.1.0"
-gradleIntelliJPlugin = "1.14.1"
+gradleIntelliJPlugin = "1.14.2"
 qodana = "0.1.13"
 kover = "0.7.1"
 
