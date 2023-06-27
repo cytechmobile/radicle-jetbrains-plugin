@@ -175,7 +175,7 @@ public class TimelineTest extends AbstractIT {
         patch.title = editedTitle;
         prBtn.doClick();
         /* Wait for the reload */
-        timelineComponent.getLatch().await();
+        Thread.sleep(1000);
         var updatedPatchModel = patchTabController.getPatchModel();
         var updatedPatch = updatedPatchModel.getValue();
         assertThat(editedTitle).isEqualTo(updatedPatch.title);
@@ -210,11 +210,11 @@ public class TimelineTest extends AbstractIT {
         patch.title = editedTitle;
         prBtn.doClick();
         /* Wait for the reload */
-        timelineComponent.getLatch().await();
+        Thread.sleep(1000);
         executeUiTasks();
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("patchTitleError"));
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("patchTitleError"));
     }
 
     @Test
@@ -276,8 +276,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(1);
         prBtn.doClick();
-
-        timelineComponent.getLatch().await();
+        Thread.sleep(1000);
         // Open createEditor
         patch.repo = firstRepo;
         patch.project = getProject();
@@ -310,11 +309,10 @@ public class TimelineTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         Thread.sleep(1000);
-        timelineComponent.getLatch().await();
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("commentError"));
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
     }
 
     private RadPatch createPatch() {

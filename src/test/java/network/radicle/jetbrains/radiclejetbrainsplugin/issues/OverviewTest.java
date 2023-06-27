@@ -175,7 +175,7 @@ public class OverviewTest extends AbstractIT {
         issue.title = editedTitle;
         prBtn.doClick();
         /* Wait for the reload */
-        issueComponent.getLatch().await();
+        Thread.sleep(1000);
         var updatedIssueModel = issueTabController.getIssueModel();
         var updatedIssue = updatedIssueModel.getValue();
         assertThat(editedTitle).isEqualTo(updatedIssue.title);
@@ -213,7 +213,7 @@ public class OverviewTest extends AbstractIT {
         issue.title = editedTitle;
         prBtn.doClick();
         /* Wait for the reload */
-        issueComponent.getLatch().await();
+        Thread.sleep(1000);
         executeUiTasks();
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
@@ -254,7 +254,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(1);
         prBtn.doClick();
-        issueComponent.getLatch().await();
+        Thread.sleep(1000);
 
         // Open createEditor
         issue.repo = firstRepo;
@@ -288,7 +288,6 @@ public class OverviewTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         Thread.sleep(1000);
-        issueComponent.getLatch().await();
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();

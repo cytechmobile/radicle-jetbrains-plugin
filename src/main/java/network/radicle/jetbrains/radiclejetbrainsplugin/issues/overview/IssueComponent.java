@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.JComponent;
 import javax.swing.ImageIcon;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
@@ -39,7 +38,6 @@ public class IssueComponent {
     private JComponent commentFieldPanel;
     private JComponent commentSection;
     private final RadicleProjectApi api;
-    private final CountDownLatch latch = new CountDownLatch(1);
 
     public IssueComponent(SingleValueModel<RadIssue> issueModel) {
         this.radIssue = issueModel.getValue();
@@ -127,7 +125,6 @@ public class IssueComponent {
         final boolean success = edited != null;
         if (success) {
             issueModel.setValue(edited);
-            latch.countDown();
         }
         return true;
     }
@@ -164,7 +161,6 @@ public class IssueComponent {
             if (success) {
                 issueModel.setValue(edited);
             }
-            latch.countDown();
             return success;
         }).build();
         var contentPanel = panelHandle.panel;
@@ -195,9 +191,5 @@ public class IssueComponent {
 
     public JComponent getCommentSection() {
         return commentSection;
-    }
-
-    public CountDownLatch getLatch() {
-        return latch;
     }
 }

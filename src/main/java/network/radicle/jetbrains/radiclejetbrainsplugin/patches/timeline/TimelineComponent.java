@@ -26,7 +26,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import java.util.concurrent.CountDownLatch;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 
@@ -37,7 +36,6 @@ public class TimelineComponent {
 
     private JPanel headerPanel;
     private JComponent commentPanel;
-    private final CountDownLatch latch = new CountDownLatch(1);
     private JComponent revisionSection;
     private final RadicleProjectApi api;
 
@@ -100,7 +98,6 @@ public class TimelineComponent {
         var ok = api.addPatchComment(radPatch, comment);
         if (ok != null) {
             radPatchModel.setValue(ok);
-            latch.countDown();
             return true;
         }
         return false;
@@ -132,7 +129,6 @@ public class TimelineComponent {
             if (success) {
                 radPatchModel.setValue(edited);
             }
-            latch.countDown();
             return success;
         }).build();
         var contentPanel = panelHandle.panel;
@@ -163,9 +159,5 @@ public class TimelineComponent {
 
     public TimelineComponentFactory getComponentsFactory() {
         return componentsFactory;
-    }
-
-    public CountDownLatch getLatch() {
-        return latch;
     }
 }
