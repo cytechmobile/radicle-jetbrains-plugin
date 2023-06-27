@@ -113,7 +113,7 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                     continue;
                 }
                 for (var assignee : issue.assignees) {
-                    if (!assigness.contains(assignee)) {
+                    if (!assigness.contains((String) assignee)) {
                         assigness.add((String) assignee);
                     }
                 }
