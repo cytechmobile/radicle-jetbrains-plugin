@@ -67,7 +67,7 @@ public class RadicleProjectApi {
     public SeedNodeInfo checkApi(SeedNode node) {
         var url = node.url + "/api/v1";
         try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchSeeNodeError"));
+            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchSeedNodeError"));
             if (res.isSuccess()) {
                 var json = new ObjectMapper().readTree(res.body);
                 String version = json.get("version").asText("");
@@ -207,7 +207,6 @@ public class RadicleProjectApi {
     }
 
     public RadIssue addIssueComment(RadIssue issue, String comment) {
-        //TODO check for expiration
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
             return null;
@@ -233,7 +232,6 @@ public class RadicleProjectApi {
     }
 
     public RadIssue changeIssueTitle(RadIssue issue) {
-        //TODO check for expiration
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
             return null;
@@ -257,7 +255,6 @@ public class RadicleProjectApi {
     }
 
     public RadPatch changePatchTitle(RadPatch patch) {
-        //TODO check for expiration
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -284,7 +281,6 @@ public class RadicleProjectApi {
     }
 
     public RadPatch addPatchComment(RadPatch patch, String comment) {
-        //TODO check for expiration
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;

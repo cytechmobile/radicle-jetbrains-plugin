@@ -19,7 +19,7 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
 
     public IssueTabController(Content tab, Project project) {
         super(project, tab);
-        issueListPanel = new IssueListPanel(this, project, this);
+        issueListPanel = new IssueListPanel(this, project);
     }
 
     public IssueListPanel getIssueListPanel() {

@@ -29,9 +29,9 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
     private final IssueTabController cntrl;
 
-    public IssueListPanel(IssueTabController controller, Project project, IssueTabController cntrl) {
+    public IssueListPanel(IssueTabController controller, Project project) {
         super(controller, project);
-        this.cntrl = cntrl;
+        this.cntrl = controller;
     }
 
     @Override
