@@ -122,7 +122,7 @@ public class TimelineTest extends AbstractIT {
             when(statusLine.getStatusCode()).thenReturn(statusCode[0]);
             return resp;
         });
-       setupWindow();
+        setupWindow();
     }
 
     public void setupWindow() throws InterruptedException {
@@ -146,6 +146,7 @@ public class TimelineTest extends AbstractIT {
         patchEditorProvider.createEditor(getProject(), editorFile);
         /* Wait to load the patches */
         Thread.sleep(200);
+        executeUiTasks();
     }
 
     @Test
@@ -233,6 +234,7 @@ public class TimelineTest extends AbstractIT {
     public void testRevSection() {
         executeUiTasks();
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
+        executeUiTasks();
         var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
         var comments = "";
         for (var el : elements) {
