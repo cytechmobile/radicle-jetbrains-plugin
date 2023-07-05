@@ -1,37 +1,27 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import git4idea.repo.GitRepositoryManager;
 import kotlin.jvm.functions.Function2;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.MutableStateFlow;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SearchViewModelBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter, RadPatch> {
 
-    private static final Logger logger = LoggerFactory.getLogger(PatchSearchPanelViewModel.class);
-
-    private final Project project;
-    private List<String> projectNames = List.of();
 
     public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
                                      @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, Project project) {
-        super(scope, historyModel, new PatchListSearchValue(), new PatchListQuickFilter());
-        this.project = project;
+        super(scope, historyModel, new PatchListSearchValue(), new PatchListQuickFilter(), project);
     }
 
     public MutableStateFlow<String> authorFilterState() {
@@ -70,62 +60,29 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
                 });
     }
 
-    public List<String> getProjectNames() {
-        var isFinished = new CountDownLatch(1);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var gitRepoManager = GitRepositoryManager.getInstance(project);
-            projectNames = RadAction.getInitializedReposWithNodeConfigured(gitRepoManager.getRepositories(), true)
-                    .stream().map(e -> e.getRoot().getName()).collect(Collectors.toList());
-            isFinished.countDown();
-        });
-        try {
-            isFinished.await();
-        } catch (Exception e) {
-            logger.warn("Unable to get project names", e);
-        }
-        return projectNames;
+    @Override
+    protected String getSelectedProjectFilter() {
+        return this.getSearchState().getValue().project;
     }
 
-    public List<String> getTags() {
-        var selectedProjectFilter = this.getSearchState().getValue().project;
-        List<String> tags = new ArrayList<>();
-        try {
-            countDown.await();
-        } catch (Exception e) {
-            logger.warn("Unable to get rad tags", e);
-            return tags;
-        }
-        for (var p : myList) {
-            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                continue;
-            }
-            for (var tag : p.tags) {
-                if (!tags.contains(tag)) {
-                    tags.add(tag);
-                }
-            }
-        }
-        return tags;
+    @Override
+    protected List<String> getItemTags(RadPatch patch) {
+        return patch.tags;
     }
 
-    public List<String> getAuthors() {
-        var selectedProjectFilter = this.getSearchState().getValue().project;
-        List<String> peersIds = new ArrayList<>();
-        try {
-            countDown.await();
-        } catch (Exception e) {
-            logger.warn("Unable to get rad patches", e);
-            return peersIds;
+    @Override
+    protected List<RadPatch> filterListByProject() {
+        var selectedProject = getSelectedProjectFilter();
+        if (Strings.isNullOrEmpty(selectedProject)) {
+            return myList;
         }
-        for (var p : myList) {
-            if (selectedProjectFilter != null && !p.repo.getRoot().getName().equals(selectedProjectFilter)) {
-                continue;
-            }
-            if (!peersIds.contains(p.author.id)) {
-                peersIds.add(p.author.id);
-            }
-        }
-        return peersIds;
+        return myList.stream().filter(patch -> patch.repo.getRoot().getName().equals(selectedProject))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    protected RadAuthor getAuthor(RadPatch issue) {
+        return issue.author;
     }
 
     @NotNull

@@ -21,7 +21,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -74,8 +73,7 @@ public class TimelineComponentFactory {
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var patchUtils = new Utils(patch);
-            groupedCommits = patchUtils.calculateCommits();
+            groupedCommits = patch.calculateCommits();
             latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 loadingIcon.setVisible(false);
