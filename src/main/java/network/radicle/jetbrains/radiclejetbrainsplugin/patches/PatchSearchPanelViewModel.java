@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter, RadPatch> {
 
@@ -69,8 +71,13 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
     }
 
     @Override
-    protected boolean isProjectFilterMatch(RadPatch patch, String projectFilter) {
-        return !patch.repo.getRoot().getName().equals(projectFilter);
+    protected List<RadPatch> filterListByProject() {
+        var selectedProject = getSelectedProjectFilter();
+        if (Strings.isNullOrEmpty(selectedProject)) {
+            return myList;
+        }
+        return myList.stream().filter(patch -> patch.repo.getRoot().getName().equals(selectedProject))
+                .collect(Collectors.toList());
     }
 
     @Override

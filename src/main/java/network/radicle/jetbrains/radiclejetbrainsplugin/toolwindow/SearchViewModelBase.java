@@ -58,11 +58,8 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
     public CompletableFuture<List<String>> getTags() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> tags = new ArrayList<>();
-            var selectedProjectFilter = getSelectedProjectFilter();
-            for (var el : myList) {
-                if (selectedProjectFilter != null && isProjectFilterMatch(el, selectedProjectFilter)) {
-                    continue;
-                }
+            var filteredList = filterListByProject();
+            for (var el : filteredList) {
                 List<String> itemTags = getItemTags(el);
                 for (var tag : itemTags) {
                     if (!tags.contains(tag)) {
@@ -77,11 +74,8 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
     public CompletableFuture<List<String>> getAuthors() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> peersIds = new ArrayList<>();
-            var selectedProjectFilter = getSelectedProjectFilter();
-            for (var el : myList) {
-                if (selectedProjectFilter != null && isProjectFilterMatch(el, selectedProjectFilter)) {
-                    continue;
-                }
+            var filteredList = filterListByProject();
+            for (var el : filteredList) {
                 var author = getAuthor(el);
                 if (!peersIds.contains(author.id)) {
                     peersIds.add(author.id);
@@ -91,12 +85,12 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
         });
     }
 
+    protected abstract List<Q> filterListByProject();
+
     protected abstract RadAuthor getAuthor(Q item);
 
     protected abstract String getSelectedProjectFilter();
 
     protected abstract List<String> getItemTags(Q item);
-
-    protected abstract boolean isProjectFilterMatch(Q item, String projectFilter);
 
 }

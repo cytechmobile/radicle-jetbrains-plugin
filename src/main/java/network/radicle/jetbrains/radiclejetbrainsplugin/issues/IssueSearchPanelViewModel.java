@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListQuickFilter;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchHistoryModel;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSearchValue, IssueSearchPanelViewModel.IssueListQuickFilter, RadIssue> {
     public IssueSearchPanelViewModel(@NotNull CoroutineScope scope,
@@ -71,11 +73,8 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     public CompletableFuture<List<String>> getAssignees() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> assigness = new ArrayList<>();
-            var selectedProjectFilter = getSelectedProjectFilter();
-            for (var issue : myList) {
-                if (selectedProjectFilter != null && isProjectFilterMatch(issue, selectedProjectFilter)) {
-                    continue;
-                }
+            var filteredList = filterListByProject();
+            for (var issue : filteredList) {
                 for (var assignee : issue.assignees) {
                     if (!assigness.contains(assignee)) {
                         assigness.add(assignee);
@@ -97,8 +96,13 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     }
 
     @Override
-    protected boolean isProjectFilterMatch(RadIssue issue, String projectFilter) {
-        return !issue.repo.getRoot().getName().equals(projectFilter);
+    protected List<RadIssue> filterListByProject() {
+        var selectedProject = getSelectedProjectFilter();
+        if (Strings.isNullOrEmpty(selectedProject)) {
+            return myList;
+        }
+        return myList.stream().filter(issue -> issue.repo.getRoot().getName().equals(selectedProject))
+                .collect(Collectors.toList());
     }
 
     @Override
