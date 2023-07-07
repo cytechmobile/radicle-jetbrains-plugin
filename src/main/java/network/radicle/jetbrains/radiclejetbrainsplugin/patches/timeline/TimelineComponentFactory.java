@@ -64,7 +64,7 @@ public class TimelineComponentFactory {
         contentPanel.setOpaque(false);
         var horizontalPanel = getHorizontalPanel(8);
         horizontalPanel.setOpaque(false);
-        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.id, null);
+        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.generateLabelText(), null);
         return descSection;
     }
 
@@ -136,7 +136,7 @@ public class TimelineComponentFactory {
                 var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
                 contentPanel.setOpaque(false);
                 contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
-                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.id, com.timestamp));
+                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.generateLabelText(), com.timestamp));
             }
         }
         return mainPanel;
