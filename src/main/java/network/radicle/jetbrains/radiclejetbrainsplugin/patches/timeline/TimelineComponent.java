@@ -18,6 +18,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
@@ -66,7 +67,28 @@ public class TimelineComponent {
             var radDetails = getCurrentRadDetails();
             if (radDetails != null) {
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                    var self = radDetails.did;
+                    if (radPatch.author.id.equals(self)) {
+                        self = radPatch.author.generateLabelText();
+                    } else {
+                        // look for an alias in discussions
+                        RadAuthor selfAuthor = null;
+                        for (var rev : radPatch.revisions) {
+                            for (var d : rev.discussions()) {
+                                if (d.author.id.equals(self)) {
+                                    selfAuthor = d.author;
+                                    break;
+                                }
+                            }
+                            if (selfAuthor != null) {
+                                break;
+                            }
+                        }
+                        if (selfAuthor != null) {
+                            self = selfAuthor.generateLabelText();
+                        }
+                    }
+                    var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, self, null);
                     commentPanel = commentSection;
                     timelinePanel.add(commentSection);
                 }, ModalityState.any());
