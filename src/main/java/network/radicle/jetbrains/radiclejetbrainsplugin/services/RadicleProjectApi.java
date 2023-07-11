@@ -206,6 +206,77 @@ public class RadicleProjectApi {
         return null;
     }
 
+    public RadIssue changeIssueState(RadIssue issue, String state) {
+        var session = createAuthenticatedSession(issue.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "lifecycle", "state", Map.of("status", state, "reason", "other"));
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error changing state {} to issue:{} resp:{}", state, issue, resp);
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error changing state to issue: {}", issue, e);
+        }
+        return null;
+    }
+
+    public RadIssue addRemoveIssueAssignees(RadIssue issue, List<String> addAssigneesList, List<String> removeAssigneesList) {
+        var session = createAuthenticatedSession(issue.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "assign", "add", addAssigneesList, "remove", removeAssigneesList);
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error adding {} / remove {} assignees: to issue:{} resp:{}", addAssigneesList, removeAssigneesList, issue, resp);
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error adding / remove assignees to issue: {}", issue, e);
+        }
+
+        return null;
+    }
+
+    public RadIssue addRemoveIssueTag(RadIssue issue, List<String> addTagList, List<String> removeTagList) {
+        var session = createAuthenticatedSession(issue.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "tag", "add", addTagList, "remove", removeTagList);
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error adding {} / remove {} tags to issue:{} resp:{}", addTagList, removeTagList, issue, resp);
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error adding tag to issue: {}", issue, e);
+        }
+
+        return null;
+    }
+
     public RadIssue addIssueComment(RadIssue issue, String comment) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
