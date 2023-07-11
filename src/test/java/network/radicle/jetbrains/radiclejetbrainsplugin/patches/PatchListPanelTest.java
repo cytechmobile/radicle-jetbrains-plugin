@@ -21,6 +21,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -117,7 +118,7 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testFilterByProject() {
+    public void testFilterByProject() throws ExecutionException, InterruptedException {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
@@ -125,7 +126,7 @@ public class PatchListPanelTest extends AbstractIT {
         var filter = new PatchListSearchValue();
         var searchVm = listPanel.getSearchVm();
         var projectNames = searchVm.getProjectNames();
-        filter.project = projectNames.get(0);
+        filter.project = projectNames.get().get(0);
         listPanel.filterList(filter);
         executeUiTasks();
 
@@ -162,7 +163,7 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testFiltersData() {
+    public void testFiltersData() throws ExecutionException, InterruptedException {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
@@ -171,10 +172,10 @@ public class PatchListPanelTest extends AbstractIT {
         var filterAuthors = searchVm.getAuthors();
         var projectNames = searchVm.getProjectNames();
 
-        assertThat(projectNames.size()).isEqualTo(1);
-        assertThat(projectNames.size()).isEqualTo(1);
-        assertThat(projectNames.get(0)).contains("testRemote");
-        assertThat(filterAuthors.get(0)).isEqualTo(patches.get(0).author.id);
+        assertThat(projectNames.get().size()).isEqualTo(1);
+        assertThat(projectNames.get().size()).isEqualTo(1);
+        assertThat(projectNames.get().get(0)).contains("testRemote");
+        assertThat(filterAuthors.get().get(0)).isEqualTo(patches.get(0).author.id);
     }
 
     @Test
@@ -209,13 +210,13 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testTagDuplicates() {
+    public void testTagDuplicates() throws ExecutionException, InterruptedException {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
         var searchVm = listPanel.getSearchVm();
         var tags = searchVm.getTags();
-        assertThat(tags.size()).isEqualTo(4);
+        assertThat(tags.get().size()).isEqualTo(4);
     }
 
     @Test

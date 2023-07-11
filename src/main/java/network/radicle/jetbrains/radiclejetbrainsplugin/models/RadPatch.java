@@ -4,12 +4,21 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.project.Project;
+import git4idea.GitCommit;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RadPatch {
+    private static final Logger logger = LoggerFactory.getLogger(RadPatch.class);
     public SeedNode seedNode;
     public GitRepository repo;
     public Project project;
@@ -86,4 +95,30 @@ public class RadPatch {
             return null;
         }
     }
+
+    public Map<String, List<GitCommit>> calculateCommits() {
+        var myRevisions = new HashMap<String, List<GitCommit>>();
+        var success = fetchCommits();
+        if (!success) {
+            return null;
+        }
+        try {
+            for (var rev : this.revisions) {
+                var patchCommits = GitHistoryUtils.history(this.repo.getProject(),
+                        this.repo.getRoot(), rev.base() + "..." + rev.oid());
+                myRevisions.put(rev.id(), patchCommits);
+            }
+            return myRevisions;
+        } catch (Exception e) {
+            logger.warn("error calculating patch commits for patch: {}", this, e);
+            return null;
+        }
+    }
+
+    private boolean fetchCommits() {
+        var service = this.repo.getProject().getService(RadicleProjectService.class);
+        var output = service.fetchPeerChanges(this);
+        return RadAction.isSuccess(output);
+    }
+
 }
