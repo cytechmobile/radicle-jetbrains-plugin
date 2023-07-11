@@ -12,8 +12,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SearchViewModelBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSearchValue, IssueSearchPanelViewModel.IssueListQuickFilter, RadIssue> {
-    private static final Logger logger = LoggerFactory.getLogger(IssueSearchPanelViewModel.class);
 
     private final Project project;
     private List<String> projectNames = List.of();
@@ -142,10 +139,10 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     @Override
     public List<IssueListQuickFilter> getQuickFilters() {
         var openFilter = new IssueSearchPanelViewModel.IssueListQuickFilter();
-        openFilter.issueListSearchValue.state = RadIssue.State.OPEN.status;
+        openFilter.issueListSearchValue.state = RadIssue.State.OPEN.label;
 
         var closedFilter = new IssueSearchPanelViewModel.IssueListQuickFilter();
-        closedFilter.issueListSearchValue.state = RadIssue.State.CLOSED.status;
+        closedFilter.issueListSearchValue.state = RadIssue.State.CLOSED.label;
 
         return List.of(openFilter, closedFilter);
     }
@@ -163,7 +160,7 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
         public IssueListQuickFilter() {
             issueListSearchValue = new IssueListSearchValue();
             // Set OPEN as default filter
-            issueListSearchValue.state = RadIssue.State.OPEN.status;
+            issueListSearchValue.state = RadIssue.State.OPEN.label;
         }
 
         @NotNull

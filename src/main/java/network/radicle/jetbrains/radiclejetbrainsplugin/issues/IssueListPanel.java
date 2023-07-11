@@ -80,7 +80,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                             p.title.contains(searchFilter))
                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
                     .filter(p -> peerAuthorFilter == null || p.author.id.equals(peerAuthorFilter))
-                    .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
+                    .filter(p -> stateFilter == null || (p.state != null && p.state.label.equals(stateFilter)))
                     .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
                     .filter(p -> assigneeFilter == null || p.assignees.stream().anyMatch(tag -> tag.equals(assigneeFilter)))
                     .collect(Collectors.toList());
