@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchListPanel patchListPanel;
-    private  SingleValueModel<RadPatch> patchModel;
+    private SingleValueModel<RadPatch> patchModel;
 
     public PatchTabController(Content tab, Project project) {
         super(project, tab);
@@ -38,7 +38,7 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
     }
 
     protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {
-        tab.setDisplayName("Patch Proposal from: " + patch.getValue().author);
+        tab.setDisplayName(RadicleBundle.message("patchProposalFrom") + ": " + patch.getValue().author.generateLabelText());
         var patchProposalPanel = new PatchProposalPanel(this, patch);
         var panel = patchProposalPanel.createViewPatchProposalPanel();
         mainPanel.removeAll();
