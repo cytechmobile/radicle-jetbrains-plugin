@@ -1,5 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -48,6 +51,16 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                     patchTabController.createPanel();
                     issueTabController = new IssueTabController(issueContent, project);
                     issueTabController.createPanel();
+                    toolWindow.setTitleActions(List.of(new AnAction(AllIcons.Actions.Refresh) {
+                        @Override
+                        public void actionPerformed(@NotNull AnActionEvent e) {
+                            if (contentManager.isSelected(patchContent)) {
+                                patchTabController.createPanel();
+                            } else if (contentManager.isSelected(issueContent)) {
+                                issueTabController.createPanel();
+                            }
+                        }
+                    }));
                 }
             }
         };
