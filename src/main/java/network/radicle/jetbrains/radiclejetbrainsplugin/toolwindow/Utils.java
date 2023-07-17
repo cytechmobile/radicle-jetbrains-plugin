@@ -51,8 +51,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
 
 public class Utils {
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
@@ -67,7 +65,7 @@ public class Utils {
 
     public static class SelectableWrapper<T> {
         public T value;
-        public boolean selected = false;
+        public boolean selected;
         public SelectableWrapper(T value, boolean selected) {
             this.value = value;
             this.selected = selected;
@@ -241,6 +239,12 @@ public class Utils {
         public JBPopupListener listener;
 
         public LabeledListPanelHandle() {
+            progressLabel = new JLabel(new AnimatedIcon.Default());
+            progressLabel.setBorder(JBUI.Borders.empty(6, 0));
+            errorIcon = new JLabel(AllIcons.General.Error);
+            errorIcon.setBorder(JBUI.Borders.empty(6, 0));
+            progressLabel.setVisible(false);
+            errorIcon.setVisible(false);
             titleLabel = new JLabel();
             titleLabel.setForeground(UIUtil.getContextHelpForeground());
             titleLabel.setBorder(JBUI.Borders.empty(6, 5));
@@ -248,29 +252,20 @@ public class Utils {
             editButton = new InlineIconButton(AllIcons.General.Inline_edit, AllIcons.General.Inline_edit_hovered);
             editButton.setBorder(JBUI.Borders.empty(6, 0));
             editButton.setActionListener(e ->
-                    showEditPopup(editButton).thenComposeAsync(new Function() {
-                @Override
-                public Object apply(Object data) {
-                    progressLabel.setVisible(true);
-                    errorIcon.setVisible(false);
-                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var isSuccess = storeValues((List<T>) data);
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            progressLabel.setVisible(false);
-                            if (!isSuccess) {
-                                errorIcon.setVisible(true);
-                            }
-                        }, ModalityState.any());
-                    });
-                    return null;
-                }
-            }));
-            progressLabel = new JLabel(new AnimatedIcon.Default());
-            progressLabel.setBorder(JBUI.Borders.empty(6, 0));
-            errorIcon = new JLabel(AllIcons.General.Error);
-            errorIcon.setBorder(JBUI.Borders.empty(6, 0));
-            progressLabel.setVisible(false);
-            errorIcon.setVisible(false);
+                    showEditPopup(editButton).thenComposeAsync(data -> {
+                        progressLabel.setVisible(true);
+                        errorIcon.setVisible(false);
+                        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                            var isSuccess = storeValues(data);
+                            ApplicationManager.getApplication().invokeLater(() -> {
+                                progressLabel.setVisible(false);
+                                if (!isSuccess) {
+                                    errorIcon.setVisible(true);
+                                }
+                            }, ModalityState.any());
+                        });
+                        return null;
+                    }));
         }
 
         private JPanel getControlsPanel() {

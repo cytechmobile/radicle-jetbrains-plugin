@@ -37,7 +37,7 @@ public class IssuePanel {
     protected SingleValueModel<RadIssue> issueModel;
     protected TabInfo infoTab;
     protected IssueTabController issueTabController;
-    private RadicleProjectApi api = null;
+    private RadicleProjectApi api;
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     public static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
@@ -194,8 +194,7 @@ public class IssuePanel {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;
                 }
-                var myList = new ArrayList<Tag>();
-                myList.addAll(data);
+                var myList = new ArrayList<>(data);
                 myList.add(new Tag(addField.getText()));
                 return myList;
             });
