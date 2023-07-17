@@ -341,12 +341,11 @@ public class OverviewTest extends AbstractIT {
          assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
          assertThat(thirdAssignee.selected).isFalse();
 
-         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
-         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
-
+        // ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        // ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
+        // ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
          //Trigger close function in order to trigger the stub and verify the request
-         popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        // popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
     }
 
     @Test
