@@ -12,13 +12,15 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 import org.apache.commons.lang.StringUtils;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 
 public class IssueTabController extends TabController<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final IssueListPanel issueListPanel;
     private SingleValueModel<RadIssue> myIssueModel;
+    private JComponent issueJPanel;
+    private IssuePanel issuePanel;
 
     public IssueTabController(Content tab, Project project) {
         super(project, tab);
@@ -60,13 +62,22 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
     }
 
     protected void createInternalIssuePanel(SingleValueModel<RadIssue> issue, JComponent mainPanel) {
-        tab.setDisplayName("Issue : " + StringUtils.substring(issue.getValue().id, 0 , 7));
-        var panel = new IssuePanel(this, issue, project).createPanel();
+        tab.setDisplayName("Issue : " + StringUtils.substring(issue.getValue().id, 0,  7));
+        issuePanel = new IssuePanel(this, issue);
+        issueJPanel = issuePanel.createPanel();
         mainPanel.removeAll();
-        mainPanel.add(panel, BorderLayout.CENTER);
+        mainPanel.add(issueJPanel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
         openIssueTimelineOnEditor(issue, true);
+    }
+
+    public IssuePanel getIssuePanel() {
+        return issuePanel;
+    }
+
+    public JComponent getIssueJPanel() {
+        return issueJPanel;
     }
 
     public void openIssueTimelineOnEditor(SingleValueModel<RadIssue> issueModel, boolean force) {

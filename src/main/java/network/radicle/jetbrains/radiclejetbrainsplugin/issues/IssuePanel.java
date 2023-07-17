@@ -3,7 +3,8 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBTextField;
@@ -21,8 +22,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.ListModel;
+import java.awt.BorderLayout;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -36,19 +40,23 @@ public class IssuePanel {
     protected SingleValueModel<RadIssue> issueModel;
     protected TabInfo infoTab;
     protected IssueTabController issueTabController;
-    public Project project;
-    private final RadicleProjectApi api;
+    private RadicleProjectApi api = null;
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
-    private static final DateTimeFormatter DATE_TIME_FORMATTER =
+    public static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
     private static final String AUTHOR_SPLIT_CHARACTER = ":";
+    public AssigneesSelect assigneesSelect;
+    public StateSelect stateSelect;
+    public TagSelect tagSelect;
 
-    public IssuePanel(IssueTabController issueTabController, SingleValueModel<RadIssue> issueModel, Project project) {
+    public IssuePanel(IssueTabController issueTabController, SingleValueModel<RadIssue> issueModel) {
         this.issueTabController = issueTabController;
         this.issueModel = issueModel;
         this.issue = issueModel.getValue();
-        this.project = project;
-        this.api = project.getService(RadicleProjectApi.class);
+        this.api = issue.project.getService(RadicleProjectApi.class);
+        this.assigneesSelect = new AssigneesSelect();
+        this.stateSelect = new StateSelect();
+        this.tagSelect = new TagSelect();
     }
 
     public JComponent createPanel() {
@@ -67,15 +75,14 @@ public class IssuePanel {
     private JComponent getComponent() {
         var actionPanel = new JPanel();
         actionPanel.setOpaque(false);
-        actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0","0").insets("0","0","0","0")));
-        addListPanel(actionPanel, new AssigneesSelect());
-        addListPanel(actionPanel, new StateSelect());
-        addListPanel(actionPanel, new TagSelect());
+        actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
+        addListPanel(actionPanel, assigneesSelect);
+        addListPanel(actionPanel, stateSelect);
+        addListPanel(actionPanel, tagSelect);
         final var splitter = new OnePixelSplitter(true, "Radicle.IssuePanel.action.Component", 0.6f);
-
         splitter.setFirstComponent(getIssueInfo());
         splitter.setSecondComponent(actionPanel);
-        return  splitter;
+        return splitter;
     }
 
     private JComponent getIssueInfo() {
@@ -83,13 +90,20 @@ public class IssuePanel {
                 .insets("0", "5", "0", "0").gridGap("0", "0").fill().flowY()));
         detailsSection.setOpaque(false);
         detailsSection.setBorder(JBUI.Borders.empty(8));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("title", "", Strings.nullToEmpty(issue.title))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueId", "", Strings.nullToEmpty(issue.id))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueTag", "", String.join(",", issue.tags))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueAssignees", "", String.join(",", issue.assignees))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueState", "", Strings.nullToEmpty(issue.state.label))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueCreated", "", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("title", "",
+                Strings.nullToEmpty(issue.title))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("issueId", "",
+                Strings.nullToEmpty(issue.id))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("issueAuthor", "",
+                Strings.nullToEmpty(issue.author.id))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("issueTag", "",
+                String.join(",", issue.tags))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("issueAssignees", "",
+                String.join(",", issue.assignees))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("issueState", "",
+                Strings.nullToEmpty(issue.state.label))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+        detailsSection.add(getLabelPanel(RadicleBundle.message("issueCreated", "",
+                DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp))), new CC().gapBottom(String.valueOf(UI.scale(4))));
         var borderPanel = new JPanel(new BorderLayout());
         borderPanel.add(detailsSection, BorderLayout.NORTH);
         return borderPanel;
@@ -116,8 +130,11 @@ public class IssuePanel {
     }
 
     public class TagSelect extends Utils.LabeledListPanelHandle<TagSelect.Tag> {
+        public JBPopup jbPopup;
+        public JBPopupListener listener;
+        public ListModel myListModel;
 
-        public record Tag(String tag) {}
+        public record Tag(String tag) { }
 
         public static class TagRender extends Utils.SelectionListCellRenderer<TagSelect.Tag> {
 
@@ -151,7 +168,11 @@ public class IssuePanel {
         @Override
         public CompletableFuture<List<Tag>> showEditPopup(JComponent parent) {
             var addField = new JBTextField();
-            var res = Utils.createPopup(parent, this.getTagValues(), new TagRender(), false, addField);
+            var res = new CompletableFuture<List<Tag>>();
+            jbPopup = Utils.PopupBuilder.createPopup(this.getTagValues(), new TagRender(), false, addField, res);
+            jbPopup.showUnderneathOf(parent);
+            listener = Utils.PopupBuilder.myListener;
+            myListModel = Utils.PopupBuilder.myListModel;
             return res.thenApply(popupData -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return popupData;
@@ -181,8 +202,11 @@ public class IssuePanel {
     }
 
     public class StateSelect extends Utils.LabeledListPanelHandle<StateSelect.State> {
+        public JBPopup jbPopup;
+        public JBPopupListener listener;
+        public ListModel myListModel;
 
-        public record State(String status, String label) {}
+        public record State(String status, String label) { }
 
         public static class StateRender extends Utils.SelectionListCellRenderer<StateSelect.State> {
 
@@ -218,7 +242,12 @@ public class IssuePanel {
 
         @Override
         public CompletableFuture<List<StateSelect.State>> showEditPopup(JComponent parent) {
-            return Utils.createPopup(parent, this.getStateValues(), new StateSelect.StateRender(), true, null);
+            var result = new CompletableFuture<List<StateSelect.State>>();
+            jbPopup = Utils.PopupBuilder.createPopup(this.getStateValues(), new StateSelect.StateRender(), true, null, result);
+            jbPopup.showUnderneathOf(parent);
+            listener = Utils.PopupBuilder.myListener;
+            myListModel = Utils.PopupBuilder.myListModel;
+            return result;
         }
 
         public CompletableFuture<List<Utils.SelectableWrapper<StateSelect.State>>> getStateValues() {
@@ -241,7 +270,11 @@ public class IssuePanel {
     }
 
     public class AssigneesSelect extends Utils.LabeledListPanelHandle<AssigneesSelect.Assignee> {
-        public record Assignee(String name) {}
+        public JBPopup jbPopup;
+        public JBPopupListener listener;
+        public ListModel myListModel;
+        public record Assignee(String name) { }
+
         public static class AssigneeRender extends Utils.SelectionListCellRenderer<AssigneesSelect.Assignee> {
 
             @Override
@@ -275,7 +308,12 @@ public class IssuePanel {
 
         @Override
         public CompletableFuture<List<AssigneesSelect.Assignee>> showEditPopup(JComponent parent) {
-            return Utils.createPopup(parent, this.getDelegates(), new AssigneesSelect.AssigneeRender(), false, null);
+            var result = new CompletableFuture<List<AssigneesSelect.Assignee>>();
+            jbPopup = Utils.PopupBuilder.createPopup(this.getDelegates(), new AssigneesSelect.AssigneeRender(), false, null, result);
+            jbPopup.showUnderneathOf(parent);
+            listener = Utils.PopupBuilder.myListener;
+            myListModel = Utils.PopupBuilder.myListModel;
+            return result;
         }
 
         @Override

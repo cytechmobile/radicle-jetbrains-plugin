@@ -1,14 +1,20 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider;
@@ -18,6 +24,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -31,6 +38,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import javax.swing.JPanel;
+import javax.swing.JLabel;
 import javax.swing.JComponent;
 import javax.swing.JButton;
 import java.awt.event.ActionEvent;
@@ -45,6 +55,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssuePanel.DATE_TIME_FORMATTER;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestProjects;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,6 +100,21 @@ public class OverviewTest extends AbstractIT {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
+                } else if (map.get("type").equals("assign")) {
+                    var removeList = (ArrayList<String>) map.get("remove");
+                    var addList = (ArrayList<String>) map.get("add");
+                    assertThat(removeList).contains(getTestProjects().get(0).delegates.get(0).split(":")[2]);
+                    assertThat(removeList).contains(getTestProjects().get(0).delegates.get(1).split(":")[2]);
+                    assertThat(addList).contains(getTestProjects().get(0).delegates.get(2).split(":")[2]);
+                } else if (map.get("type").equals("lifecycle")) {
+                    var state = (HashMap<String, String>) map.get("state");
+                    assertThat(state.get("status")).isEqualTo(RadIssue.State.CLOSED.status);
+                } else if (map.get("type").equals("tag")) {
+                    var removeList = (ArrayList<String>) map.get("remove");
+                    var addList = (ArrayList<String>) map.get("add");
+                    assertThat(removeList).contains(issue.tags.get(0));
+                    assertThat(removeList).contains(issue.tags.get(1));
+                    assertThat(addList).contains(issue.tags.get(0));
                 }
                 // Return status code 400 in order to trigger the notification
                 if (dummyComment.equals("break") || issue.title.equals("break")) {
@@ -143,6 +169,184 @@ public class OverviewTest extends AbstractIT {
         issueEditorProvider.createEditor(getProject(), editorFile);
         /* Wait to load the issues */
         Thread.sleep(200);
+    }
+
+    @Test
+    public void testIssueInfo() {
+        var panel = issueTabController.getIssueJPanel();
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getFirstComponent();
+        var components = actionPanel.getComponents();
+        var myPanels = (JPanel) components[0];
+        var allPanels = myPanels.getComponents();
+
+        var titleLabel = UIUtil.findComponentOfType((JPanel) allPanels[0], JLabel.class);
+        var issueIdLabel = UIUtil.findComponentOfType((JPanel) allPanels[1], JLabel.class);
+        var issueAuthorLabel = UIUtil.findComponentOfType((JPanel) allPanels[2], JLabel.class);
+        var issueTagLabel = UIUtil.findComponentOfType((JPanel) allPanels[3], JLabel.class);
+        var issueAssigneeLabel = UIUtil.findComponentOfType((JPanel) allPanels[4], JLabel.class);
+        var issueStateLabel = UIUtil.findComponentOfType((JPanel) allPanels[5], JLabel.class);
+        var issueCreatedLabel = UIUtil.findComponentOfType((JPanel) allPanels[6], JLabel.class);
+
+        assertThat(titleLabel.getText()).isEqualTo(RadicleBundle.message("title", "", Strings.nullToEmpty(issue.title)));
+        assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", "", Strings.nullToEmpty(issue.id)));
+        assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id)));
+        assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueTag", "", String.join(",", issue.tags)));
+        assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees", "", String.join(",", issue.assignees)));
+        assertThat(issueStateLabel.getText()).isEqualTo(RadicleBundle.message("issueState", "", Strings.nullToEmpty(issue.state.label)));
+        assertThat(issueCreatedLabel.getText()).isEqualTo(RadicleBundle.message("issueCreated", "",
+                DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
+    }
+
+    @Test
+    public void addRemoveTags() throws InterruptedException {
+        var issuePanel = issueTabController.getIssuePanel();
+        var panel = issueTabController.getIssueJPanel();
+
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var tagLabel = (JLabel) components[4];
+        assertThat(tagLabel.getText()).isEqualTo(RadicleBundle.message("tag"));
+
+        var tagPanel = (NonOpaquePanel) components[5];
+        var myPanel = (BorderLayoutPanel) tagPanel.getComponent(0);
+
+        // Assert that the label has the selected tags
+        var stateValueLabel = (JLabel) myPanel.getComponents()[0];
+        assertThat(stateValueLabel.getText()).contains(String.join(",", issue.tags));
+
+        // Find edit key and press it
+        var openPopupButton = UIUtil.findComponentOfType(tagPanel, InlineIconButton.class);
+        openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
+        executeUiTasks();
+
+        var popupListener = issuePanel.tagSelect.listener;
+        var listmodel = issuePanel.tagSelect.myListModel;
+
+        // Trigger beforeShown method
+        var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
+        fakePopup.getContent().removeAll();
+        fakePopup.getContent().add(new BorderLayoutPanel());
+
+        popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
+        //Wait to load tags
+        Thread.sleep(1000);
+        assertThat(listmodel.getSize()).isEqualTo(2);
+
+        var firstTag = (Utils.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(0);
+        assertThat(firstTag.value.tag()).isEqualTo(issue.tags.get(0));
+        assertThat(firstTag.selected).isTrue();
+
+        var closedState = (Utils.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(1);
+        assertThat(closedState.value.tag()).isEqualTo(issue.tags.get(1));
+        assertThat(closedState.selected).isTrue();
+
+        //Remove first tag
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+    }
+
+    @Test
+    public void changeStateTest() throws InterruptedException {
+        var issuePanel = issueTabController.getIssuePanel();
+        var panel = issueTabController.getIssueJPanel();
+
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var assigneeLabel = (JLabel) components[2];
+        assertThat(assigneeLabel.getText()).isEqualTo(RadicleBundle.message("state"));
+
+        var statePanel = (NonOpaquePanel) components[3];
+        var myPanel = (BorderLayoutPanel) statePanel.getComponent(0);
+
+        // Assert that the label has the selected state
+        var stateValueLabel = (JLabel) myPanel.getComponents()[0];
+        assertThat(stateValueLabel.getText()).contains(issue.state.label);
+
+        // Find edit key and press it
+        var openPopupButton = UIUtil.findComponentOfType(statePanel, InlineIconButton.class);
+        openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
+        executeUiTasks();
+
+        var popupListener = issuePanel.stateSelect.listener;
+        var listmodel = issuePanel.stateSelect.myListModel;
+
+        // Trigger beforeShown method
+        popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        //Wait to load state
+        Thread.sleep(1000);
+        assertThat(listmodel.getSize()).isEqualTo(2);
+
+        var openState = (Utils.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(0);
+        assertThat(openState.value.label()).isEqualTo(issue.state.label);
+        assertThat(openState.selected).isTrue();
+
+        var closedState = (Utils.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(1);
+        assertThat(closedState.value.label()).isEqualTo(RadIssue.State.CLOSED.label);
+        assertThat(closedState.selected).isFalse();
+
+        // Change state to closed
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
+
+        //Trigger close function in order to trigger the stub and verify the request
+        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+    }
+
+    @Test
+    public void addRemoveAssignersTest() throws InterruptedException {
+
+        var projectDelegates = getTestProjects().get(0).delegates;
+        var issuePanel = issueTabController.getIssuePanel();
+        var panel = issueTabController.getIssueJPanel();
+
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var assigneeLabel = (JLabel) components[0];
+        assertThat(assigneeLabel.getText()).isEqualTo(RadicleBundle.message("assignees"));
+
+        var assigneePanel = (NonOpaquePanel) components[1];
+        var myPanel = (BorderLayoutPanel) assigneePanel.getComponent(0);
+
+        // Assert that the label has the selected values
+        var assigneeValuesLabel = (JLabel) myPanel.getComponents()[0];
+        assertThat(assigneeValuesLabel.getText()).contains(String.join(",", issue.assignees));
+
+        // Find edit key and press it
+        var assigneeActionPanel = (NonOpaquePanel) components[1];
+        var openPopupButton = UIUtil.findComponentOfType(assigneeActionPanel, InlineIconButton.class);
+        openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
+        executeUiTasks();
+
+        var popupListener = issuePanel.assigneesSelect.listener;
+        var listmodel = issuePanel.assigneesSelect.myListModel;
+
+        // Trigger beforeShown method
+        popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        //Wait to load delegates
+        Thread.sleep(500);
+        assertThat(listmodel.getSize()).isEqualTo(3);
+
+         var firstAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
+         assertThat(firstAssignee.value.name()).isEqualTo(projectDelegates.get(0));
+         assertThat(firstAssignee.selected).isTrue();
+
+         var secondAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
+         assertThat(secondAssignee.value.name()).isEqualTo(projectDelegates.get(1));
+         assertThat(secondAssignee.selected).isTrue();
+
+         var thirdAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
+         assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
+         assertThat(thirdAssignee.selected).isFalse();
+
+         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
+         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
+
+         //Trigger close function in order to trigger the stub and verify the request
+         popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
     }
 
     @Test
@@ -316,7 +520,7 @@ public class OverviewTest extends AbstractIT {
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
         var myIssue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
-                RadIssue.State.OPEN, List.of(), List.of(), discussions);
+                RadIssue.State.OPEN, List.of("did:key:test", "did:key:assignee2"), List.of("tag1", "tag2"), discussions);
         myIssue.project = getProject();
         myIssue.repo = firstRepo;
         return myIssue;
