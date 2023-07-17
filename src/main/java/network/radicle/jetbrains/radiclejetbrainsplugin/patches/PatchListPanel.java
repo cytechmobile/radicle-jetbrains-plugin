@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -9,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
@@ -20,8 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,12 +78,13 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
              var tagFilter = patchListSearchValue.tag;
              var loadedRadPatches = loadedData;
              List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                     .filter(p -> searchFilter == null || p.author.id.contains(searchFilter) ||
+                     .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
                              p.title.contains(searchFilter) || p.description.contains(searchFilter))
-                     .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                     .filter(p -> peerAuthorFilter == null || p.author.id.equals(peerAuthorFilter))
-                     .filter(p -> stateFilter == null || (p.state != null && p.state.status.equals(stateFilter)))
-                     .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
+                     .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
+                     .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
+                             p.author.id.equals(peerAuthorFilter))
+                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.status.equals(stateFilter)))
+                     .filter(p -> Strings.isNullOrEmpty(tagFilter) || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
                      .collect(Collectors.toList());
              model.addAll(filteredPatches);
          }
@@ -132,9 +136,9 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 title = new JLabel(patch.title);
                 patchPanel.add(title, BorderLayout.NORTH);
                 var revision = patch.revisions.get(patch.revisions.size() - 1);
-                var date = Date.from(revision.timestamp());
-                var formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(date);
-                var info = new JLabel("Created : " + formattedDate + " by " + patch.author.id);
+                var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(revision.timestamp().atZone(ZoneId.systemDefault()));
+                var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " +
+                        RadicleBundle.message("by") + " " + patch.author.generateLabelText());
                 info.setForeground(JBColor.GRAY);
                 patchPanel.add(info, BorderLayout.SOUTH);
                 add(patchPanel, new CC().minWidth("0").gapAfter("push"));
@@ -143,7 +147,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
             @Override
             public AccessibleContext getAccessibleContext() {
                 var ac = super.getAccessibleContext();
-                ac.setAccessibleName(patch.repo.getRoot().getName() + " - " + patch.author);
+                ac.setAccessibleName(patch.repo.getRoot().getName() + " - " + patch.author.generateLabelText());
                 return ac;
             }
         }

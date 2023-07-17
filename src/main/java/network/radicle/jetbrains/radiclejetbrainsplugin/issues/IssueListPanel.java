@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -9,19 +10,21 @@ import kotlinx.coroutines.CoroutineScope;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
 import javax.accessibility.AccessibleContext;
-import javax.swing.ListCellRenderer;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JLabel;
-import java.awt.Component;
+import javax.swing.ListCellRenderer;
 import java.awt.BorderLayout;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.awt.Component;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,13 +79,14 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
             var assigneeFilter = searchValue.assignee;
             var loadedRadIssues = loadedData;
             List<RadIssue> filteredPatches = loadedRadIssues.stream()
-                    .filter(p -> searchFilter == null || p.author.id.contains(searchFilter) ||
+                    .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
                             p.title.contains(searchFilter))
-                    .filter(p -> projectFilter == null || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> peerAuthorFilter == null || p.author.id.equals(peerAuthorFilter))
-                    .filter(p -> stateFilter == null || (p.state != null && p.state.label.equals(stateFilter)))
-                    .filter(p -> tagFilter == null || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
-                    .filter(p -> assigneeFilter == null || p.assignees.stream().anyMatch(tag -> tag.equals(assigneeFilter)))
+                    .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
+                    .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
+                            p.author.id.equals(peerAuthorFilter))
+                    .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.label.equals(stateFilter)))
+                    .filter(p -> Strings.isNullOrEmpty(tagFilter) || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
+                    .filter(p -> Strings.isNullOrEmpty(assigneeFilter) || p.assignees.stream().anyMatch(tag -> tag.equals(assigneeFilter)))
                     .collect(Collectors.toList());
             model.addAll(filteredPatches);
         }
@@ -134,12 +138,12 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                 title = new JLabel(issue.title);
                 issuePanel.add(title, BorderLayout.NORTH);
                 var firstDiscussion = issue.discussion.get(0);
-                var date = Date.from(firstDiscussion.timestamp);
-                var formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(date);
-                var info = new JLabel("Created : " + formattedDate + " by " + issue.author.id);
+                var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(firstDiscussion.timestamp.atZone(ZoneId.systemDefault()));
+                var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " +
+                        RadicleBundle.message("by") + " " + issue.author.generateLabelText());
                 info.setForeground(JBColor.GRAY);
                 if (!issue.tags.isEmpty()) {
-                    var tags = new JLabel("Tags : " + String.join(", ", issue.tags));
+                    var tags = new JLabel(RadicleBundle.message("tags") + ": " + String.join(", ", issue.tags));
                     tags.setForeground(JBColor.GRAY);
                     issuePanel.add(tags, BorderLayout.SOUTH);
                 }
