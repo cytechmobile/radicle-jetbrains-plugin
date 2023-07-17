@@ -37,14 +37,14 @@ public class IssuePanel {
     protected SingleValueModel<RadIssue> issueModel;
     protected TabInfo infoTab;
     protected IssueTabController issueTabController;
-    private RadicleProjectApi api;
+    private final RadicleProjectApi api;
+    private final AssigneesSelect assigneesSelect;
+    private final StateSelect stateSelect;
+    private final TagSelect tagSelect;
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     public static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
     private static final String AUTHOR_SPLIT_CHARACTER = ":";
-    private final AssigneesSelect assigneesSelect;
-    private final StateSelect stateSelect;
-    private final TagSelect tagSelect;
 
     public IssuePanel(IssueTabController issueTabController, SingleValueModel<RadIssue> issueModel) {
         this.issueTabController = issueTabController;
