@@ -349,10 +349,6 @@ public class OverviewTest extends AbstractIT {
         var thirdAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
         assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
         assertThat(thirdAssignee.selected).isFalse();
-
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
     }
 
     @Test

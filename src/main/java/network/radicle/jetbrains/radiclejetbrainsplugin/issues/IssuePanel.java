@@ -336,9 +336,9 @@ public class IssuePanel {
         @Override
         public CompletableFuture<List<Utils.SelectableWrapper<Assignee>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var pr = api.fetchRadProject(issue.projectId);
+                var projectInfo = api.fetchRadProject(issue.projectId);
                 var assignees = new ArrayList<Utils.SelectableWrapper<AssigneesSelect.Assignee>>();
-                for (var delegate : pr.delegates) {
+                for (var delegate : projectInfo.delegates) {
                     var assignee = new AssigneesSelect.Assignee(delegate);
                     var isSelected = issue.assignees.contains(delegate);
                     var selectableWrapper = new Utils.SelectableWrapper<>(assignee, isSelected);
