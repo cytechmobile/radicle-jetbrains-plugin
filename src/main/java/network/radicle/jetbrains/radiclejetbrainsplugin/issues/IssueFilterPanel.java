@@ -37,25 +37,25 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
 
         var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(viewModel.getProjectNames(), viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getProjectNames(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var authorFilter = new DropDownComponentFactory<>(this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("author"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(viewModel.getAuthors(), viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getAuthors(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var tagFilter = new DropDownComponentFactory<>(this.viewModel.tagFilter()).create(coroutineScope, RadicleBundle.message("tag"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(viewModel.getTags(), viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getTags(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var assigneesFilter = new DropDownComponentFactory<>(this.viewModel.assigneeFilter()).create(coroutineScope, RadicleBundle.message("assignees"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(viewModel.getAssignees(), viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getAssignees(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
