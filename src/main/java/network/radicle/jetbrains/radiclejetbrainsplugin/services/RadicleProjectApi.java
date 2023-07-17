@@ -217,7 +217,7 @@ public class RadicleProjectApi {
             var patchIssueData = Map.of("type", "lifecycle", "state", Map.of("status", state, "reason", "other"));
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("stateChangeError"));
             if (!resp.isSuccess()) {
                 logger.warn("error changing state {} to issue:{} resp:{}", state, issue, resp);
                 return null;
@@ -240,16 +240,15 @@ public class RadicleProjectApi {
             var patchIssueData = Map.of("type", "assign", "add", addAssigneesList, "remove", removeAssigneesList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("assignersChangeError"));
             if (!resp.isSuccess()) {
-                logger.warn("error adding {} / remove {} assignees: to issue:{} resp:{}", addAssigneesList, removeAssigneesList, issue, resp);
+                logger.warn("error adding {} / remove {} assignees to issue:{} resp:{}", addAssigneesList, removeAssigneesList, issue, resp);
                 return null;
             }
             return issue;
         } catch (Exception e) {
             logger.warn("error adding / remove assignees to issue: {}", issue, e);
         }
-
         return null;
     }
 
@@ -264,7 +263,7 @@ public class RadicleProjectApi {
             var patchIssueData = Map.of("type", "tag", "add", addTagList, "remove", removeTagList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("tagChangeError"));
             if (!resp.isSuccess()) {
                 logger.warn("error adding {} / remove {} tags to issue:{} resp:{}", addTagList, removeTagList, issue, resp);
                 return null;
@@ -273,7 +272,6 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("error adding tag to issue: {}", issue, e);
         }
-
         return null;
     }
 

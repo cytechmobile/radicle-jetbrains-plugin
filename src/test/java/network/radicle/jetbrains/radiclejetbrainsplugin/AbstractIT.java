@@ -184,7 +184,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         var api = new RadicleProjectApi(myProject, client) {
             @Override
             public Session createAuthenticatedSession(GitRepository repo) {
-                return new Session("", "", "");
+                return new Session("testId", "testPublicKey", "testSignature");
             }
         };
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());

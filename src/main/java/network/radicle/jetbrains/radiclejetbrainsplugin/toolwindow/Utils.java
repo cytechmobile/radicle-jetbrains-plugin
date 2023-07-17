@@ -40,7 +40,6 @@ import javax.swing.JLabel;
 import javax.swing.ListSelectionModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.ListModel;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Cursor;
@@ -101,66 +100,13 @@ public class Utils {
         public abstract String getPopupTitle();
     }
 
-    public static class PopupListener<T> implements JBPopupListener {
-        private final JBList<SelectableWrapper<T>> list;
-        private final JBTextField inputField;
-        private final CompletableFuture<List<Utils.SelectableWrapper<T>>> myList;
-        private final CollectionListModel<SelectableWrapper<T>> listModel;
-        private final CompletableFuture<List<T>> result;
-
-        public PopupListener(JBList<SelectableWrapper<T>> list, JBTextField inputField, CompletableFuture<List<SelectableWrapper<T>>> myList,
-                             CollectionListModel<SelectableWrapper<T>> listModel, CompletableFuture<List<T>> result) {
-            this.list = list;
-            this.inputField = inputField;
-            this.myList = myList;
-            this.listModel = listModel;
-            this.result = result;
-        }
-
-        @Override
-        public void beforeShown(@NotNull LightweightWindowEvent event) {
-            var popUp = event.asPopup().getContent();
-            //Start loading indicator
-            list.setPaintBusy(true);
-            if (inputField != null) {
-                var borderLayout = (BorderLayoutPanel) popUp.getComponent(0);
-                borderLayout.addToBottom(inputField);
-                inputField.addActionListener(e -> event.asPopup().closeOk(null));
-            }
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                try {
-                    var dataList = myList.get(5, TimeUnit.SECONDS);
-                    listModel.replaceAll(dataList);
-                    if (dataList.size() == 0) {
-                        popUp.setPreferredSize(new Dimension(100, 100));
-                    }
-                    event.asPopup().pack(true, true);
-                } catch (Exception e) {
-                    logger.warn("Unable to load popup data", e);
-                } finally {
-                    // Stop loading indicator
-                    ApplicationManager.getApplication().invokeLater(() ->
-                            list.setPaintBusy(false), ModalityState.any());
-                }
-            });
-        }
-
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-            var selected = listModel.getItems().stream().filter(item -> item.selected).toList();
-            var data = selected.stream().map(el -> el.value).toList();
-            result.complete(data);
-        }
-    }
-
     public static class PopupBuilder {
         public static JBPopupListener myListener;
-        public static ListModel myListModel;
+
         public static <T> JBPopup createPopup(CompletableFuture<List<Utils.SelectableWrapper<T>>> myList,
-                                              Utils.SelectionListCellRenderer<T> rendered, boolean singleSelection, JBTextField inputField,
-                                              CompletableFuture<List<T>> result) {
+                                              Utils.SelectionListCellRenderer<T> rendered, boolean singleSelection,
+                                              JBTextField inputField, CompletableFuture<List<T>> result) {
             var listModel = new CollectionListModel<SelectableWrapper<T>>();
-            myListModel = listModel;
             var list = new JBList<>(listModel);
             list.setVisibleRowCount(7);
             list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -193,7 +139,41 @@ public class Utils {
                     }
                 }
             });
-            myListener = new PopupListener<>(list, inputField, myList, listModel, result);
+            myListener = new JBPopupListener() {
+                @Override
+                public void beforeShown(@NotNull LightweightWindowEvent event) {
+                    var popUp = event.asPopup().getContent();
+                    //Start loading indicator
+                    list.setPaintBusy(true);
+                    if (inputField != null) {
+                        var borderLayout = (BorderLayoutPanel) popUp.getComponent(0);
+                        borderLayout.addToBottom(inputField);
+                        inputField.addActionListener(e -> event.asPopup().closeOk(null));
+                    }
+                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                        try {
+                            var dataList = myList.get(5, TimeUnit.SECONDS);
+                            listModel.replaceAll(dataList);
+                            if (dataList.size() == 0) {
+                                popUp.setPreferredSize(new Dimension(100, 100));
+                            }
+                            event.asPopup().pack(true, true);
+                        } catch (Exception e) {
+                            logger.warn("Unable to load popup data", e);
+                        } finally {
+                            // Stop loading indicator
+                            ApplicationManager.getApplication().invokeLater(() ->
+                                    list.setPaintBusy(false), ModalityState.any());
+                        }
+                    });
+                }
+                @Override
+                public void onClosed(@NotNull LightweightWindowEvent event) {
+                    var selected = listModel.getItems().stream().filter(item -> item.selected).toList();
+                    var data = selected.stream().map(el -> el.value).toList();
+                    result.complete(data);
+                }
+            };
             return JBPopupFactory.getInstance().createComponentPopupBuilder(panel, searchField)
                     .setRequestFocus(true)
                     .setCancelOnClickOutside(true)
@@ -257,36 +237,34 @@ public class Utils {
         private final JLabel progressLabel;
         private final JLabel errorIcon;
         private final JLabel titleLabel;
-        private final JLabel values;
+        public JBPopup jbPopup;
+        public JBPopupListener listener;
 
         public LabeledListPanelHandle() {
             titleLabel = new JLabel();
-            values = new JLabel();
             titleLabel.setForeground(UIUtil.getContextHelpForeground());
             titleLabel.setBorder(JBUI.Borders.empty(6, 5));
             titleLabel.setText(getLabel());
             editButton = new InlineIconButton(AllIcons.General.Inline_edit, AllIcons.General.Inline_edit_hovered);
             editButton.setBorder(JBUI.Borders.empty(6, 0));
-            editButton.setActionListener(e -> {
+            editButton.setActionListener(e ->
                     showEditPopup(editButton).thenComposeAsync(new Function() {
-                        @Override
-                        public Object apply(Object o) {
-                            progressLabel.setVisible(true);
-                            errorIcon.setVisible(false);
-                            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                                var isSuccess = storeValues((List<T>) o);
-                                ApplicationManager.getApplication().invokeLater(() -> {
-                                    progressLabel.setVisible(false);
-                                    // Show error if the request failed
-                                    if (!isSuccess) {
-                                        errorIcon.setVisible(true);
-                                    }
-                                }, ModalityState.any());
-                            });
-                            return null;
-                        }
+                @Override
+                public Object apply(Object data) {
+                    progressLabel.setVisible(true);
+                    errorIcon.setVisible(false);
+                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                        var isSuccess = storeValues((List<T>) data);
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            progressLabel.setVisible(false);
+                            if (!isSuccess) {
+                                errorIcon.setVisible(true);
+                            }
+                        }, ModalityState.any());
                     });
-            });
+                    return null;
+                }
+            }));
             progressLabel = new JLabel(new AnimatedIcon.Default());
             progressLabel.setBorder(JBUI.Borders.empty(6, 0));
             errorIcon = new JLabel(AllIcons.General.Error);
@@ -311,20 +289,30 @@ public class Utils {
         public JComponent getPanel() {
             var simplePanel = JBUI.Panels.simplePanel();
             simplePanel.setOpaque(false);
-            values.setText(getSelectedValues());
-            simplePanel.add(values);
+            simplePanel.add(new JLabel(getSelectedValues()));
             simplePanel.addToRight(getControlsPanel());
             var panel = new NonOpaquePanel(new WrapLayout(FlowLayout.LEADING, 0, 0));
             panel.add(simplePanel);
             return panel;
+        }
+        public CompletableFuture<List<T>> showEditPopup(JComponent parent) {
+            var result = new CompletableFuture<List<T>>();
+            jbPopup = Utils.PopupBuilder.createPopup(this.getData(), getRender(), this.isSingleSelection(), null, result);
+            jbPopup.showUnderneathOf(parent);
+            listener = Utils.PopupBuilder.myListener;
+            return result;
         }
 
         public abstract String getSelectedValues();
 
         public abstract boolean storeValues(List<T> data);
 
-        public abstract CompletableFuture<List<T>> showEditPopup(JComponent parent);
+        public abstract Utils.SelectionListCellRenderer<T> getRender();
+
+        public abstract CompletableFuture<List<Utils.SelectableWrapper<T>>> getData();
 
         public abstract String getLabel();
+
+        public abstract boolean isSingleSelection();
     }
 }

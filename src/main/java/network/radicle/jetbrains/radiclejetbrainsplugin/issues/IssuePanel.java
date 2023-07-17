@@ -3,8 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBTextField;
@@ -25,7 +23,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
-import javax.swing.ListModel;
 import java.awt.BorderLayout;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -45,9 +42,9 @@ public class IssuePanel {
     public static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
     private static final String AUTHOR_SPLIT_CHARACTER = ":";
-    public AssigneesSelect assigneesSelect;
-    public StateSelect stateSelect;
-    public TagSelect tagSelect;
+    private final AssigneesSelect assigneesSelect;
+    private final StateSelect stateSelect;
+    private final TagSelect tagSelect;
 
     public IssuePanel(IssueTabController issueTabController, SingleValueModel<RadIssue> issueModel) {
         this.issueTabController = issueTabController;
@@ -90,20 +87,32 @@ public class IssuePanel {
                 .insets("0", "5", "0", "0").gridGap("0", "0").fill().flowY()));
         detailsSection.setOpaque(false);
         detailsSection.setBorder(JBUI.Borders.empty(8));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("title", "",
-                Strings.nullToEmpty(issue.title))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueId", "",
-                Strings.nullToEmpty(issue.id))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueAuthor", "",
-                Strings.nullToEmpty(issue.author.id))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueTag", "",
-                String.join(",", issue.tags))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueAssignees", "",
-                String.join(",", issue.assignees))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueState", "",
-                Strings.nullToEmpty(issue.state.label))), new CC().gapBottom(String.valueOf(UI.scale(4))));
-        detailsSection.add(getLabelPanel(RadicleBundle.message("issueCreated", "",
-                DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp))), new CC().gapBottom(String.valueOf(UI.scale(4))));
+
+        var issueTitle = getLabelPanel(RadicleBundle.message("title", "", Strings.nullToEmpty(issue.title)));
+        detailsSection.add(issueTitle, new CC().gapBottom(String.valueOf(UI.scale(4))));
+
+        var issueId = getLabelPanel(RadicleBundle.message("issueId", "", Strings.nullToEmpty(issue.id)));
+        detailsSection.add(issueId, new CC().gapBottom(String.valueOf(UI.scale(4))));
+
+        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id)));
+        detailsSection.add(issueAuthor, new CC().gapBottom(String.valueOf(UI.scale(4))));
+
+        if (!issue.tags.isEmpty()) {
+            var issueTag = getLabelPanel(RadicleBundle.message("issueTag", "", String.join(",", issue.tags)));
+            detailsSection.add(issueTag, new CC().gapBottom(String.valueOf(UI.scale(4))));
+        }
+
+        if (!issue.assignees.isEmpty()) {
+            var issueAssignees = getLabelPanel(RadicleBundle.message("issueAssignees", "", String.join(",", issue.assignees)));
+            detailsSection.add(issueAssignees, new CC().gapBottom(String.valueOf(UI.scale(4))));
+        }
+
+        var issueState = getLabelPanel(RadicleBundle.message("issueState", "", Strings.nullToEmpty(issue.state.label)));
+        detailsSection.add(issueState, new CC().gapBottom(String.valueOf(UI.scale(4))));
+
+        var issueCreated = getLabelPanel(RadicleBundle.message("issueCreated", "", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
+        detailsSection.add(issueCreated, new CC().gapBottom(String.valueOf(UI.scale(4))));
+
         var borderPanel = new JPanel(new BorderLayout());
         borderPanel.add(detailsSection, BorderLayout.NORTH);
         return borderPanel;
@@ -129,10 +138,19 @@ public class IssuePanel {
                 });
     }
 
+    public AssigneesSelect getAssigneesSelect() {
+        return assigneesSelect;
+    }
+
+    public StateSelect getStateSelect() {
+        return stateSelect;
+    }
+
+    public TagSelect getTagSelect() {
+        return tagSelect;
+    }
+
     public class TagSelect extends Utils.LabeledListPanelHandle<TagSelect.Tag> {
-        public JBPopup jbPopup;
-        public JBPopupListener listener;
-        public ListModel myListModel;
 
         public record Tag(String tag) { }
 
@@ -156,7 +174,7 @@ public class IssuePanel {
 
         @Override
         public boolean storeValues(List<Tag> tags) {
-            var tagList = tags.stream().map(tag -> tag.tag).toList();
+            var tagList = tags.stream().map(value -> value.tag).toList();
             var resp = api.addRemoveIssueTag(issue, tagList, issue.tags);
             var isSuccess = resp != null;
             if (isSuccess) {
@@ -169,22 +187,27 @@ public class IssuePanel {
         public CompletableFuture<List<Tag>> showEditPopup(JComponent parent) {
             var addField = new JBTextField();
             var res = new CompletableFuture<List<Tag>>();
-            jbPopup = Utils.PopupBuilder.createPopup(this.getTagValues(), new TagRender(), false, addField, res);
+            jbPopup = Utils.PopupBuilder.createPopup(this.getData(), new TagRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = Utils.PopupBuilder.myListener;
-            myListModel = Utils.PopupBuilder.myListModel;
-            return res.thenApply(popupData -> {
+            return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
-                    return popupData;
+                    return data;
                 }
                 var myList = new ArrayList<Tag>();
-                myList.addAll(popupData);
+                myList.addAll(data);
                 myList.add(new Tag(addField.getText()));
                 return myList;
             });
         }
 
-        public CompletableFuture<List<Utils.SelectableWrapper<TagSelect.Tag>>> getTagValues() {
+        @Override
+        public Utils.SelectionListCellRenderer<Tag> getRender() {
+            return new TagRender();
+        }
+
+        @Override
+        public CompletableFuture<List<Utils.SelectableWrapper<Tag>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var tagFuture = new ArrayList<Utils.SelectableWrapper<TagSelect.Tag>>();
                 for (String tag : issue.tags) {
@@ -199,12 +222,14 @@ public class IssuePanel {
         public String getLabel() {
             return RadicleBundle.message("tag");
         }
+
+        @Override
+        public boolean isSingleSelection() {
+            return false;
+        }
     }
 
     public class StateSelect extends Utils.LabeledListPanelHandle<StateSelect.State> {
-        public JBPopup jbPopup;
-        public JBPopupListener listener;
-        public ListModel myListModel;
 
         public record State(String status, String label) { }
 
@@ -241,25 +266,21 @@ public class IssuePanel {
         }
 
         @Override
-        public CompletableFuture<List<StateSelect.State>> showEditPopup(JComponent parent) {
-            var result = new CompletableFuture<List<StateSelect.State>>();
-            jbPopup = Utils.PopupBuilder.createPopup(this.getStateValues(), new StateSelect.StateRender(), true, null, result);
-            jbPopup.showUnderneathOf(parent);
-            listener = Utils.PopupBuilder.myListener;
-            myListModel = Utils.PopupBuilder.myListModel;
-            return result;
+        public Utils.SelectionListCellRenderer<State> getRender() {
+            return new StateSelect.StateRender();
         }
 
-        public CompletableFuture<List<Utils.SelectableWrapper<StateSelect.State>>> getStateValues() {
+        @Override
+        public CompletableFuture<List<Utils.SelectableWrapper<State>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var allStates = Arrays.stream(RadIssue.State.values()).map(e -> new State(e.status, e.label)).toList();
-                var stateFuture = new ArrayList<Utils.SelectableWrapper<StateSelect.State>>();
+                var stateList = new ArrayList<Utils.SelectableWrapper<StateSelect.State>>();
                 for (State state : allStates) {
                     var isSelected = issue.state.status.equals(state.status);
                     var selectableWrapper = new Utils.SelectableWrapper<>(state, isSelected);
-                    stateFuture.add(selectableWrapper);
+                    stateList.add(selectableWrapper);
                 }
-                return stateFuture;
+                return stateList;
             });
         }
 
@@ -267,12 +288,15 @@ public class IssuePanel {
         public String getLabel() {
             return RadicleBundle.message("state");
         }
+
+        @Override
+        public boolean isSingleSelection() {
+            return true;
+        }
     }
 
     public class AssigneesSelect extends Utils.LabeledListPanelHandle<AssigneesSelect.Assignee> {
-        public JBPopup jbPopup;
-        public JBPopupListener listener;
-        public ListModel myListModel;
+
         public record Assignee(String name) { }
 
         public static class AssigneeRender extends Utils.SelectionListCellRenderer<AssigneesSelect.Assignee> {
@@ -300,33 +324,22 @@ public class IssuePanel {
             var resp = api.addRemoveIssueAssignees(issue, addAssignees, removeAssignees);
             var isSuccess = resp != null;
             if (isSuccess) {
-                // Trigger refresh
                 issueModel.setValue(issue);
             }
             return isSuccess;
         }
 
         @Override
-        public CompletableFuture<List<AssigneesSelect.Assignee>> showEditPopup(JComponent parent) {
-            var result = new CompletableFuture<List<AssigneesSelect.Assignee>>();
-            jbPopup = Utils.PopupBuilder.createPopup(this.getDelegates(), new AssigneesSelect.AssigneeRender(), false, null, result);
-            jbPopup.showUnderneathOf(parent);
-            listener = Utils.PopupBuilder.myListener;
-            myListModel = Utils.PopupBuilder.myListModel;
-            return result;
+        public Utils.SelectionListCellRenderer<Assignee> getRender() {
+            return new AssigneesSelect.AssigneeRender();
         }
 
         @Override
-        public String getLabel() {
-            return RadicleBundle.message("assignees");
-        }
-
-        public CompletableFuture<List<Utils.SelectableWrapper<AssigneesSelect.Assignee>>> getDelegates() {
+        public CompletableFuture<List<Utils.SelectableWrapper<Assignee>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var pr = api.fetchRadProject(issue.projectId);
                 var assignees = new ArrayList<Utils.SelectableWrapper<AssigneesSelect.Assignee>>();
-                for (var i = 0; i < pr.delegates.size(); i++) {
-                    var delegate = pr.delegates.get(i);
+                for (var delegate : pr.delegates) {
                     var assignee = new AssigneesSelect.Assignee(delegate);
                     var isSelected = issue.assignees.contains(delegate);
                     var selectableWrapper = new Utils.SelectableWrapper<>(assignee, isSelected);
@@ -334,6 +347,16 @@ public class IssuePanel {
                 }
                 return assignees;
             });
+        }
+
+        @Override
+        public String getLabel() {
+            return RadicleBundle.message("assignees");
+        }
+
+        @Override
+        public boolean isSingleSelection() {
+            return false;
         }
 
         public String getAuthorId(String authorDid) {

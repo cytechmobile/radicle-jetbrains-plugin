@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
@@ -52,6 +53,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
@@ -71,6 +74,7 @@ public class OverviewTest extends AbstractIT {
     private IssueEditorProvider issueEditorProvider;
     private VirtualFile editorFile;
     private IssueTabController issueTabController;
+    private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
 
     @Before
     public void beforeTest() throws IOException, InterruptedException {
@@ -100,21 +104,8 @@ public class OverviewTest extends AbstractIT {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
-                } else if (map.get("type").equals("assign")) {
-                    var removeList = (ArrayList<String>) map.get("remove");
-                    var addList = (ArrayList<String>) map.get("add");
-                    assertThat(removeList).contains(getTestProjects().get(0).delegates.get(0).split(":")[2]);
-                    assertThat(removeList).contains(getTestProjects().get(0).delegates.get(1).split(":")[2]);
-                    assertThat(addList).contains(getTestProjects().get(0).delegates.get(2).split(":")[2]);
-                } else if (map.get("type").equals("lifecycle")) {
-                    var state = (HashMap<String, String>) map.get("state");
-                    assertThat(state.get("status")).isEqualTo(RadIssue.State.CLOSED.status);
-                } else if (map.get("type").equals("tag")) {
-                    var removeList = (ArrayList<String>) map.get("remove");
-                    var addList = (ArrayList<String>) map.get("add");
-                    assertThat(removeList).contains(issue.tags.get(0));
-                    assertThat(removeList).contains(issue.tags.get(1));
-                    assertThat(addList).contains(issue.tags.get(0));
+                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("tag")) {
+                    response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
                 if (dummyComment.equals("break") || issue.title.equals("break")) {
@@ -221,8 +212,10 @@ public class OverviewTest extends AbstractIT {
         openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
         executeUiTasks();
 
-        var popupListener = issuePanel.tagSelect.listener;
-        var listmodel = issuePanel.tagSelect.myListModel;
+        var tagSelect = issuePanel.getTagSelect();
+        var popupListener = tagSelect.listener;
+        var jblist = UIUtil.findComponentOfType(tagSelect.jbPopup.getContent(), JBList.class);
+        var listmodel = jblist.getModel();
 
         // Trigger beforeShown method
         var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
@@ -238,12 +231,20 @@ public class OverviewTest extends AbstractIT {
         assertThat(firstTag.value.tag()).isEqualTo(issue.tags.get(0));
         assertThat(firstTag.selected).isTrue();
 
-        var closedState = (Utils.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(1);
-        assertThat(closedState.value.tag()).isEqualTo(issue.tags.get(1));
-        assertThat(closedState.selected).isTrue();
+        var secondTag = (Utils.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(1);
+        assertThat(secondTag.value.tag()).isEqualTo(issue.tags.get(1));
+        assertThat(secondTag.selected).isTrue();
 
         //Remove first tag
         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        var removeList = (ArrayList<String>) res.get("remove");
+        var addList = (ArrayList<String>) res.get("add");
+        assertThat(removeList).contains(issue.tags.get(0));
+        assertThat(removeList).contains(issue.tags.get(1));
+        assertThat(addList).contains(issue.tags.get(1));
     }
 
     @Test
@@ -269,8 +270,10 @@ public class OverviewTest extends AbstractIT {
         openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
         executeUiTasks();
 
-        var popupListener = issuePanel.stateSelect.listener;
-        var listmodel = issuePanel.stateSelect.myListModel;
+        var stateSelect = issuePanel.getStateSelect();
+        var popupListener = stateSelect.listener;
+        var jblist = UIUtil.findComponentOfType(stateSelect.jbPopup.getContent(), JBList.class);
+        var listmodel = jblist.getModel();
 
         // Trigger beforeShown method
         popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
@@ -292,6 +295,10 @@ public class OverviewTest extends AbstractIT {
 
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        var state = (HashMap<String, String>) res.get("state");
+        assertThat(state.get("status")).isEqualTo(RadIssue.State.CLOSED.status);
     }
 
     @Test
@@ -320,8 +327,10 @@ public class OverviewTest extends AbstractIT {
         openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
         executeUiTasks();
 
-        var popupListener = issuePanel.assigneesSelect.listener;
-        var listmodel = issuePanel.assigneesSelect.myListModel;
+        var assigneesSelect = issuePanel.getAssigneesSelect();
+        var popupListener = assigneesSelect.listener;
+        var jblist = UIUtil.findComponentOfType(assigneesSelect.jbPopup.getContent(), JBList.class);
+        var listmodel = jblist.getModel();
 
         // Trigger beforeShown method
         popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
@@ -329,23 +338,30 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(500);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
-         var firstAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
-         assertThat(firstAssignee.value.name()).isEqualTo(projectDelegates.get(0));
-         assertThat(firstAssignee.selected).isTrue();
+        var firstAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
+        assertThat(firstAssignee.value.name()).isEqualTo(projectDelegates.get(0));
+        assertThat(firstAssignee.selected).isTrue();
 
-         var secondAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
-         assertThat(secondAssignee.value.name()).isEqualTo(projectDelegates.get(1));
-         assertThat(secondAssignee.selected).isTrue();
+        var secondAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
+        assertThat(secondAssignee.value.name()).isEqualTo(projectDelegates.get(1));
+        assertThat(secondAssignee.selected).isTrue();
 
-         var thirdAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
-         assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
-         assertThat(thirdAssignee.selected).isFalse();
+        var thirdAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
+        assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
+        assertThat(thirdAssignee.selected).isFalse();
 
-        // ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-        // ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
-        // ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
-         //Trigger close function in order to trigger the stub and verify the request
-        // popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
+        //Trigger close function in order to trigger the stub and verify the request
+        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        var removeList = (ArrayList<String>) res.get("remove");
+        var addList = (ArrayList<String>) res.get("add");
+        assertThat(removeList).contains(getTestProjects().get(0).delegates.get(0).split(":")[2]);
+        assertThat(removeList).contains(getTestProjects().get(0).delegates.get(1).split(":")[2]);
+        assertThat(addList).contains(getTestProjects().get(0).delegates.get(2).split(":")[2]);
     }
 
     @Test
