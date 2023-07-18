@@ -121,8 +121,8 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
             progressStripe.startLoading();
             loadedData = getData(repos);
             searchVm.setList(loadedData);
-            countDown.countDown();
             this.model.addAll(loadedData);
+            countDown.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 progressStripe.stopLoading();
                 updateListEmptyText(searchVm.getValue());
