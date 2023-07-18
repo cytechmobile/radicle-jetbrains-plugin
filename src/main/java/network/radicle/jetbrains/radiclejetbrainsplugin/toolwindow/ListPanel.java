@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -39,16 +40,18 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static kotlinx.coroutines.CoroutineScopeKt.MainScope;
 
 public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends SearchViewModelBase<Q, ?, P>> {
+    private static final Logger logger = Logger.getInstance(ListPanel.class);
     protected final TabController<P, Q, S> controller;
     protected final Project project;
     protected final RadicleProjectApi api;
     protected final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     protected ProgressStripe progressStripe;
-    protected List<P> loadedData;
+    protected List<P> loadedData = null;
     protected JBList<P> list;
     protected DefaultListModel<P> model;
     protected S searchVm;
@@ -64,7 +67,6 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     public JComponent create() {
         var scope = MainScope();
         Disposer.register(controller.getDisposer(), () -> CoroutineScopeKt.cancel(scope, null));
-        loadedData = null;
         searchVm = getViewModel(scope);
         var filterPanel = getFilterPanel(searchVm, scope);
         var verticalPanel = new JPanel(new VerticalLayout(5));
@@ -73,9 +75,21 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
         var listPanel = createListPanel();
         mainPanel.addToTop(verticalPanel);
         mainPanel.addToCenter(listPanel);
+        updateListPanel();
         searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
-            filterList(patchListSearchValue);
-            updateListEmptyText(patchListSearchValue);
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+               try {
+                   var isDataLoaded = searchVm.getCountDown().await(5, TimeUnit.SECONDS);
+                   ApplicationManager.getApplication().invokeLater(() -> {
+                       if (isDataLoaded) {
+                           filterList(patchListSearchValue);
+                           updateListEmptyText(patchListSearchValue);
+                       }
+                   }, ModalityState.any());
+               } catch (Exception e) {
+                   logger.warn("Unable to wait for data", e);
+               }
+            });
             return null;
         }, new Continuation<>() {
             @Override
@@ -89,7 +103,6 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
                 return scope.getCoroutineContext();
             }
         });
-        updateListPanel();
         return mainPanel;
     }
 
