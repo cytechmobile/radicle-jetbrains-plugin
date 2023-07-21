@@ -252,6 +252,31 @@ public class RadicleProjectApi {
         return null;
     }
 
+    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction) {
+        var session = createAuthenticatedSession(issue.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "thread", "action", Map.of("type", "react", "to", discussionId,
+                    "reaction", reaction, "active", true));
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("issueReactionError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error reacting to discussion : {} , resp:{}", discussionId, resp);
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error reacting to discussion: {}", discussionId, e);
+        }
+
+        return null;
+    }
+
     public RadIssue addRemoveIssueTag(RadIssue issue, List<String> addTagList, List<String> removeTagList) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
