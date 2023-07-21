@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -96,10 +97,15 @@ public class OverviewTest extends AbstractIT {
                 //Assert that we send the correct payload to the api
                 if (map.get("type").equals("thread")) {
                     //Comment
-                    assertThat(map.get("type")).isEqualTo("thread");
-                    assertThat(action.get("type")).isEqualTo("comment");
-                    assertThat(action.get("body")).isEqualTo(dummyComment);
-                    issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of()));
+                    if (Objects.equals(action.get("type"), "comment")) {
+                        assertThat(map.get("type")).isEqualTo("thread");
+                        assertThat(action.get("type")).isEqualTo("comment");
+                        assertThat(action.get("body")).isEqualTo(dummyComment);
+                        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of()));
+                    }
+                    if (Objects.equals(action.get("type"), "react")) {
+                        response.add(map);
+                    }
                 } else if (map.get("type").equals("edit")) {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
@@ -352,6 +358,42 @@ public class OverviewTest extends AbstractIT {
     }
 
     @Test
+    public void testReactions() throws InterruptedException {
+        executeUiTasks();
+        var emojiJPanel = issueEditorProvider.getIssueComponent().getEmojiJPanel();
+        var emojiLabel = UIUtil.findComponentOfType(emojiJPanel, JLabel.class);
+        emojiLabel.getMouseListeners()[0].mouseClicked(null);
+
+        //Check that our reaction exists
+        var borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
+        var myEmojiLabel = ((JLabel) ((BorderLayoutPanel) ((JPanel) borderPanel.getComponent(1)).getComponent(1)).getComponent(0));
+        assertThat(myEmojiLabel.getText()).isEqualTo(issue.discussion.get(0).reactions.get(0).get(1));
+
+        // Make new reaction
+        var emojiPanel = issueEditorProvider.getIssueComponent().getEmojiPanel();
+        var popUp = emojiPanel.getEmojisPopUp();
+        var jblist = UIUtil.findComponentOfType(popUp.getContent(), JBList.class);
+
+        var popUpListener = emojiPanel.getPopupListener();
+        popUpListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        //Wait for the emojis to load
+        Thread.sleep(1000);
+        var listmodel = jblist.getModel();
+        assertThat(listmodel.getSize()).isEqualTo(4);
+        //Select the first emoji
+        jblist.setSelectedIndex(0);
+        jblist.getMouseListeners()[4].mouseClicked(null);
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("type")).isEqualTo("thread");
+        var action = (HashMap<String, String>) res.get("action");
+        assertThat(action.get("to")).isEqualTo(issue.discussion.get(1).id);
+        assertThat(action.get("type")).isEqualTo("react");
+        assertThat(action.get("reaction")).isEqualTo("\uD83D\uDE00");
+    }
+
+    @Test
     public void testChangeTitle() throws InterruptedException {
         var issueComponent = issueEditorProvider.getIssueComponent();
         var titlePanel = issueComponent.getHeaderPanel();
@@ -529,6 +571,6 @@ public class OverviewTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of());
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(List.of("author", "\uD83D\uDC4D")));
     }
 }
