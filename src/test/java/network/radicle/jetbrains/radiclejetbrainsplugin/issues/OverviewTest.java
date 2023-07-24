@@ -237,7 +237,7 @@ public class OverviewTest extends AbstractIT {
 
         //Remove first tag
         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
 
         var res = response.poll(5, TimeUnit.SECONDS);
         var removeList = (ArrayList<String>) res.get("remove");
@@ -294,7 +294,7 @@ public class OverviewTest extends AbstractIT {
         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
 
         //Trigger close function in order to trigger the stub and verify the request
-        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
 
         var res = response.poll(5, TimeUnit.SECONDS);
         var state = (HashMap<String, String>) res.get("state");
@@ -354,8 +354,8 @@ public class OverviewTest extends AbstractIT {
         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
         ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
 
-        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
-
+        popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
+        Thread.sleep(1000);
         var res = response.poll(5, TimeUnit.SECONDS);
         var removeList = (ArrayList<String>) res.get("remove");
         var addList = (ArrayList<String>) res.get("add");
