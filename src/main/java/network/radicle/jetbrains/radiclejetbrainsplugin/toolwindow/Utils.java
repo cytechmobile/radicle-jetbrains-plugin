@@ -152,7 +152,7 @@ public class Utils {
                         try {
                             var dataList = myList.get(5, TimeUnit.SECONDS);
                             listModel.replaceAll(dataList);
-                            if (dataList.size() == 0) {
+                            if (dataList.isEmpty()) {
                                 popUp.setPreferredSize(new Dimension(100, 100));
                             }
                             event.asPopup().pack(true, true);
