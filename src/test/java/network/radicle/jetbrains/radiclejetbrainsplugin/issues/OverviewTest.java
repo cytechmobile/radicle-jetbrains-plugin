@@ -349,6 +349,20 @@ public class OverviewTest extends AbstractIT {
         var thirdAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
         assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
         assertThat(thirdAssignee.selected).isFalse();
+
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
+        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
+
+        popupListener.onClosed(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        var removeList = (ArrayList<String>) res.get("remove");
+        var addList = (ArrayList<String>) res.get("add");
+
+        assertThat(removeList).contains(getTestProjects().get(0).delegates.get(0).split(":")[2]);
+        assertThat(removeList).contains(getTestProjects().get(0).delegates.get(1).split(":")[2]);
+        assertThat(addList).contains(getTestProjects().get(0).delegates.get(2).split(":")[2]);
     }
 
     @Test
