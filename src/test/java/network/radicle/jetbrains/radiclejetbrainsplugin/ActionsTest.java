@@ -4,6 +4,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import org.junit.Test;
@@ -41,6 +42,19 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("inspect");
         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
+    }
+
+    @Test
+    public void radSelfAction() throws InterruptedException {
+        var radSelf = new RadSelf(getProject());
+        radSelf.askForIdentity(false);
+        radSelf.perform();
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains(RAD_PATH + " " + "self --alias  &&");
+        assertThat(cmd.getCommandLineString()).contains(RAD_PATH + "  " + "self --nid  &&");
+        assertThat(cmd.getCommandLineString()).contains(RAD_PATH + "  " + "self --did  &&");
+        assertThat(cmd.getCommandLineString()).contains(RAD_PATH + "  " + "self --ssh-fingerprint");
     }
 
     @Test

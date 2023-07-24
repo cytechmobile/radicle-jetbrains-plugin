@@ -39,14 +39,13 @@ public class RadStub extends RadicleProjectService {
     public String keyHash = "SHA256:myFakeHash";
     public static String did =  "did:key:fakeDid";
     public static String nodeId = "fakeDid";
+    public static String alias = "alias";
+
     private String getSelfResponse(String hash) {
-        return "ID             " + did + "\n" +
-                "Node ID       " + nodeId + "\n" +
-                "Key (hash)     " + hash + "\n" +
-                "Key (full)     ssh-ed25519 myFullKey\n" +
-                "Storage (git)  /home/test/.myInstallation/storage\n" +
-                "Storage (keys) /home/test/.myInstallation/keys\n" +
-                "Node (socket)  /home/test/.myInstallation/node/radicle.sock";
+        return  alias + "\n" +
+                nodeId + "\n" +
+                did + "\n" +
+                hash;
     }
 
     public RadStub(String commitHash, Project project) {

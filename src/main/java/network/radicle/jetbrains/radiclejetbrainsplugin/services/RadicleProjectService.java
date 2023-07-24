@@ -27,6 +27,7 @@ import java.util.List;
 public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
+    private static final String JOIN_COMMAND = "&&";
     private final RadicleProjectSettingsHandler projectSettingsHandler;
 
     public RadicleProjectService(Project project) {
@@ -47,7 +48,11 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput self(String radHome, String radPath) {
-        return executeCommand(radPath, radHome, ".", List.of("self"), null, "");
+        return executeCommand(radPath, radHome, ".", List.of(
+                "self", "--alias", JOIN_COMMAND,
+                "self", "--nid", JOIN_COMMAND,
+                "self", "--did", JOIN_COMMAND,
+                "self", "--ssh-fingerprint"), null, "");
     }
 
     public ProcessOutput fetchPeerChanges(RadPatch patch) {
@@ -164,15 +169,33 @@ public class RadicleProjectService {
         return executeCommand(exePath, radHome, workDir, args, repo, "");
     }
 
+    private String joinCommands(String exePath, List<String> args) {
+        var commandBuilder = new StringBuilder();
+        var joinCommands = String.join(" ", args);
+        var parts = joinCommands.split(JOIN_COMMAND);
+        // We dont have multiple commands
+        if (parts.length == 1) {
+            return exePath + " " + joinCommands;
+        }
+        for (var i = 0; i < parts.length; i++) {
+            var singleCommand = exePath + " " +  String.join(" ", parts[i]);
+            commandBuilder.append(" ").append(singleCommand);
+            if (i != parts.length - 1) {
+                commandBuilder.append(" " + JOIN_COMMAND + " ");
+            }
+        }
+        return commandBuilder.toString();
+     }
+
     public ProcessOutput executeCommand(
             String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin) {
         ProcessOutput result;
         final var cmdLine = new GeneralCommandLine();
         var params = "";
         if (!Strings.isNullOrEmpty(radHome)) {
-            params = "export RAD_HOME=" + radHome + "; " + exePath + " " + String.join(" ", args);
+            params = "export RAD_HOME=" + radHome + "; " + joinCommands(exePath, args);
         } else {
-            params = exePath + " " + String.join(" ", args);
+            params = joinCommands(exePath, args);
         }
         if (SystemInfo.isWindows) {
             cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(params);
