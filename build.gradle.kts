@@ -32,7 +32,7 @@ dependencies {
     testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.3")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.9.3")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.9.3")
 
     testImplementation("org.assertj:assertj-core:3.24.2")
