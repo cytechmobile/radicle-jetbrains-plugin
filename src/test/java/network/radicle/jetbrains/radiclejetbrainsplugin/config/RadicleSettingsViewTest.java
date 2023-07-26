@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
@@ -90,10 +89,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
-        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME);
+        assertSelfCommands(AbstractIT.RAD_HOME);
         for (int i = 0; i < 10; i++) {
             if (radicleSettingsView.getRadDetails() == null) {
                 Thread.sleep(100);
@@ -117,17 +113,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
-        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var identityUnlockedCmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
-        assertThat(radSelfCmd).isNotNull();
-        if (SystemInfo.isWindows) {
-            assertThat(radSelfCmd.getCommandLineString()).contains("export RAD_HOME=/lakis");
-        } else {
-            assertThat(radSelfCmd.getEnvironment().get("RAD_HOME")).contains("lakis");
-        }
-        assertThat(radSelfCmd.getCommandLineString()).contains(AbstractIT.RAD_PATH);
-        assertThat(radSelfCmd.getCommandLineString()).contains("rad self");
-        assertThat(identityUnlockedCmd).isNull();
+        assertSelfCommands("/lakis");
     }
 
     @Test
@@ -144,9 +130,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
-        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME1);
+        assertSelfCommands(AbstractIT.RAD_HOME1);
     }
 
     @Test
@@ -157,9 +141,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
-        var radSelfCmd =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
-        assertCommands(radSelfCmd, identityUnlockedCmd, AbstractIT.RAD_HOME1);
+        assertSelfCommands(AbstractIT.RAD_HOME1);
         var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getEnvironment().get("stdin")).isEqualTo(RadicleGlobalSettingsHandlerTest.PASSWORD);
@@ -193,16 +175,40 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertThat(cmd.getCommandLineString()).contains(AbstractIT.RAD_PATH + " --version");
     }
 
-    private void assertCommands(GeneralCommandLine radSelfCmd, GeneralCommandLine identityUnlockedCmd, String radHome) {
-        assertThat(radSelfCmd).isNotNull();
+    private void assertSelfCommands(String radHome) throws InterruptedException {
+        var radSelfAlias =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var radSelfNid =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var radSelfDid =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var radSelfKey =  radStub.commands.poll(10, TimeUnit.SECONDS);
+        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(radSelfAlias).isNotNull();
+        assertThat(radSelfNid).isNotNull();
+        assertThat(radSelfDid).isNotNull();
+        assertThat(radSelfKey).isNotNull();
         if (SystemInfo.isWindows) {
-            assertThat(radSelfCmd.getCommandLineString()).contains("export RAD_HOME=" + radHome);
+            assertThat(radSelfAlias.getCommandLineString()).contains("export RAD_HOME=" + radHome);
+            assertThat(radSelfNid.getCommandLineString()).contains("export RAD_HOME=" + radHome);
+            assertThat(radSelfDid.getCommandLineString()).contains("export RAD_HOME=" + radHome);
+            assertThat(radSelfKey.getCommandLineString()).contains("export RAD_HOME=" + radHome);
         } else {
-            assertThat(radSelfCmd.getEnvironment().get("RAD_HOME")).contains(radHome);
+            assertThat(radSelfAlias.getEnvironment().get("RAD_HOME")).contains(radHome);
+            assertThat(radSelfNid.getEnvironment().get("RAD_HOME")).contains(radHome);
+            assertThat(radSelfDid.getEnvironment().get("RAD_HOME")).contains(radHome);
+            assertThat(radSelfKey.getEnvironment().get("RAD_HOME")).contains(radHome);
         }
-        assertThat(radSelfCmd.getCommandLineString()).contains(AbstractIT.RAD_PATH);
-        assertThat(radSelfCmd.getCommandLineString()).contains("rad self");
-        assertThat(identityUnlockedCmd).isNotNull();
-        assertThat(identityUnlockedCmd.getCommandLineString()).contains("ssh-add -l");
+        assertThat(radSelfAlias.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radSelfAlias.getCommandLineString()).contains("rad self --alias");
+        assertThat(radSelfNid.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radSelfNid.getCommandLineString()).contains("rad self --nid");
+        assertThat(radSelfDid.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radSelfDid.getCommandLineString()).contains("rad self --did");
+        assertThat(radSelfKey.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radSelfKey.getCommandLineString()).contains("rad self --ssh-fingerprint");
+        if (radHome.equals("/lakis")) {
+            assertThat(identityUnlockedCmd).isNull();
+        } else {
+            assertThat(identityUnlockedCmd).isNotNull();
+            assertThat(identityUnlockedCmd.getCommandLineString()).contains("ssh-add -l");
+        }
     }
 }
