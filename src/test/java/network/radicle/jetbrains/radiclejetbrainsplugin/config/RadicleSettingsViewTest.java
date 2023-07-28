@@ -1,7 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.LightPlatform4TestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -17,19 +19,18 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.assert
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
+    private static final String ALIAS = "myAlias";
     private static final Logger logger = LoggerFactory.getLogger(RadicleSettingsViewTest.class);
-
+    public static final String NEW_RAD_INSTALLATION = "/newRadInstallation";
     private RadicleSettingsView radicleSettingsView;
-    private RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private RadicleProjectSettingsHandler radicleSettingsHandler;
     private RadStub radStub;
 
     @Before
     public void before() throws InterruptedException {
         radStub = RadStub.replaceRadicleProjectService(this, "", getProject());
-        radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(getProject());
-        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsHandler = new RadicleProjectSettingsHandler(getProject());
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
         radicleSettingsHandler.saveSeedNode("http://localhost:8080");
         radicleSettingsView = new RadicleSettingsView(getProject());
@@ -84,7 +85,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void testButtonWithUnlockedIdentity() throws InterruptedException {
-        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsView = new RadicleSettingsView(getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
@@ -108,12 +109,15 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
                 return true;
             }
         };
-        radicleProjectSettingsHandler.saveRadHome("/lakis");
+        identityDialog.setPassphrase(RadicleGlobalSettingsHandlerTest.PASSWORD);
+        identityDialog.setAlias(ALIAS);
+        radicleSettingsHandler.saveRadHome(NEW_RAD_INSTALLATION);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
-        assertSelfCommands("/lakis");
+        executeUiTasks();
+        assertSelfCommands(NEW_RAD_INSTALLATION);
     }
 
     @Test
@@ -125,7 +129,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
                 return true;
             }
         };
-        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
@@ -135,8 +139,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void testButtonWithStoredPassword() throws InterruptedException {
-        radicleProjectSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
-        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
+        radicleSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
@@ -204,11 +208,17 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertThat(radSelfDid.getCommandLineString()).contains("rad self --did");
         assertThat(radSelfKey.getCommandLineString()).contains(AbstractIT.RAD_PATH);
         assertThat(radSelfKey.getCommandLineString()).contains("rad self --ssh-fingerprint");
-        if (radHome.equals("/lakis")) {
-            assertThat(identityUnlockedCmd).isNull();
+        if (radHome.equals(NEW_RAD_INSTALLATION)) {
+            assertThat(identityUnlockedCmd.getCommandLineString()).contains("rad auth --stdin --alias " + ALIAS);
         } else {
             assertThat(identityUnlockedCmd).isNotNull();
             assertThat(identityUnlockedCmd.getCommandLineString()).contains("ssh-add -l");
         }
+    }
+
+    public void executeUiTasks() {
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
 }

@@ -128,7 +128,10 @@ public class RadicleProjectService {
                 "--default-branch", branch, "--no-confirm"), root);
     }
 
-    public ProcessOutput auth(String passphrase, String radHome, String radPath) {
+    public ProcessOutput auth(String passphrase, String alias, String radHome, String radPath) {
+        if (!Strings.isNullOrEmpty(alias)) {
+            return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin", "--alias", alias), null, passphrase);
+        }
         return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
     }
 
@@ -207,7 +210,6 @@ public class RadicleProjectService {
             if (console != null) {
                 console.showCommandLine("[" + workDir + "] " + cmdLine.getCommandLineString());
             }
-
             if (!Strings.isNullOrEmpty(stdin)) {
                 result = execAndGetOutputWithStdin(cmdLine, stdin);
             } else {
