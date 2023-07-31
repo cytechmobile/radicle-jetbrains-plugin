@@ -65,6 +65,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private IdentityDialog identityDialog;
     private RadDetails radDetails;
     private final Project myProject;
+    private final CountDownLatch myLatch = new CountDownLatch(1);
     protected CountDownLatch init = new CountDownLatch(1);
 
     public RadicleSettingsView(Project project) {
@@ -139,6 +140,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
             logger.warn("got rad details: " + radDetails.did);
+            myLatch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 var isSuccess = RadAction.isSuccess(output);
                 var msg = isSuccess ? radDetails.did : output.getStderr();
@@ -359,6 +361,10 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         if (!isCompatibleVersion(radVersion)) {
             enforceVersionLabel.setVisible(true);
         }
+    }
+
+    public CountDownLatch getLatch() {
+        return myLatch;
     }
 
     public JLabel getRadVersionLabel() {

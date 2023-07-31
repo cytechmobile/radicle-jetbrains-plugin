@@ -116,6 +116,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
+        radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
         executeUiTasks();
         assertSelfCommands(NEW_RAD_INSTALLATION);
     }
@@ -129,12 +130,18 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
                 return true;
             }
         };
+        identityDialog.setPassphrase(RadicleGlobalSettingsHandlerTest.PASSWORD);
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
+        radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
+        executeUiTasks();
         assertSelfCommands(AbstractIT.RAD_HOME1);
+        var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
+        assertThat(auth.getCommandLineString()).doesNotContain("--alias");
     }
 
     @Test
