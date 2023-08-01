@@ -7,7 +7,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPane
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -35,19 +35,22 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
 
         var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(this.viewModel.getProjectNames(), this.viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(this.viewModel.getProjectNames(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var authorFilter = new DropDownComponentFactory<>(this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("author"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(this.viewModel.getAuthors(), this.viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(this.viewModel.getAuthors(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var tagFilter = new DropDownComponentFactory<>(this.viewModel.tagFilter()).create(coroutineScope, RadicleBundle.message("tag"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(this.viewModel.getTags(), this.viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(this.viewModel.getTags(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
