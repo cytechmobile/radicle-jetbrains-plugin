@@ -19,6 +19,7 @@ import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,7 +109,7 @@ public class CloneDialogTest extends AbstractIT {
     @Test
     public void successCloneTest() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("");
-        var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy", "testName", "Test", "main");
+        var radProject = new RadProject("hnrk81ky87cii8h68nedkej991c5dspazi9xy", "testName", "Test", "main", List.of());
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());
@@ -128,7 +129,7 @@ public class CloneDialogTest extends AbstractIT {
 
     @Test
     public void errorCloneTest() throws InterruptedException {
-        var radProject = new RadProject("hnr", "testName", "Test", "main");
+        var radProject = new RadProject("hnr", "testName", "Test", "main", List.of());
         cloneDialog.projectModel.addElement(radProject);
         cloneDialog.radProjectJBList.setSelectedIndex(0);
         cloneDialog.doClone(new CheckoutProvider());

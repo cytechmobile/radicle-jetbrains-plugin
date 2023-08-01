@@ -35,19 +35,19 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
 
         var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(this.viewModel.getProjectNames(), this.viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(this.viewModel.getProjectNames(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var authorFilter = new DropDownComponentFactory<>(this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("author"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(this.viewModel.getAuthors(), this.viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(this.viewModel.getAuthors(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var tagFilter = new DropDownComponentFactory<>(this.viewModel.tagFilter()).create(coroutineScope, RadicleBundle.message("tag"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.createPopup(this.viewModel.getTags(), this.viewModel.getCountDown());
+                    var popUp = Utils.PopupBuilder.createPopup(this.viewModel.getTags(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 

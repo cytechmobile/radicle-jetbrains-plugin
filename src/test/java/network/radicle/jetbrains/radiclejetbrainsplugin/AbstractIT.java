@@ -101,7 +101,6 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         /* initialize rad stub service */
         radStub = RadStub.replaceRadicleProjectService(this, change.getBeforeRevision().getRevisionNumber().asString(), getProject());
-
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 
@@ -182,7 +181,12 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     public RadicleProjectApi replaceApiService() {
         var client = mock(CloseableHttpClient.class);
-        var api = new RadicleProjectApi(myProject, client);
+        var api = new RadicleProjectApi(myProject, client) {
+            @Override
+            public Session createAuthenticatedSession(GitRepository repo) {
+                return new Session("testId", "testPublicKey", "testSignature");
+            }
+        };
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
     }
