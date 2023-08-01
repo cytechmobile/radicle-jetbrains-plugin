@@ -114,10 +114,10 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     @Override
     public List<IssueListQuickFilter> getQuickFilters() {
         var openFilter = new IssueSearchPanelViewModel.IssueListQuickFilter();
-        openFilter.issueListSearchValue.state = RadIssue.State.OPEN.status;
+        openFilter.issueListSearchValue.state = RadIssue.State.OPEN.label;
 
         var closedFilter = new IssueSearchPanelViewModel.IssueListQuickFilter();
-        closedFilter.issueListSearchValue.state = RadIssue.State.CLOSED.status;
+        closedFilter.issueListSearchValue.state = RadIssue.State.CLOSED.label;
 
         return List.of(openFilter, closedFilter);
     }
@@ -135,7 +135,7 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
         public IssueListQuickFilter() {
             issueListSearchValue = new IssueListSearchValue();
             // Set OPEN as default filter
-            issueListSearchValue.state = RadIssue.State.OPEN.status;
+            issueListSearchValue.state = RadIssue.State.OPEN.label;
         }
 
         @NotNull
