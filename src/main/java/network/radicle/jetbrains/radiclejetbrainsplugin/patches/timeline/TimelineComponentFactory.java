@@ -179,7 +179,7 @@ public class TimelineComponentFactory {
         titleTextPane.removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
         titleTextPane.setForeground(UIUtil.getContextHelpForeground());
         return new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                integer -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel)
+                integer -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), contentPanel)
                 .withHeader(titleTextPane, actionsPanel).build();
     }
 

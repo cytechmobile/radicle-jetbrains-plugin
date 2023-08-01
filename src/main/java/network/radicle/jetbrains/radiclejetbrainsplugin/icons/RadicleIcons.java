@@ -8,6 +8,8 @@ import javax.swing.Icon;
 public class  RadicleIcons {
     private static final String ICON_PATH = "/icons/";
 
+    public static final Icon DEFAULT_AVATAR = getIcon("default_avatar", false);
+
     public static final Icon RADICLE = getIcon("radicle", false);
 
     public static final Icon RADICLE_TOOL_WINDOW = getIcon("rad_tool_window", true);
