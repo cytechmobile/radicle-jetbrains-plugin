@@ -48,10 +48,10 @@ public abstract class EmojiPanel<T> {
         this.radDetails = radDetails;
     }
 
-    private static class EmojiRender extends Utils.SelectionListCellRenderer<Emoji> {
+    private static class EmojiRender extends SelectionListCellRenderer<Emoji> {
         @Override
-        public Component getListCellRendererComponent(JList<? extends Utils.SelectableWrapper<Emoji>> list,
-                                                      Utils.SelectableWrapper<Emoji> selectableWrapperObj,
+        public Component getListCellRendererComponent(JList<? extends SelectableWrapper<Emoji>> list,
+                                                      SelectableWrapper<Emoji> selectableWrapperObj,
                                                       int index, boolean isSelected, boolean cellHasFocus) {
             var jLabel = new JLabel();
             jLabel.setFont(new Font(FONT_NAME, FONT_STYLE, FONT_SIZE));
@@ -70,7 +70,7 @@ public abstract class EmojiPanel<T> {
         }
     }
 
-    private static class ReactorRender extends Utils.SelectionListCellRenderer<String> {
+    private static class ReactorRender extends SelectionListCellRenderer<String> {
         @Override
         public String getText(String value) {
             return value;
@@ -82,22 +82,22 @@ public abstract class EmojiPanel<T> {
         }
     }
 
-    private static CompletableFuture<List<Utils.SelectableWrapper<Emoji>>> getEmojis() {
+    private static CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Emoji>>> getEmojis() {
         return CompletableFuture.supplyAsync(() -> {
-            var selectableEmojiList = new ArrayList<Utils.SelectableWrapper<Emoji>>();
+            var selectableEmojiList = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Emoji>>();
             var emojiList = Emoji.loadEmojis();
             for (var emoji : emojiList) {
-                selectableEmojiList.add(new Utils.SelectableWrapper<>(emoji, false));
+                selectableEmojiList.add(new SelectionListCellRenderer.SelectableWrapper<>(emoji, false));
             }
             return selectableEmojiList;
         });
     }
 
-    private static CompletableFuture<List<Utils.SelectableWrapper<String>>> getReactors(List<String> reactorsList) {
+    private static CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<String>>> getReactors(List<String> reactorsList) {
         return CompletableFuture.supplyAsync(() -> {
-            var reactors = new ArrayList<Utils.SelectableWrapper<String>>();
+            var reactors = new ArrayList<SelectionListCellRenderer.SelectableWrapper<String>>();
             for (var reactor : reactorsList) {
-                reactors.add(new Utils.SelectableWrapper<>(reactor, false));
+                reactors.add(new SelectionListCellRenderer.SelectableWrapper<>(reactor, false));
             }
             return reactors;
         });
@@ -115,8 +115,9 @@ public abstract class EmojiPanel<T> {
             @Override
             public void mouseClicked(MouseEvent e) {
                 var result = new CompletableFuture<List<Emoji>>();
-                emojisPopUp = Utils.PopupBuilder.createHorizontalPopup(getEmojis(), new EmojiRender(), result);
-                popupListener = Utils.PopupBuilder.myListener;
+                var popupBuilder = new PopupBuilder(95,40);
+                emojisPopUp = popupBuilder.createHorizontalPopup(getEmojis(), new EmojiRender(), result);
+                popupListener =popupBuilder.getListener();
                 emojisPopUp.showUnderneathOf(emojiButton);
                 result.thenComposeAsync(selectedEmoji -> {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -170,12 +171,14 @@ public abstract class EmojiPanel<T> {
                 });
             }
             var result = new CompletableFuture<List<String>>();
-            reactorsPopUp = Utils.PopupBuilder.createHorizontalPopup(getReactors(groupReactions.get(emojiUnicode)),
+            var builder = new PopupBuilder();
+            reactorsPopUp = builder.createHorizontalPopup(getReactors(groupReactions.get(emojiUnicode)),
                     new ReactorRender(), result);
             reactorsPanel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    reactorsPopUp = Utils.PopupBuilder.createHorizontalPopup(getReactors(groupReactions.get(emojiUnicode)),
+                    var builder = new PopupBuilder();
+                    reactorsPopUp = builder.createHorizontalPopup(getReactors(groupReactions.get(emojiUnicode)),
                             new ReactorRender(), result);
                     reactorsPopUp.showUnderneathOf(reactorEmoji);
                 }

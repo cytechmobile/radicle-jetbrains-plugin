@@ -15,6 +15,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.ui.JBUI;
@@ -25,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.ListSelectionModel;
+import javax.swing.JList;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
@@ -37,8 +39,71 @@ import java.util.concurrent.TimeUnit;
 
 public class PopupBuilder {
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
-
     private JBPopupListener myListener;
+    private Integer width;
+    private Integer height;
+
+    public PopupBuilder(Integer width, Integer height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public PopupBuilder() {
+    }
+
+    public <T> JBPopup createHorizontalPopup(CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<T>>> myList,
+                                             SelectionListCellRenderer<T> rendered, CompletableFuture<List<T>> result) {
+        var listModel = new CollectionListModel<SelectionListCellRenderer.SelectableWrapper<T>>();
+        var list = new JBList<>(listModel);
+        list.setVisibleRowCount(7);
+        list.setCellRenderer(rendered);
+        var scrollPane = new JBScrollPane(list);
+        scrollPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        scrollPane.setFocusable(false);
+        var panel = JBUI.Panels.simplePanel(scrollPane);
+        ListUtil.installAutoSelectOnMouseMove(list);
+        list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        list.setVisibleRowCount(-1);
+        list.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+        list.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                var selectedItem = list.getSelectedValue();
+                result.complete(List.of(selectedItem.value));
+            }
+        });
+        myListener = new JBPopupListener() {
+            @Override
+            public void beforeShown(@NotNull LightweightWindowEvent event) {
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    try {
+                        var dataList = myList.get(5, TimeUnit.SECONDS);
+                        listModel.replaceAll(dataList);
+                        if (width != null && height != null) {
+                            event.asPopup().getContent().setPreferredSize(new Dimension(width, height));
+                        } else {
+                            event.asPopup().pack(true, true);
+                        }
+                    } catch (Exception e) {
+                        logger.warn("Unable to load popup data", e);
+                    } finally {
+                        // Stop loading indicator
+                        ApplicationManager.getApplication().invokeLater(() ->
+                                list.setPaintBusy(false), ModalityState.any());
+                    }
+                });
+            }
+        };
+        return JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
+                .setRequestFocus(true)
+                .setCancelOnClickOutside(true)
+                .setResizable(true)
+                .setMovable(true)
+                .setTitle(rendered.getPopupTitle())
+                .setCancelOnClickOutside(true)
+                .addListener(myListener)
+                .createPopup();
+    }
 
     public <T> JBPopup createPopup(CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<T>>> myList,
                                           SelectionListCellRenderer<T> rendered, boolean singleSelection,
