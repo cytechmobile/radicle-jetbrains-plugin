@@ -36,17 +36,16 @@ public class RadStub extends RadicleProjectService {
     public static final String SESSION_RESP = "{\"sessionId\":\"mySession\"," +
             "\"publicKey\":\"myPrivateKey\"," +
             "\"signature\":\"mySignature\"}";
-    public String keyHash = "SHA256:myFakeHash";
+    public static String keyHash = "SHA256:myFakeHash";
     public static String did =  "did:key:fakeDid";
     public static String nodeId = "fakeDid";
+    public static String alias = "alias";
+
     private String getSelfResponse(String hash) {
-        return "ID             " + did + "\n" +
-                "Node ID       " + nodeId + "\n" +
-                "Key (hash)     " + hash + "\n" +
-                "Key (full)     ssh-ed25519 myFullKey\n" +
-                "Storage (git)  /home/test/.myInstallation/storage\n" +
-                "Storage (keys) /home/test/.myInstallation/keys\n" +
-                "Node (socket)  /home/test/.myInstallation/node/radicle.sock";
+        return  alias + "\n" +
+                nodeId + "\n" +
+                did + "\n" +
+                hash;
     }
 
     public RadStub(String commitHash, Project project) {
@@ -81,14 +80,20 @@ public class RadStub extends RadicleProjectService {
             stdout = keyHash;
         } else if (cmdLine.getCommandLineString().contains("web")) {
             stdout = SESSION_RESP;
-        } else if (cmdLine.getCommandLineString().contains("self")) {
+        } else if (cmdLine.getCommandLineString().contains("self --alias")) {
+            stdout = alias + "\n";
+        } else if (cmdLine.getCommandLineString().contains("self --nid")) {
+            stdout = nodeId + "\n";
+        } else if (cmdLine.getCommandLineString().contains("self --did")) {
+            stdout = did + "\n";
+        } else if (cmdLine.getCommandLineString().contains("self --ssh-fingerprint")) {
             var envRadHome = cmdLine.getEnvironment().get("RAD_HOME");
-            if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome) &&
-                    envRadHome.contains(RAD_HOME))) {
-                stdout = getSelfResponse(keyHash);
-            } else if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome) &&
+            if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome) &&
                     envRadHome.contains(RAD_HOME1))) {
-                stdout = getSelfResponse(keyHash + "A");
+                stdout = keyHash + "A" + "\n";
+            } else if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome) &&
+                    envRadHome.contains(RAD_HOME))) {
+                stdout = keyHash + "\n";
             } else {
                 pr.setExitCode(-1);
             }

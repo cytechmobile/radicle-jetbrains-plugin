@@ -4,8 +4,10 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,6 +43,37 @@ public class ActionsTest extends AbstractIT {
         assertThat(cmd.getCommandLineString()).contains("inspect");
         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
+    }
+
+    @Test
+    public void radSelfAction() throws InterruptedException {
+        radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
+        var radSelf = new RadSelf(getProject());
+        radSelf.askForIdentity(false);
+        var output = radSelf.perform();
+
+        var aliasCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(aliasCmd);
+        assertThat(aliasCmd.getCommandLineString()).contains(RAD_PATH + " " + "self --alias");
+
+        var nidCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(nidCmd);
+        assertThat(nidCmd.getCommandLineString()).contains(RAD_PATH + " " + "self --nid");
+
+        var didCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(didCmd);
+        assertThat(didCmd.getCommandLineString()).contains(RAD_PATH + " " + "self --did");
+
+        var fingerPrint = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(fingerPrint);
+        assertThat(fingerPrint.getCommandLineString()).contains(RAD_PATH + " " + "self --ssh-fingerprint");
+
+        //Test parsing
+        var details = new RadDetails(output.getStdoutLines(true));
+        assertThat(details.alias).isEqualTo(RadStub.alias);
+        assertThat(details.did).isEqualTo(RadStub.did);
+        assertThat(details.nodeId).isEqualTo(RadStub.nodeId);
+        assertThat(details.keyHash).isEqualTo(RadStub.keyHash);
     }
 
     @Test

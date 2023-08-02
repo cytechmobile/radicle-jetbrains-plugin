@@ -47,7 +47,21 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput self(String radHome, String radPath) {
-        return executeCommand(radPath, radHome, ".", List.of("self"), null, "");
+        var alias = executeCommand(radPath, radHome, ".", List.of("self", "--alias"), null, "");
+        var nid = executeCommand(radPath, radHome, ".", List.of("self", "--nid"), null, "");
+        var did = executeCommand(radPath, radHome, ".", List.of("self", "--did"), null, "");
+        var sshFingerPrint = executeCommand(radPath, radHome, ".", List.of("self", "--ssh-fingerprint"), null, "");
+        if (!RadAction.isSuccess(alias) || !RadAction.isSuccess(nid) || !RadAction.isSuccess(did) ||
+                !RadAction.isSuccess(sshFingerPrint)) {
+            return new ProcessOutput(-1);
+        }
+        var aliasStr = alias.getStdout();
+        var nidStr = nid.getStdout();
+        var didStr = did.getStdout();
+        var sshFingerPrintStr = sshFingerPrint.getStdout();
+        var output = new ProcessOutput(0);
+        output.appendStdout(aliasStr + nidStr + didStr + sshFingerPrintStr);
+        return output;
     }
 
     public ProcessOutput fetchPeerChanges(RadPatch patch) {
