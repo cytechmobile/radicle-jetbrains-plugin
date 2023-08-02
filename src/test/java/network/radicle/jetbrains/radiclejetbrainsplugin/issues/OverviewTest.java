@@ -124,7 +124,7 @@ public class OverviewTest extends AbstractIT {
                 issue.repo = null;
                 issue.project = null;
                 // Convert Reaction object to List<List<String>>
-                var map = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() {});
+                var map = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
                 var discussions = (ArrayList<Map<String, Object>>) map.get("discussion");
                 for (var discussion : discussions) {
                     var allReactions = new ArrayList<>();
@@ -604,6 +604,6 @@ public class OverviewTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of( new Reaction("author", "\uD83D\uDC4D")));
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("author", "\uD83D\uDC4D")));
     }
 }
