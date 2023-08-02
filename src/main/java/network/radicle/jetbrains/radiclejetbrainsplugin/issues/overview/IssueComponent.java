@@ -21,6 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
@@ -119,7 +120,7 @@ public class IssueComponent {
     public class IssueEmojiPanel extends EmojiPanel<RadIssue> {
 
 
-        protected IssueEmojiPanel(SingleValueModel<RadIssue> model, List<List<String>> reactions,
+        protected IssueEmojiPanel(SingleValueModel<RadIssue> model, List<Reaction> reactions,
                                   String discussionId, RadDetails radDetails) {
             super(model, reactions, discussionId, radDetails);
         }

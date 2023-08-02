@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 
 import javax.swing.JList;
 import javax.swing.JLabel;
@@ -33,14 +34,14 @@ public abstract class EmojiPanel<T> {
     private static final int FONT_SIZE = 14;
     private static final String SMILEY_FACE_EMOJI = "\uD83D\uDE00"; // 😀
     private final SingleValueModel<T> model;
-    private final List<List<String>> reactions;
+    private final List<Reaction> reactions;
     private final String discussionId;
     private final RadDetails radDetails;
     private JBPopup reactorsPopUp;
     private JBPopup emojisPopUp;
     private JBPopupListener popupListener;
 
-    protected EmojiPanel(SingleValueModel<T> model, List<List<String>> reactions, String discussionId,
+    protected EmojiPanel(SingleValueModel<T> model, List<Reaction> reactions, String discussionId,
                          RadDetails radDetails) {
         this.model = model;
         this.reactions = reactions;
@@ -205,12 +206,11 @@ public abstract class EmojiPanel<T> {
     public JBPopup getEmojisPopUp() {
         return emojisPopUp;
     }
-    public Map<String, List<String>> groupEmojis(List<List<String>> myReactions) {
+
+    public Map<String, List<String>> groupEmojis(List<Reaction> myReactions) {
         HashMap<String, List<String>> map = new HashMap<>();
         for (var react : myReactions) {
-            var from = react.get(0);
-            var emoji = react.get(1);
-            map.computeIfAbsent(emoji, k -> new ArrayList<>()).add(from);
+            map.computeIfAbsent(react.emoji, k -> new ArrayList<>()).add(react.nid);
         }
         return map;
     }
