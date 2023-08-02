@@ -115,9 +115,9 @@ public abstract class EmojiPanel<T> {
             @Override
             public void mouseClicked(MouseEvent e) {
                 var result = new CompletableFuture<List<Emoji>>();
-                var popupBuilder = new PopupBuilder(95,40);
+                var popupBuilder = new PopupBuilder(95, 40);
                 emojisPopUp = popupBuilder.createHorizontalPopup(getEmojis(), new EmojiRender(), result);
-                popupListener =popupBuilder.getListener();
+                popupListener = popupBuilder.getListener();
                 emojisPopUp.showUnderneathOf(emojiButton);
                 result.thenComposeAsync(selectedEmoji -> {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
