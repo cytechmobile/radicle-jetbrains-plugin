@@ -30,6 +30,7 @@ import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import net.miginfocom.layout.CC;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,11 @@ public class Utils {
 
     public static JComponent getVerticalPanel(int gap) {
         return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
+    }
+
+    public static void addListPanel(JPanel panel, Utils.LabeledListPanelHandle<?> handle) {
+        panel.add(handle.getTitleLabel(), new CC().alignY("top").width("30"));
+        panel.add(handle.getPanel(), new CC().minWidth("0").growX().pushX().wrap());
     }
 
     public static JComponent getHorizontalPanel(int gap) {

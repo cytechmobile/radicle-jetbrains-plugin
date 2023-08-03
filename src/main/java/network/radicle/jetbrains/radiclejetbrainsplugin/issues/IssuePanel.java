@@ -73,9 +73,9 @@ public class IssuePanel {
         var actionPanel = new JPanel();
         actionPanel.setOpaque(false);
         actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
-        addListPanel(actionPanel, assigneesSelect);
-        addListPanel(actionPanel, stateSelect);
-        addListPanel(actionPanel, tagSelect);
+        Utils.addListPanel(actionPanel, assigneesSelect);
+        Utils.addListPanel(actionPanel, stateSelect);
+        Utils.addListPanel(actionPanel, tagSelect);
         final var splitter = new OnePixelSplitter(true, "Radicle.IssuePanel.action.Component", 0.6f);
         splitter.setFirstComponent(getIssueInfo());
         splitter.setSecondComponent(actionPanel);
@@ -123,11 +123,6 @@ public class IssuePanel {
         panel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         panel.add(new JLabel(txt), new CC().gapBottom(String.valueOf(UI.scale(10))));
         return panel;
-    }
-
-    private void addListPanel(JPanel panel, Utils.LabeledListPanelHandle<?> handle) {
-        panel.add(handle.getTitleLabel(), new CC().alignY("top").width("30"));
-        panel.add(handle.getPanel(), new CC().minWidth("0").growX().pushX().wrap());
     }
 
     protected JComponent createReturnToListSideComponent() {
