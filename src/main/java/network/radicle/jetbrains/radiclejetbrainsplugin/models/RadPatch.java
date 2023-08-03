@@ -74,9 +74,9 @@ public class RadPatch {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
-        OPEN("open","Open"),
-        DRAFT("draft","Draft"),
-        ARCHIVED("archived","Archived");
+        OPEN("open", "Open"),
+        DRAFT("draft", "Draft"),
+        ARCHIVED("archived", "Archived");
 
         public final String status;
         public final String label;
