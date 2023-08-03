@@ -83,7 +83,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                      .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
                      .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
                              p.author.id.equals(peerAuthorFilter))
-                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.status.equals(stateFilter)))
+                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.label.equals(stateFilter)))
                      .filter(p -> Strings.isNullOrEmpty(tagFilter) || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
                      .collect(Collectors.toList());
              model.addAll(filteredPatches);

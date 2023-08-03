@@ -74,21 +74,22 @@ public class RadPatch {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
-        OPEN("Open"),
-        CLOSED("Closed"),
-        MERGED("Merged"),
-        ARCHIVED("Archived");
+        OPEN("open","Open"),
+        DRAFT("draft","Draft"),
+        ARCHIVED("archived","Archived");
 
         public final String status;
+        public final String label;
 
-        State(String status) {
+        State(String status, String label) {
             this.status = status;
+            this.label = label;
         }
 
         @JsonCreator
         public static State forValues(@JsonProperty("status") String status) {
             for (State state : State.values()) {
-                if (state.status.equalsIgnoreCase(status)) {
+                if (state.status.equals(status)) {
                     return state;
                 }
             }
