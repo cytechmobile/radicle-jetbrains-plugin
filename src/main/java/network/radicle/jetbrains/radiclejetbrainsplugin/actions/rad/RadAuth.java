@@ -7,13 +7,15 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadAuth extends RadAction {
+    private final String alias;
     private final String passphrase;
     private final String radHome;
     private final String radPath;
     private final RadAuthAction action;
 
-    public RadAuth(String passphrase, String radHome, String radPath, RadAuthAction action, Project project) {
+    public RadAuth(String alias, String passphrase, String radHome, String radPath, RadAuthAction action, Project project) {
         super(project);
+        this.alias = alias;
         this.passphrase = passphrase;
         this.action = action;
         this.radHome = radHome;
@@ -48,7 +50,7 @@ public class RadAuth extends RadAction {
 
     public ProcessOutput createNewIdentity() {
         var rad = project.getService(RadicleProjectService.class);
-        var output = rad.auth(passphrase, radHome, radPath);
+        var output = rad.auth(passphrase, alias, radHome, radPath);
         return validateOutput(output);
     }
 
