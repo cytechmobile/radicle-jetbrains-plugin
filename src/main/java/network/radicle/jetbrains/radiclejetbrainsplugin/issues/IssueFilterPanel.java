@@ -6,7 +6,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPane
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,25 +37,29 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
 
         var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getProjectNames(), viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(viewModel.getProjectNames(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var authorFilter = new DropDownComponentFactory<>(this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("author"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getAuthors(), viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(viewModel.getAuthors(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var tagFilter = new DropDownComponentFactory<>(this.viewModel.tagFilter()).create(coroutineScope, RadicleBundle.message("tag"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getTags(), viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(viewModel.getTags(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
         var assigneesFilter = new DropDownComponentFactory<>(this.viewModel.assigneeFilter()).create(coroutineScope, RadicleBundle.message("assignees"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
-                    var popUp = Utils.PopupBuilder.createPopup(viewModel.getAssignees(), viewModel.getCountDown());
+                    var popUpBuilder = new PopupBuilder();
+                    var popUp = popUpBuilder.createPopup(viewModel.getAssignees(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 

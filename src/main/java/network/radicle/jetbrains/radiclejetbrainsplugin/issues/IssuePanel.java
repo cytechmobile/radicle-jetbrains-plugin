@@ -18,7 +18,10 @@ import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
+
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -59,7 +62,7 @@ public class IssuePanel {
     public JComponent createPanel() {
         var component = getComponent();
         infoTab = new TabInfo(component);
-        infoTab.setText(RadicleBundle.message("Issue Overview"));
+        infoTab.setText(RadicleBundle.message("issueOverview"));
         infoTab.setSideComponent(createReturnToListSideComponent());
 
         final var uiDisposable = Disposer.newDisposable(issueTabController.getDisposer(),
@@ -125,7 +128,7 @@ public class IssuePanel {
         return panel;
     }
 
-    private void addListPanel(JPanel panel, Utils.LabeledListPanelHandle<?> handle) {
+    private void addListPanel(JPanel panel, LabeledListPanelHandle<?> handle) {
         panel.add(handle.getTitleLabel(), new CC().alignY("top").width("30"));
         panel.add(handle.getPanel(), new CC().minWidth("0").growX().pushX().wrap());
     }
@@ -150,11 +153,11 @@ public class IssuePanel {
         return tagSelect;
     }
 
-    public class TagSelect extends Utils.LabeledListPanelHandle<TagSelect.Tag> {
+    public class TagSelect extends LabeledListPanelHandle<TagSelect.Tag> {
 
         public record Tag(String tag) { }
 
-        public static class TagRender extends Utils.SelectionListCellRenderer<TagSelect.Tag> {
+        public static class TagRender extends SelectionListCellRenderer<Tag> {
 
             @Override
             public String getText(TagSelect.Tag value) {
@@ -187,9 +190,10 @@ public class IssuePanel {
         public CompletableFuture<List<Tag>> showEditPopup(JComponent parent) {
             var addField = new JBTextField();
             var res = new CompletableFuture<List<Tag>>();
-            jbPopup = Utils.PopupBuilder.createPopup(this.getData(), new TagRender(), false, addField, res);
+            var popUpBuilder = new PopupBuilder();
+            jbPopup = popUpBuilder.createPopup(this.getData(), new TagRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
-            listener = Utils.PopupBuilder.myListener;
+            listener = popUpBuilder.getListener();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;
@@ -201,16 +205,16 @@ public class IssuePanel {
         }
 
         @Override
-        public Utils.SelectionListCellRenderer<Tag> getRender() {
+        public SelectionListCellRenderer<Tag> getRender() {
             return new TagRender();
         }
 
         @Override
-        public CompletableFuture<List<Utils.SelectableWrapper<Tag>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Tag>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var tagFuture = new ArrayList<Utils.SelectableWrapper<TagSelect.Tag>>();
+                var tagFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Tag>>();
                 for (String tag : issue.tags) {
-                    var selectableWrapper = new Utils.SelectableWrapper<>(new TagSelect.Tag(tag), true);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new TagSelect.Tag(tag), true);
                     tagFuture.add(selectableWrapper);
                 }
                 return tagFuture;
@@ -228,11 +232,11 @@ public class IssuePanel {
         }
     }
 
-    public class StateSelect extends Utils.LabeledListPanelHandle<StateSelect.State> {
+    public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
 
         public record State(String status, String label) { }
 
-        public static class StateRender extends Utils.SelectionListCellRenderer<StateSelect.State> {
+        public static class StateRender extends SelectionListCellRenderer<StateSelect.State> {
 
             @Override
             public String getText(StateSelect.State value) {
@@ -265,18 +269,18 @@ public class IssuePanel {
         }
 
         @Override
-        public Utils.SelectionListCellRenderer<State> getRender() {
+        public SelectionListCellRenderer<State> getRender() {
             return new StateSelect.StateRender();
         }
 
         @Override
-        public CompletableFuture<List<Utils.SelectableWrapper<State>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<State>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var allStates = Arrays.stream(RadIssue.State.values()).map(e -> new State(e.status, e.label)).toList();
-                var stateList = new ArrayList<Utils.SelectableWrapper<StateSelect.State>>();
+                var stateList = new ArrayList<SelectionListCellRenderer.SelectableWrapper<State>>();
                 for (State state : allStates) {
                     var isSelected = issue.state.status.equals(state.status);
-                    var selectableWrapper = new Utils.SelectableWrapper<>(state, isSelected);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(state, isSelected);
                     stateList.add(selectableWrapper);
                 }
                 return stateList;
@@ -294,11 +298,11 @@ public class IssuePanel {
         }
     }
 
-    public class AssigneesSelect extends Utils.LabeledListPanelHandle<AssigneesSelect.Assignee> {
+    public class AssigneesSelect extends LabeledListPanelHandle<AssigneesSelect.Assignee> {
 
         public record Assignee(String name) { }
 
-        public static class AssigneeRender extends Utils.SelectionListCellRenderer<AssigneesSelect.Assignee> {
+        public static class AssigneeRender extends SelectionListCellRenderer<AssigneesSelect.Assignee> {
 
             @Override
             public String getText(AssigneesSelect.Assignee value) {
@@ -329,19 +333,19 @@ public class IssuePanel {
         }
 
         @Override
-        public Utils.SelectionListCellRenderer<Assignee> getRender() {
+        public SelectionListCellRenderer<Assignee> getRender() {
             return new AssigneesSelect.AssigneeRender();
         }
 
         @Override
-        public CompletableFuture<List<Utils.SelectableWrapper<Assignee>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Assignee>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var projectInfo = api.fetchRadProject(issue.projectId);
-                var assignees = new ArrayList<Utils.SelectableWrapper<AssigneesSelect.Assignee>>();
+                var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Assignee>>();
                 for (var delegate : projectInfo.delegates) {
                     var assignee = new AssigneesSelect.Assignee(delegate);
                     var isSelected = issue.assignees.contains(delegate);
-                    var selectableWrapper = new Utils.SelectableWrapper<>(assignee, isSelected);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
                     assignees.add(selectableWrapper);
                 }
                 return assignees;
