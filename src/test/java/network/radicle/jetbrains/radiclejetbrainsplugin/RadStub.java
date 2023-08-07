@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsViewTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
@@ -17,6 +18,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_HO
 import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_PATH;
 
 public class RadStub extends RadicleProjectService {
+    private int counter = 0;
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
     public String firstCommitHash;
     public static final String SECOND_COMMIT_HASH = "970b7ceb6678bc42e4fb0b9e3628914e1e1b8dae";
@@ -88,11 +90,18 @@ public class RadStub extends RadicleProjectService {
             stdout = did + "\n";
         } else if (cmdLine.getCommandLineString().contains("self --ssh-fingerprint")) {
             var envRadHome = cmdLine.getEnvironment().get("RAD_HOME");
+            if (cmdLine.getCommandLineString().contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION) || (!Strings.isNullOrEmpty(envRadHome) &&
+                    envRadHome.contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION))) {
+                counter++;
+            }
             if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome) &&
                     envRadHome.contains(RAD_HOME1))) {
                 stdout = keyHash + "A" + "\n";
             } else if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome) &&
                     envRadHome.contains(RAD_HOME))) {
+                stdout = keyHash + "\n";
+            } else if ((cmdLine.getCommandLineString().contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION) || (!Strings.isNullOrEmpty(envRadHome) &&
+                    envRadHome.contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION))) && counter == 2) {
                 stdout = keyHash + "\n";
             } else {
                 pr.setExitCode(-1);

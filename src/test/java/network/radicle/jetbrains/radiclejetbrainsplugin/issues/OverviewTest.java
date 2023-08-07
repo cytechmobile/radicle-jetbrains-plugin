@@ -25,7 +25,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -227,16 +227,16 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
-        var firstTag = (Utils.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(0);
+        var firstTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(0);
         assertThat(firstTag.value.tag()).isEqualTo(issue.tags.get(0));
         assertThat(firstTag.selected).isTrue();
 
-        var secondTag = (Utils.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(1);
+        var secondTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(1);
         assertThat(secondTag.value.tag()).isEqualTo(issue.tags.get(1));
         assertThat(secondTag.selected).isTrue();
 
         //Remove first tag
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
 
         var res = response.poll(5, TimeUnit.SECONDS);
@@ -281,17 +281,17 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
-        var openState = (Utils.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(0);
+        var openState = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(0);
         assertThat(openState.value.label()).isEqualTo(issue.state.label);
         assertThat(openState.selected).isTrue();
 
-        var closedState = (Utils.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(1);
+        var closedState = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(1);
         assertThat(closedState.value.label()).isEqualTo(RadIssue.State.CLOSED.label);
         assertThat(closedState.selected).isFalse();
 
         // Change state to closed
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
 
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
@@ -338,21 +338,21 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(500);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
-        var firstAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
+        var firstAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
         assertThat(firstAssignee.value.name()).isEqualTo(projectDelegates.get(0));
         assertThat(firstAssignee.selected).isTrue();
 
-        var secondAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
+        var secondAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
         assertThat(secondAssignee.value.name()).isEqualTo(projectDelegates.get(1));
         assertThat(secondAssignee.selected).isTrue();
 
-        var thirdAssignee = (Utils.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
+        var thirdAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
         assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
         assertThat(thirdAssignee.selected).isFalse();
 
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
 
         popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
         Thread.sleep(1000);
