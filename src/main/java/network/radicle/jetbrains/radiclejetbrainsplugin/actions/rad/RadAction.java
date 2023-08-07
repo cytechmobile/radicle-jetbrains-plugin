@@ -115,6 +115,7 @@ public abstract class RadAction {
         var showDialog = ((!hasIdentity || !isIdentityUnlocked) && !hasStoredPassword);
         AtomicBoolean okButton = new AtomicBoolean(false);
         AtomicReference<String> passphrase = new AtomicReference<>("");
+        AtomicReference<String> alias = new AtomicReference<>("");
         if (showDialog) {
             var latch = new CountDownLatch(1);
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -122,10 +123,11 @@ public abstract class RadAction {
                         RadicleBundle.message("unlockIdentity");
                 var myDialog = dialog == null ? new IdentityDialog() : dialog;
                 myDialog.setTitle(title);
-
+                myDialog.hasIdentity(hasIdentity);
                 okButton.set(myDialog.showAndGet());
                 latch.countDown();
                 passphrase.set(myDialog.getPassword());
+                alias.set(myDialog.getAlias());
             }, ModalityState.any());
             try {
                 latch.await();
@@ -135,7 +137,7 @@ public abstract class RadAction {
             }
         }
         if (!isIdentityUnlocked && hasIdentity && hasStoredPassword) {
-            var authOutput = rad.auth(storedPassword, radHome, radPath);
+            var authOutput = rad.auth(storedPassword, "", radHome, radPath);
             var success = RadAuth.validateOutput(authOutput);
             if (!RadAction.isSuccess(success)) {
                 projectSettings.savePassphrase(radDetails.nodeId, null);
@@ -143,7 +145,7 @@ public abstract class RadAction {
             return success;
         }
         if (okButton.get()) {
-              var authOutput = rad.auth(passphrase.get(), radHome, radPath);
+              var authOutput = rad.auth(passphrase.get(), alias.get(), radHome, radPath);
               var success = RadAuth.validateOutput(authOutput);
               if (RadAction.isSuccess(success)) {
                   output = rad.self(radHome, radPath);
