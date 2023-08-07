@@ -52,19 +52,21 @@ public class RadIssue {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
-        OPEN("Open"),
-        CLOSED("Closed");
+        OPEN("open", "Open"),
+        CLOSED("closed", "Closed");
 
         public final String status;
+        public final String label;
 
-        State(String status) {
+        State(String status, String label) {
             this.status = status;
+            this.label = label;
         }
 
         @JsonCreator
         public static RadIssue.State forValues(@JsonProperty("status") String status) {
             for (RadIssue.State state : RadIssue.State.values()) {
-                if (state.status.equalsIgnoreCase(status)) {
+                if (state.status.equals(status)) {
                     return state;
                 }
             }

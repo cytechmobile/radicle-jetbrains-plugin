@@ -10,12 +10,17 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.I
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
+import org.apache.commons.lang.StringUtils;
 
+import javax.swing.JComponent;
+import java.awt.BorderLayout;
 import java.util.Arrays;
 
 public class IssueTabController extends TabController<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final IssueListPanel issueListPanel;
     private SingleValueModel<RadIssue> myIssueModel;
+    private JComponent issueJPanel;
+    private IssuePanel issuePanel;
 
     public IssueTabController(Content tab, Project project) {
         super(project, tab);
@@ -41,9 +46,10 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
     }
 
     public void createIssuePanel(RadIssue myIssue) {
+        final var mainPanel = tab.getComponent();
         final var issueModel = new SingleValueModel<>(myIssue);
         this.myIssueModel = issueModel;
-        createInternalIssuePanel(issueModel);
+        createInternalIssuePanel(issueModel, mainPanel);
         issueModel.addListener(issue -> {
             var fetched = api.fetchIssue(myIssue.projectId, myIssue.repo, myIssue.id);
             // Reload whole panel
@@ -55,8 +61,23 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
         });
     }
 
-    protected void createInternalIssuePanel(SingleValueModel<RadIssue> issue) {
+    protected void createInternalIssuePanel(SingleValueModel<RadIssue> issue, JComponent mainPanel) {
+        tab.setDisplayName("Issue : " + StringUtils.substring(issue.getValue().id, 0,  7));
+        issuePanel = new IssuePanel(this, issue);
+        issueJPanel = issuePanel.createPanel();
+        mainPanel.removeAll();
+        mainPanel.add(issueJPanel, BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
         openIssueTimelineOnEditor(issue, true);
+    }
+
+    public IssuePanel getIssuePanel() {
+        return issuePanel;
+    }
+
+    public JComponent getIssueJPanel() {
+        return issueJPanel;
     }
 
     public void openIssueTimelineOnEditor(SingleValueModel<RadIssue> issueModel, boolean force) {
