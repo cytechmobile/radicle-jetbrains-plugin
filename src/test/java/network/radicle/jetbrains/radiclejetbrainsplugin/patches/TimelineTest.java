@@ -24,7 +24,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -269,16 +269,16 @@ public class TimelineTest extends AbstractIT {
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
-        var firstTag = (Utils.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>) listmodel.getElementAt(0);
+        var firstTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>) listmodel.getElementAt(0);
         assertThat(firstTag.value.tag()).isEqualTo(patch.tags.get(0));
         assertThat(firstTag.selected).isTrue();
 
-        var secondTag = (Utils.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>) listmodel.getElementAt(1);
+        var secondTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>) listmodel.getElementAt(1);
         assertThat(secondTag.value.tag()).isEqualTo(patch.tags.get(1));
         assertThat(secondTag.selected).isTrue();
 
         //Remove first tag
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
 
         var res = response.poll(5, TimeUnit.SECONDS);
@@ -323,21 +323,21 @@ public class TimelineTest extends AbstractIT {
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
-        var openState = (Utils.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(0);
+        var openState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(0);
         assertThat(openState.value.label()).isEqualTo(RadPatch.State.OPEN.label);
         assertThat(openState.selected).isTrue();
 
-        var draftState = (Utils.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(1);
+        var draftState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(1);
         assertThat(draftState.value.label()).isEqualTo(RadPatch.State.DRAFT.label);
         assertThat(draftState.selected).isFalse();
 
-        var archivedState = (Utils.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(2);
+        var archivedState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(2);
         assertThat(archivedState.value.label()).isEqualTo(RadPatch.State.ARCHIVED.label);
         assertThat(archivedState.selected).isFalse();
 
         // Change state to draft
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
-        ((Utils.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
 
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));

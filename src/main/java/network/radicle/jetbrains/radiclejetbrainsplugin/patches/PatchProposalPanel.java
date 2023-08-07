@@ -44,6 +44,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -307,11 +310,11 @@ public class PatchProposalPanel {
         });
     }
 
-    public class StateSelect extends Utils.LabeledListPanelHandle<PatchProposalPanel.StateSelect.State> {
+    public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
 
         public record State(String status, String label) { }
 
-        public static class StateRender extends Utils.SelectionListCellRenderer<PatchProposalPanel.StateSelect.State> {
+        public static class StateRender extends SelectionListCellRenderer<State> {
 
             @Override
             public String getText(PatchProposalPanel.StateSelect.State value) {
@@ -345,18 +348,18 @@ public class PatchProposalPanel {
 
 
         @Override
-        public Utils.SelectionListCellRenderer<PatchProposalPanel.StateSelect.State> getRender() {
+        public SelectionListCellRenderer<PatchProposalPanel.StateSelect.State> getRender() {
             return new PatchProposalPanel.StateSelect.StateRender();
         }
 
         @Override
-        public CompletableFuture<List<Utils.SelectableWrapper<PatchProposalPanel.StateSelect.State>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<State>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var allStates = Arrays.stream(RadPatch.State.values()).map(e -> new PatchProposalPanel.StateSelect.State(e.status, e.label)).toList();
-                var stateList = new ArrayList<Utils.SelectableWrapper<PatchProposalPanel.StateSelect.State>>();
+                var stateList = new ArrayList<SelectionListCellRenderer.SelectableWrapper<State>>();
                 for (PatchProposalPanel.StateSelect.State state : allStates) {
                     var isSelected = patch.state.status.equals(state.status);
-                    var selectableWrapper = new Utils.SelectableWrapper<>(state, isSelected);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(state, isSelected);
                     stateList.add(selectableWrapper);
                 }
                 return stateList;
@@ -373,11 +376,11 @@ public class PatchProposalPanel {
             return true;
         }
     }
-    public class TagSelect extends Utils.LabeledListPanelHandle<PatchProposalPanel.TagSelect.Tag> {
+    public class TagSelect extends LabeledListPanelHandle<PatchProposalPanel.TagSelect.Tag> {
 
         public record Tag(String tag) { }
 
-        public static class TagRender extends Utils.SelectionListCellRenderer<PatchProposalPanel.TagSelect.Tag> {
+        public static class TagRender extends SelectionListCellRenderer<PatchProposalPanel.TagSelect.Tag> {
 
             @Override
             public String getText(PatchProposalPanel.TagSelect.Tag value) {
@@ -410,9 +413,10 @@ public class PatchProposalPanel {
         public CompletableFuture<List<PatchProposalPanel.TagSelect.Tag>> showEditPopup(JComponent parent) {
             var addField = new JBTextField();
             var res = new CompletableFuture<List<PatchProposalPanel.TagSelect.Tag>>();
-            jbPopup = Utils.PopupBuilder.createPopup(this.getData(), new PatchProposalPanel.TagSelect.TagRender(), false, addField, res);
+            var popUpBuilder = new PopupBuilder();
+            jbPopup = popUpBuilder.createPopup(this.getData(), getRender(), this.isSingleSelection(), addField, res);
             jbPopup.showUnderneathOf(parent);
-            listener = Utils.PopupBuilder.myListener;
+            listener = popUpBuilder.getListener();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;
@@ -424,16 +428,16 @@ public class PatchProposalPanel {
         }
 
         @Override
-        public Utils.SelectionListCellRenderer<PatchProposalPanel.TagSelect.Tag> getRender() {
+        public SelectionListCellRenderer<PatchProposalPanel.TagSelect.Tag> getRender() {
             return new PatchProposalPanel.TagSelect.TagRender();
         }
 
         @Override
-        public CompletableFuture<List<Utils.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Tag>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var tagFuture = new ArrayList<Utils.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>>();
+                var tagFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Tag>>();
                 for (String tag : patch.tags) {
-                    var selectableWrapper = new Utils.SelectableWrapper<>(new PatchProposalPanel.TagSelect.Tag(tag), true);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new PatchProposalPanel.TagSelect.Tag(tag), true);
                     tagFuture.add(selectableWrapper);
                 }
                 return tagFuture;

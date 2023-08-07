@@ -1,6 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
 import com.intellij.ui.components.panels.ListLayout;
+import net.miginfocom.layout.CC;
+
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
@@ -9,7 +11,7 @@ public class Utils {
         return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
     }
 
-    public static void addListPanel(JPanel panel, Utils.LabeledListPanelHandle<?> handle) {
+    public static void addListPanel(JPanel panel, LabeledListPanelHandle<?> handle) {
         panel.add(handle.getTitleLabel(), new CC().alignY("top").width("30"));
         panel.add(handle.getPanel(), new CC().minWidth("0").growX().pushX().wrap());
     }

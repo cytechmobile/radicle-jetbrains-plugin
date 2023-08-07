@@ -21,6 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 
 import javax.swing.JComponent;
