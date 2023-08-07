@@ -171,7 +171,7 @@ public class IssueComponent {
         }));
 
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                i -> new SingleValueModel<>(RadicleIcons.RADICLE), contentPanel);
+                i -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), contentPanel);
         b.withHeader(contentPanel, actionsPanel);
         headerPanel = (JPanel) b.build();
         return headerPanel;
