@@ -215,7 +215,7 @@ public class PatchListPanelTest extends AbstractIT {
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
         var searchVm = listPanel.getSearchVm();
-        var tags = searchVm.getTags();
+        var tags = searchVm.getLabels();
         assertThat(tags.get().size()).isEqualTo(4);
     }
 
@@ -227,7 +227,7 @@ public class PatchListPanelTest extends AbstractIT {
 
         var filterWithSearch = new PatchListSearchValue();
 
-        filterWithSearch.tag = "tag1";
+        filterWithSearch.label = "tag1";
         listPanel.filterList(filterWithSearch);
         executeUiTasks();
         var patchModel = listPanel.getModel();
@@ -235,7 +235,7 @@ public class PatchListPanelTest extends AbstractIT {
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
-        filterWithSearch.tag = "firstTag";
+        filterWithSearch.label = "firstTag";
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
@@ -243,7 +243,7 @@ public class PatchListPanelTest extends AbstractIT {
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
-        filterWithSearch.tag = "unknownTag";
+        filterWithSearch.label = "unknownTag";
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();

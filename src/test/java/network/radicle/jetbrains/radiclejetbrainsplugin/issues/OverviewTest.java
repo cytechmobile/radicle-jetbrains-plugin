@@ -94,17 +94,17 @@ public class OverviewTest extends AbstractIT {
                 Map<String, Object> map = mapper.readValue(obj, Map.class);
                 var action = (HashMap<String, String>) map.get("action");
                 //Assert that we send the correct payload to the api
-                if (map.get("type").equals("thread")) {
+                if (map.get("type").equals("comment")) {
                     //Comment
-                    assertThat(map.get("type")).isEqualTo("thread");
-                    assertThat(action.get("type")).isEqualTo("comment");
-                    assertThat(action.get("body")).isEqualTo(dummyComment);
+                    assertThat(map.get("type")).isEqualTo("comment");
+                    assertThat(map.get("body")).isEqualTo(dummyComment);
+                    assertThat(map.get("replyTo")).isEqualTo(issue.id);
                     issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of()));
                 } else if (map.get("type").equals("edit")) {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
-                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("tag")) {
+                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -182,7 +182,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(titleLabel.getText()).isEqualTo(RadicleBundle.message("title", "", Strings.nullToEmpty(issue.title)));
         assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", "", Strings.nullToEmpty(issue.id)));
         assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id)));
-        assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueTag", "", String.join(",", issue.tags)));
+        assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueLabels", "", String.join(",", issue.labels)));
         assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees", "", String.join(",", issue.assignees)));
         assertThat(issueStateLabel.getText()).isEqualTo(RadicleBundle.message("issueState", "", Strings.nullToEmpty(issue.state.label)));
         assertThat(issueCreatedLabel.getText()).isEqualTo(RadicleBundle.message("issueCreated", "",
@@ -198,21 +198,21 @@ public class OverviewTest extends AbstractIT {
         var actionPanel = ef.getSecondComponent();
         var components = actionPanel.getComponents();
         var tagLabel = (JLabel) components[4];
-        assertThat(tagLabel.getText()).isEqualTo(RadicleBundle.message("tag"));
+        assertThat(tagLabel.getText()).isEqualTo(RadicleBundle.message("label"));
 
         var tagPanel = (NonOpaquePanel) components[5];
         var myPanel = (BorderLayoutPanel) tagPanel.getComponent(0);
 
         // Assert that the label has the selected tags
         var stateValueLabel = (JLabel) myPanel.getComponents()[0];
-        assertThat(stateValueLabel.getText()).contains(String.join(",", issue.tags));
+        assertThat(stateValueLabel.getText()).contains(String.join(",", issue.labels));
 
         // Find edit key and press it
         var openPopupButton = UIUtil.findComponentOfType(tagPanel, InlineIconButton.class);
         openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
         executeUiTasks();
 
-        var tagSelect = issuePanel.getTagSelect();
+        var tagSelect = issuePanel.getLabelSelect();
         var popupListener = tagSelect.listener;
         var jblist = UIUtil.findComponentOfType(tagSelect.jbPopup.getContent(), JBList.class);
         var listmodel = jblist.getModel();
@@ -227,24 +227,22 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
-        var firstTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(0);
-        assertThat(firstTag.value.tag()).isEqualTo(issue.tags.get(0));
+        var firstTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.LabelSelect.Label>) listmodel.getElementAt(0);
+        assertThat(firstTag.value.value()).isEqualTo(issue.labels.get(0));
         assertThat(firstTag.selected).isTrue();
 
-        var secondTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.TagSelect.Tag>) listmodel.getElementAt(1);
-        assertThat(secondTag.value.tag()).isEqualTo(issue.tags.get(1));
+        var secondTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.LabelSelect.Label>) listmodel.getElementAt(1);
+        assertThat(secondTag.value.value()).isEqualTo(issue.labels.get(1));
         assertThat(secondTag.selected).isTrue();
 
-        //Remove first tag
+        //Remove first value
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
 
         var res = response.poll(5, TimeUnit.SECONDS);
-        var removeList = (ArrayList<String>) res.get("remove");
-        var addList = (ArrayList<String>) res.get("add");
-        assertThat(removeList).contains(issue.tags.get(0));
-        assertThat(removeList).contains(issue.tags.get(1));
-        assertThat(addList).contains(issue.tags.get(1));
+        var selectedLabels = (ArrayList<String>) res.get("labels");
+        assertThat(selectedLabels.size()).isEqualTo(1);
+        assertThat(selectedLabels).contains(issue.labels.get(1));
     }
 
     @Test
@@ -357,12 +355,9 @@ public class OverviewTest extends AbstractIT {
         popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
         Thread.sleep(1000);
         var res = response.poll(5, TimeUnit.SECONDS);
-        var removeList = (ArrayList<String>) res.get("remove");
-        var addList = (ArrayList<String>) res.get("add");
-
-        assertThat(removeList).contains(getTestProjects().get(0).delegates.get(0).split(":")[2]);
-        assertThat(removeList).contains(getTestProjects().get(0).delegates.get(1).split(":")[2]);
-        assertThat(addList).contains(getTestProjects().get(0).delegates.get(2).split(":")[2]);
+        var assignees = (ArrayList<String>) res.get("assignees");
+        assertThat(assignees.size()).isEqualTo(1);
+        assertThat(assignees).contains(getTestProjects().get(0).delegates.get(2));
     }
 
     @Test
