@@ -61,11 +61,11 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                 });
     }
 
-    public MutableStateFlow<String> tagFilter() {
-        return partialState(getSearchState(), IssueListSearchValue::getTag,
-                (Function2<IssueListSearchValue, Object, IssueListSearchValue>) (issueListSearchValue, tag) -> {
+    public MutableStateFlow<String> labelFilter() {
+        return partialState(getSearchState(), IssueListSearchValue::getLabel,
+                (Function2<IssueListSearchValue, Object, IssueListSearchValue>) (issueListSearchValue, label) -> {
                     var copyIssueSearchValue = new IssueListSearchValue(issueListSearchValue);
-                    copyIssueSearchValue.tag = (String) tag;
+                    copyIssueSearchValue.label = (String) label;
                     return copyIssueSearchValue;
                 });
     }
@@ -91,8 +91,8 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     }
 
     @Override
-    protected List<String> getItemTags(RadIssue issue) {
-        return issue.tags;
+    protected List<String> getLabels(RadIssue issue) {
+        return issue.labels;
     }
 
     @Override
