@@ -356,8 +356,7 @@ public class RadicleProjectApi {
         try {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var data = Map.of("type", "thread", "revision",
-                    patch.revisions.get(patch.revisions.size() - 1).id(), "action", Map.of("type", "comment", "body", comment));
+            var data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(), "body", comment);
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(commentReq, RadicleBundle.message("commentError"));
