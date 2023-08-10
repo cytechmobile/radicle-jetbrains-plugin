@@ -75,7 +75,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
              var searchFilter = patchListSearchValue.searchQuery;
              var peerAuthorFilter = patchListSearchValue.author;
              var stateFilter = patchListSearchValue.state;
-             var tagFilter = patchListSearchValue.tag;
+             var labelFilter = patchListSearchValue.label;
              var loadedRadPatches = loadedData;
              List<RadPatch> filteredPatches = loadedRadPatches.stream()
                      .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
@@ -83,8 +83,8 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                      .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
                      .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
                              p.author.id.equals(peerAuthorFilter))
-                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.label.equals(stateFilter)))
-                     .filter(p -> Strings.isNullOrEmpty(tagFilter) || p.tags.stream().anyMatch(tag -> tag.equals(tagFilter)))
+                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.status.equals(stateFilter)))
+                     .filter(p -> Strings.isNullOrEmpty(labelFilter) || p.labels.stream().anyMatch(label -> label.equals(labelFilter)))
                      .collect(Collectors.toList());
              model.addAll(filteredPatches);
          }

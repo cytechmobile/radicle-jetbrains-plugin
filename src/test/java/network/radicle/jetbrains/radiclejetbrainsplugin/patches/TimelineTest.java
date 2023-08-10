@@ -89,12 +89,10 @@ public class TimelineTest extends AbstractIT {
                 var mapper = new ObjectMapper();
                 Map<String, Object> map = mapper.readValue(obj, Map.class);
                 var action = (HashMap<String, String>) map.get("action");
-                if (map.get("type").equals("thread")) {
+                if (map.get("type").equals("revision.comment")) {
                     //Comment
                     assertThat(map.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
-                    assertThat(map.get("type")).isEqualTo("thread");
-                    assertThat(action.get("type")).isEqualTo("comment");
-                    assertThat(action.get("body")).isEqualTo(dummyComment);
+                    assertThat(map.get("body")).isEqualTo(dummyComment);
                     var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of());
                     patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
                 } else if (map.get("type").equals("edit")) {

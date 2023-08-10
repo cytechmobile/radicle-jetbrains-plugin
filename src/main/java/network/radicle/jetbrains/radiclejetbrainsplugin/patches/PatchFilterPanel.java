@@ -47,14 +47,14 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
-        var tagFilter = new DropDownComponentFactory<>(this.viewModel.tagFilter()).create(coroutineScope, RadicleBundle.message("tag"), o -> o,
+        var labelFilter = new DropDownComponentFactory<>(this.viewModel.labelFilter()).create(coroutineScope, RadicleBundle.message("label"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
                     var popUpBuilder = new PopupBuilder();
-                    var popUp = popUpBuilder.createPopup(this.viewModel.getTags(), this.viewModel.getCountDown());
+                    var popUp = popUpBuilder.createPopup(this.viewModel.getLabels(), this.viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
-        return List.of(stateFilter, projectFilter, authorFilter, tagFilter);
+        return List.of(stateFilter, projectFilter, authorFilter, labelFilter);
     }
 
     @NotNull

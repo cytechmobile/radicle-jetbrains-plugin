@@ -9,14 +9,14 @@ public abstract class AbstractReviewListSearchValue implements ReviewListSearchV
     public String searchQuery;
     public String author;
     public String state;
-    public String tag;
+    public String label;
 
-    public AbstractReviewListSearchValue(String project, String searchQuery, String author, String state, String tag) {
+    public AbstractReviewListSearchValue(String project, String searchQuery, String author, String state, String label) {
         this.project = project;
         this.searchQuery = searchQuery;
         this.author = author;
         this.state = state;
-        this.tag = tag;
+        this.label = label;
     }
 
     public AbstractReviewListSearchValue() {
@@ -34,8 +34,8 @@ public abstract class AbstractReviewListSearchValue implements ReviewListSearchV
         return state;
     }
 
-    public String getTag() {
-        return tag;
+    public String getLabel() {
+        return label;
     }
 
     @Override
@@ -53,7 +53,7 @@ public abstract class AbstractReviewListSearchValue implements ReviewListSearchV
         if (state != null) {
             count++;
         }
-        if (tag != null) {
+        if (label != null) {
             count++;
         }
         return count;
