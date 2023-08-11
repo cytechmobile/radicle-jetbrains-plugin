@@ -49,10 +49,10 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
-        var tagFilter = new DropDownComponentFactory<>(this.viewModel.tagFilter()).create(coroutineScope, RadicleBundle.message("tag"), o -> o,
+        var labelFilter = new DropDownComponentFactory<>(this.viewModel.labelFilter()).create(coroutineScope, RadicleBundle.message("label"), o -> o,
                 (relativePoint, jbPopupPopupState, continuation) -> {
                     var popUpBuilder = new PopupBuilder();
-                    var popUp = popUpBuilder.createPopup(viewModel.getTags(), viewModel.getCountDown());
+                    var popUp = popUpBuilder.createPopup(viewModel.getLabels(), viewModel.getCountDown());
                     return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
                 });
 
@@ -64,7 +64,7 @@ public class IssueFilterPanel extends ReviewListSearchPanelFactory<IssueListSear
                 });
 
 
-        return List.of(stateFilter, projectFilter, authorFilter, assigneesFilter, tagFilter);
+        return List.of(stateFilter, projectFilter, authorFilter, assigneesFilter, labelFilter);
     }
 
     @NotNull

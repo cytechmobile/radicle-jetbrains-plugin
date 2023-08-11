@@ -229,7 +229,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadIssue addRemoveIssueAssignees(RadIssue issue, List<String> addAssigneesList, List<String> removeAssigneesList) {
+    public RadIssue addRemoveIssueAssignees(RadIssue issue, List<String> addAssigneesList) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
             return null;
@@ -237,12 +237,12 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "assign", "add", addAssigneesList, "remove", removeAssigneesList);
+            var patchIssueData = Map.of("type", "assign", "assignees", addAssigneesList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("assignersChangeError"));
             if (!resp.isSuccess()) {
-                logger.warn("error adding {} / remove {} assignees to issue:{} resp:{}", addAssigneesList, removeAssigneesList, issue, resp);
+                logger.warn("error adding {} assignees to issue:{} resp:{}", addAssigneesList, issue, resp);
                 return null;
             }
             return issue;
@@ -277,7 +277,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadIssue addRemoveIssueTag(RadIssue issue, List<String> addTagList, List<String> removeTagList) {
+    public RadIssue addRemoveIssueLabel(RadIssue issue, List<String> addTagList) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
             return null;
@@ -285,17 +285,17 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "tag", "add", addTagList, "remove", removeTagList);
+            var patchIssueData = Map.of("type", "label", "labels", addTagList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("tagChangeError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("labelChangeError"));
             if (!resp.isSuccess()) {
-                logger.warn("error adding {} / remove {} tags to issue:{} resp:{}", addTagList, removeTagList, issue, resp);
+                logger.warn("error adding {} tags to issue:{} resp:{}", addTagList, issue, resp);
                 return null;
             }
             return issue;
         } catch (Exception e) {
-            logger.warn("error adding tag to issue: {}", issue, e);
+            logger.warn("error adding label to issue: {}", issue, e);
         }
         return null;
     }
@@ -308,8 +308,7 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "thread", "action",
-                    Map.of("type", "comment", "body", comment));
+            var patchIssueData = Map.of("type", "comment", "body", comment, "replyTo", issue.id);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
@@ -382,8 +381,7 @@ public class RadicleProjectApi {
         try {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var data = Map.of("type", "thread", "revision",
-                    patch.revisions.get(patch.revisions.size() - 1).id(), "action", Map.of("type", "comment", "body", comment));
+            var data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(), "body", comment);
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(commentReq, RadicleBundle.message("commentError"));

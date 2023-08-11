@@ -51,11 +51,11 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
                 });
     }
 
-    public MutableStateFlow<String> tagFilter() {
-        return partialState(getSearchState(), PatchListSearchValue::getTag,
-                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, tag) -> {
+    public MutableStateFlow<String> labelFilter() {
+        return partialState(getSearchState(), PatchListSearchValue::getLabel,
+                (Function2<PatchListSearchValue, Object, PatchListSearchValue>) (patchListSearchValue, label) -> {
                     var copyPatchSearchValue = new PatchListSearchValue(patchListSearchValue);
-                    copyPatchSearchValue.tag = (String) tag;
+                    copyPatchSearchValue.label = (String) label;
                     return copyPatchSearchValue;
                 });
     }
@@ -66,8 +66,8 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
     }
 
     @Override
-    protected List<String> getItemTags(RadPatch patch) {
-        return patch.tags;
+    protected List<String> getLabels(RadPatch patch) {
+        return patch.labels;
     }
 
     @Override

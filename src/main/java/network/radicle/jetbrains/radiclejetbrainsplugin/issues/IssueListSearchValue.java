@@ -6,7 +6,7 @@ public class IssueListSearchValue extends AbstractReviewListSearchValue {
 
     public IssueListSearchValue(IssueListSearchValue searchValue) {
         super(searchValue.project, searchValue.searchQuery, searchValue.author,
-                searchValue.state, searchValue.tag);
+                searchValue.state, searchValue.label);
         this.assignee = searchValue.assignee;
     }
 

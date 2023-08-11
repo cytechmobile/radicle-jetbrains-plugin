@@ -93,11 +93,12 @@ public class IssueComponent {
             return mainPanel;
         }
         for (var i = 1; i < discussionList.size(); i++) {
+            var issueId = discussionList.get(0).id;
             var com = discussionList.get(i);
             var textHtmlEditor = new BaseHtmlEditorPane();
             textHtmlEditor.setOpaque(false);
             var message = com.body;
-            if (!Strings.isNullOrEmpty(com.replyTo)) {
+            if (!Strings.isNullOrEmpty(com.replyTo) && !com.replyTo.equals(issueId)) {
                 var replyToMessage = findMessage(com.replyTo, discussionList);
                 message = "<div><div style=\"border-left: 2px solid black;\">" +
                         " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +

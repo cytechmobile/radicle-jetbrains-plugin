@@ -14,7 +14,7 @@ public class RadIssue {
     public String title;
     public State state;
     public List<String> assignees;
-    public List<String> tags;
+    public List<String> labels;
     public List<RadDiscussion> discussion;
     public GitRepository repo;
     public Project project;
@@ -26,13 +26,13 @@ public class RadIssue {
     }
 
     public RadIssue(String id, RadAuthor author, String title, State state,
-                    List<String> assignees, List<String> tags, List<RadDiscussion> discussion) {
+                    List<String> assignees, List<String> labels, List<RadDiscussion> discussion) {
         this.id = id;
         this.author = author;
         this.title = title;
         this.state = state;
         this.assignees = assignees;
-        this.tags = tags;
+        this.labels = labels;
         this.discussion = discussion;
     }
 
@@ -42,7 +42,7 @@ public class RadIssue {
         this.title = other.title;
         this.state = other.state;
         this.assignees = other.assignees;
-        this.tags = other.tags;
+        this.labels = other.labels;
         this.discussion = other.discussion;
         this.repo = other.repo;
         this.project = other.project;
