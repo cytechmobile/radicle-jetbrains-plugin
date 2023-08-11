@@ -101,7 +101,7 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
-                } else if (map.get("type").equals("tag") || map.get("type").equals("lifecycle")) {
+                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -230,7 +230,7 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
-    public void addRemoveTags() throws InterruptedException {
+    public void addRemoveLabels() throws InterruptedException {
         var patchProposalPanel = patchTabController.getPatchProposalPanel();
         var panel = patchTabController.getPatchProposalJPanel();
 
@@ -238,21 +238,21 @@ public class TimelineTest extends AbstractIT {
         var actionPanel = ef.getSecondComponent();
         var components = actionPanel.getComponents();
         var tagLabel = (JLabel) components[2];
-        assertThat(tagLabel.getText()).isEqualTo(RadicleBundle.message("tag"));
+        assertThat(tagLabel.getText()).isEqualTo(RadicleBundle.message("label"));
 
         var tagPanel = (NonOpaquePanel) components[3];
         var myPanel = (BorderLayoutPanel) tagPanel.getComponent(0);
 
         // Assert that the label has the selected tags
         var stateValueLabel = (JLabel) myPanel.getComponents()[0];
-        assertThat(stateValueLabel.getText()).contains(String.join(",", patch.tags));
+        assertThat(stateValueLabel.getText()).contains(String.join(",", patch.labels));
 
         // Find edit key and press it
         var openPopupButton = UIUtil.findComponentOfType(tagPanel, InlineIconButton.class);
         openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
         executeUiTasks();
 
-        var tagSelect = patchProposalPanel.getTagSelect();
+        var tagSelect = patchProposalPanel.getLabelSelect();
         var popupListener = tagSelect.listener;
         var jblist = UIUtil.findComponentOfType(tagSelect.jbPopup.getContent(), JBList.class);
         var listmodel = jblist.getModel();
@@ -267,12 +267,12 @@ public class TimelineTest extends AbstractIT {
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
-        var firstTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>) listmodel.getElementAt(0);
-        assertThat(firstTag.value.tag()).isEqualTo(patch.tags.get(0));
+        var firstTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.LabelSelect.Label>) listmodel.getElementAt(0);
+        assertThat(firstTag.value.label()).isEqualTo(patch.labels.get(0));
         assertThat(firstTag.selected).isTrue();
 
-        var secondTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.TagSelect.Tag>) listmodel.getElementAt(1);
-        assertThat(secondTag.value.tag()).isEqualTo(patch.tags.get(1));
+        var secondTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.LabelSelect.Label>) listmodel.getElementAt(1);
+        assertThat(secondTag.value.label()).isEqualTo(patch.labels.get(1));
         assertThat(secondTag.selected).isTrue();
 
         //Remove first tag
@@ -280,11 +280,9 @@ public class TimelineTest extends AbstractIT {
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
 
         var res = response.poll(5, TimeUnit.SECONDS);
-        var removeList = (ArrayList<String>) res.get("remove");
-        var addList = (ArrayList<String>) res.get("add");
-        assertThat(removeList).contains(patch.tags.get(0));
-        assertThat(removeList).contains(patch.tags.get(1));
-        assertThat(addList).contains(patch.tags.get(1));
+        var addList = (ArrayList<String>) res.get("labels");
+        assertThat(addList.size()).isEqualTo(1);
+        assertThat(addList).contains(patch.labels.get(1));
     }
 
     @Test

@@ -206,7 +206,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch addRemovePatchTag(RadPatch patch, List<String> addTagList, List<String> removeTagList) {
+    public RadPatch addRemovePatchLabel(RadPatch patch, List<String> addLabelList) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -214,17 +214,17 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "tag", "add", addTagList, "remove", removeTagList);
+            var patchIssueData = Map.of("type", "label", "labels", addLabelList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("tagChangeError"));
             if (!resp.isSuccess()) {
-                logger.warn("error adding {} / remove {} tags to patch:{} resp:{}", addTagList, removeTagList, patch, resp);
+                logger.warn("error adding {} labels to patch:{} resp:{}", addLabelList, patch, resp);
                 return null;
             }
             return patch;
         } catch (Exception e) {
-            logger.warn("error adding tag to patch: {}", patch, e);
+            logger.warn("error adding label to patch: {}", patch, e);
         }
         return null;
     }

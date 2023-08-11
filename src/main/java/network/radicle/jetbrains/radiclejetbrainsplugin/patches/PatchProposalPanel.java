@@ -74,7 +74,7 @@ public class PatchProposalPanel {
     protected PatchTabController controller;
     private SingleHeightTabs tabs;
     private final RadicleProjectApi api;
-    private final TagSelect tagSelect;
+    private final LabelSelect labelSelect;
     private final StateSelect stateSelect;
 
     private JComponent commitBrowser;
@@ -84,7 +84,7 @@ public class PatchProposalPanel {
         this.patch = patch.getValue();
         this.api = this.patch.project.getService(RadicleProjectApi.class);
         this.patchModel = patch;
-        this.tagSelect = new TagSelect();
+        this.labelSelect = new LabelSelect();
         this.stateSelect = new StateSelect();
     }
 
@@ -171,7 +171,7 @@ public class PatchProposalPanel {
         actionPanel.setOpaque(false);
         actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         Utils.addListPanel(actionPanel, stateSelect);
-        Utils.addListPanel(actionPanel, tagSelect);
+        Utils.addListPanel(actionPanel, labelSelect);
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchPanel.action.Component", 0.6f);
         splitter.setFirstComponent(borderPanel);
         splitter.setSecondComponent(actionPanel);
@@ -376,32 +376,32 @@ public class PatchProposalPanel {
             return true;
         }
     }
-    public class TagSelect extends LabeledListPanelHandle<PatchProposalPanel.TagSelect.Tag> {
+    public class LabelSelect extends LabeledListPanelHandle<LabelSelect.Label> {
 
-        public record Tag(String tag) { }
+        public record Label(String label) { }
 
-        public static class TagRender extends SelectionListCellRenderer<PatchProposalPanel.TagSelect.Tag> {
+        public static class LabelRender extends SelectionListCellRenderer<LabelSelect.Label> {
 
             @Override
-            public String getText(PatchProposalPanel.TagSelect.Tag value) {
-                return value.tag;
+            public String getText(LabelSelect.Label value) {
+                return value.label;
             }
 
             @Override
             public String getPopupTitle() {
-                return RadicleBundle.message("tag");
+                return RadicleBundle.message("label");
             }
         }
 
         @Override
         public String getSelectedValues() {
-            return String.join(",", patch.tags);
+            return String.join(",", patch.labels);
         }
 
         @Override
-        public boolean storeValues(List<Tag> tags) {
-            var tagList = tags.stream().map(value -> value.tag).toList();
-            var resp = api.addRemovePatchTag(patch, tagList, patch.tags);
+        public boolean storeValues(List<Label> labels) {
+            var labelList = labels.stream().map(value -> value.label).toList();
+            var resp = api.addRemovePatchLabel(patch, labelList);
             var isSuccess = resp != null;
             if (isSuccess) {
                 patchModel.setValue(patch);
@@ -410,9 +410,9 @@ public class PatchProposalPanel {
         }
 
         @Override
-        public CompletableFuture<List<PatchProposalPanel.TagSelect.Tag>> showEditPopup(JComponent parent) {
+        public CompletableFuture<List<LabelSelect.Label>> showEditPopup(JComponent parent) {
             var addField = new JBTextField();
-            var res = new CompletableFuture<List<PatchProposalPanel.TagSelect.Tag>>();
+            var res = new CompletableFuture<List<LabelSelect.Label>>();
             var popUpBuilder = new PopupBuilder();
             jbPopup = popUpBuilder.createPopup(this.getData(), getRender(), this.isSingleSelection(), addField, res);
             jbPopup.showUnderneathOf(parent);
@@ -422,31 +422,31 @@ public class PatchProposalPanel {
                     return data;
                 }
                 var myList = new ArrayList<>(data);
-                myList.add(new PatchProposalPanel.TagSelect.Tag(addField.getText()));
+                myList.add(new LabelSelect.Label(addField.getText()));
                 return myList;
             });
         }
 
         @Override
-        public SelectionListCellRenderer<PatchProposalPanel.TagSelect.Tag> getRender() {
-            return new PatchProposalPanel.TagSelect.TagRender();
+        public SelectionListCellRenderer<LabelSelect.Label> getRender() {
+            return new LabelRender();
         }
 
         @Override
-        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Tag>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Label>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var tagFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Tag>>();
-                for (String tag : patch.tags) {
-                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new PatchProposalPanel.TagSelect.Tag(tag), true);
-                    tagFuture.add(selectableWrapper);
+                var labelFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Label>>();
+                for (String label : patch.labels) {
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new LabelSelect.Label(label), true);
+                    labelFuture.add(selectableWrapper);
                 }
-                return tagFuture;
+                return labelFuture;
             });
         }
 
         @Override
         public String getLabel() {
-            return RadicleBundle.message("tag");
+            return RadicleBundle.message("label");
         }
 
         @Override
@@ -455,8 +455,8 @@ public class PatchProposalPanel {
         }
     }
 
-    public TagSelect getTagSelect() {
-        return tagSelect;
+    public LabelSelect getLabelSelect() {
+        return labelSelect;
     }
 
     public StateSelect getStateSelect() {
