@@ -20,6 +20,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
@@ -54,7 +55,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -107,7 +107,8 @@ public class OverviewTest extends AbstractIT {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
-                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label")) {
+                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label") ||
+                        map.get("type").equals("comment.react")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -403,17 +404,16 @@ public class OverviewTest extends AbstractIT {
         //Wait for the emojis to load
         Thread.sleep(1000);
         var listmodel = jblist.getModel();
-        assertThat(listmodel.getSize()).isEqualTo(4);
+        assertThat(listmodel.getSize()).isEqualTo(8);
         //Select the first emoji
         jblist.setSelectedIndex(0);
         jblist.getMouseListeners()[4].mouseClicked(null);
+        var selectedEmoji = (Emoji) jblist.getSelectedValue();
 
         var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("type")).isEqualTo("thread");
-        var action = (HashMap<String, String>) res.get("action");
-        assertThat(action.get("to")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(action.get("type")).isEqualTo("react");
-        assertThat(action.get("reaction")).isEqualTo("\uD83D\uDE00");
+        assertThat(res.get("type")).isEqualTo("comment.react");
+        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
+        assertThat(res.get("reaction")).isEqualTo(selectedEmoji.getUnicode());
     }
 
     @Test
