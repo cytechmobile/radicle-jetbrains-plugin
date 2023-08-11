@@ -116,7 +116,7 @@ public abstract class EmojiPanel<T> {
             @Override
             public void mouseClicked(MouseEvent e) {
                 var result = new CompletableFuture<List<Emoji>>();
-                var popupBuilder = new PopupBuilder(95, 40);
+                var popupBuilder = new PopupBuilder(170, 40);
                 emojisPopUp = popupBuilder.createHorizontalPopup(getEmojis(), new EmojiRender(), result);
                 popupListener = popupBuilder.getListener();
                 emojisPopUp.showUnderneathOf(emojiButton);
@@ -125,7 +125,7 @@ public abstract class EmojiPanel<T> {
                         ApplicationManager.getApplication().invokeLater(() ->
                                 emojisPopUp.closeOk(null), ModalityState.any());
                         progressLabel.setVisible(true);
-                        var res = selectedEmoji(selectedEmoji.get(0), discussionId);
+                        var res = addEmoji(selectedEmoji.get(0), discussionId);
                         progressLabel.setVisible(false);
                         var isSuccess = res != null;
                         if (isSuccess) {
@@ -161,7 +161,7 @@ public abstract class EmojiPanel<T> {
                     public void mouseClicked(MouseEvent e) {
                         ApplicationManager.getApplication().executeOnPooledThread(() -> {
                             progressLabel.setVisible(true);
-                            var res = unselectEmoji(emojiUnicode, discussionId);
+                            var res = removeEmoji(emojiUnicode, discussionId);
                             var isSuccess = res != null;
                             if (isSuccess) {
                                 model.setValue(model.getValue());
@@ -207,7 +207,7 @@ public abstract class EmojiPanel<T> {
         return emojisPopUp;
     }
 
-    public Map<String, List<String>> groupEmojis(List<Reaction> myReactions) {
+    private Map<String, List<String>> groupEmojis(List<Reaction> myReactions) {
         HashMap<String, List<String>> map = new HashMap<>();
         for (var react : myReactions) {
             map.computeIfAbsent(react.emoji, k -> new ArrayList<>()).add(react.nid);
@@ -215,8 +215,8 @@ public abstract class EmojiPanel<T> {
         return map;
     }
 
-    public abstract T selectedEmoji(Emoji emoji, String id);
+    public abstract T addEmoji(Emoji emoji, String id);
 
-    public abstract T unselectEmoji(String emojiUnicode, String id);
+    public abstract T removeEmoji(String emojiUnicode, String id);
 
 }

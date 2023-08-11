@@ -127,12 +127,12 @@ public class IssueComponent {
         }
 
         @Override
-        public RadIssue selectedEmoji(Emoji emoji, String discussionId) {
+        public RadIssue addEmoji(Emoji emoji, String discussionId) {
             return api.issueCommentReact(radIssue, discussionId, emoji.getUnicode());
         }
 
         @Override
-        public RadIssue unselectEmoji(String emojiUnicode, String discussionId) {
+        public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
             //TODO
             return null;
         }
