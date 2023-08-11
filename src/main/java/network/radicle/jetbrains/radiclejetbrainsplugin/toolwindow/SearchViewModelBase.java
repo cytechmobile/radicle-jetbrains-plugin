@@ -55,19 +55,19 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
         });
     }
 
-    public CompletableFuture<List<String>> getTags() {
+    public CompletableFuture<List<String>> getLabels() {
         return CompletableFuture.supplyAsync(() -> {
-            List<String> tags = new ArrayList<>();
+            List<String> labels = new ArrayList<>();
             var filteredList = filterListByProject();
             for (var el : filteredList) {
-                List<String> itemTags = getItemTags(el);
-                for (var tag : itemTags) {
-                    if (!tags.contains(tag)) {
-                        tags.add(tag);
+                List<String> itemLabels = getLabels(el);
+                for (var label : itemLabels) {
+                    if (!labels.contains(label)) {
+                        labels.add(label);
                     }
                 }
             }
-            return tags;
+            return labels;
         });
     }
 
@@ -91,6 +91,6 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
 
     protected abstract String getSelectedProjectFilter();
 
-    protected abstract List<String> getItemTags(Q item);
+    protected abstract List<String> getLabels(Q item);
 
 }

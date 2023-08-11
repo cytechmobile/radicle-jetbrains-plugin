@@ -90,8 +90,8 @@ public class IssueListPanelTest extends AbstractIT {
         assertThat(firstRadIssue.title).isEqualTo(issues.get(0).title);
         assertThat(secondRadIssue.title).isEqualTo(issues.get(1).title);
 
-        assertThat(firstRadIssue.tags).isEqualTo(issues.get(0).tags);
-        assertThat(secondRadIssue.tags).isEqualTo(issues.get(1).tags);
+        assertThat(firstRadIssue.labels).isEqualTo(issues.get(0).labels);
+        assertThat(secondRadIssue.labels).isEqualTo(issues.get(1).labels);
     }
 
     @Test
@@ -216,7 +216,7 @@ public class IssueListPanelTest extends AbstractIT {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
         var searchVm = listPanel.getSearchVm();
-        var tags = searchVm.getTags().get();
+        var tags = searchVm.getLabels().get();
         assertThat(tags.size()).isEqualTo(4);
     }
 
@@ -234,7 +234,7 @@ public class IssueListPanelTest extends AbstractIT {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var filterWithSearch = new IssueListSearchValue();
 
-        filterWithSearch.tag = "tag1";
+        filterWithSearch.label = "tag1";
         var listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
         var patchModel = listPanel.getModel();
@@ -242,7 +242,7 @@ public class IssueListPanelTest extends AbstractIT {
         var issue = patchModel.get(0);
         assertThat(issue.author.id).isEqualTo(issues.get(0).author.id);
 
-        filterWithSearch.tag = "firstTag";
+        filterWithSearch.label = "firstTag";
         listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();

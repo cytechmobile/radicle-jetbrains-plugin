@@ -5,7 +5,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.AbstractRevie
 public class PatchListSearchValue extends AbstractReviewListSearchValue {
 
     public PatchListSearchValue(PatchListSearchValue searchValue) {
-        super(searchValue.project, searchValue.searchQuery, searchValue.author, searchValue.state, searchValue.tag);
+        super(searchValue.project, searchValue.searchQuery, searchValue.author, searchValue.state, searchValue.label);
     }
 
     public PatchListSearchValue() {

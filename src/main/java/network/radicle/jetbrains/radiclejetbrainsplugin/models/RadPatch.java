@@ -29,7 +29,7 @@ public class RadPatch {
     public RadAuthor author;
     public String description;
     public String target;
-    public List<String> tags;
+    public List<String> labels;
     public State state;
     public List<Revision> revisions;
 
@@ -38,13 +38,13 @@ public class RadPatch {
     }
 
     public RadPatch(
-            String id, String title, RadAuthor author, String description, String target, List<String> tags, State state, List<Revision> revisions) {
+            String id, String title, RadAuthor author, String description, String target, List<String> labels, State state, List<Revision> revisions) {
         this.id = id;
         this.title = title;
         this.author = author;
         this.description = description;
         this.target = target;
-        this.tags = tags;
+        this.labels = labels;
         this.state = state;
         this.revisions = revisions;
     }
@@ -60,7 +60,7 @@ public class RadPatch {
         this.author = other.author;
         this.description = other.description;
         this.target = other.target;
-        this.tags = other.tags;
+        this.labels = other.labels;
         this.state = other.state;
         this.revisions = other.revisions;
     }

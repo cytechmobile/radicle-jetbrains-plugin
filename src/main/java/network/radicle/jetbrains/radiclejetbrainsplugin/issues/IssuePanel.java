@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 public class IssuePanel {
     protected RadIssue issue;
@@ -43,11 +42,10 @@ public class IssuePanel {
     private final RadicleProjectApi api;
     private final AssigneesSelect assigneesSelect;
     private final StateSelect stateSelect;
-    private final TagSelect tagSelect;
+    private final LabelSelect labelSelect;
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     public static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
-    private static final String AUTHOR_SPLIT_CHARACTER = ":";
 
     public IssuePanel(IssueTabController issueTabController, SingleValueModel<RadIssue> issueModel) {
         this.issueTabController = issueTabController;
@@ -56,7 +54,7 @@ public class IssuePanel {
         this.api = issue.project.getService(RadicleProjectApi.class);
         this.assigneesSelect = new AssigneesSelect();
         this.stateSelect = new StateSelect();
-        this.tagSelect = new TagSelect();
+        this.labelSelect = new LabelSelect();
     }
 
     public JComponent createPanel() {
@@ -78,7 +76,7 @@ public class IssuePanel {
         actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         addListPanel(actionPanel, assigneesSelect);
         addListPanel(actionPanel, stateSelect);
-        addListPanel(actionPanel, tagSelect);
+        addListPanel(actionPanel, labelSelect);
         final var splitter = new OnePixelSplitter(true, "Radicle.IssuePanel.action.Component", 0.6f);
         splitter.setFirstComponent(getIssueInfo());
         splitter.setSecondComponent(actionPanel);
@@ -100,8 +98,8 @@ public class IssuePanel {
         var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id)));
         detailsSection.add(issueAuthor, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        if (!issue.tags.isEmpty()) {
-            var issueTag = getLabelPanel(RadicleBundle.message("issueTag", "", String.join(",", issue.tags)));
+        if (!issue.labels.isEmpty()) {
+            var issueTag = getLabelPanel(RadicleBundle.message("issueLabels", "", String.join(",", issue.labels)));
             detailsSection.add(issueTag, new CC().gapBottom(String.valueOf(UI.scale(4))));
         }
 
@@ -149,36 +147,36 @@ public class IssuePanel {
         return stateSelect;
     }
 
-    public TagSelect getTagSelect() {
-        return tagSelect;
+    public LabelSelect getLabelSelect() {
+        return labelSelect;
     }
 
-    public class TagSelect extends LabeledListPanelHandle<TagSelect.Tag> {
+    public class LabelSelect extends LabeledListPanelHandle<LabelSelect.Label> {
 
-        public record Tag(String tag) { }
+        public record Label(String value) { }
 
-        public static class TagRender extends SelectionListCellRenderer<Tag> {
+        public static class LabelRender extends SelectionListCellRenderer<Label> {
 
             @Override
-            public String getText(TagSelect.Tag value) {
-                return value.tag;
+            public String getText(Label value) {
+                return value.value;
             }
 
             @Override
             public String getPopupTitle() {
-                return RadicleBundle.message("tag");
+                return RadicleBundle.message("label");
             }
         }
 
         @Override
         public String getSelectedValues() {
-            return String.join(",", issue.tags);
+            return String.join(",", issue.labels);
         }
 
         @Override
-        public boolean storeValues(List<Tag> tags) {
-            var tagList = tags.stream().map(value -> value.tag).toList();
-            var resp = api.addRemoveIssueTag(issue, tagList, issue.tags);
+        public boolean storeValues(List<Label> labels) {
+            var tagList = labels.stream().map(value -> value.value).toList();
+            var resp = api.addRemoveIssueLabel(issue, tagList);
             var isSuccess = resp != null;
             if (isSuccess) {
                 issueModel.setValue(issue);
@@ -187,11 +185,11 @@ public class IssuePanel {
         }
 
         @Override
-        public CompletableFuture<List<Tag>> showEditPopup(JComponent parent) {
+        public CompletableFuture<List<Label>> showEditPopup(JComponent parent) {
             var addField = new JBTextField();
-            var res = new CompletableFuture<List<Tag>>();
+            var res = new CompletableFuture<List<Label>>();
             var popUpBuilder = new PopupBuilder();
-            jbPopup = popUpBuilder.createPopup(this.getData(), new TagRender(), false, addField, res);
+            jbPopup = popUpBuilder.createPopup(this.getData(), new LabelRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = popUpBuilder.getListener();
             return res.thenApply(data -> {
@@ -199,31 +197,31 @@ public class IssuePanel {
                     return data;
                 }
                 var myList = new ArrayList<>(data);
-                myList.add(new Tag(addField.getText()));
+                myList.add(new Label(addField.getText()));
                 return myList;
             });
         }
 
         @Override
-        public SelectionListCellRenderer<Tag> getRender() {
-            return new TagRender();
+        public SelectionListCellRenderer<Label> getRender() {
+            return new LabelRender();
         }
 
         @Override
-        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Tag>>> getData() {
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Label>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var tagFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Tag>>();
-                for (String tag : issue.tags) {
-                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new TagSelect.Tag(tag), true);
-                    tagFuture.add(selectableWrapper);
+                var labelFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Label>>();
+                for (String label : issue.labels) {
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new Label(label), true);
+                    labelFuture.add(selectableWrapper);
                 }
-                return tagFuture;
+                return labelFuture;
             });
         }
 
         @Override
         public String getLabel() {
-            return RadicleBundle.message("tag");
+            return RadicleBundle.message("label");
         }
 
         @Override
@@ -322,9 +320,8 @@ public class IssuePanel {
 
         @Override
         public boolean storeValues(List<AssigneesSelect.Assignee> data) {
-            var removeAssignees = issue.assignees.stream().map(this::getAuthorId).collect(Collectors.toList());
-            var addAssignees = data.stream().map(assignee -> getAuthorId(assignee.name())).toList();
-            var resp = api.addRemoveIssueAssignees(issue, addAssignees, removeAssignees);
+            var addAssignees = data.stream().map(Assignee::name).toList();
+            var resp = api.addRemoveIssueAssignees(issue, addAssignees);
             var isSuccess = resp != null;
             if (isSuccess) {
                 issueModel.setValue(issue);
@@ -362,12 +359,5 @@ public class IssuePanel {
             return false;
         }
 
-        public String getAuthorId(String authorDid) {
-            var parts = authorDid.split(AUTHOR_SPLIT_CHARACTER);
-            if (parts.length > 2) {
-                return parts[2];
-            }
-            return "";
-        }
     }
 }
