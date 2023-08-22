@@ -26,7 +26,7 @@ repositories {
     }
 }
 
-var remoteRobotVersion = "0.11.19"
+var remoteRobotVersion: String = libs.versions.remoteRobot.get();
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
     testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
@@ -45,10 +45,11 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
 }
 
+
 checkstyle {
-    configFile = File("${rootProject.projectDir}/checkstyle.xml");
+//    configFile = File("./checkstyle.xml");
     // we do not tolerate errors or warnings, break build if any found
-    toolVersion = "10.6.0";
+    toolVersion = libs.versions.checkstyleTools.get();
     maxErrors = 0;
     maxWarnings = 0;
 }

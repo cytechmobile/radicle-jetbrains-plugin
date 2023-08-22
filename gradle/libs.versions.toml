@@ -2,6 +2,7 @@
 # libraries
 annotations = "24.0.1"
 remoteRobot = "0.11.18"
+checkstyleTools = "10.12.2"
 
 # plugins
 dokka = "1.8.20"
