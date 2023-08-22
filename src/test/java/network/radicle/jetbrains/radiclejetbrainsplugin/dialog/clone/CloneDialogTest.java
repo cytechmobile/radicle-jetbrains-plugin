@@ -84,7 +84,8 @@ public class CloneDialogTest extends AbstractIT {
         cloneDialog.loadProjects();
 
         notificationsQueue.take();
-        Thread.sleep(2000);
+        executeUiTasks();
+        //Thread.sleep(2000);
         assertThat(cloneDialog.errorMsg.isVisible()).isTrue();
         assertThat(cloneDialog.errorMsg.getText()).contains(RadicleBundle.message("httpRequestErrorTitle"));
         assertThat(cloneDialog.errorMsg.getText()).contains(RadicleBundle.message("httpRequestErrorDesc"));
