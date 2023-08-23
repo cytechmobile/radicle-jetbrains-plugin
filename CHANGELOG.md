@@ -4,26 +4,50 @@
 
 ## Unreleased
 
+## 0.6.2 - 2023-08-23
+
+### Fixes
+- Fix broken api requests by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/324
+
+- Fix `rad self` parsing by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/313
+
+- Add alias field in the settings by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/315
+Others: 
+
+- Wait for data before calling the filter method on issues / patches by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/304
+
+- Issue overview panel by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/303
+
+- Change icons with new ones by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/316
+
+- Remove classes from Utils and move to separate files by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/318
+
+### Dependabot (Security) Updates
+- Bump JetBrains/qodana-action from 2023.1.5 to 2023.2.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/305
+
+- Bump org.junit.jupiter:junit-jupiter-engine from 5.9.3 to 5.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/307
+
+- Bump org.junit.vintage:junit-vintage-engine from 5.9.3 to 5.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/309
+
+- Bump org.junit.jupiter:junit-jupiter-api from 5.9.3 to 5.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/310
+
+- Bump org.junit.platform:junit-platform-launcher from 1.9.3 to 1.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/308
+
+- Bump org.jetbrains.kotlinx.kover from 0.7.2 to 0.7.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/314
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.1...v0.6.2
+
 ## 0.6.1 - 2023-07-13
 - Adds a refresh button for patches and issues by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/300
-
 - Refactor issue & patch filters. by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/289
 
 ### Dependabot (Security) Updates
 - Bump remoteRobotVersion from 0.11.18 to 0.11.19 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/292
-
 - Bump org.jetbrains.kotlin.jvm from 1.8.22 to 1.9.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/291
-
 - Bump org.jetbrains.kotlinx.kover from 0.7.1 to 0.7.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/288
-
 - Bump org.jetbrains.changelog from 2.1.0 to 2.1.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/296
-
 - Bump org.jetbrains.intellij from 1.14.2 to 1.15.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/295
-
 - add support for aliases in radicle identities by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/293
-
 - Bump org.jetbrains.changelog from 2.1.1 to 2.1.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/297
-
 - bump version to 0.6.1 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/301
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.0...v0.6.1
 
