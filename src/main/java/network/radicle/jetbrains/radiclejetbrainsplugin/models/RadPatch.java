@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.project.Project;
 import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
