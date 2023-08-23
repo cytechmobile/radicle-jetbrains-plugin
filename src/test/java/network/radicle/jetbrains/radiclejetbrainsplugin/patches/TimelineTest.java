@@ -97,9 +97,10 @@ public class TimelineTest extends AbstractIT {
                 }
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
-                patch.repo = null;
-                patch.project = null;
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(patch));
+                var p = new RadPatch(patch);
+                p.repo = null;
+                p.project = null;
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(p));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
@@ -264,18 +265,22 @@ public class TimelineTest extends AbstractIT {
         var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(0);
-        executeUiTasks();
         prBtn.doClick();
-        executeUiTasks();
-        Thread.sleep(1000);
+
         // Open createEditor
         patch.repo = firstRepo;
         patch.project = getProject();
         patchEditorProvider.createEditor(getProject(), editorFile);
         radStub.commands.clear();
         executeUiTasks();
+        Thread.sleep(1000);
+
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
+        executeUiTasks();
+        Thread.sleep(1000);
+
         var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
+        assertThat(elements).isNotEmpty();
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(0).id());

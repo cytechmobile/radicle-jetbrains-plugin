@@ -198,6 +198,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
             CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            Thread.yield();
         }
     }
 
