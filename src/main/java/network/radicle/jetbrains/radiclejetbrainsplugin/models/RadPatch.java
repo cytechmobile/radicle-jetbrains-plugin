@@ -8,6 +8,7 @@ import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,4 +123,16 @@ public class RadPatch {
         return RadAction.isSuccess(output);
     }
 
+    @Override
+    public String toString() {
+        try {
+            var p = new RadPatch(this);
+            p.repo = null;
+            p.project = null;
+            return RadicleProjectApi.MAPPER.writeValueAsString(p);
+        } catch (Exception e) {
+            logger.warn("error converting this to string", e);
+            return "";
+        }
+    }
 }

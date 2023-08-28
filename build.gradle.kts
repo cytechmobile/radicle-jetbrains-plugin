@@ -26,29 +26,30 @@ repositories {
     }
 }
 
-var remoteRobotVersion = "0.11.19"
+var remoteRobotVersion: String = libs.versions.remoteRobot.get();
 dependencies {
     testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
     testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.10.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${libs.versions.junitJupiter.get()}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${libs.versions.junitJupiter.get()}")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junitJupiter.get()}")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${libs.versions.junitPlatformLauncher.get()}")
 
-    testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("org.assertj:assertj-core:${libs.versions.assertj.get()}")
 
     // Logging Network Calls
-    testImplementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
-    testImplementation("org.mockito:mockito-core:5.4.0")
+    testImplementation("com.squareup.okhttp3:logging-interceptor:${libs.versions.loggingInterceptor.get()}")
+    testImplementation("org.mockito:mockito-core:${libs.versions.mockito.get()}")
 
     // Deserialize timestamps to Instant
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${libs.versions.jacksonJsr310.get()}")
 }
 
+
 checkstyle {
-    configFile = File("${rootProject.projectDir}/checkstyle.xml");
+//    configFile = File("./checkstyle.xml");
     // we do not tolerate errors or warnings, break build if any found
-    toolVersion = "10.6.0";
+    toolVersion = libs.versions.checkstyleTools.get();
     maxErrors = 0;
     maxWarnings = 0;
 }
