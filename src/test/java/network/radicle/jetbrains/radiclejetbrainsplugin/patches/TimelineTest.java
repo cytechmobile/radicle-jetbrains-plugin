@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.InlineIconButton;
@@ -33,8 +32,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.swing.JButton;
+import javax.swing.JEditorPane;
 import java.awt.event.ActionEvent;
-import java.awt.event.HierarchyEvent;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -43,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
@@ -97,9 +97,10 @@ public class TimelineTest extends AbstractIT {
                 }
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
-                patch.repo = null;
-                patch.project = null;
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(patch));
+                var p = new RadPatch(patch);
+                p.repo = null;
+                p.project = null;
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(p));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
@@ -160,10 +161,7 @@ public class TimelineTest extends AbstractIT {
         /* Test the header title */
         assertThat(ef.getText()).isEqualTo(patch.title);
 
-        markAsShowing(ef.getParent());
-        for (var hl : ef.getParent().getHierarchyListeners()) {
-            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
-        }
+        markAsShowing(ef.getParent(), ef);
         executeUiTasks();
         var editedTitle = "Edited title to " + UUID.randomUUID();
         ef.setText(editedTitle);
@@ -193,10 +191,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(ef.getText()).isEqualTo(editedTitle);
 
         //Check that error notification exists
-        markAsShowing(ef.getParent());
-        for (var hl : ef.getParent().getHierarchyListeners()) {
-            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
-        }
+        markAsShowing(ef.getParent(), ef);
         executeUiTasks();
 
         notificationsQueue.clear();
@@ -247,10 +242,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
         var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
-        var comments = "";
-        for (var el : elements) {
-            comments += el.getText();
-        }
+        var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(0).id());
         assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
@@ -265,30 +257,31 @@ public class TimelineTest extends AbstractIT {
         var timelineComponent = patchEditorProvider.getTimelineComponent();
         var commentPanel = timelineComponent.getCommentPanel();
         var ef = UIUtil.findComponentOfType(commentPanel, EditorTextField.class);
-        markAsShowing(ef.getParent());
-        for (var hl : ef.getParent().getHierarchyListeners()) {
-            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
-        }
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
         executeUiTasks();
         assertThat(ef.getText()).isEmpty();
         ef.setText(dummyComment);
         var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        var prBtn = prBtns.get(1);
+        var prBtn = prBtns.get(0);
         prBtn.doClick();
-        Thread.sleep(1000);
+
         // Open createEditor
         patch.repo = firstRepo;
         patch.project = getProject();
         patchEditorProvider.createEditor(getProject(), editorFile);
         radStub.commands.clear();
         executeUiTasks();
+        Thread.sleep(1000);
+
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
+        executeUiTasks();
+        Thread.sleep(1000);
+
         var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
-        var comments = "";
-        for (var el : elements) {
-            comments += el.getText();
-        }
+        assertThat(elements).isNotEmpty();
+        var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(0).id());
         assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
@@ -297,10 +290,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(comments).contains(patch.revisions.get(1).discussions().get(1).body);
 
         //Check that notification get triggered
-        markAsShowing(ef.getParent());
-        for (var hl : ef.getParent().getHierarchyListeners()) {
-            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
-        }
+        markAsShowing(ef.getParent(), ef);
         executeUiTasks();
         dummyComment = "break";
         ef.setText(dummyComment);
@@ -329,10 +319,8 @@ public class TimelineTest extends AbstractIT {
         return myPatch;
     }
 
-    private RadPatch.Revision createRevision(String id, String description, GitCommit commit,
-                                             RadDiscussion discussion) {
-        var fistCommitChanges = (ArrayList) commit.getChanges();
-        var firstChange = (Change) fistCommitChanges.get(0);
+    private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion) {
+        var firstChange = commit.getChanges().stream().findFirst().orElseThrow();
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
         var discussions = new ArrayList<RadDiscussion>();
         discussions.add(discussion);
