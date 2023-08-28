@@ -6,7 +6,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
@@ -40,8 +39,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.swing.JButton;
-import javax.swing.JEditorPane;
 import javax.swing.JLabel;
+import javax.swing.JEditorPane;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.time.Instant;
