@@ -183,6 +183,52 @@ public class RadicleProjectApi {
         }
     }
 
+    public RadPatch changePatchState(RadPatch patch, String state) {
+        var session = createAuthenticatedSession(patch.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "lifecycle", "state", Map.of("status", state, "reason", "other"));
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("stateChangeError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error changing state {} to patch:{} resp:{}", state, patch, resp);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error changing state to patch: {}", patch, e);
+        }
+        return null;
+    }
+
+    public RadPatch addRemovePatchLabel(RadPatch patch, List<String> addLabelList) {
+        var session = createAuthenticatedSession(patch.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "label", "labels", addLabelList);
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("tagChangeError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error adding {} labels to patch:{} resp:{}", addLabelList, patch, resp);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error adding label to patch: {}", patch, e);
+        }
+        return null;
+    }
+
     public RadIssue fetchIssue(String projectId, GitRepository repo, String issueId) {
         var node = getSeedNode();
         var radProject = fetchRadProject(projectId);

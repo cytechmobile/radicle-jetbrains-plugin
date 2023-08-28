@@ -18,6 +18,8 @@ import java.util.Arrays;
 public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchListPanel patchListPanel;
     private SingleValueModel<RadPatch> patchModel;
+    private PatchProposalPanel patchProposalPanel;
+    private JComponent patchProposalJPanel;
 
     public PatchTabController(Content tab, Project project) {
         super(project, tab);
@@ -39,10 +41,10 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
 
     protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {
         tab.setDisplayName(RadicleBundle.message("patchProposalFrom") + ": " + patch.getValue().author.generateLabelText());
-        var patchProposalPanel = new PatchProposalPanel(this, patch);
-        var panel = patchProposalPanel.createViewPatchProposalPanel();
+        patchProposalPanel = new PatchProposalPanel(this, patch);
+        patchProposalJPanel = patchProposalPanel.createViewPatchProposalPanel();
         mainPanel.removeAll();
-        mainPanel.add(panel, BorderLayout.CENTER);
+        mainPanel.add(patchProposalJPanel, BorderLayout.CENTER);
         mainPanel.revalidate();
         mainPanel.repaint();
         openPatchTimelineOnEditor(patch, patchProposalPanel, true);
@@ -82,5 +84,13 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
 
     public PatchListPanel getPatchListPanel() {
         return patchListPanel;
+    }
+
+    public PatchProposalPanel getPatchProposalPanel() {
+        return patchProposalPanel;
+    }
+
+    public JComponent getPatchProposalJPanel() {
+        return patchProposalJPanel;
     }
 }

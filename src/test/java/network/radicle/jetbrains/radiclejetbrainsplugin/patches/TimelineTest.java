@@ -4,10 +4,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -17,6 +23,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -32,6 +39,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JEditorPane;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -41,6 +49,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -60,6 +70,7 @@ public class TimelineTest extends AbstractIT {
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
+    private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
 
     @Before
     public void beforeTest() throws IOException, InterruptedException {
@@ -90,6 +101,8 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
+                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle")) {
+                    response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
                 if (dummyComment.equals("break") || patch.title.equals("break")) {
@@ -209,6 +222,120 @@ public class TimelineTest extends AbstractIT {
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("patchTitleError"));
+    }
+
+    @Test
+    public void addRemoveLabels() throws InterruptedException {
+        var patchProposalPanel = patchTabController.getPatchProposalPanel();
+        var panel = patchTabController.getPatchProposalJPanel();
+
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var tagLabel = (JLabel) components[2];
+        assertThat(tagLabel.getText()).isEqualTo(RadicleBundle.message("label"));
+
+        var tagPanel = (NonOpaquePanel) components[3];
+        var myPanel = (BorderLayoutPanel) tagPanel.getComponent(0);
+
+        // Assert that the label has the selected tags
+        var stateValueLabel = (JLabel) myPanel.getComponents()[0];
+        assertThat(stateValueLabel.getText()).contains(String.join(",", patch.labels));
+
+        // Find edit key and press it
+        var openPopupButton = UIUtil.findComponentOfType(tagPanel, InlineIconButton.class);
+        openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
+        executeUiTasks();
+
+        var tagSelect = patchProposalPanel.getLabelSelect();
+        var popupListener = tagSelect.listener;
+        var jblist = UIUtil.findComponentOfType(tagSelect.jbPopup.getContent(), JBList.class);
+        var listmodel = jblist.getModel();
+
+        // Trigger beforeShown method
+        var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
+        fakePopup.getContent().removeAll();
+        fakePopup.getContent().add(new BorderLayoutPanel());
+
+        popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
+        //Wait to load tags
+        Thread.sleep(1000);
+        assertThat(listmodel.getSize()).isEqualTo(2);
+
+        var firstTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.LabelSelect.Label>) listmodel.getElementAt(0);
+        assertThat(firstTag.value.label()).isEqualTo(patch.labels.get(0));
+        assertThat(firstTag.selected).isTrue();
+
+        var secondTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.LabelSelect.Label>) listmodel.getElementAt(1);
+        assertThat(secondTag.value.label()).isEqualTo(patch.labels.get(1));
+        assertThat(secondTag.selected).isTrue();
+
+        //Remove first tag
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        var addList = (ArrayList<String>) res.get("labels");
+        assertThat(addList.size()).isEqualTo(1);
+        assertThat(addList).contains(patch.labels.get(1));
+    }
+
+    @Test
+    public void changeStateTest() throws InterruptedException {
+        var patchProposalPanel = patchTabController.getPatchProposalPanel();
+        var panel = patchTabController.getPatchProposalJPanel();
+
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var stateLabel = (JLabel) components[0];
+        assertThat(stateLabel.getText()).isEqualTo(RadicleBundle.message("state"));
+
+        var statePanel = (NonOpaquePanel) components[1];
+        var myPanel = (BorderLayoutPanel) statePanel.getComponent(0);
+
+        // Assert that the label has the selected state
+        var stateValueLabel = (JLabel) myPanel.getComponents()[0];
+        assertThat(stateValueLabel.getText()).contains(patch.state.label);
+
+        // Find edit key and press it
+        var openPopupButton = UIUtil.findComponentOfType(statePanel, InlineIconButton.class);
+        openPopupButton.getActionListener().actionPerformed(new ActionEvent(openPopupButton, 0, ""));
+        executeUiTasks();
+
+        var stateSelect = patchProposalPanel.getStateSelect();
+        var popupListener = stateSelect.listener;
+        var jblist = UIUtil.findComponentOfType(stateSelect.jbPopup.getContent(), JBList.class);
+        var listmodel = jblist.getModel();
+
+        // Trigger beforeShown method
+        popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        //Wait to load state
+        Thread.sleep(1000);
+        assertThat(listmodel.getSize()).isEqualTo(3);
+
+        var openState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(0);
+        assertThat(openState.value.label()).isEqualTo(RadPatch.State.OPEN.label);
+        assertThat(openState.selected).isTrue();
+
+        var draftState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(1);
+        assertThat(draftState.value.label()).isEqualTo(RadPatch.State.DRAFT.label);
+        assertThat(draftState.selected).isFalse();
+
+        var archivedState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(2);
+        assertThat(archivedState.value.label()).isEqualTo(RadPatch.State.ARCHIVED.label);
+        assertThat(archivedState.selected).isFalse();
+
+        // Change state to draft
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
+
+        //Trigger close function in order to trigger the stub and verify the request
+        popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        var state = (HashMap<String, String>) res.get("state");
+        assertThat(state.get("status")).isEqualTo(RadPatch.State.DRAFT.status);
     }
 
     @Test
