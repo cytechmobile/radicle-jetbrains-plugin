@@ -194,7 +194,7 @@ public class PatchListPanelTest extends AbstractIT {
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
-        filterWithSearch.state = RadPatch.State.CLOSED.status;
+        filterWithSearch.state = RadPatch.State.DRAFT.status;
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
@@ -202,7 +202,7 @@ public class PatchListPanelTest extends AbstractIT {
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
-        filterWithSearch.state = RadPatch.State.MERGED.status;
+        filterWithSearch.state = RadPatch.State.ARCHIVED.status;
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
@@ -266,7 +266,7 @@ public class PatchListPanelTest extends AbstractIT {
 
         var radPatch2 = new RadPatch("c4d12", "secondProposal", new RadAuthor(AUTHOR1),
                 "My description", "testTarget", List.of("firstTag", "secondTag", "tag1"),
-                RadPatch.State.CLOSED, List.of(revision));
+                RadPatch.State.DRAFT, List.of(revision));
         patches = List.of(radPatch, radPatch2);
         return patches;
     }

@@ -22,6 +22,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -42,6 +43,11 @@ import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +56,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
@@ -65,12 +73,19 @@ public class PatchProposalPanel {
     protected TabInfo filesTab;
     protected PatchTabController controller;
     private SingleHeightTabs tabs;
+    private final RadicleProjectApi api;
+    private final LabelSelect labelSelect;
+    private final StateSelect stateSelect;
+
     private JComponent commitBrowser;
 
     public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
-        this.patchModel = patch;
         this.patch = patch.getValue();
+        this.api = this.patch.project.getService(RadicleProjectApi.class);
+        this.patchModel = patch;
+        this.labelSelect = new LabelSelect();
+        this.stateSelect = new StateSelect();
     }
 
     public JComponent createViewPatchProposalPanel() {
@@ -152,7 +167,16 @@ public class PatchProposalPanel {
         var borderPanel = new JPanel(new BorderLayout());
         borderPanel.add(detailsSection, BorderLayout.NORTH);
 
-        return borderPanel;
+        var actionPanel = new JPanel();
+        actionPanel.setOpaque(false);
+        actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
+        Utils.addListPanel(actionPanel, stateSelect);
+        Utils.addListPanel(actionPanel, labelSelect);
+        final var splitter = new OnePixelSplitter(true, "Radicle.PatchPanel.action.Component", 0.6f);
+        splitter.setFirstComponent(borderPanel);
+        splitter.setSecondComponent(actionPanel);
+
+        return splitter;
     }
 
     private JComponent descriptionComponent() {
@@ -284,6 +308,159 @@ public class PatchProposalPanel {
                         RadicleBundle.message("errorCalculatingPatchProposalCommits"));
             }
         });
+    }
+
+    public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
+
+        public record State(String status, String label) { }
+
+        public static class StateRender extends SelectionListCellRenderer<State> {
+
+            @Override
+            public String getText(PatchProposalPanel.StateSelect.State value) {
+                return value.label;
+            }
+
+            @Override
+            public String getPopupTitle() {
+                return RadicleBundle.message("state");
+            }
+        }
+
+        @Override
+        public String getSelectedValues() {
+            return patch.state.label;
+        }
+
+        @Override
+        public boolean storeValues(List<State> data) {
+            var selectedState = data.get(0).status;
+            if (selectedState.equals(patch.state.status)) {
+                return true;
+            }
+            var resp = api.changePatchState(patch, selectedState);
+            var isSuccess = resp != null;
+            if (isSuccess) {
+                patchModel.setValue(patch);
+            }
+            return isSuccess;
+        }
+
+
+        @Override
+        public SelectionListCellRenderer<PatchProposalPanel.StateSelect.State> getRender() {
+            return new PatchProposalPanel.StateSelect.StateRender();
+        }
+
+        @Override
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<State>>> getData() {
+            return CompletableFuture.supplyAsync(() -> {
+                var allStates = Arrays.stream(RadPatch.State.values()).map(e -> new PatchProposalPanel.StateSelect.State(e.status, e.label)).toList();
+                var stateList = new ArrayList<SelectionListCellRenderer.SelectableWrapper<State>>();
+                for (PatchProposalPanel.StateSelect.State state : allStates) {
+                    var isSelected = patch.state.status.equals(state.status);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(state, isSelected);
+                    stateList.add(selectableWrapper);
+                }
+                return stateList;
+            });
+        }
+
+        @Override
+        public String getLabel() {
+            return RadicleBundle.message("state");
+        }
+
+        @Override
+        public boolean isSingleSelection() {
+            return true;
+        }
+    }
+    public class LabelSelect extends LabeledListPanelHandle<LabelSelect.Label> {
+
+        public record Label(String label) { }
+
+        public static class LabelRender extends SelectionListCellRenderer<LabelSelect.Label> {
+
+            @Override
+            public String getText(LabelSelect.Label value) {
+                return value.label;
+            }
+
+            @Override
+            public String getPopupTitle() {
+                return RadicleBundle.message("label");
+            }
+        }
+
+        @Override
+        public String getSelectedValues() {
+            return String.join(",", patch.labels);
+        }
+
+        @Override
+        public boolean storeValues(List<Label> labels) {
+            var labelList = labels.stream().map(value -> value.label).toList();
+            var resp = api.addRemovePatchLabel(patch, labelList);
+            var isSuccess = resp != null;
+            if (isSuccess) {
+                patchModel.setValue(patch);
+            }
+            return isSuccess;
+        }
+
+        @Override
+        public CompletableFuture<List<LabelSelect.Label>> showEditPopup(JComponent parent) {
+            var addField = new JBTextField();
+            var res = new CompletableFuture<List<LabelSelect.Label>>();
+            var popUpBuilder = new PopupBuilder();
+            jbPopup = popUpBuilder.createPopup(this.getData(), getRender(), this.isSingleSelection(), addField, res);
+            jbPopup.showUnderneathOf(parent);
+            listener = popUpBuilder.getListener();
+            return res.thenApply(data -> {
+                if (Strings.isNullOrEmpty(addField.getText())) {
+                    return data;
+                }
+                var myList = new ArrayList<>(data);
+                myList.add(new LabelSelect.Label(addField.getText()));
+                return myList;
+            });
+        }
+
+        @Override
+        public SelectionListCellRenderer<LabelSelect.Label> getRender() {
+            return new LabelRender();
+        }
+
+        @Override
+        public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Label>>> getData() {
+            return CompletableFuture.supplyAsync(() -> {
+                var labelFuture = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Label>>();
+                for (String label : patch.labels) {
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(new LabelSelect.Label(label), true);
+                    labelFuture.add(selectableWrapper);
+                }
+                return labelFuture;
+            });
+        }
+
+        @Override
+        public String getLabel() {
+            return RadicleBundle.message("label");
+        }
+
+        @Override
+        public boolean isSingleSelection() {
+            return false;
+        }
+    }
+
+    public LabelSelect getLabelSelect() {
+        return labelSelect;
+    }
+
+    public StateSelect getStateSelect() {
+        return stateSelect;
     }
 
     private JBList<GitCommit> findCommitList() {

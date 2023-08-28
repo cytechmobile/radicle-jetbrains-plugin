@@ -33,6 +33,8 @@ import org.junit.Before;
 
 import javax.swing.JComponent;
 import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -192,14 +194,30 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     public void executeUiTasks() {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        for (int i = 0; i < 10; i++) {
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            Thread.yield();
+        }
+    }
+
+    public static void markAsShowing(Container parent, Component inner) {
+        markAsShowing(parent);
+        for (var hl : parent.getHierarchyListeners()) {
+            hl.hierarchyChanged(new HierarchyEvent(inner, 0, inner, parent, HierarchyEvent.SHOWING_CHANGED));
+        }
     }
 
     public static void markAsShowing(Component c) {
         var jc = (JComponent) c;
+
+        // set headless to false, otherwise markAsShowing will be a no-op
+        var prev = System.getProperty("java.awt.headless");
+        System.setProperty("java.awt.headless", "false");
         UIUtil.markAsShowing(jc, true);
+        System.setProperty("java.awt.headless", prev);
+
         //matching UiUtil IS_SHOWING key
         jc.putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
         assertThat(UIUtil.isShowing(jc, false)).isTrue();

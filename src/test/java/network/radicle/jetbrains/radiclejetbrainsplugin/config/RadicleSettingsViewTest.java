@@ -116,6 +116,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
+        executeUiTasks();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
         executeUiTasks();
         assertSelfCommands(NEW_RAD_INSTALLATION);
