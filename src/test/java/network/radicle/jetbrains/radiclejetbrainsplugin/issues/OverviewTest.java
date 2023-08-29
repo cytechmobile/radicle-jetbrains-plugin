@@ -523,7 +523,7 @@ public class OverviewTest extends AbstractIT {
         ef.setText(dummyComment);
         var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        var prBtn = prBtns.get(1);
+        var prBtn = prBtns.get(0);
         prBtn.doClick();
         Thread.sleep(1000);
 
@@ -547,10 +547,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(comments).doesNotContain(issue.discussion.get(0).body);
 
         //Check that notification get triggered
-        markAsShowing(ef.getParent());
-        for (var hl : ef.getParent().getHierarchyListeners()) {
-            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
-        }
+        markAsShowing(ef.getParent(), ef);
         executeUiTasks();
         dummyComment = "break";
         ef.setText(dummyComment);

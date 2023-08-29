@@ -1,7 +1,16 @@
 [versions]
 # libraries
 annotations = "24.0.1"
-remoteRobot = "0.11.18"
+jacksonJsr310 = "2.15.2"
+
+# test libraries
+junitJupiter = "5.10.0"
+junitPlatformLauncher = "1.10.0"
+assertj = "3.24.2"
+loggingInterceptor = "4.11.0"
+mockito = "5.5.0"
+remoteRobot = "0.11.19"
+checkstyleTools = "10.12.2"
 
 # plugins
 dokka = "1.8.20"

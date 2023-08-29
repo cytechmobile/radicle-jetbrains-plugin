@@ -8,6 +8,7 @@ import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,21 +75,22 @@ public class RadPatch {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
-        OPEN("Open"),
-        CLOSED("Closed"),
-        MERGED("Merged"),
-        ARCHIVED("Archived");
+        OPEN("open", "Open"),
+        DRAFT("draft", "Draft"),
+        ARCHIVED("archived", "Archived");
 
         public final String status;
+        public final String label;
 
-        State(String status) {
+        State(String status, String label) {
             this.status = status;
+            this.label = label;
         }
 
         @JsonCreator
         public static State forValues(@JsonProperty("status") String status) {
             for (State state : State.values()) {
-                if (state.status.equalsIgnoreCase(status)) {
+                if (state.status.equals(status)) {
                     return state;
                 }
             }
@@ -121,4 +123,16 @@ public class RadPatch {
         return RadAction.isSuccess(output);
     }
 
+    @Override
+    public String toString() {
+        try {
+            var p = new RadPatch(this);
+            p.repo = null;
+            p.project = null;
+            return RadicleProjectApi.MAPPER.writeValueAsString(p);
+        } catch (Exception e) {
+            logger.warn("error converting this to string", e);
+            return "";
+        }
+    }
 }

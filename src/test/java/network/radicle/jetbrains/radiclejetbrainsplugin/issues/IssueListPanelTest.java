@@ -188,7 +188,7 @@ public class IssueListPanelTest extends AbstractIT {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var filterWithSearch = new IssueListSearchValue();
 
-        filterWithSearch.state = RadPatch.State.OPEN.status;
+        filterWithSearch.state = RadIssue.State.OPEN.label;
         var listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
         var patchModel = listPanel.getModel();
@@ -196,7 +196,7 @@ public class IssueListPanelTest extends AbstractIT {
         var issue = patchModel.get(0);
         assertThat(issue.author.id).isEqualTo(issues.get(0).author.id);
 
-        filterWithSearch.state = RadPatch.State.CLOSED.status;
+        filterWithSearch.state = RadIssue.State.CLOSED.label;
         listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
@@ -204,7 +204,7 @@ public class IssueListPanelTest extends AbstractIT {
         issue = patchModel.get(0);
         assertThat(issue.author.id).isEqualTo(issues.get(1).author.id);
 
-        filterWithSearch.state = RadPatch.State.MERGED.status;
+        filterWithSearch.state = RadPatch.State.ARCHIVED.label;
         listPanel = controller.getIssueListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
