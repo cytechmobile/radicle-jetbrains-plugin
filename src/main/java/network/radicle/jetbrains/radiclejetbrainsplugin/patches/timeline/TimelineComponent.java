@@ -43,7 +43,7 @@ public class TimelineComponent {
     public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
         this.radPatchModel = radPatchModel;
         this.radPatch = radPatchModel.getValue();
-        componentsFactory = new TimelineComponentFactory(radPatch, patchProposalPanel);
+        componentsFactory = new TimelineComponentFactory(radPatch, patchProposalPanel, radPatchModel);
         api = radPatch.project.getService(RadicleProjectApi.class);
     }
 
