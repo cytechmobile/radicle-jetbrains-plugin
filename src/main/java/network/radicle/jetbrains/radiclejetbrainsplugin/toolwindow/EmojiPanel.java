@@ -115,6 +115,7 @@ public abstract class EmojiPanel<T> {
         emojiButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                //Show the available emojis when the user click on the smiley face emoji button
                 var result = new CompletableFuture<List<Emoji>>();
                 var popupBuilder = new PopupBuilder(170, 40);
                 emojisPopUp = popupBuilder.createHorizontalPopup(getEmojis(), new EmojiRender(), result);
@@ -151,11 +152,12 @@ public abstract class EmojiPanel<T> {
             reactorsPanel.addToLeft(reactorEmoji);
             var numberOfReactors = groupReactions.get(emojiUnicode).size();
             var self = isEmojiFromCurrentUser(radDetails.nodeId, groupReactions.get(emojiUnicode));
-            var emojiReaction = new JLabel(String.valueOf(numberOfReactors));
-            reactorsPanel.addToRight(emojiReaction);
+            var numberOfReactionsLabel = new JLabel(String.valueOf(numberOfReactors));
+            reactorsPanel.addToRight(numberOfReactionsLabel);
             reactorsPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            //If the user has reacted then allow him to remove his reaction
             if (self) {
-                emojiReaction.setFont(new Font(FONT_NAME, Font.BOLD, 13));
+                numberOfReactionsLabel.setFont(new Font(FONT_NAME, Font.BOLD, 13));
                 reactorsPanel.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
@@ -175,6 +177,7 @@ public abstract class EmojiPanel<T> {
             reactorsPanel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
+                    //Show the reactors on emoji hover
                     var builder = new PopupBuilder();
                     reactorsPopUp = builder.createHorizontalPopup(getReactors(groupReactions.get(emojiUnicode)),
                             new ReactorRender(), result);
@@ -183,6 +186,7 @@ public abstract class EmojiPanel<T> {
 
                 @Override
                 public void mouseExited(MouseEvent e) {
+                    //Close the pop-up
                     reactorsPopUp.closeOk(null);
                 }
             });

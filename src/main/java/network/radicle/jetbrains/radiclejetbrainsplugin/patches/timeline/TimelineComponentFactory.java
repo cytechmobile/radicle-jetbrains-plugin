@@ -60,11 +60,11 @@ public class TimelineComponentFactory {
     private JPanel emojiJPanel;
     private EmojiPanel<RadPatch> emojiPanel;
 
-    public TimelineComponentFactory(RadPatch radPatch, PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel) {
-        this.patch = radPatch;
+    public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel) {
+        this.patch = patchModel.getValue();
         this.patchProposalPanel = patchProposalPanel;
         this.patchModel = patchModel;
-        this.api = radPatch.project.getService(RadicleProjectApi.class);
+        this.api = patch.project.getService(RadicleProjectApi.class);
     }
 
     public JComponent createDescSection() {
