@@ -225,8 +225,11 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     public void executeUiTasks() {
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-        CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+        for (int i = 0; i < 10; i++) {
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
+            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            Thread.yield();
+        }
     }
 }

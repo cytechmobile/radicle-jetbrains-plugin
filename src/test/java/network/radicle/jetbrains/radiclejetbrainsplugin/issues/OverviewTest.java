@@ -408,12 +408,12 @@ public class OverviewTest extends AbstractIT {
         //Select the first emoji
         jblist.setSelectedIndex(0);
         jblist.getMouseListeners()[4].mouseClicked(null);
-        var selectedEmoji = (Emoji) jblist.getSelectedValue();
-
+        var selectedEmoji = jblist.getSelectedValue();
+        var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(res.get("reaction")).isEqualTo(selectedEmoji.getUnicode());
+        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
     }
 
     @Test
