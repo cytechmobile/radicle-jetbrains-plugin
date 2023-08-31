@@ -4,35 +4,30 @@
 
 ## Unreleased
 
+## 0.7.0 - 2023-08-31
+- Change the state / label of a patch proposal by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/325
+
+- Support IDEA 2023.2 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/329
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.2...v0.7.0
+
 ## 0.6.2 - 2023-08-23
 
 ### Fixes
 - Fix broken api requests by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/324
-
 - Fix `rad self` parsing by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/313
-
 - Add alias field in the settings by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/315
 Others: 
-
 - Wait for data before calling the filter method on issues / patches by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/304
-
 - Issue overview panel by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/303
-
 - Change icons with new ones by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/316
-
 - Remove classes from Utils and move to separate files by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/318
 
 ### Dependabot (Security) Updates
 - Bump JetBrains/qodana-action from 2023.1.5 to 2023.2.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/305
-
 - Bump org.junit.jupiter:junit-jupiter-engine from 5.9.3 to 5.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/307
-
 - Bump org.junit.vintage:junit-vintage-engine from 5.9.3 to 5.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/309
-
 - Bump org.junit.jupiter:junit-jupiter-api from 5.9.3 to 5.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/310
-
 - Bump org.junit.platform:junit-platform-launcher from 1.9.3 to 1.10.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/308
-
 - Bump org.jetbrains.kotlinx.kover from 0.7.2 to 0.7.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/314
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.1...v0.6.2
 
