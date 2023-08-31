@@ -37,6 +37,32 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         boolean ok = radicleSettingsView.init.await(10, TimeUnit.SECONDS);
         /* pop previous commands from queue ( Checking for compatible version ) */
         radStub.commands.clear();
+        executeUiTasks();
+    }
+
+    @Test
+    public void testButtonWithoutIdentity() throws InterruptedException {
+        var identityDialog = new IdentityDialog() {
+            @Override
+            public boolean showAndGet() {
+                assertThat(getTitle()).isEqualTo(RadicleBundle.message("newIdentity"));
+                return true;
+            }
+        };
+        identityDialog.setPassphrase(RadicleGlobalSettingsHandlerTest.PASSWORD);
+        identityDialog.setAlias(ALIAS);
+        radicleSettingsHandler.saveRadHome(NEW_RAD_INSTALLATION);
+        radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
+        for (var i = 0; i < 2; i++) {
+            radStub.commands.poll(10, TimeUnit.SECONDS);
+            Thread.sleep(1000);
+        }
+        var testButton = radicleSettingsView.getRadHomeTestButton();
+        testButton.doClick();
+        executeUiTasks();
+        radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
+        executeUiTasks();
+        assertSelfCommands(NEW_RAD_INSTALLATION);
     }
 
     @Test
@@ -98,28 +124,6 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         }
         logger.warn("checking for rad details: " + radicleSettingsView.getRadDetails());
         assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.did);
-    }
-
-    @Test
-    public void testButtonWithoutIdentity() throws InterruptedException {
-        var identityDialog = new IdentityDialog() {
-            @Override
-            public boolean showAndGet() {
-                assertThat(getTitle()).isEqualTo(RadicleBundle.message("newIdentity"));
-                return true;
-            }
-        };
-        identityDialog.setPassphrase(RadicleGlobalSettingsHandlerTest.PASSWORD);
-        identityDialog.setAlias(ALIAS);
-        radicleSettingsHandler.saveRadHome(NEW_RAD_INSTALLATION);
-        radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
-        radStub.commands.poll(10, TimeUnit.SECONDS);
-        var testButton = radicleSettingsView.getRadHomeTestButton();
-        testButton.doClick();
-        executeUiTasks();
-        radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
-        executeUiTasks();
-        assertSelfCommands(NEW_RAD_INSTALLATION);
     }
 
     @Test

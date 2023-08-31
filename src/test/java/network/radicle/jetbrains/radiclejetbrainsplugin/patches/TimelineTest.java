@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -37,7 +38,9 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -75,6 +78,8 @@ public class TimelineTest extends AbstractIT {
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
     private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
+    @Rule
+    public TestName testName = new TestName();
 
     @Before
     public void beforeTest() throws IOException, InterruptedException {
@@ -167,7 +172,12 @@ public class TimelineTest extends AbstractIT {
         radicleToolWindow.createToolWindowContent(super.getProject(), mockToolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(mockToolWindow);
         patchTabController = radicleToolWindow.patchTabController;
-        patchTabController.createPatchProposalPanel(patch);
+        if (testName.getMethodName().equals("testReactions")) {
+            // Don't recreate PatchProposalPanel after success request for this test
+            patchTabController.createInternalPatchProposalPanel(new SingleValueModel<>(patch), new JPanel());
+        } else {
+            patchTabController.createPatchProposalPanel(patch);
+        }
         var editorManager = FileEditorManager.getInstance(getProject());
         var allEditors = editorManager.getAllEditors();
         assertThat(allEditors.length).isEqualTo(1);
