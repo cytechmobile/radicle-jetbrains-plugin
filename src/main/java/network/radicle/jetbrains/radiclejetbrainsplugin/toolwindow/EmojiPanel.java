@@ -172,9 +172,6 @@ public abstract class EmojiPanel<T> {
                 });
             }
             var result = new CompletableFuture<List<String>>();
-            var builder = new PopupBuilder();
-            reactorsPopUp = builder.createHorizontalPopup(getReactors(groupReactions.get(emojiUnicode)),
-                    new ReactorRender(), result);
             reactorsPanel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
