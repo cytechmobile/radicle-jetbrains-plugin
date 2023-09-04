@@ -298,6 +298,54 @@ public class RadicleProjectApi {
         return null;
     }
 
+    public RadPatch patchCommentReact(RadPatch patch, String commendId, String revId, String reaction) {
+        var session = createAuthenticatedSession(patch.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchData = Map.of("type", "revision.comment.react", "revision", revId, "comment", commendId, "reaction", reaction, "active", true);
+            var json = MAPPER.writeValueAsString(patchData);
+            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(patchReq, RadicleBundle.message("reactionError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error reacting to revision : {} , comment : {} , resp:{}", revId, commendId, resp);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error reacting to revision : {} , comment : {}", revId, commendId, e);
+        }
+
+        return null;
+    }
+
+    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction) {
+        var session = createAuthenticatedSession(issue.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var issueData = Map.of("type", "comment.react", "id", discussionId, "reaction", reaction, "active", true);
+            var json = MAPPER.writeValueAsString(issueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("reactionError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error reacting to discussion : {} , resp:{}", discussionId, resp);
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error reacting to discussion: {}", discussionId, e);
+        }
+
+        return null;
+    }
+
     public RadIssue addRemoveIssueLabel(RadIssue issue, List<String> addTagList) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {

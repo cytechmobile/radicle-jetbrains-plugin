@@ -1,6 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -17,9 +19,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
@@ -34,12 +38,15 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JEditorPane;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -71,6 +78,8 @@ public class TimelineTest extends AbstractIT {
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
     private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
+    @Rule
+    public TestName testName = new TestName();
 
     @Before
     public void beforeTest() throws IOException, InterruptedException {
@@ -101,7 +110,7 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
-                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle")) {
+                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -113,7 +122,26 @@ public class TimelineTest extends AbstractIT {
                 var p = new RadPatch(patch);
                 p.repo = null;
                 p.project = null;
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(p));
+                var map = RadicleProjectApi.MAPPER.convertValue(p, new TypeReference<Map<String, Object>>() { });
+                var revisions = (ArrayList<Map<String, Object>>) map.get("revisions");
+                for (var rev : revisions) {
+                    var discussions = (ArrayList<Map<String, Object>>) rev.get("discussions");
+                    for (var discussion : discussions) {
+                        var allReactions = new ArrayList<>();
+                        var reactions = (ArrayList<Map<String, Object>>) discussion.get("reactions");
+                        for (var reaction : reactions) {
+                            var reactionList = new ArrayList<>();
+                            var nid = reaction.get("nid");
+                            var emoji = reaction.get("emoji");
+                            reactionList.add(nid);
+                            reactionList.add(emoji);
+                            allReactions.add(reactionList);
+                        }
+                        discussion.remove("reactions");
+                        discussion.put("reactions", allReactions);
+                    }
+                }
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
@@ -144,7 +172,12 @@ public class TimelineTest extends AbstractIT {
         radicleToolWindow.createToolWindowContent(super.getProject(), mockToolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(mockToolWindow);
         patchTabController = radicleToolWindow.patchTabController;
-        patchTabController.createPatchProposalPanel(patch);
+        if (testName.getMethodName().equals("testReactions")) {
+            // Don't recreate PatchProposalPanel after success request for this test
+            patchTabController.createInternalPatchProposalPanel(new SingleValueModel<>(patch), new JPanel());
+        } else {
+            patchTabController.createPatchProposalPanel(patch);
+        }
         var editorManager = FileEditorManager.getInstance(getProject());
         var allEditors = editorManager.getAllEditors();
         assertThat(allEditors.length).isEqualTo(1);
@@ -278,6 +311,40 @@ public class TimelineTest extends AbstractIT {
         var addList = (ArrayList<String>) res.get("labels");
         assertThat(addList.size()).isEqualTo(1);
         assertThat(addList).contains(patch.labels.get(1));
+    }
+
+    @Test
+    public void testReactions() throws InterruptedException {
+        executeUiTasks();
+        var emojiJPanel = patchEditorProvider.getTimelineComponent().getComponentsFactory().getEmojiJPanel();
+        var emojiLabel = UIUtil.findComponentOfType(emojiJPanel, JLabel.class);
+        emojiLabel.getMouseListeners()[0].mouseClicked(null);
+
+        var borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
+        var myEmojiLabel = ((JLabel) ((BorderLayoutPanel) ((JPanel) borderPanel.getComponent(1)).getComponent(1)).getComponent(0));
+        assertThat(myEmojiLabel.getText()).isEqualTo(patch.revisions.get(0).discussions().get(0).reactions.get(0).emoji);
+
+        // Make new reaction
+        var emojiPanel = patchEditorProvider.getTimelineComponent().getComponentsFactory().getEmojiPanel();
+        var popUp = emojiPanel.getEmojisPopUp();
+        var jblist = UIUtil.findComponentOfType(popUp.getContent(), JBList.class);
+
+        var popUpListener = emojiPanel.getPopupListener();
+        popUpListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        //Wait for the emojis to load
+        Thread.sleep(1000);
+        var listmodel = jblist.getModel();
+        assertThat(listmodel.getSize()).isEqualTo(8);
+
+        //Select the first emoji
+        jblist.setSelectedIndex(0);
+        jblist.getMouseListeners()[4].mouseClicked(null);
+        var selectedEmoji =  jblist.getSelectedValue();
+        var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
+        var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("type")).isEqualTo("revision.comment.react");
+        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
     }
 
     @Test
@@ -456,7 +523,7 @@ public class TimelineTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of());
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("author", "\uD83D\uDC4D")));
     }
 
 }

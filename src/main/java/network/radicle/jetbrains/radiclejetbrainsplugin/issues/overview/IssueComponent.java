@@ -9,18 +9,22 @@ import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
 import javax.swing.ImageIcon;
@@ -38,6 +42,9 @@ public class IssueComponent {
     private JComponent commentFieldPanel;
     private JComponent commentSection;
     private final RadicleProjectApi api;
+    private RadDetails radDetails;
+    private JPanel emojiJPanel;
+    private EmojiPanel<RadIssue> emojiPanel;
 
     public IssueComponent(SingleValueModel<RadIssue> issueModel) {
         this.radIssue = issueModel.getValue();
@@ -50,18 +57,18 @@ public class IssueComponent {
         var issueContainer = getVerticalPanel(2);
         issueContainer.add(getHeader());
         issueContainer.add(getDescription());
-        commentSection = createCommentSection(radIssue.discussion);
-        issueContainer.add(commentSection);
 
         var horizontalPanel = getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-           var radDetails = api.getCurrentIdentity();
-           if (radDetails != null) {
-               ApplicationManager.getApplication().invokeLater(() -> {
-                   this.commentFieldPanel = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
-                   issueContainer.add(commentFieldPanel);
-               }, ModalityState.any());
-           }
+            radDetails = api.getCurrentIdentity();
+            if (radDetails != null) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    commentSection = createCommentSection(radIssue.discussion);
+                    issueContainer.add(commentSection);
+                    this.commentFieldPanel = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                    issueContainer.add(commentFieldPanel);
+                }, ModalityState.any());
+            }
         });
 
         var scrollPanel = ScrollPaneFactory.createScrollPane(issueContainer, true);
@@ -79,7 +86,7 @@ public class IssueComponent {
         return "";
     }
 
-    public static JComponent createCommentSection(List<RadDiscussion> discussionList) {
+    public JComponent createCommentSection(List<RadDiscussion> discussionList) {
         var mainPanel = getVerticalPanel(0);
         /* The first discussion is the description of the issue */
         if (discussionList.size() == 1) {
@@ -100,12 +107,35 @@ public class IssueComponent {
             textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
             var horizontalPanel = getHorizontalPanel(8);
             horizontalPanel.setOpaque(false);
-            var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
+            var contentPanel = new BorderLayoutPanel();
             contentPanel.setOpaque(false);
             contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
+            emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
+            emojiJPanel = emojiPanel.getEmojiPanel();
+            contentPanel.addToBottom(emojiJPanel);
             mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.generateLabelText(), com.timestamp));
         }
         return mainPanel;
+    }
+
+    public class IssueEmojiPanel extends EmojiPanel<RadIssue> {
+
+
+        protected IssueEmojiPanel(SingleValueModel<RadIssue> model, List<Reaction> reactions,
+                                  String discussionId, RadDetails radDetails) {
+            super(model, reactions, discussionId, radDetails);
+        }
+
+        @Override
+        public RadIssue addEmoji(Emoji emoji, String discussionId) {
+            return api.issueCommentReact(radIssue, discussionId, emoji.getUnicode());
+        }
+
+        @Override
+        public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
+            //TODO
+            return null;
+        }
     }
 
     private EditablePanelHandler getCommentField() {
@@ -176,6 +206,14 @@ public class IssueComponent {
         b.withHeader(contentPanel, actionsPanel);
         headerPanel = (JPanel) b.build();
         return headerPanel;
+    }
+
+    public EmojiPanel<RadIssue> getEmojiPanel() {
+        return emojiPanel;
+    }
+
+    public JPanel getEmojiJPanel() {
+        return emojiJPanel;
     }
 
     public JPanel getHeaderPanel() {
