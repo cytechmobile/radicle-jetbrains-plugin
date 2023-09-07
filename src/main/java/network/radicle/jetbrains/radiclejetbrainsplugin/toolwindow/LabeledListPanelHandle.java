@@ -25,6 +25,7 @@ public abstract  class LabeledListPanelHandle<T> {
     private final JLabel progressLabel;
     private final JLabel errorIcon;
     private final JLabel titleLabel;
+    private JLabel selectedValuesLabel;
     public JBPopup jbPopup;
     public JBPopupListener listener;
 
@@ -72,9 +73,10 @@ public abstract  class LabeledListPanelHandle<T> {
     }
 
     public JComponent getPanel() {
+        selectedValuesLabel = new JLabel(getSelectedValues());
         var simplePanel = JBUI.Panels.simplePanel();
         simplePanel.setOpaque(false);
-        simplePanel.add(new JLabel(getSelectedValues()));
+        simplePanel.add(selectedValuesLabel);
         simplePanel.addToRight(getControlsPanel());
         var panel = new NonOpaquePanel(new WrapLayout(FlowLayout.LEADING, 0, 0));
         panel.add(simplePanel);
@@ -87,6 +89,10 @@ public abstract  class LabeledListPanelHandle<T> {
         jbPopup.showUnderneathOf(parent);
         listener = popUpBuilder.getListener();
         return result;
+    }
+
+    public void updateValues() {
+        selectedValuesLabel.setText(getSelectedValues());
     }
 
     public abstract String getSelectedValues();
