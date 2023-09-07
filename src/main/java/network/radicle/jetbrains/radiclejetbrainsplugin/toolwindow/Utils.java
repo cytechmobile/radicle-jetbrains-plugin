@@ -28,6 +28,9 @@ public class Utils {
             return did;
         }
         var id = parts[2];
+        if (id.length() < 6) {
+            return id;
+        }
         var firstPart = id.substring(0, 6);
         var secondPart = id.substring(id.length() - 6);
         return didStr + firstPart + "..." + secondPart;
