@@ -15,12 +15,18 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -48,10 +54,17 @@ public class TimelineComponentFactory {
     private JComponent descSection;
     private Map<String, List<GitCommit>> groupedCommits;
     private final PatchProposalPanel patchProposalPanel;
+    private final SingleValueModel<RadPatch> patchModel;
+    private final RadicleProjectApi api;
+    private RadDetails radDetails;
+    private JPanel emojiJPanel;
+    private EmojiPanel<RadPatch> emojiPanel;
 
-    public TimelineComponentFactory(RadPatch radPatch, PatchProposalPanel patchProposalPanel) {
-        this.patch = radPatch;
+    public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel) {
+        this.patch = patchModel.getValue();
         this.patchProposalPanel = patchProposalPanel;
+        this.patchModel = patchModel;
+        this.api = patch.project.getService(RadicleProjectApi.class);
     }
 
     public JComponent createDescSection() {
@@ -74,6 +87,7 @@ public class TimelineComponentFactory {
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             groupedCommits = patch.calculateCommits();
+            radDetails = api.getCurrentIdentity();
             latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 loadingIcon.setVisible(false);
@@ -81,6 +95,12 @@ public class TimelineComponentFactory {
                     RadAction.showErrorNotification(patch.repo.getProject(),
                             RadicleBundle.message("radCliError"),
                             RadicleBundle.message("errorCalculatingPatchProposalCommits"));
+                    return;
+                }
+                if (radDetails == null) {
+                    RadAction.showErrorNotification(patch.repo.getProject(),
+                            RadicleBundle.message("radCliError"),
+                            RadicleBundle.message("identityDetailsError"));
                     return;
                 }
                 for (var rev : patch.revisions) {
@@ -133,13 +153,55 @@ public class TimelineComponentFactory {
                 textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
                 var horizontalPanel = getHorizontalPanel(8);
                 horizontalPanel.setOpaque(false);
-                var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
+                var contentPanel  = new BorderLayoutPanel();
                 contentPanel.setOpaque(false);
                 contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
+                emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
+                emojiJPanel = emojiPanel.getEmojiPanel();
+                contentPanel.addToBottom(emojiJPanel);
                 mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.generateLabelText(), com.timestamp));
             }
         }
         return mainPanel;
+    }
+
+    public JPanel getEmojiJPanel() {
+        return emojiJPanel;
+    }
+
+    public EmojiPanel<RadPatch> getEmojiPanel() {
+        return emojiPanel;
+    }
+
+    private class PatchEmojiPanel extends EmojiPanel<RadPatch> {
+
+        public PatchEmojiPanel(SingleValueModel<RadPatch> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
+            super(model, reactions, discussionId, radDetails);
+        }
+
+        @Override
+        public RadPatch addEmoji(Emoji emoji, String commentId) {
+            var revisionId = findRevisionId(commentId);
+            return api.patchCommentReact(patch, commentId, revisionId, emoji.getUnicode());
+        }
+
+        private String findRevisionId(String commentId) {
+            String revisionId = "";
+            for (var rev : patch.revisions) {
+                for (var com : rev.discussions()) {
+                    if (com.id.equals(commentId)) {
+                        revisionId = rev.id();
+                        break;
+                    }
+                }
+            }
+            return revisionId;
+        }
+
+        @Override
+        public RadPatch removeEmoji(String emojiUnicode, String commentId) {
+            return null;
+        }
     }
 
     public BaseHtmlEditorPane createCommitsSection(List<GitCommit> commits) {

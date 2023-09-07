@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
@@ -20,9 +21,11 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
@@ -109,7 +112,8 @@ public class OverviewTest extends AbstractIT {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
-                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label")) {
+                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label") ||
+                        map.get("type").equals("comment.react")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -128,7 +132,24 @@ public class OverviewTest extends AbstractIT {
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(ISSUES_URL + "/" + issue.id)) {
                 issue.repo = null;
                 issue.project = null;
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(issue));
+                // Convert Reaction object to List<List<String>>
+                var map = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
+                var discussions = (ArrayList<Map<String, Object>>) map.get("discussion");
+                for (var discussion : discussions) {
+                    var allReactions = new ArrayList<>();
+                    var reactions = (ArrayList<Map<String, Object>>) discussion.get("reactions");
+                    for (var reaction : reactions) {
+                        var reactionList = new ArrayList<>();
+                        var nid = reaction.get("nid");
+                        var emoji = reaction.get("emoji");
+                        reactionList.add(nid);
+                        reactionList.add(emoji);
+                        allReactions.add(reactionList);
+                    }
+                    discussion.remove("reactions");
+                    discussion.put("reactions", allReactions);
+                }
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
@@ -462,6 +483,41 @@ public class OverviewTest extends AbstractIT {
     }
 
     @Test
+    public void testReactions() throws InterruptedException {
+        executeUiTasks();
+        var emojiJPanel = issueEditorProvider.getIssueComponent().getEmojiJPanel();
+        var emojiLabel = UIUtil.findComponentOfType(emojiJPanel, JLabel.class);
+        emojiLabel.getMouseListeners()[0].mouseClicked(null);
+
+        //Check that our reaction exists
+        var borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
+        var myEmojiLabel = ((JLabel) ((BorderLayoutPanel) ((JPanel) borderPanel.getComponent(1)).getComponent(1)).getComponent(0));
+        assertThat(myEmojiLabel.getText()).isEqualTo(issue.discussion.get(0).reactions.get(0).emoji);
+
+        // Make new reaction
+        var emojiPanel = issueEditorProvider.getIssueComponent().getEmojiPanel();
+        var popUp = emojiPanel.getEmojisPopUp();
+        var jblist = UIUtil.findComponentOfType(popUp.getContent(), JBList.class);
+
+        var popUpListener = emojiPanel.getPopupListener();
+        popUpListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+
+        //Wait for the emojis to load
+        Thread.sleep(1000);
+        var listmodel = jblist.getModel();
+        assertThat(listmodel.getSize()).isEqualTo(8);
+        //Select the first emoji
+        jblist.setSelectedIndex(0);
+        jblist.getMouseListeners()[4].mouseClicked(null);
+        var selectedEmoji = jblist.getSelectedValue();
+        var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
+        var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("type")).isEqualTo("comment.react");
+        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
+        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+    }
+
+    @Test
     public void testChangeTitle() throws InterruptedException {
         var issueComponent = issueEditorProvider.getIssueComponent();
         var titlePanel = issueComponent.getHeaderPanel();
@@ -636,6 +692,6 @@ public class OverviewTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of());
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("author", "\uD83D\uDC4D")));
     }
 }

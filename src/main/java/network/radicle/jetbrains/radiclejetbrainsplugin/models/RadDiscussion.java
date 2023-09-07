@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.time.Instant;
 import java.util.List;
 
@@ -9,13 +10,14 @@ public class RadDiscussion {
     public String body;
     public Instant timestamp;
     public String replyTo;
-    public List<List<String>> reactions;
+    @JsonDeserialize(using = Reaction.Deserializer.class)
+    public List<Reaction> reactions;
 
     public RadDiscussion() {
     }
 
     public RadDiscussion(String id, RadAuthor author, String body, Instant timestamp,
-                         String replyTo, List<List<String>> reactions) {
+                         String replyTo, List<Reaction> reactions) {
         this.id = id;
         this.author = author;
         this.body = body;
