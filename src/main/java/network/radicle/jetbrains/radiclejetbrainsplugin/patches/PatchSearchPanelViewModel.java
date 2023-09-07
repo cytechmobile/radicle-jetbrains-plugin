@@ -96,13 +96,13 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
     @Override
     public List<PatchListQuickFilter> getQuickFilters() {
         var openFilter = new PatchListQuickFilter();
-        openFilter.patchListSearchValue.state = RadPatch.State.OPEN.status;
+        openFilter.patchListSearchValue.state = RadPatch.State.OPEN.label;
 
         var draftFilter = new PatchListQuickFilter();
-        draftFilter.patchListSearchValue.state = RadPatch.State.DRAFT.status;
+        draftFilter.patchListSearchValue.state = RadPatch.State.DRAFT.label;
 
         var archivedFilter = new PatchListQuickFilter();
-        archivedFilter.patchListSearchValue.state = RadPatch.State.ARCHIVED.status;
+        archivedFilter.patchListSearchValue.state = RadPatch.State.ARCHIVED.label;
 
         return List.of(openFilter, draftFilter, archivedFilter);
     }
