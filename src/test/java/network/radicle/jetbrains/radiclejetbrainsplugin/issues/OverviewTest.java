@@ -448,23 +448,19 @@ public class OverviewTest extends AbstractIT {
         var jblist = UIUtil.findComponentOfType(assigneesSelect.jbPopup.getContent(), JBList.class);
         var listmodel = jblist.getModel();
 
-        var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
-        fakePopup.getContent().removeAll();
-        fakePopup.getContent().add(new BorderLayoutPanel());
-
         // Trigger beforeShown method
-        popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
+        popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
         //Wait to load delegates
         Thread.sleep(500);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
         var firstAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
         assertThat(firstAssignee.value.name()).isEqualTo(projectDelegates.get(0));
-        assertThat(firstAssignee.selected).isFalse();
+        assertThat(firstAssignee.selected).isTrue();
 
         var secondAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
         assertThat(secondAssignee.value.name()).isEqualTo(projectDelegates.get(1));
-        assertThat(secondAssignee.selected).isFalse();
+        assertThat(secondAssignee.selected).isTrue();
 
         var thirdAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
         assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
@@ -685,7 +681,7 @@ public class OverviewTest extends AbstractIT {
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
         var myIssue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
-                RadIssue.State.OPEN, List.of("did:key:test1234Adgtqwda", "did:key:assignee2Adgtqwda"), List.of("tag1", "tag2"), discussions);
+                RadIssue.State.OPEN, List.of("did:key:test", "did:key:assignee2"), List.of("tag1", "tag2"), discussions);
         myIssue.project = getProject();
         myIssue.repo = firstRepo;
         return myIssue;

@@ -252,9 +252,9 @@ public class PatchListPanelTest extends AbstractIT {
 
     public static List<RadProject> getTestProjects() {
         return List.of(new RadProject("test-rad-project", "test project", "test project description",
-                        "main", List.of("did:key:testdasdwdadg12", "did:key:assignee223412345fa", "did:key:assignee3dasdasdqw123")),
+                        "main", List.of("did:key:test", "did:key:assignee2", "did:key:assignee3")),
                 new RadProject("test-rad-project-second", "test project 2", "test project 2 description",
-                        "main", List.of("did:key:testddasdqwddasdq")));
+                        "main", List.of("did:key:test")));
     }
 
     public static List<RadPatch> getTestPatches() {
