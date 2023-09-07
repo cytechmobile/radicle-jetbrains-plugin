@@ -53,15 +53,11 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         identityDialog.setAlias(ALIAS);
         radicleSettingsHandler.saveRadHome(NEW_RAD_INSTALLATION);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
-        for (var i = 0; i < 2; i++) {
-            radStub.commands.poll(10, TimeUnit.SECONDS);
-            Thread.sleep(1000);
-        }
         var testButton = radicleSettingsView.getRadHomeTestButton();
+        radStub.commands.poll(10, TimeUnit.SECONDS);
         testButton.doClick();
         executeUiTasks();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
-        executeUiTasks();
         assertSelfCommands(NEW_RAD_INSTALLATION);
     }
 
