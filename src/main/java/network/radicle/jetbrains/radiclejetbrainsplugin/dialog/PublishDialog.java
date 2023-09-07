@@ -122,7 +122,7 @@ public class PublishDialog extends DialogWrapper {
         });
     }
 
-    private static class ComboBoxCellRenderer extends DefaultListCellRenderer {
+    public static class ComboBoxCellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
                                                       boolean cellHasFocus) {
