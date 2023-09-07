@@ -24,6 +24,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -181,6 +182,32 @@ public class RadicleProjectApi {
             logger.warn("http request exception {}", url, e);
             return null;
         }
+    }
+
+    public boolean createIssue(String title, String description, List<String> assignees,
+                               List<String> labels, GitRepository repo, String projectId) {
+        var session = createAuthenticatedSession(repo);
+        if (session == null) {
+            return false;
+        }
+        try {
+            var issueReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/issues");
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees);
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("createIssueError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error creating new issue, title : {}, assignees : {}, labels : {}, " +
+                        "repo : {}, projectId : {}", title, assignees, labels, repo, projectId);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            logger.warn("error creating new issue, title : {}, assignees : {}, labels : {}, " +
+                    "repo : {}, projectId : {}", title, assignees, labels, repo, projectId);
+        }
+        return false;
     }
 
     public RadPatch changePatchState(RadPatch patch, String state) {
