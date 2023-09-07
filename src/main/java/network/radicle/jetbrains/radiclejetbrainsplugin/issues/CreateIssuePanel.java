@@ -169,7 +169,7 @@ public class CreateIssuePanel {
                         RadAction.showErrorNotification(project,
                                 RadicleBundle.message("radCliError"),
                                 RadicleBundle.message("errorFindingProjectId"));
-                        return ;
+                        return;
                     }
                     var radProjectId = output.getStdout().trim();
                     var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProjectId);
