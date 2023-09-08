@@ -162,6 +162,7 @@ public class CreateIssuePanel {
                 var assignees = assigneeSelect.delegates;
                 var labels = labelSelect.storeLabels;
                 var repo = (GitRepository) projectSelect.getSelectedItem();
+                newIssueButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                     var radInspect = new RadInspect(repo);
                     var output = radInspect.perform();
@@ -177,6 +178,7 @@ public class CreateIssuePanel {
                         if (isSuccess) {
                             issueTabController.createPanel();
                         }
+                        newIssueButton.setEnabled(true);
                     }, ModalityState.any());
                 });
             }
