@@ -55,8 +55,7 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
         final var patch = myPatchModel.getValue();
         var file = new PatchVirtualFile(myPatchModel, proposalPanel);
         var editorTabs = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
-                ed.getFile() instanceof PatchVirtualFile &&
-                        ((PatchVirtualFile) ed.getFile()).getPatch().id.equals(patch.id)).toList();
+                ed.getFile() instanceof PatchVirtualFile pvf && pvf.getPatch().id.equals(patch.id)).toList();
         if (force) {
             for (var et : editorTabs) {
                 editorManager.closeFile(et.getFile());
