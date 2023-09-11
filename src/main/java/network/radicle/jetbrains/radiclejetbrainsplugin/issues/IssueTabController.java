@@ -61,6 +61,17 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
         });
     }
 
+    public void createNewIssuePanel() {
+        final var mainPanel = tab.getComponent();
+        tab.setDisplayName(RadicleBundle.message("newIssue"));
+
+        var createPanel = new CreateIssuePanel(this, project).create();
+        mainPanel.removeAll();
+        mainPanel.add(createPanel, BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
     protected void createInternalIssuePanel(SingleValueModel<RadIssue> issue, JComponent mainPanel) {
         tab.setDisplayName("Issue : " + StringUtils.substring(issue.getValue().id, 0,  7));
         issuePanel = new IssuePanel(this, issue);

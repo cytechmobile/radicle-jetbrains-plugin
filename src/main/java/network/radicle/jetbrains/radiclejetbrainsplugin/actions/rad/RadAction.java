@@ -125,9 +125,9 @@ public abstract class RadAction {
                 myDialog.setTitle(title);
                 myDialog.hasIdentity(hasIdentity);
                 okButton.set(myDialog.showAndGet());
-                latch.countDown();
                 passphrase.set(myDialog.getPassword());
                 alias.set(myDialog.getAlias());
+                latch.countDown();
             }, ModalityState.any());
             try {
                 latch.await();

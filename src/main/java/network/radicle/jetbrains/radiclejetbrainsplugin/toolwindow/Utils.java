@@ -7,6 +7,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 public class Utils {
+    private static final String SPLIT_CHAR = ":";
     public static JComponent getVerticalPanel(int gap) {
         return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
     }
@@ -18,5 +19,20 @@ public class Utils {
 
     public static JComponent getHorizontalPanel(int gap) {
         return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
+    }
+
+    public static String formatDid(String did) {
+        var didStr = "did:key:";
+        var parts = did.split(SPLIT_CHAR);
+        if (parts.length != 3) {
+            return did;
+        }
+        var id = parts[2];
+        if (id.length() < 6) {
+            return id;
+        }
+        var firstPart = id.substring(0, 6);
+        var secondPart = id.substring(id.length() - 6);
+        return didStr + firstPart + "..." + secondPart;
     }
 }

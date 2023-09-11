@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
@@ -33,13 +35,16 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -73,11 +78,16 @@ import static org.mockito.Mockito.when;
 public class OverviewTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private static String dummyComment = "Hello";
+    private RadicleToolWindow radicleToolWindow;
     private RadIssue issue;
     private IssueEditorProvider issueEditorProvider;
     private VirtualFile editorFile;
     private IssueTabController issueTabController;
+    private static final String ISSUE_NAME = "Test Issue";
+    private static final String ISSUE_DESC = "Test Description";
     private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
+    @Rule
+    public TestName testName = new TestName();
 
     @Before
     public void beforeTest() throws IOException, InterruptedException {
@@ -115,6 +125,14 @@ public class OverviewTest extends AbstractIT {
                 if (dummyComment.equals("break") || issue.title.equals("break")) {
                     statusCode[0] = 400;
                 }
+                se = new StringEntity("{}");
+            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains(ISSUES_URL)) {
+                var obj = EntityUtils.toString(((HttpPost) req).getEntity());
+                var mapper = new ObjectMapper();
+                Map<String, Object> map = mapper.readValue(obj, Map.class);
+                response.add(map);
+                // We don't need to refresh the panel after the request
+                statusCode[0] = 400;
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(ISSUES_URL + "/" + issue.id)) {
                 issue.repo = null;
@@ -162,12 +180,17 @@ public class OverviewTest extends AbstractIT {
 
     public void setupWindow() throws InterruptedException {
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
-        RadicleToolWindow radicleToolWindow = new RadicleToolWindow();
+        radicleToolWindow = new RadicleToolWindow();
         var mockToolWindow = new PatchListPanelTest.MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), mockToolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(mockToolWindow);
         issueTabController = radicleToolWindow.issueTabController;
-        issueTabController.createIssuePanel(issue);
+        if (testName.getMethodName().equals("testReactions")) {
+            // Don't recreate IssuePanel after success request for this test
+            issueTabController.createInternalIssuePanel(new SingleValueModel<>(issue), new JPanel());
+        } else {
+            issueTabController.createIssuePanel(issue);
+        }
         var editorManager = FileEditorManager.getInstance(getProject());
         var allEditors = editorManager.getAllEditors();
         assertThat(allEditors.length).isEqualTo(1);
@@ -264,6 +287,90 @@ public class OverviewTest extends AbstractIT {
         var selectedLabels = (ArrayList<String>) res.get("labels");
         assertThat(selectedLabels.size()).isEqualTo(1);
         assertThat(selectedLabels).contains(issue.labels.get(1));
+    }
+
+    @Test
+    public void createNewIssueTest() throws InterruptedException {
+        var newIssuePanel = new CreateIssuePanel(issueTabController, myProject);
+        var tabs = newIssuePanel.create();
+        newIssuePanel.latch.await();
+        executeUiTasks();
+
+        var panel = (JPanel) tabs.getComponents()[tabs.getComponents().length - 1];
+        var children = panel.getComponents();
+        var buttonsPanel = (JPanel) ((JPanel) children[2]).getComponents()[1];
+
+        var titleField = UIUtil.findComponentOfType((JComponent) children[0], JBTextArea.class);
+        titleField.setText(ISSUE_NAME);
+        var descriptionField = UIUtil.findComponentOfType((JComponent) children[1], JBTextArea.class);
+        descriptionField.setText(ISSUE_DESC);
+
+        // Get the panel where the actions select are
+        var actionsPanel = (JPanel) ((JPanel) children[2]).getComponents()[0];
+
+        var actionsPanelComponents = actionsPanel.getComponents();
+        assertThat(((JLabel) actionsPanelComponents[0]).getText()).isEqualTo(RadicleBundle.message("assignees"));
+        assertThat(((JLabel) actionsPanelComponents[2]).getText()).isEqualTo(RadicleBundle.message("label"));
+
+        // Find assignee panel and trigger the open action
+        var assigneePanel = (NonOpaquePanel) actionsPanelComponents[1];
+        var assigneeButton = UIUtil.findComponentOfType(assigneePanel, InlineIconButton.class);
+        assigneeButton.getActionListener().actionPerformed(new ActionEvent(assigneeButton, 0, ""));
+        executeUiTasks();
+
+        var assigneeSelect = newIssuePanel.getAssigneeSelect();
+        var popUpListener = assigneeSelect.listener;
+        var jbList = UIUtil.findComponentOfType(assigneeSelect.jbPopup.getContent(), JBList.class);
+        var listmodel = jbList.getModel();
+
+        var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
+        fakePopup.getContent().removeAll();
+        fakePopup.getContent().add(new BorderLayoutPanel());
+        popUpListener.beforeShown(new LightweightWindowEvent(fakePopup));
+
+        //Wait to load delegates
+        Thread.sleep(1000);
+        assertThat(listmodel.getSize()).isEqualTo(getTestProjects().get(0).delegates.size());
+
+        //Select the first did
+        ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = true;
+        popUpListener.onClosed(new LightweightWindowEvent(fakePopup));
+
+        var labelSelect = newIssuePanel.getLabelSelect();
+        var label1 = "label1";
+        var label2 = "label2";
+        labelSelect.storeLabels.add(label1);
+        labelSelect.storeLabels.add(label2);
+
+        // Find label panel and trigger the open action
+        var labelPanel = (NonOpaquePanel) actionsPanelComponents[3];
+        var labelButton = UIUtil.findComponentOfType(labelPanel, InlineIconButton.class);
+        labelButton.getActionListener().actionPerformed(new ActionEvent(assigneeButton, 0, ""));
+        executeUiTasks();
+
+        var labelPopupListener = labelSelect.listener;
+        var labelJbList = UIUtil.findComponentOfType(labelSelect.jbPopup.getContent(), JBList.class);
+        var labelListModel = labelJbList.getModel();
+        labelPopupListener.beforeShown(new LightweightWindowEvent(fakePopup));
+
+        //Wait to load labels
+        Thread.sleep(1000);
+        assertThat(labelListModel.getSize()).isEqualTo(2);
+
+        //Remove the first label
+        ((SelectionListCellRenderer.SelectableWrapper<?>) labelListModel.getElementAt(0)).selected = false;
+        labelPopupListener.onClosed(new LightweightWindowEvent(fakePopup));
+
+        // Find create new issue button
+        var createIssueButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
+        createIssueButton.doClick();
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+
+        assertThat(res.get("title")).isEqualTo(ISSUE_NAME);
+        assertThat(res.get("description")).isEqualTo(ISSUE_DESC);
+        assertThat(res.get("labels")).usingRecursiveAssertion().isEqualTo(List.of(label2));
+        assertThat(res.get("assignees")).usingRecursiveAssertion().isEqualTo(List.of(getTestProjects().get(0).delegates.get(0)));
     }
 
     @Test

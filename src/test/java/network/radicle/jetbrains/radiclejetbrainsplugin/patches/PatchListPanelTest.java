@@ -185,7 +185,7 @@ public class PatchListPanelTest extends AbstractIT {
         executeUiTasks();
 
         var filterWithSearch = new PatchListSearchValue();
-        filterWithSearch.state = RadPatch.State.OPEN.status;
+        filterWithSearch.state = RadPatch.State.OPEN.label;
         listPanel.filterList(filterWithSearch);
         executeUiTasks();
 
@@ -194,7 +194,7 @@ public class PatchListPanelTest extends AbstractIT {
         var radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
 
-        filterWithSearch.state = RadPatch.State.DRAFT.status;
+        filterWithSearch.state = RadPatch.State.DRAFT.label;
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
@@ -202,7 +202,7 @@ public class PatchListPanelTest extends AbstractIT {
         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
-        filterWithSearch.state = RadPatch.State.ARCHIVED.status;
+        filterWithSearch.state = RadPatch.State.ARCHIVED.label;
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
