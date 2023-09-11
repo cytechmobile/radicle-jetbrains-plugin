@@ -31,10 +31,12 @@ import java.util.stream.Collectors;
 public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchTabController controller;
     private final ListCellRenderer<RadPatch> patchListCellRenderer = new PatchListCellRenderer();
+    protected PatchListSearchValue patchListSearchValue;
 
     public PatchListPanel(PatchTabController ctrl, Project project) {
         super(ctrl, project);
         this.controller = ctrl;
+        this.patchListSearchValue = getEmptySearchValueModel();
     }
 
     @Override
@@ -49,7 +51,9 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
 
     @Override
     public PatchSearchPanelViewModel getViewModel(CoroutineScope scope) {
-        return new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
+        var model = new PatchSearchPanelViewModel(scope, new PatchSearchHistoryModel(), project);
+        model.getSearchState().setValue(this.patchListSearchValue);
+        return model;
     }
 
     @Override
@@ -63,19 +67,20 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
     }
 
      @Override
-     public void filterList(PatchListSearchValue patchListSearchValue) {
+     public void filterList(PatchListSearchValue plsv) {
+        this.patchListSearchValue = plsv;
          model.clear();
          if (loadedData == null) {
              return;
          }
-         if (patchListSearchValue.getFilterCount() == 0) {
+         if (plsv.getFilterCount() == 0) {
              model.addAll(loadedData);
          } else {
-             var projectFilter = patchListSearchValue.project;
-             var searchFilter = patchListSearchValue.searchQuery;
-             var peerAuthorFilter = patchListSearchValue.author;
-             var stateFilter = patchListSearchValue.state;
-             var labelFilter = patchListSearchValue.label;
+             var projectFilter = plsv.project;
+             var searchFilter = plsv.searchQuery;
+             var peerAuthorFilter = plsv.author;
+             var stateFilter = plsv.state;
+             var labelFilter = plsv.label;
              var loadedRadPatches = loadedData;
              List<RadPatch> filteredPatches = loadedRadPatches.stream()
                      .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
