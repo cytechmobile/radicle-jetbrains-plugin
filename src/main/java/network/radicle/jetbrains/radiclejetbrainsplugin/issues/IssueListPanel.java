@@ -31,10 +31,12 @@ import java.util.stream.Collectors;
 public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, IssueSearchPanelViewModel> {
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
     private final IssueTabController cntrl;
+    protected IssueListSearchValue issueListSearchValue;
 
     public IssueListPanel(IssueTabController controller, Project project) {
         super(controller, project);
         this.cntrl = controller;
+        this.issueListSearchValue = getEmptySearchValueModel();
     }
 
     @Override
@@ -49,7 +51,9 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public IssueSearchPanelViewModel getViewModel(CoroutineScope scope) {
-        return new IssueSearchPanelViewModel(scope, new IssueSearchHistoryModel(), project);
+        var model = new IssueSearchPanelViewModel(scope, new IssueSearchHistoryModel(), project);
+        model.getSearchState().setValue(this.issueListSearchValue);
+        return model;
     }
 
     @Override
@@ -64,6 +68,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public void filterList(IssueListSearchValue searchValue) {
+        this.issueListSearchValue = searchValue;
         model.clear();
         if (loadedData == null) {
             return;

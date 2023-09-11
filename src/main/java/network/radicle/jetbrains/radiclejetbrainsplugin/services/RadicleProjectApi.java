@@ -52,7 +52,6 @@ public class RadicleProjectApi {
     private final Project project;
 
     protected Cache<String, Session> sessions;
-    protected SeedNode seedNode;
 
     public RadicleProjectApi(Project project) {
         this(project, HttpClientBuilder.create().build());
@@ -581,13 +580,9 @@ public class RadicleProjectApi {
     }
 
     protected SeedNode getSeedNode() {
-        if (seedNode != null) {
-            return seedNode;
-        }
         var sh = new RadicleProjectSettingsHandler(project);
         var settings = sh.loadSettings();
-        seedNode = settings.getSeedNode();
-        return seedNode;
+        return settings.getSeedNode();
     }
 
     protected String getHttpNodeUrl() {
