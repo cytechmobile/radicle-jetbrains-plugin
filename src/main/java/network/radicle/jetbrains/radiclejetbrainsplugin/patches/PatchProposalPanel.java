@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
@@ -33,6 +34,7 @@ import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
+import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import icons.CollaborationToolsIcons;
@@ -41,7 +43,9 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCheckout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
@@ -52,9 +56,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JLabel;
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -190,6 +197,36 @@ public class PatchProposalPanel {
         });
         viewTimelineLink.setBorder(JBUI.Borders.emptyTop(4));
         nonOpaquePanel.add(viewTimelineLink, new CC().gapBottom(String.valueOf(UI.scale(8))));
+
+        var checkoutAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    var formattedPatchId = patch.id.substring(0, 6);
+                    var countDown = new CountDownLatch(1);
+                    UpdateBackgroundTask ubt = new UpdateBackgroundTask(patch.project, RadicleBundle.message("checkingOut", "", "patch/" + formattedPatchId),
+                            countDown);
+                    new Thread(ubt::queue).start();
+                    var radCheckout = new RadCheckout(patch.repo, patch.id);
+                    var output = radCheckout.perform();
+                    if (!RadAction.isSuccess(output)) {
+                        var errorMsg = output.getStdout();
+                        RadAction.showErrorNotification(patch.project, "", errorMsg);
+                        countDown.countDown();
+                        return;
+                    }
+                    // Refresh repo and root directory
+                    patch.repo.update();
+                    GitUtil.refreshVfs(patch.repo.getRoot(), null);
+                    countDown.countDown();
+                    RadAction.showNotification(patch.project, "", RadicleBundle.message("successCheckingOut",
+                                    "", formattedPatchId), NotificationType.INFORMATION, List.of());
+                });
+            }
+        };
+        var checkoutBtn = new JButton(checkoutAction);
+        checkoutBtn.setText(RadicleBundle.message("checkout"));
+        nonOpaquePanel.add(checkoutBtn, new CC().gapBottom(String.valueOf(UI.scale(8))));
         return nonOpaquePanel;
     }
 
