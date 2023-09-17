@@ -128,13 +128,12 @@ public class IssueComponent {
 
         @Override
         public RadIssue addEmoji(Emoji emoji, String discussionId) {
-            return api.issueCommentReact(radIssue, discussionId, emoji.getUnicode());
+            return api.issueCommentReact(radIssue, discussionId, emoji.getUnicode(), true);
         }
 
         @Override
         public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
-            //TODO
-            return null;
+            return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
         }
     }
 

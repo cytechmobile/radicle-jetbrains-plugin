@@ -182,7 +182,13 @@ public class TimelineComponentFactory {
         @Override
         public RadPatch addEmoji(Emoji emoji, String commentId) {
             var revisionId = findRevisionId(commentId);
-            return api.patchCommentReact(patch, commentId, revisionId, emoji.getUnicode());
+            return api.patchCommentReact(patch, commentId, revisionId, emoji.getUnicode(), true);
+        }
+
+        @Override
+        public RadPatch removeEmoji(String emojiUnicode, String commentId) {
+            var revisionId = findRevisionId(commentId);
+            return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
         }
 
         private String findRevisionId(String commentId) {
@@ -196,11 +202,6 @@ public class TimelineComponentFactory {
                 }
             }
             return revisionId;
-        }
-
-        @Override
-        public RadPatch removeEmoji(String emojiUnicode, String commentId) {
-            return null;
         }
     }
 

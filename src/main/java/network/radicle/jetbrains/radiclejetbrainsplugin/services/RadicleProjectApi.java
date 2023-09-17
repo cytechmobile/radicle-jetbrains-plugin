@@ -324,7 +324,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch patchCommentReact(RadPatch patch, String commendId, String revId, String reaction) {
+    public RadPatch patchCommentReact(RadPatch patch, String commendId, String revId, String reaction, boolean active) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -332,7 +332,7 @@ public class RadicleProjectApi {
         try {
             var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchData = Map.of("type", "revision.comment.react", "revision", revId, "comment", commendId, "reaction", reaction, "active", true);
+            var patchData = Map.of("type", "revision.comment.react", "revision", revId, "comment", commendId, "reaction", reaction, "active", active);
             var json = MAPPER.writeValueAsString(patchData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(patchReq, RadicleBundle.message("reactionError"));
@@ -348,7 +348,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction) {
+    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction, boolean active) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
             return null;
@@ -356,7 +356,7 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var issueData = Map.of("type", "comment.react", "id", discussionId, "reaction", reaction, "active", true);
+            var issueData = Map.of("type", "comment.react", "id", discussionId, "reaction", reaction, "active", active);
             var json = MAPPER.writeValueAsString(issueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("reactionError"));
