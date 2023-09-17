@@ -521,6 +521,18 @@ public class OverviewTest extends AbstractIT {
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
         assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+        assertThat((Boolean) res.get("active")).isTrue();
+
+        borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
+        var reactorsPanel = ((JPanel) borderPanel.getComponents()[1]).getComponents()[1];
+        var listeners = reactorsPanel.getMouseListeners();
+        listeners[0].mouseClicked(null);
+
+        res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("type")).isEqualTo("comment.react");
+        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
+        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+        assertThat((Boolean) res.get("active")).isFalse();
     }
 
     @Test
@@ -698,6 +710,6 @@ public class OverviewTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("author", "\uD83D\uDC4D")));
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")));
     }
 }
