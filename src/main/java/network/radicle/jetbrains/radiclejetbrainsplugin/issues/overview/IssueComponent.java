@@ -28,6 +28,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import javax.swing.JPanel;
 import javax.swing.JComponent;
 import javax.swing.ImageIcon;
+import javax.swing.ScrollPaneConstants;
+import java.awt.Dimension;
 import java.util.List;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
@@ -72,6 +74,7 @@ public class IssueComponent {
         });
 
         var scrollPanel = ScrollPaneFactory.createScrollPane(issueContainer, true);
+        scrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPanel.setOpaque(false);
         mainPanel.setContent(scrollPanel);
         return mainPanel;
@@ -165,7 +168,8 @@ public class IssueComponent {
         bodyIssue = bodyIssue.replaceAll("\\\\n", "<br>");
         var descriptionEditor = new BaseHtmlEditorPane();
         descriptionEditor.setFont(JBFont.h4().asPlain());
-        descriptionEditor.setBody("<html>" + bodyIssue + "</html>");
+        descriptionEditor.setBody("<html><body>" + bodyIssue + "</body></html>");
+        descriptionEditor.setPreferredSize(new Dimension(600, 50));
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), descriptionEditor,
                 RadicleBundle.message("issue.change.title", "change title"),
                 new SingleValueModel<>(bodyIssue), (editedTitle) -> true).build();
