@@ -20,15 +20,15 @@
         </properties>
         <border type="none"/>
         <children>
-          <component id="476bd" class="javax.swing.JLabel" binding="branchLabel">
+          <component id="476bd" class="javax.swing.JLabel" binding="nameLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Default Branch :"/>
+              <text value="Name :"/>
             </properties>
           </component>
-          <component id="92b" class="javax.swing.JTextField" binding="branchField">
+          <component id="92b" class="javax.swing.JTextField" binding="nameField">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
@@ -36,15 +36,15 @@
             </constraints>
             <properties/>
           </component>
-          <component id="1389" class="javax.swing.JLabel" binding="nameLabel">
+          <component id="1389" class="javax.swing.JLabel" binding="branchLabel">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Name :"/>
+              <text value="Default Branch :"/>
             </properties>
           </component>
-          <component id="353ce" class="javax.swing.JTextField" binding="nameField">
+          <component id="353ce" class="javax.swing.JTextField" binding="branchField">
             <constraints>
               <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>

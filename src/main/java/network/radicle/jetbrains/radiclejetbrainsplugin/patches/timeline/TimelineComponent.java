@@ -27,6 +27,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.ScrollPaneConstants;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
 
@@ -97,6 +98,7 @@ public class TimelineComponent {
 
         var mainPanel = new Wrapper();
         var scrollPanel = ScrollPaneFactory.createScrollPane(timelinePanel, true);
+        scrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPanel.setOpaque(false);
 
         mainPanel.setContent(scrollPanel);
