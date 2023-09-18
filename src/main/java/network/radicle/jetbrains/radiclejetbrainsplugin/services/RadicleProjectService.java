@@ -145,6 +145,10 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("remote", "list"), root);
     }
 
+    public ProcessOutput checkout(GitRepository root, String patchId) {
+        return executeCommand(root.getRoot().getPath(), List.of("patch", "checkout", patchId), root);
+    }
+
     public ProcessOutput inspect(GitRepository root) {
         return executeCommand(root.getRoot().getPath(), List.of("inspect"), root);
     }

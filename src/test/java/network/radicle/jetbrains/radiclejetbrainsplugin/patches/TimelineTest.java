@@ -258,6 +258,23 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
+    public void testCheckoutButton() throws InterruptedException {
+        var panel = patchTabController.getPatchProposalJPanel();
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var myPanel = ef.getFirstComponent();
+        var mainPanel = (JPanel) myPanel.getComponents()[0];
+        var opaquePanel = (JPanel) mainPanel.getComponents()[2];
+        var checkoutButton = (JButton) opaquePanel.getComponents()[2];
+        //clear previous commands
+        radStub.commands.clear();
+        checkoutButton.doClick();
+
+        var checkoutCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(checkoutCommand);
+        assertThat(checkoutCommand.getCommandLineString()).contains("patch checkout " + patch.id.substring(0, 6));
+    }
+
+    @Test
     public void addRemoveLabels() throws InterruptedException {
         var patchProposalPanel = patchTabController.getPatchProposalPanel();
         var panel = patchTabController.getPatchProposalJPanel();
