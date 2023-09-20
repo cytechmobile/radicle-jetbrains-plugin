@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
+    public static String id;
     public ToolWindowManagerListener toolWindowManagerListener;
     public PatchTabController patchTabController;
     public IssueTabController issueTabController;
@@ -37,6 +38,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
     @Override
     public void init(@NotNull ToolWindow window) {
         super.init(window);
+        id = window.getId();
         //Workaround at activating toolwindow content and check for available radicle repos
         window.getContentManager();
     }

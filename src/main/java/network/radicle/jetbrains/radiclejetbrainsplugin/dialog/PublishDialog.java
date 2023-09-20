@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextArea;
 import git4idea.repo.GitRepository;
@@ -11,6 +12,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,9 +65,18 @@ public class PublishDialog extends DialogWrapper {
         super.doOKAction();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var repo = (GitRepository) projectSelect.getSelectedItem();
-            if (!isSelectedRepoInitialized) {
+            if (!isSelectedRepoInitialized && repo != null) {
                 var init = new RadInit(repo, nameField.getText(), descriptionField.getText(), branchField.getText());
-                init.perform();
+                var output = init.perform();
+                if (RadAction.isSuccess(output)) {
+                    // Show radicle tool window
+                    var radToolWindow = ToolWindowManager.getInstance(repo.getProject()).getToolWindow(RadicleToolWindow.id);
+                    if (radToolWindow == null || radToolWindow.isAvailable()) {
+                        return;
+                    }
+                    ApplicationManager.getApplication().invokeLater(() ->
+                            radToolWindow.setAvailable(true), ModalityState.any());
+                }
             }
         });
     }
