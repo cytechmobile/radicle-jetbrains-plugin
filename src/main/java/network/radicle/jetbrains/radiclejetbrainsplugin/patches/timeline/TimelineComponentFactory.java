@@ -6,7 +6,6 @@ import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
-import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -25,8 +24,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -59,8 +61,10 @@ public class TimelineComponentFactory {
     private RadDetails radDetails;
     private JPanel emojiJPanel;
     private EmojiPanel<RadPatch> emojiPanel;
+    private final PatchVirtualFile file;
 
-    public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel) {
+    public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel, PatchVirtualFile file) {
+        this.file = file;
         this.patch = patchModel.getValue();
         this.patchProposalPanel = patchProposalPanel;
         this.patchModel = patchModel;
@@ -68,16 +72,9 @@ public class TimelineComponentFactory {
     }
 
     public JComponent createDescSection() {
-        var contentPanel = new JPanel(SizeRestrictedSingleComponentLayout.Companion.constant(null, null));
-        var textHtmlEditor = new BaseHtmlEditorPane();
         var description = !Strings.isNullOrEmpty(patch.description) ? patch.description :
-                RadicleBundle.message("noDescription");
-        textHtmlEditor.setBody(description);
-        contentPanel.add(textHtmlEditor);
-        contentPanel.setOpaque(false);
-        var horizontalPanel = getHorizontalPanel(8);
-        horizontalPanel.setOpaque(false);
-        descSection = createTimeLineItem(contentPanel, horizontalPanel, patch.author.generateLabelText(), null);
+                         RadicleBundle.message("noDescription");
+        descSection = Utils.descriptionPanel(description, patch.project, file);
         return descSection;
     }
 
@@ -150,12 +147,12 @@ public class TimelineComponentFactory {
                             " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
                             "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
                 }
-                textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
+                var markDown = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, message, patch.project);
                 var horizontalPanel = getHorizontalPanel(8);
                 horizontalPanel.setOpaque(false);
                 var contentPanel  = new BorderLayoutPanel();
                 contentPanel.setOpaque(false);
-                contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
+                contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(Utils.htmlEditorPane(markDown), StatusMessageType.WARNING));
                 emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
                 emojiJPanel = emojiPanel.getEmojiPanel();
                 contentPanel.addToBottom(emojiJPanel);
