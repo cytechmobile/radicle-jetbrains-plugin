@@ -59,7 +59,7 @@ public class IssueEditorProvider implements FileEditorProvider, DumbAware {
         }
 
         public void initPanel() {
-            issueComponent = new IssueComponent(file.getIssueModel());
+            issueComponent = new IssueComponent(file);
             panel = issueComponent.create();
             panel.setOpaque(true);
             panel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
