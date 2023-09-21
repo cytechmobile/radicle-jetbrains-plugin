@@ -7,6 +7,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.vcs</depends>
     <depends>Git4Idea</depends>
+    <depends>org.intellij.plugins.markdown</depends>
 
     <!-- Declare the default resource location for localizing menu strings -->
     <resource-bundle>messages.RadicleBundle</resource-bundle>
