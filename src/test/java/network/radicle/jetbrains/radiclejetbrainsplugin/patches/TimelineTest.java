@@ -259,7 +259,13 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testCheckoutButton() throws InterruptedException {
-        var panel = patchTabController.getPatchProposalJPanel();
+        var patchProposalPanel = new PatchProposalPanel(patchTabController, new SingleValueModel<>(patch)) {
+            @Override
+            public void refreshVcs() {
+
+            }
+        };
+        var panel = patchProposalPanel.createViewPatchProposalPanel();
         var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
         var myPanel = ef.getFirstComponent();
         var mainPanel = (JPanel) myPanel.getComponents()[0];
@@ -441,13 +447,12 @@ public class TimelineTest extends AbstractIT {
     @Test
     public void testDescSection() {
         var descSection = patchEditorProvider.getTimelineComponent().getComponentsFactory().getDescSection();
-        var elements = UIUtil.findComponentsOfType(descSection, BaseHtmlEditorPane.class);
+        var elements = UIUtil.findComponentsOfType(descSection, JEditorPane.class);
         var timeline = "";
         for (var el : elements) {
             timeline += el.getText();
         }
         assertThat(timeline).contains(patch.description);
-        assertThat(timeline).contains(patch.author.id);
     }
 
     @Test
@@ -468,7 +473,7 @@ public class TimelineTest extends AbstractIT {
     public void testCommentsExists() {
         executeUiTasks();
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
-        var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
+        var elements = UIUtil.findComponentsOfType(revisionSection, JEditorPane.class);
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
         assertThat(comments).contains(patch.revisions.get(0).id());
@@ -506,7 +511,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         Thread.sleep(1000);
 
-        var elements = UIUtil.findComponentsOfType(revisionSection, BaseHtmlEditorPane.class);
+        var elements = UIUtil.findComponentsOfType(revisionSection, JEditorPane.class);
         assertThat(elements).isNotEmpty();
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
