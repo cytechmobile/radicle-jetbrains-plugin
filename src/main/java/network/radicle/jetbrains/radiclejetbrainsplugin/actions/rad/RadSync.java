@@ -15,6 +15,9 @@ public class RadSync extends RadAction {
 
     @Override
     public String getActionName() {
+        if (this.fetch) {
+            return "Sync_Fetch";
+        }
         return "Sync";
     }
 
