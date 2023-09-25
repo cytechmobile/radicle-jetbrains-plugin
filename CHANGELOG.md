@@ -4,24 +4,31 @@
 
 ## Unreleased
 
+## 0.7.2 - 2023-09-19
+
+- Check out patches directly from the IDE! A new check out button, allows you to check out the patch branch, so you can work directly with the code in your working copy. by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/360
+
+- You can now not only add reactions to patches / issues, but you can also - wait for it - **remove** them. No more stress when you accidentally misclick the embarassing wrong icon.  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/361
+
+- The issue descriptions and comments were all having a bit of a bad hair day, so it was time to help them out a little.  We also fixed the  order of the fields inside publish dialog to match the CLI order! by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/359
+
+### Dependabot (Security) Updates
+
+- Bump actions/checkout from 3 to 4 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/348
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.1...v0.7.2
+
 ## 0.7.1 - 2023-09-13
 
 - You can now create new Radicle Issues from within your IDE ! 🎉  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/350
-
 - You can also add reactions 👍🏼 🎉 🚀  to comments (for both Patches and Issues !) ;)  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/341
-
 - The "Refresh" button would reset filters in the Issue listing. @JChrist (politely) explained that it shouldn't, in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/349
-
 - The Radicle Tool Window Icon size was kind of... large. A short diet later, it's now back to normal! by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/351
 
 ### Dependabot (Security) Updates
 
 - Bump org.jetbrains.kotlin.jvm from 1.9.0 to 1.9.10 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/334
-
 - Bump org.jetbrains.changelog from 2.1.2 to 2.2.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/336
-
 - Bump org.jetbrains.dokka from 1.8.20 to 1.9.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/342
-
 - Bump JetBrains/qodana-action from 2023.2.1 to 2023.2.6 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/347
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.0...v0.7.1
 
