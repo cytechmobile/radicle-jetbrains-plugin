@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview;
 
+
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtilKt;
 import com.intellij.collaboration.ui.SingleValueModel;
@@ -17,6 +18,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
@@ -25,11 +27,13 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
+
 import javax.swing.JPanel;
 import javax.swing.JComponent;
-import javax.swing.ImageIcon;
 import javax.swing.ScrollPaneConstants;
-import java.awt.Dimension;
+
 import java.util.List;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
@@ -47,10 +51,12 @@ public class IssueComponent {
     private RadDetails radDetails;
     private JPanel emojiJPanel;
     private EmojiPanel<RadIssue> emojiPanel;
+    private final IssueVirtualFile  file;
 
-    public IssueComponent(SingleValueModel<RadIssue> issueModel) {
-        this.radIssue = issueModel.getValue();
-        this.issueModel = issueModel;
+    public IssueComponent(IssueVirtualFile file) {
+        this.file = file;
+        this.radIssue = file.getIssueModel().getValue();
+        this.issueModel = file.getIssueModel();
         this.api = radIssue.project.getService(RadicleProjectApi.class);
     }
 
@@ -98,8 +104,6 @@ public class IssueComponent {
         for (var i = 1; i < discussionList.size(); i++) {
             var issueId = discussionList.get(0).id;
             var com = discussionList.get(i);
-            var textHtmlEditor = new BaseHtmlEditorPane();
-            textHtmlEditor.setOpaque(false);
             var message = com.body;
             if (!Strings.isNullOrEmpty(com.replyTo) && !com.replyTo.equals(issueId)) {
                 var replyToMessage = findMessage(com.replyTo, discussionList);
@@ -107,12 +111,12 @@ public class IssueComponent {
                         " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
                         "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
             }
-            textHtmlEditor.setBody("<html><body>" + message + "</body></html>");
+            var markDown = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, message, radIssue.project);
             var horizontalPanel = getHorizontalPanel(8);
             horizontalPanel.setOpaque(false);
             var contentPanel = new BorderLayoutPanel();
             contentPanel.setOpaque(false);
-            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(textHtmlEditor, StatusMessageType.WARNING));
+            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(Utils.htmlEditorPane(markDown), StatusMessageType.WARNING));
             emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
             emojiJPanel = emojiPanel.getEmojiPanel();
             contentPanel.addToBottom(emojiJPanel);
@@ -163,20 +167,10 @@ public class IssueComponent {
     }
 
     private JComponent getDescription() {
-        var bodyIssue = radIssue.discussion.size() > 0 ? radIssue.discussion.get(0).body : "";
-        bodyIssue = bodyIssue.replaceAll("\\\\n", "<br>");
-        var descriptionEditor = new BaseHtmlEditorPane();
-        descriptionEditor.setFont(JBFont.h4().asPlain());
-        descriptionEditor.setBody("<html><body>" + bodyIssue + "</body></html>");
-        descriptionEditor.setPreferredSize(new Dimension(600, 50));
-        var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), descriptionEditor,
-                RadicleBundle.message("issue.change.title", "change title"),
-                new SingleValueModel<>(bodyIssue), (editedTitle) -> true).build();
-        var contentPanel = panelHandle.panel;
-        var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                i -> new SingleValueModel<>(new ImageIcon()), contentPanel);
-        b.withHeader(contentPanel, null);
-        descPanel = (JPanel) b.build();
+        var bodyIssue = !radIssue.discussion.isEmpty() ? radIssue.discussion.get(0).body : "";
+        var description = !Strings.isNullOrEmpty(bodyIssue) ? bodyIssue :
+                RadicleBundle.message("noDescription");
+        descPanel = Utils.descriptionPanel(description, radIssue.project, file);
         return descPanel;
     }
 

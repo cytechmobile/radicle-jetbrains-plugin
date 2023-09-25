@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
-import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -50,6 +49,7 @@ import org.junit.runners.JUnit4;
 
 import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JEditorPane;
 import javax.swing.JComponent;
 import javax.swing.JButton;
 import java.awt.event.ActionEvent;
@@ -613,7 +613,7 @@ public class OverviewTest extends AbstractIT {
     @Test
     public void testDescSection() {
         var descSection = issueEditorProvider.getIssueComponent().getDescPanel();
-        var elements = UIUtil.findComponentsOfType(descSection, BaseHtmlEditorPane.class);
+        var elements = UIUtil.findComponentsOfType(descSection, JEditorPane.class);
         var timeline = "";
         for (var el : elements) {
             timeline += el.getText();
@@ -653,7 +653,7 @@ public class OverviewTest extends AbstractIT {
         radStub.commands.clear();
         executeUiTasks();
         var commentSection = issueEditorProvider.getIssueComponent().getCommentSection();
-        var elements = UIUtil.findComponentsOfType(commentSection, BaseHtmlEditorPane.class);
+        var elements = UIUtil.findComponentsOfType(commentSection, JEditorPane.class);
         var comments = "";
         for (var el : elements) {
             comments += el.getText();
@@ -685,7 +685,7 @@ public class OverviewTest extends AbstractIT {
     public void testCommentsExists() {
         executeUiTasks();
         var commentSection = issueEditorProvider.getIssueComponent().getCommentSection();
-        var elements = UIUtil.findComponentsOfType(commentSection, BaseHtmlEditorPane.class);
+        var elements = UIUtil.findComponentsOfType(commentSection, JEditorPane.class);
         var comments = "";
         for (var el : elements) {
             comments += el.getText();

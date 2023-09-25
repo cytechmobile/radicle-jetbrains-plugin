@@ -22,6 +22,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
@@ -41,10 +42,10 @@ public class TimelineComponent {
     private JComponent revisionSection;
     private final RadicleProjectApi api;
 
-    public TimelineComponent(SingleValueModel<RadPatch> radPatchModel, PatchProposalPanel patchProposalPanel) {
-        this.radPatchModel = radPatchModel;
-        this.radPatch = radPatchModel.getValue();
-        componentsFactory = new TimelineComponentFactory(patchProposalPanel, radPatchModel);
+    public TimelineComponent(PatchProposalPanel patchProposalPanel, PatchVirtualFile file) {
+        this.radPatchModel = file.getPatchModel();
+        this.radPatch = file.getPatchModel().getValue();
+        componentsFactory = new TimelineComponentFactory(patchProposalPanel, radPatchModel, file);
         api = radPatch.project.getService(RadicleProjectApi.class);
     }
 
