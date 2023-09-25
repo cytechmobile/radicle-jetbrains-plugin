@@ -7,19 +7,24 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadSync extends RadAction {
-    public RadSync(GitRepository repo) {
+    private boolean fetch;
+    public RadSync(GitRepository repo, boolean fetch) {
         super(repo);
+        this.fetch = fetch;
     }
 
     @Override
     public String getActionName() {
+        if (this.fetch) {
+            return "Sync_Fetch";
+        }
         return "Sync";
     }
 
     @Override
     public ProcessOutput run() {
         var rad = repo.getProject().getService(RadicleProjectService.class);
-        var output = rad.sync(repo);
+        var output = rad.sync(repo, this.fetch);
         /* rad fetch return success exit code (0) and a failed msg if fetch command failed */
         var isSuccess = RadAction.isSuccess(output) && !output.getStdout().contains("Failed");
         var pr = new ProcessOutput(isSuccess ? 0 : -1);

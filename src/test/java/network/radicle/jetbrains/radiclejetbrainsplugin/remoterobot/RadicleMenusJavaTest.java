@@ -104,6 +104,7 @@ public class RadicleMenusJavaTest {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git").click();
             actionMenu(remoteRobot, "Radicle").click();
+            actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
             actionMenuItem(remoteRobot, "Sync").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
             actionMenuItem(remoteRobot, "Track").isShowing();
@@ -112,6 +113,7 @@ public class RadicleMenusJavaTest {
 
         step("Ensure Radicle toolbar actions show", () -> {
             keyboard.hotKey(VK_ESCAPE);
+            isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_fetch.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");
         });

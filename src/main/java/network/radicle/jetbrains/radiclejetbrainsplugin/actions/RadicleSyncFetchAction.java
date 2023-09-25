@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class RadicleSyncAction extends AnAction {
+public class RadicleSyncFetchAction extends AnAction {
     protected CountDownLatch updateCountDown;
 
     @Override
@@ -53,10 +53,10 @@ public class RadicleSyncAction extends AnAction {
             }
             updateCountDown = new CountDownLatch(radInitializedRepos.size());
             radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var fetch = new RadSync(repo, false);
+                var fetch = new RadSync(repo, true);
                 fetch.perform(updateCountDown);
             }));
-            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radSyncProgressTitle"),
+            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radFetchProgressTitle"),
                     updateCountDown);
             new Thread(ubt::queue).start();
         });

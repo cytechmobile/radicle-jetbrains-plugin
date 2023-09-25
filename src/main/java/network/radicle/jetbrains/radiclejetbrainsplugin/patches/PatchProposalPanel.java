@@ -215,9 +215,7 @@ public class PatchProposalPanel {
                         countDown.countDown();
                         return;
                     }
-                    // Refresh repo and root directory
-                    patch.repo.update();
-                    GitUtil.refreshVfs(patch.repo.getRoot(), null);
+                    refreshVcs();
                     countDown.countDown();
                     RadAction.showNotification(patch.project, "", RadicleBundle.message("successCheckingOut",
                                     "", formattedPatchId), NotificationType.INFORMATION, List.of());
@@ -228,6 +226,12 @@ public class PatchProposalPanel {
         checkoutBtn.setText(RadicleBundle.message("checkout"));
         nonOpaquePanel.add(checkoutBtn, new CC().gapBottom(String.valueOf(UI.scale(8))));
         return nonOpaquePanel;
+    }
+
+    public void refreshVcs() {
+        // Refresh repo and root directory
+        patch.repo.update();
+        GitUtil.refreshVfs(patch.repo.getRoot(), null);
     }
 
     private JComponent titleComponent() {

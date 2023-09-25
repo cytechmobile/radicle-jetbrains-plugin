@@ -22,6 +22,8 @@ public class  RadicleIcons {
 
     public static final Icon RADICLE_PULL = getIcon("rad_pull", true);
 
+    public static final Icon RADICLE_SYNC = getIcon("rad_sync", true);
+
     private static boolean isNewUiEnabled() {
         return Registry.get("ide.experimental.ui").asBoolean();
     }

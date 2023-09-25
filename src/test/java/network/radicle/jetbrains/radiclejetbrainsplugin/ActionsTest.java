@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
@@ -77,8 +78,23 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
-    public void radFetchAction() throws InterruptedException {
+    public void radSyncAction() throws InterruptedException {
         var rfa = new RadicleSyncAction();
+        rfa.performAction(getProject());
+        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("sync");
+        assertThat(cmd.getCommandLineString()).doesNotContain("-f");
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not).isNotNull();
+        var repo = mock(GitRepository.class);
+        when(repo.getProject()).thenReturn(getProject());
+        assertThat(not.getContent()).contains(new RadSync(repo, false).getNotificationSuccessMessage());
+    }
+
+    @Test
+    public void radFetchAction() throws InterruptedException {
+        var rfa = new RadicleSyncFetchAction();
         rfa.performAction(getProject());
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
@@ -87,7 +103,7 @@ public class ActionsTest extends AbstractIT {
         assertThat(not).isNotNull();
         var repo = mock(GitRepository.class);
         when(repo.getProject()).thenReturn(getProject());
-        assertThat(not.getContent()).contains(new RadSync(repo).getNotificationSuccessMessage());
+        assertThat(not.getContent()).contains(new RadSync(repo, true).getNotificationSuccessMessage());
     }
 
     @Test
@@ -109,15 +125,21 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void cliConfiguredError() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("");
-        var rsa = new RadicleSyncAction();
+        var rsa = new RadicleSyncFetchAction();
         rsa.performAction(getProject());
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).contains(RadicleBundle.message("radCliPathMissingText"));
 
-        var rps = new RadicleSyncAction();
+        var rps = new RadicleSyncFetchAction();
         rps.performAction(getProject(), List.of(firstRepo));
+
+        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
+
+        var radSyncAction = new RadicleSyncAction();
+        radSyncAction.performAction(getProject(), List.of(firstRepo));
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
@@ -128,10 +150,16 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void testRadInitError() throws InterruptedException {
         removeRemoteRadUrl(firstRepo);
-        var rsa = new RadicleSyncAction();
+        var rsa = new RadicleSyncFetchAction();
         rsa.performAction(getProject());
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
+
+        var syncAction = new RadicleSyncFetchAction();
+        syncAction.performAction(getProject());
+
+        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
 
         initializeProject(firstRepo);
