@@ -376,6 +376,7 @@ public class PatchProposalPanel {
         @Override
         public boolean storeValues(List<State> data) {
             var selectedState = data.get(0).status;
+            // We don't have changes so don't refresh the window
             if (selectedState.equals(patch.state.status)) {
                 return true;
             }
@@ -442,6 +443,10 @@ public class PatchProposalPanel {
         @Override
         public boolean storeValues(List<Label> labels) {
             var labelList = labels.stream().map(value -> value.label).toList();
+            // We don't have changes so don't refresh the window
+            if (labelList.size() == patch.labels.size()) {
+                return true;
+            }
             var resp = api.addRemovePatchLabel(patch, labelList);
             var isSuccess = resp != null;
             if (isSuccess) {
