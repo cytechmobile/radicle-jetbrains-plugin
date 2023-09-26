@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Strings;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
@@ -45,6 +45,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAc
 public class RadicleProjectApi {
     public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
+    public static final int ALL_IN_ONE_PAGE = 10000;
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectApi.class);
     private static final int PER_PAGE = 10;
 
@@ -83,7 +84,7 @@ public class RadicleProjectApi {
 
     public List<RadIssue> fetchIssues(String projectId, GitRepository repo) {
         var node = getSeedNode();
-        var url = node.url + "/api/v1/projects/" + projectId + "/issues";
+        var url = node.url + "/api/v1/projects/" + projectId + "/issues?page=0&perPage=" + ALL_IN_ONE_PAGE;
         try {
             var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchIssuesError"));
             if (res.isSuccess()) {
@@ -108,7 +109,7 @@ public class RadicleProjectApi {
             return List.of();
         }
         var node = getSeedNode();
-        var url = node.url + "/api/v1/projects/" + projectId + "/patches";
+        var url = node.url + "/api/v1/projects/" + projectId + "/patches?page=0&perPage=" + ALL_IN_ONE_PAGE;
         try {
             var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchesError"));
             if (res.isSuccess()) {

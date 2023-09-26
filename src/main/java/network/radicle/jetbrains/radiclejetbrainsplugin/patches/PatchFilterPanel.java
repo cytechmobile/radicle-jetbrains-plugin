@@ -30,9 +30,9 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
     @Override
     protected List<JComponent> createFilters(@NotNull CoroutineScope coroutineScope) {
         var stateFilter = new DropDownComponentFactory<>(this.viewModel.stateFilter()).create(coroutineScope, RadicleBundle.message("state"), o -> o,
-                (relativePoint, continuation) -> ChooserPopupUtil.INSTANCE.showAsyncChooserPopup(relativePoint,
-                        continuation1 -> Arrays.stream(RadPatch.State.values()).map(e -> e.label).collect(Collectors.toList()),
-                        state -> new PopupItemPresentation.Simple((String) state, null, null),
+                (relativePoint, continuation) -> ChooserPopupUtil.INSTANCE.showChooserPopup(relativePoint,
+                        Arrays.stream(RadPatch.State.values()).map(e -> e.label).collect(Collectors.toList()),
+                        state -> new PopupItemPresentation.Simple(state, null, null),
                         PopupConfig.Companion.getDEFAULT(), continuation));
 
         var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,

@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.google.common.base.Strings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -43,7 +42,7 @@ public class PatchListPanelTest extends AbstractIT {
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = (HttpGet) i.getArgument(0);
             final StringEntity se;
-            if (!Strings.isNullOrEmpty(req.getURI().getQuery())) {
+            if (req.getURI().getPath().endsWith(PROJECTS_URL)) {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
             } else if (req.getURI().getPath().endsWith(PATCHES_URL)) {
                 // request to fetch patches
