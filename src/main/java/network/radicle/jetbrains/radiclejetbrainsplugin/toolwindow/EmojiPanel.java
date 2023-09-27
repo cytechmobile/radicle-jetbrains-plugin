@@ -8,13 +8,15 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 
-import javax.swing.JList;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Font;
@@ -32,7 +34,6 @@ public abstract class EmojiPanel<T> {
     private static final String FONT_NAME = "Segoe UI Emoji";
     private static final int FONT_STYLE = Font.PLAIN;
     private static final int FONT_SIZE = 14;
-    private static final String SMILEY_FACE_EMOJI = "\uD83D\uDE00"; // 😀
     private final SingleValueModel<T> model;
     private final List<Reaction> reactions;
     private final String discussionId;
@@ -109,7 +110,7 @@ public abstract class EmojiPanel<T> {
         progressLabel.setBorder(JBUI.Borders.empty(6, 0));
         progressLabel.setVisible(false);
         var emojiButton = new JLabel();
-        emojiButton.setText(SMILEY_FACE_EMOJI);
+        emojiButton.setIcon(RadicleIcons.EMOJI);
         emojiButton.setFont(new Font(FONT_NAME, FONT_STYLE, FONT_SIZE));
         emojiButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         emojiButton.addMouseListener(new MouseAdapter() {
@@ -193,6 +194,7 @@ public abstract class EmojiPanel<T> {
             horizontalPanel.add(reactorsPanel);
         }
         borderPanel.addToRight(horizontalPanel);
+        borderPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         return borderPanel;
     }
 
