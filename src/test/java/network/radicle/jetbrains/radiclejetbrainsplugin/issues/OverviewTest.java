@@ -30,6 +30,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTe
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -445,7 +446,11 @@ public class OverviewTest extends AbstractIT {
 
         // Assert that the label has the selected values
         var assigneeValuesLabel = (JLabel) myPanel.getComponents()[0];
-        assertThat(assigneeValuesLabel.getText()).contains(String.join(",", issue.assignees));
+        var formattedDid = new ArrayList<String>();
+        for (var delegate : issue.assignees) {
+            formattedDid.add(Utils.formatDid(delegate));
+        }
+        assertThat(assigneeValuesLabel.getText()).contains(String.join(",", formattedDid));
 
         // Find edit key and press it
         var assigneeActionPanel = (NonOpaquePanel) components[1];
@@ -459,7 +464,11 @@ public class OverviewTest extends AbstractIT {
         var listmodel = jblist.getModel();
 
         // Trigger beforeShown method
-        popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
+        var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
+        fakePopup.getContent().removeAll();
+        fakePopup.getContent().add(new BorderLayoutPanel());
+
+        popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
         //Wait to load delegates
         Thread.sleep(500);
         assertThat(listmodel.getSize()).isEqualTo(3);

@@ -280,6 +280,24 @@ public class CreateIssuePanel {
         }
 
         @Override
+        public CompletableFuture<List<IssuePanel.AssigneesSelect.Assignee>> showEditPopup(JComponent parent) {
+            var addField = new JBTextField();
+            var res = new CompletableFuture<List<IssuePanel.AssigneesSelect.Assignee>>();
+            var popUpBuilder = new PopupBuilder();
+            jbPopup = popUpBuilder.createPopup(this.getData(), new IssuePanel.AssigneesSelect.AssigneeRender(), false, addField, res);
+            jbPopup.showUnderneathOf(parent);
+            listener = popUpBuilder.getListener();
+            return res.thenApply(data -> {
+                if (Strings.isNullOrEmpty(addField.getText())) {
+                    return data;
+                }
+                var myList = new ArrayList<>(data);
+                myList.add(new IssuePanel.AssigneesSelect.Assignee(addField.getText()));
+                return myList;
+            });
+        }
+
+        @Override
         public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
                 var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>>();
@@ -295,6 +313,15 @@ public class CreateIssuePanel {
                     var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate);
                     var isSelected = delegates.contains(delegate);
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
+                    assignees.add(selectableWrapper);
+                }
+                for (var delegate : delegates) {
+                    var exist = assignees.stream().anyMatch(el -> el.value.name().equals(delegate));
+                    if (exist) {
+                        continue;
+                    }
+                    var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, true);
                     assignees.add(selectableWrapper);
                 }
                 return assignees;

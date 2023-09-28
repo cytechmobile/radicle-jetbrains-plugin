@@ -21,6 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 
 import javax.swing.JComponent;
@@ -176,6 +177,10 @@ public class IssuePanel {
         @Override
         public boolean storeValues(List<Label> labels) {
             var tagList = labels.stream().map(value -> value.value).toList();
+            // We don't have changes so don't refresh the window
+            if (tagList.size() == issue.labels.size()) {
+                return true;
+            }
             var resp = api.addRemoveIssueLabel(issue, tagList);
             var isSuccess = resp != null;
             if (isSuccess) {
@@ -304,7 +309,7 @@ public class IssuePanel {
 
             @Override
             public String getText(AssigneesSelect.Assignee value) {
-                return value.name();
+                return Utils.formatDid(value.name());
             }
 
             @Override
@@ -315,18 +320,44 @@ public class IssuePanel {
 
         @Override
         public String  getSelectedValues() {
-            return String.join(",", issue.assignees);
+            var formattedDid = new ArrayList<String>();
+            for (var delegate : issue.assignees) {
+                formattedDid.add(Utils.formatDid(delegate));
+            }
+            return String.join(",", formattedDid);
         }
 
         @Override
         public boolean storeValues(List<AssigneesSelect.Assignee> data) {
             var addAssignees = data.stream().map(Assignee::name).toList();
+            // We don't have changes so don't refresh the window
+            if (addAssignees.size() == issue.assignees.size()) {
+                return true;
+            }
             var resp = api.addRemoveIssueAssignees(issue, addAssignees);
             var isSuccess = resp != null;
             if (isSuccess) {
                 issueModel.setValue(issue);
             }
             return isSuccess;
+        }
+
+        @Override
+        public CompletableFuture<List<Assignee>> showEditPopup(JComponent parent) {
+            var addField = new JBTextField();
+            var res = new CompletableFuture<List<IssuePanel.AssigneesSelect.Assignee>>();
+            var popUpBuilder = new PopupBuilder();
+            jbPopup = popUpBuilder.createPopup(this.getData(), new IssuePanel.AssigneesSelect.AssigneeRender(), false, addField, res);
+            jbPopup.showUnderneathOf(parent);
+            listener = popUpBuilder.getListener();
+            return res.thenApply(data -> {
+                if (Strings.isNullOrEmpty(addField.getText())) {
+                    return data;
+                }
+                var myList = new ArrayList<>(data);
+                myList.add(new IssuePanel.AssigneesSelect.Assignee(addField.getText()));
+                return myList;
+            });
         }
 
         @Override
@@ -343,6 +374,15 @@ public class IssuePanel {
                     var assignee = new AssigneesSelect.Assignee(delegate);
                     var isSelected = issue.assignees.contains(delegate);
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
+                    assignees.add(selectableWrapper);
+                }
+                for (var delegate : issue.assignees) {
+                    var exist = assignees.stream().anyMatch(el -> el.value.name.equals(delegate));
+                    if (exist) {
+                        continue;
+                    }
+                    var assignee = new AssigneesSelect.Assignee(delegate);
+                    var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, true);
                     assignees.add(selectableWrapper);
                 }
                 return assignees;
