@@ -77,7 +77,8 @@ public class RadPatch {
     public enum State {
         OPEN("open", "Open"),
         DRAFT("draft", "Draft"),
-        ARCHIVED("archived", "Archived");
+        ARCHIVED("archived", "Archived"),
+        MERGED("merged", "Merged");
 
         public final String status;
         public final String label;
