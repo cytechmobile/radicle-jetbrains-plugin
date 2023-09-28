@@ -4,12 +4,25 @@
 
 ## Unreleased
 
+## 0.7.3 - 2023-09-28
+
+- Synchronizing your Radicle project with the network is something that the `radicle-node` automagically takes care of you behind the scenes. But not always (as the node is sometimes not running, or offline, etc.) That's why it's important to allow the user to manually `rad sync` their project! 🔛  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/376
+
+- Let's be honest, markdown is much prettier when rendered! We weren't rendering, so this PR adds markdown support in Radicle Issue and Patch description and comments! 🤩  ( by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/375
+
+- Small fix when we didn't show the radicle tool window after the user first published a project.  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/374
+
+- Few (successful) projects have less than 10 issues or patches. Our test projects did though(!!), so we were previously only loading the latest 10... That's now fixed, so the plugin is ready for some real-world projects! 1️⃣ 0️⃣  by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/378
+
+- It's now possible to add arbitrary Decentralized Identifiers (DIDs) as assignees to an issue (and not just assign an issue to delegates) ✅  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/379
+
+- Improved the emoji reaction button look and feel, so it should hopefully be easier to add reactions now! 👌 by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/381
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.2...v0.7.3
+
 ## 0.7.2 - 2023-09-19
 
 - Check out patches directly from the IDE! A new check out button, allows you to check out the patch branch, so you can work directly with the code in your working copy. by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/360
-
 - You can now not only add reactions to patches / issues, but you can also - wait for it - **remove** them. No more stress when you accidentally misclick the embarassing wrong icon.  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/361
-
 - The issue descriptions and comments were all having a bit of a bad hair day, so it was time to help them out a little.  We also fixed the  order of the fields inside publish dialog to match the CLI order! by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/359
 
 ### Dependabot (Security) Updates
