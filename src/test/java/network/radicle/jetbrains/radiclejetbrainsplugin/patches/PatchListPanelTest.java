@@ -46,7 +46,11 @@ public class PatchListPanelTest extends AbstractIT {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects()));
             } else if (req.getURI().getPath().endsWith(PATCHES_URL)) {
                 // request to fetch patches
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+                var query = req.getURI().getQuery();
+                var parts = query.split("&");
+                var state = parts[1].split("=")[1];
+                var patch = getTestPatches().stream().filter(p -> p.state.status.equals(state)).toList();
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(patch));
             } else if (req.getURI().getPath().endsWith(ISSUES_URL)) {
                 se = new StringEntity("[]");
             } else {

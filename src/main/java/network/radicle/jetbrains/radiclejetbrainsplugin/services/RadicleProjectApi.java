@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -84,23 +85,28 @@ public class RadicleProjectApi {
 
     public List<RadIssue> fetchIssues(String projectId, GitRepository repo) {
         var node = getSeedNode();
-        var url = node.url + "/api/v1/projects/" + projectId + "/issues?page=0&perPage=" + ALL_IN_ONE_PAGE;
+        var allIssues = new ArrayList<RadIssue>();
+        var states = Arrays.stream(RadIssue.State.values()).map(e -> e.status).toList();
         try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchIssuesError"));
-            if (res.isSuccess()) {
-                var issues = MAPPER.readValue(res.body, new TypeReference<List<RadIssue>>() { });
-                for (var issue : issues) {
-                    issue.repo = repo;
-                    issue.projectId = projectId;
-                    issue.project = repo.getProject();
-                    issue.seedNode = node;
+            for (var state : states) {
+                var url = node.url + "/api/v1/projects/" + projectId + "/issues?page=0&state=" + state + "&perPage=" + ALL_IN_ONE_PAGE;
+                var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchIssuesError"));
+                if (res.isSuccess()) {
+                    var issues = MAPPER.readValue(res.body, new TypeReference<List<RadIssue>>() { });
+                    for (var issue : issues) {
+                        issue.repo = repo;
+                        issue.projectId = projectId;
+                        issue.project = repo.getProject();
+                        issue.seedNode = node;
+                    }
+                    allIssues.addAll(issues);
                 }
-                return issues;
             }
+            return allIssues;
         } catch (Exception e) {
-            logger.warn("http request exception {}", url, e);
+            logger.warn("http request exception", e);
         }
-        return List.of();
+        return allIssues;
     }
 
     public List<RadPatch> fetchPatches(String projectId, GitRepository repo) {
@@ -109,22 +115,27 @@ public class RadicleProjectApi {
             return List.of();
         }
         var node = getSeedNode();
-        var url = node.url + "/api/v1/projects/" + projectId + "/patches?page=0&perPage=" + ALL_IN_ONE_PAGE;
+        var states = Arrays.stream(RadPatch.State.values()).map(e -> e.status).toList();
+        var allPatches = new ArrayList<RadPatch>();
         try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchesError"));
-            if (res.isSuccess()) {
-                var patches = MAPPER.readValue(res.body, new TypeReference<List<RadPatch>>() { });
-                for (var patch : patches) {
-                    patch.seedNode = node;
-                    patch.project = repo.getProject();
-                    patch.projectId = projectId;
-                    patch.defaultBranch = radProject.defaultBranch;
-                    patch.repo = repo;
+            for (var state : states) {
+                var url = node.url + "/api/v1/projects/" + projectId + "/patches?page=0&state=" + state + "&perPage=" + ALL_IN_ONE_PAGE;
+                var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchesError"));
+                if (res.isSuccess()) {
+                    var patches = MAPPER.readValue(res.body, new TypeReference<List<RadPatch>>() { });
+                    for (var patch : patches) {
+                        patch.seedNode = node;
+                        patch.project = repo.getProject();
+                        patch.projectId = projectId;
+                        patch.defaultBranch = radProject.defaultBranch;
+                        patch.repo = repo;
+                    }
+                    allPatches.addAll(patches);
                 }
-                return patches;
             }
+            return allPatches;
         } catch (Exception e) {
-            logger.warn("http request exception {}", url, e);
+            logger.warn("http request exception", e);
         }
         return List.of();
     }

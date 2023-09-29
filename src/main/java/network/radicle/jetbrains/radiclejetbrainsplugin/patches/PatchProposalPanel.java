@@ -66,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -397,7 +398,8 @@ public class PatchProposalPanel {
         @Override
         public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<State>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var allStates = Arrays.stream(RadPatch.State.values()).map(e -> new PatchProposalPanel.StateSelect.State(e.status, e.label)).toList();
+                var allStates = Arrays.stream(RadPatch.State.values()).filter(e -> !Objects.equals(e.status, RadPatch.State.MERGED.status))
+                        .map(e -> new PatchProposalPanel.StateSelect.State(e.status, e.label)).toList();
                 var stateList = new ArrayList<SelectionListCellRenderer.SelectableWrapper<State>>();
                 for (PatchProposalPanel.StateSelect.State state : allStates) {
                     var isSelected = patch.state.status.equals(state.status);
