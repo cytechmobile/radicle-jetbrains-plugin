@@ -368,6 +368,7 @@ public class OverviewTest extends AbstractIT {
 
         var res = response.poll(5, TimeUnit.SECONDS);
 
+        assertThat((ArrayList) res.get("embeds")).isEmpty();
         assertThat(res.get("title")).isEqualTo(ISSUE_NAME);
         assertThat(res.get("description")).isEqualTo(ISSUE_DESC);
         assertThat(res.get("labels")).usingRecursiveAssertion().isEqualTo(List.of(label2));

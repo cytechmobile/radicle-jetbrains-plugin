@@ -204,7 +204,7 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/issues");
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees);
+            var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees, "embeds", List.of());
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("createIssueError"));
