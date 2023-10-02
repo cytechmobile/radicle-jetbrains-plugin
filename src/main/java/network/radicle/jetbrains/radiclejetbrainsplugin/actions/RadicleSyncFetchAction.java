@@ -52,13 +52,13 @@ public class RadicleSyncFetchAction extends AnAction {
                 return;
             }
             updateCountDown = new CountDownLatch(radInitializedRepos.size());
-            radInitializedRepos.forEach(repo -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var fetch = new RadSync(repo, true);
-                fetch.perform(updateCountDown);
-            }));
             UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radFetchProgressTitle"),
                     updateCountDown);
             new Thread(ubt::queue).start();
+            radInitializedRepos.forEach(repo -> {
+                var fetch = new RadSync(repo, true);
+                fetch.perform(updateCountDown);
+            });
         });
     }
 }
