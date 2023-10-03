@@ -1,9 +1,11 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline;
 
 import com.google.common.base.Strings;
+import com.intellij.collaboration.ui.CollaborationToolsUIUtilKt;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,6 +64,7 @@ public class TimelineComponentFactory {
     private JPanel emojiJPanel;
     private EmojiPanel<RadPatch> emojiPanel;
     private final PatchVirtualFile file;
+    private JComponent commentPanel;
 
     public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel, PatchVirtualFile file) {
         this.file = file;
@@ -148,15 +151,29 @@ public class TimelineComponentFactory {
                             "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
                 }
                 var markDown = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, message, patch.project);
-                var horizontalPanel = getHorizontalPanel(8);
-                horizontalPanel.setOpaque(false);
-                var contentPanel  = new BorderLayoutPanel();
-                contentPanel.setOpaque(false);
-                contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(Utils.htmlEditorPane(markDown), StatusMessageType.WARNING));
+                var panel = new BorderLayoutPanel();
+                panel.setOpaque(false);
+                panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(Utils.htmlEditorPane(markDown), StatusMessageType.WARNING));
                 emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
                 emojiJPanel = emojiPanel.getEmojiPanel();
-                contentPanel.addToBottom(emojiJPanel);
-                mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.generateLabelText(), com.timestamp));
+                panel.addToBottom(emojiJPanel);
+                var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
+                        RadicleBundle.message("save", "save"), new SingleValueModel<>(message), (editedTitle) -> {
+                    var edited = api.changePatchComment(rev.id(), com.id, editedTitle, patch);
+                    final boolean success = edited != null;
+                    if (success) {
+                        patchModel.setValue(patch);
+                    }
+                    return success;
+                }).build();
+                var contentPanel = panelHandle.panel;
+                var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
+                actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+                    panelHandle.showAndFocusEditor();
+                    return null;
+                }));
+                commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp);
+                mainPanel.add(commentPanel);
             }
         }
         return mainPanel;
@@ -243,6 +260,9 @@ public class TimelineComponentFactory {
                 .withHeader(titleTextPane, actionsPanel).build();
     }
 
+    public JComponent getCommentPanel() {
+        return commentPanel;
+    }
 
     public JComponent getDescSection() {
         return descSection;

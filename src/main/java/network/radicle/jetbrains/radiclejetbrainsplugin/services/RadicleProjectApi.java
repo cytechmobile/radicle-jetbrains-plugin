@@ -454,6 +454,31 @@ public class RadicleProjectApi {
         return null;
     }
 
+    public RadPatch changePatchComment(String revisionId, String commentId, String body, RadPatch patch) {
+        var session = createAuthenticatedSession(patch.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchEditData = Map.of("type", "revision.comment.edit", "revision", revisionId, "comment", commentId, "body", body);
+            var json = MAPPER.writeValueAsString(patchEditData);
+            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(patchReq, RadicleBundle.message("issueCommentError"));
+            if (!resp.isSuccess()) {
+                logger.warn("received invalid response with status:{} and body:{} while editing patch: {}",
+                        resp.status, resp.body, patch);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error changing patch comment: {}", patch, e);
+        }
+
+        return null;
+    }
+
     public RadPatch changePatchTitle(RadPatch patch) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {

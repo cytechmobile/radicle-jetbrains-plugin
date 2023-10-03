@@ -110,7 +110,8 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
-                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react")) {
+                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react") ||
+                        map.get("type").equals("revision.comment.edit")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -534,6 +535,26 @@ public class TimelineTest extends AbstractIT {
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
+
+        // Test edit patch functionality
+        var commPanel = timelineComponent.getComponentsFactory().getCommentPanel();
+        var editBtn = UIUtil.findComponentOfType(commPanel, InlineIconButton.class);
+        editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
+        ef = UIUtil.findComponentOfType(commPanel, EditorTextField.class);
+        markAsShowing(ef.getParent(), ef);
+        executeUiTasks();
+        var editedComment = "Edited comment to " + UUID.randomUUID();
+        ef.setText(editedComment);
+        prBtns = UIUtil.findComponentsOfType(commPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        prBtn = prBtns.get(1);
+        prBtn.doClick();
+
+        var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("type")).isEqualTo("revision.comment.edit");
+        assertThat(res.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        assertThat(res.get("body")).isEqualTo(editedComment);
+        assertThat(res.get("comment")).isEqualTo(patch.revisions.get(1).discussions().get(0).id);
     }
 
     private RadPatch createPatch() {
