@@ -255,7 +255,7 @@ public class RadicleProjectApi {
             var patchIssueData = Map.of("type", "label", "labels", addLabelList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("tagChangeError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("labelChangeError"));
             if (!resp.isSuccess()) {
                 logger.warn("error adding {} labels to patch:{} resp:{}", addLabelList, patch, resp);
                 return null;
