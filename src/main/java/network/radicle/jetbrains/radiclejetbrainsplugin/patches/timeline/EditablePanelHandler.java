@@ -8,11 +8,14 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.collaboration.ui.util.ActionUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.util.Function;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +97,14 @@ public class EditablePanelHandler {
                 });
                 return null;
             });
+            field.addDocumentListener(new DocumentListener() {
+                @Override
+                public void documentChanged(@NotNull DocumentEvent event) {
+                    var enable = !field.getText().isEmpty();
+                    prAction.setEnabled(enable);
+                }
+            });
+
             var actions = new CommentInputActionsComponentFactory.Config(
                     MutableStateFlow(prAction),
                     MutableStateFlow(List.of()), MutableStateFlow(List.of()),
