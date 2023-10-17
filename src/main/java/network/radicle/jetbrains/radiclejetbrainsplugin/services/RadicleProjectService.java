@@ -1,6 +1,8 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
 import com.google.common.base.Strings;
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.push.PushSpec;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -8,13 +10,22 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
+import git4idea.GitLocalBranch;
+import git4idea.GitStandardRemoteBranch;
+import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.fetch.GitFetchSupport;
+import git4idea.push.GitPushOperation;
+import git4idea.push.GitPushRepoResult;
+import git4idea.push.GitPushSource;
+import git4idea.push.GitPushSupport;
+import git4idea.push.GitPushTarget;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +34,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
@@ -64,13 +76,46 @@ public class RadicleProjectService {
         return output;
     }
 
-    public ProcessOutput fetchPeerChanges(RadPatch patch) {
-        GitFetchSupport gfs = GitFetchSupport.fetchSupport(patch.repo.getProject());
+    public String getBranchRevision(Project project, GitRepository repo, String branchName) {
+        var gitRevisionNumber = "";
         try {
-            var gfr = gfs.fetchAllRemotes(List.of(patch.repo));
+            gitRevisionNumber = GitChangeUtils.resolveReference(project, repo.getRoot(), branchName).getRev();
+        } catch (Exception e) {
+            logger.warn("Unable to get revision number. repo : {} , branch name : {}", repo, branchName);
+        }
+        return gitRevisionNumber;
+    }
+
+    public GitPushRepoResult pushChanges(GitRepository gitRepository, GitLocalBranch gitLocalBranch, GitRemote gitRemote) {
+        var isNewBranch = gitLocalBranch.findTrackedBranch(gitRepository) == null;
+        var pushTarget = new GitPushTarget(new GitStandardRemoteBranch(gitRemote, gitLocalBranch.getName()), isNewBranch);
+        var pushSource = GitPushSource.create(gitLocalBranch);
+        var pushSpec = new PushSpec<>(pushSource, pushTarget);
+        var gitPushSupport = DvcsUtil.getPushSupport(GitVcs.getInstance(gitRepository.getProject()));
+        if (gitPushSupport == null) {
+            return null;
+        }
+        var pushOperation = new GitPushOperation(gitRepository.getProject(), (GitPushSupport) gitPushSupport,
+                Map.of(gitRepository, pushSpec), null, false, false);
+        var results = pushOperation.execute().getResults();
+        return results.get(gitRepository);
+    }
+
+    public boolean isSuccessPush(GitPushRepoResult gitPushRepoResult) {
+        var type = gitPushRepoResult.getType();
+        return type == GitPushRepoResult.Type.SUCCESS || type == GitPushRepoResult.Type.NEW_BRANCH ||
+                type == GitPushRepoResult.Type.UP_TO_DATE || type == GitPushRepoResult.Type.FORCED ||
+                type == GitPushRepoResult.Type.REJECTED_NO_FF;
+    }
+
+
+    public ProcessOutput fetchPeerChanges(GitRepository repo) {
+        GitFetchSupport gfs = GitFetchSupport.fetchSupport(repo.getProject());
+        try {
+            var gfr = gfs.fetchAllRemotes(List.of(repo));
             gfr.showNotificationIfFailed();
         } catch (Exception e) {
-            logger.warn("error fetching repo: {} for patch:{}", patch.repo, patch);
+            logger.warn("error fetching repo: {}", repo);
         }
         return new ProcessOutput(0);
         // var didParts = patch.author.id().split(":");
