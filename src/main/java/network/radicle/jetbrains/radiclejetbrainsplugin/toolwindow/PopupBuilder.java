@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 import javax.swing.JList;
 import java.awt.Cursor;
@@ -49,6 +50,16 @@ public class PopupBuilder {
     }
 
     public PopupBuilder() {
+    }
+
+    public JBPopup createHorizontalPopup(JPanel component, boolean resizable, boolean movable) {
+        return JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+                .setRequestFocus(true)
+                .setCancelOnClickOutside(true)
+                .setResizable(resizable)
+                .setMovable(movable)
+                .setCancelOnClickOutside(true)
+                .createPopup();
     }
 
     public <T> JBPopup createHorizontalPopup(CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<T>>> myList,
