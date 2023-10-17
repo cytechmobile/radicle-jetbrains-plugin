@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,10 +13,8 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.ContentManagerListener;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryChangeListener;
+import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueTabController;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchTabController;
@@ -25,13 +24,15 @@ import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.dvcs.repo.VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED;
+
 public class RadicleToolWindow extends VcsToolWindowFactory {
     public static String id;
+    private List<GitRepository> gitRepos = new ArrayList<>();
     public ToolWindowManagerListener toolWindowManagerListener;
     public PatchTabController patchTabController;
     public IssueTabController issueTabController;
     public ContentManager contentManager;
-    public AnAction newIssueAction;
     private Content issueContent;
     private Content patchContent;
 
@@ -62,64 +63,43 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                     patchTabController.createPanel();
                     issueTabController = new IssueTabController(issueContent, project);
                     issueTabController.createPanel();
-                    contentManager.addContentManagerListener(new ContentManagerListener() {
+                    toolWindow.setTitleActions(List.of(new AnAction(AllIcons.General.Add) {
                         @Override
-                        public void selectionChanged(@NotNull ContentManagerEvent event) {
-                            setUpActions(toolWindow);
+                        public void actionPerformed(@NotNull AnActionEvent e) {
+                            if (contentManager.isSelected(patchContent)) {
+                                patchTabController.createNewPatchPanel(gitRepos);
+                            } else if (contentManager.isSelected(issueContent)) {
+                                issueTabController.createNewIssuePanel();
+                            }
                         }
-                    });
-                    setUpActions(toolWindow);
+                    }, new AnAction(AllIcons.Actions.Refresh) {
+                        @Override
+                        public void actionPerformed(@NotNull AnActionEvent e) {
+                            if (contentManager.isSelected(patchContent)) {
+                                patchTabController.createPanel();
+                            } else if (contentManager.isSelected(issueContent)) {
+                                issueTabController.createPanel();
+                            }
+                        }
+                    }));
                 }
             }
         };
 
         project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, toolWindowManagerListener);
-        project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE,
-                (GitRepositoryChangeListener) repository -> {
-                    //var gitRepoManager = GitRepositoryManager.getInstance(project);
-                    //var repos = gitRepoManager.getRepositories();
-                    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var radInited = RadAction.getInitializedReposWithNodeConfigured(List.of(repository), false);
-                        if (!radInited.isEmpty()) {
-                            ApplicationManager.getApplication().invokeLater(() -> {
-                                toolWindow.setAvailable(true);
-                            });
-                        }
+        project.getMessageBus().connect().subscribe(VCS_REPOSITORY_MAPPING_UPDATED, (VcsRepositoryMappingListener) () -> {
+            var gitRepoManager = GitRepositoryManager.getInstance(project);
+            var repos = gitRepoManager.getRepositories();
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                var radInited = RadAction.getInitializedReposWithNodeConfigured(repos, false);
+                gitRepos = radInited;
+                if (!radInited.isEmpty()) {
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        toolWindow.setAvailable(true);
                     });
-                    /*ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        var radInitializedRepos = RadAction.getInitializedReposWithNodeConfigured(repos, false);
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            if (!radInitializedRepos.isEmpty()) {
-                                toolWindow.setAvailable(true);
-                            }
-                        });
-                    });*/
-                });
-    }
-
-    private void setUpActions(ToolWindow toolWindow) {
-        var taskBarActions = new ArrayList<AnAction>();
-        taskBarActions.add(new AnAction(AllIcons.Actions.Refresh) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                if (contentManager.isSelected(patchContent)) {
-                    patchTabController.createPanel();
-                } else if (contentManager.isSelected(issueContent)) {
-                    issueTabController.createPanel();
                 }
-            }
+            });
         });
-
-        if (contentManager.isSelected(issueContent)) {
-            newIssueAction = new AnAction(AllIcons.General.Add) {
-                @Override
-                public void actionPerformed(@NotNull AnActionEvent e) {
-                    issueTabController.createNewIssuePanel();
-                }
-            };
-            taskBarActions.add(newIssueAction);
-        }
-        toolWindow.setTitleActions(taskBarActions);
     }
 
     @Override
