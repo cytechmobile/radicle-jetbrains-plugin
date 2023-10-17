@@ -267,6 +267,31 @@ public class RadicleProjectApi {
         return null;
     }
 
+    public boolean createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
+        var session = createAuthenticatedSession(repo);
+        if (session == null) {
+            return false;
+        }
+        try {
+            var patchReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/patches");
+            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("title", title, "description", description, "oid", patchOid, "target", baseOid, "labels", labels);
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(patchReq, RadicleBundle.message("createPatchError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error creating new patch, title : {}, description : {}, base_oid : {}, " + " " +
+                        "patch_oid : {} " + "repo : {}, projectId : {}", title, description, baseOid, patchOid, repo, projectId);
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            logger.warn("error creating new patch, title : {}, description : {}, base_oid : {}, " + " " +
+                    "patch_oid : {} " + "repo : {}, projectId : {}", title, description, baseOid, patchOid, repo, projectId);
+        }
+        return false;
+    }
+
     public RadIssue fetchIssue(String projectId, GitRepository repo, String issueId) {
         var node = getSeedNode();
         var radProject = fetchRadProject(projectId);
@@ -403,6 +428,26 @@ public class RadicleProjectApi {
             return issue;
         } catch (Exception e) {
             logger.warn("error adding label to issue: {}", issue, e);
+        }
+        return null;
+    }
+
+    public Map<String, Object> getProjectInfo(String projectId, GitRepository repo) {
+        var session = createAuthenticatedSession(repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var req = new HttpGet(getHttpNodeUrl() + "/api/v1/projects/" + projectId);
+            req.setHeader("Authorization", "Bearer " + session.sessionId);
+            var resp = makeRequest(req, RadicleBundle.message("fetchProjectError"));
+            if (!resp.isSuccess()) {
+                logger.warn("Unable to get project information, projectId {}, repo {}, resp {}", projectId, repo, resp);
+                return null;
+            }
+            return MAPPER.readValue(resp.body, new TypeReference<>() { });
+        } catch (Exception e) {
+            logger.warn("Unable to get project information, projectId {}, repo {}", projectId, repo, e);
         }
         return null;
     }
