@@ -5,26 +5,15 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
-import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
-import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
-import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
@@ -32,11 +21,7 @@ import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
-import git4idea.GitCommit;
 import git4idea.GitUtil;
-import git4idea.changes.GitChangeUtils;
-import git4idea.history.GitHistoryUtils;
 import icons.CollaborationToolsIcons;
 import kotlin.Unit;
 import net.miginfocom.layout.CC;
@@ -52,8 +37,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPa
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -64,28 +48,21 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
 
 public class PatchProposalPanel {
-    private static final Logger logger = LoggerFactory.getLogger(PatchProposalPanel.class);
     protected RadPatch patch;
     protected SingleValueModel<RadPatch> patchModel;
-    protected final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
-    protected final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
     protected TabInfo commitTab;
-    protected TabInfo filesTab;
     protected PatchTabController controller;
     private SingleHeightTabs tabs;
     private final RadicleProjectApi api;
     private final LabelSelect labelSelect;
     private final StateSelect stateSelect;
-
-    private JComponent commitBrowser;
+    private final PatchComponentFactory patchComponentFactory;
 
     public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
@@ -94,13 +71,10 @@ public class PatchProposalPanel {
         this.patchModel = patch;
         this.labelSelect = new LabelSelect();
         this.stateSelect = new StateSelect();
+        this.patchComponentFactory = new PatchComponentFactory(patch.getValue().project, this.controller.getDisposer());
     }
 
     public JComponent createViewPatchProposalPanel() {
-        this.patchChanges.setValue(List.of());
-        this.patchCommits.setValue(List.of());
-
-        calculatePatchCommits();
 
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
         var infoComponent = createInfoComponent();
@@ -108,22 +82,24 @@ public class PatchProposalPanel {
         tabInfo.setText(RadicleBundle.message("info"));
         tabInfo.setSideComponent(createReturnToListSideComponent());
 
-        var filesComponent = createFilesComponent();
+        var filesComponent = patchComponentFactory.createFilesComponent();
         var filesInfo = new TabInfo(filesComponent);
-        filesTab = filesInfo;
         filesInfo.setText(RadicleBundle.message("files"));
         filesInfo.setSideComponent(createReturnToListSideComponent());
+        patchComponentFactory.setFileTab(filesInfo);
+        patchComponentFactory.updateFilComponent(patch);
 
-        var commitComponent = createCommitComponent();
-        var commitInfo = new TabInfo(commitComponent);
-        commitTab = commitInfo;
-        commitInfo.setText(RadicleBundle.message("commits"));
-        commitInfo.setSideComponent(createReturnToListSideComponent());
+        var commitComponent = patchComponentFactory.createCommitComponent();
+        commitTab = new TabInfo(commitComponent);
+        commitTab.setText(RadicleBundle.message("commits"));
+        commitTab.setSideComponent(createReturnToListSideComponent());
+        patchComponentFactory.setCommitTab(commitTab);
+        patchComponentFactory.updateCommitComponent(patch);
 
         tabs = new SingleHeightTabs(null, uiDisposable);
         tabs.addTab(tabInfo);
         tabs.addTab(filesInfo);
-        tabs.addTab(commitInfo);
+        tabs.addTab(commitTab);
         return tabs;
     }
 
@@ -133,29 +109,6 @@ public class PatchProposalPanel {
                     controller.createPanel();
                     return Unit.INSTANCE;
                 });
-    }
-
-    protected JComponent createCommitComponent() {
-        var simpleChangesTree = getChangesBrowser();
-        final var splitter = new OnePixelSplitter(true, "Radicle.PatchProposals.Commits.Component", 0.4f);
-        splitter.setOpaque(true);
-        splitter.setBackground(UIUtil.getListBackground());
-        final SingleValueModel<List<Change>> selectedCommitChanges = new SingleValueModel<>(List.of());
-        commitBrowser = new CommitsBrowserComponentBuilder(patch.project, (SingleValueModel) patchCommits)
-                .setEmptyCommitListText(RadicleBundle.message("patchProposalNoCommits"))
-                .onCommitSelected(c -> {
-                    if (c == null || !(c instanceof GitCommit gc)) {
-                        selectedCommitChanges.setValue(List.of());
-                    } else {
-                        selectedCommitChanges.setValue(new ArrayList<>(gc.getChanges()));
-                    }
-                    simpleChangesTree.setChangesToDisplay(selectedCommitChanges.getValue());
-                    return Unit.INSTANCE;
-                })
-                .create();
-        splitter.setFirstComponent(commitBrowser);
-        splitter.setSecondComponent(simpleChangesTree);
-        return splitter;
     }
 
     protected JComponent createInfoComponent() {
@@ -262,7 +215,7 @@ public class PatchProposalPanel {
         branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         var to = createLabel(patch.defaultBranch);
         var revision = patch.revisions.get(patch.revisions.size() - 1);
-        var ref = revision.refs().get(revision.refs().size() - 1);
+        var ref = !revision.refs().isEmpty() ? revision.refs().get(revision.refs().size() - 1) : "ref/head/patches/" + patch.id;
         var from = createLabel(ref);
         branchPanel.add(to, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
         var arrowLabel = new JLabel(UIUtil.leftArrow());
@@ -283,73 +236,6 @@ public class PatchProposalPanel {
         });
         label.setText(branchName);
         return label;
-    }
-
-    protected JComponent createFilesComponent() {
-        var simpleChangesTree = getChangesBrowser();
-        var radLoadingChangePanel = new LoadingChangesPanel(simpleChangesTree, simpleChangesTree.getViewer().getEmptyText(), controller.getDisposer());
-        radLoadingChangePanel.loadChangesInBackground(() -> {
-            var countDown = new CountDownLatch(1);
-            calculatePatchChanges(countDown);
-            try {
-                countDown.await();
-            } catch (Exception e) {
-                logger.warn("Unable to calculate patch changes");
-                return false;
-            }
-            return true;
-        }, success -> simpleChangesTree.setChangesToDisplay(Boolean.TRUE.equals(success) ? patchChanges.getValue() : List.of()));
-        var panel = new BorderLayoutPanel().withBackground(UIUtil.getListBackground());
-        return panel.addToCenter(ScrollPaneFactory.createScrollPane(radLoadingChangePanel, true));
-    }
-
-    protected SimpleChangesBrowser getChangesBrowser() {
-        var simpleChangesTree = new SimpleChangesBrowser(patch.project, List.of());
-        DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(patch.project, simpleChangesTree, controller.getDisposer());
-        simpleChangesTree.setShowDiffActionPreview(diffPreview);
-        return simpleChangesTree;
-    }
-
-    protected void calculatePatchChanges(CountDownLatch latch) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            List<Change> changes = new ArrayList<>();
-            for (var rev : patch.revisions) {
-                final var diff = GitChangeUtils.getDiff(patch.repo, rev.base(), rev.oid(), true);
-                if (diff != null && !diff.isEmpty()) {
-                    changes.addAll(diff);
-                }
-            }
-            changes = changes.stream().distinct().collect(Collectors.toList());
-            patchChanges.setValue(changes);
-            ApplicationManager.getApplication().invokeLater(() -> {
-                filesTab.append(" " + patchChanges.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
-                latch.countDown();
-            });
-        });
-    }
-
-    protected void calculatePatchCommits() {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-                List<GitCommit> history = new ArrayList<>();
-                for (var rev : patch.revisions) {
-                    var cmts = GitHistoryUtils.history(patch.repo.getProject(), patch.repo.getRoot(), rev.base() + "..." + rev.oid());
-                    Collections.reverse(cmts);
-                    history.addAll(cmts);
-                }
-                history = history.stream().distinct().collect(Collectors.toList());
-                logger.info("calculated history for patch: {} - {}", patch, history);
-                patchCommits.setValue(history);
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    commitTab.append(" " + patchCommits.getValue().size(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
-                });
-            } catch (Exception e) {
-                logger.warn("error calculating patch commits for patch: {}", patch, e);
-                RadAction.showErrorNotification(patch.repo.getProject(),
-                        RadicleBundle.message("radCliError"),
-                        RadicleBundle.message("errorCalculatingPatchProposalCommits"));
-            }
-        });
     }
 
     public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
@@ -511,15 +397,10 @@ public class PatchProposalPanel {
         return stateSelect;
     }
 
-    private JBList<GitCommit> findCommitList() {
-        var jbScrollPane = ((JBScrollPane) commitBrowser.getComponents()[1]);
-        var jbViewPort = (JBViewport) jbScrollPane.getComponents()[0];
-        return (JBList<GitCommit>) jbViewPort.getComponents()[0];
-    }
 
     public void selectCommit(String oid) {
         tabs.select(commitTab, true);
-        var list = findCommitList();
+        var list = patchComponentFactory.findCommitList();
         var index = -1;
         for (var i = 0; i < list.getItemsCount(); i++) {
             var item = list.getModel().getElementAt(i);
