@@ -251,61 +251,7 @@ public class CreatePatchPanel {
         var newPatchAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                var mySelectedBranch = (GitLocalBranch) selectedBranch.getSelectedItem();
-                var mySelectedRepo = (GitRepository) selectedRepo.getSelectedItem();
-                if (mySelectedRepo == null || mySelectedBranch == null) {
-                    logger.warn("No selected values found");
-                    return;
-                }
-                var projectId = (String) projectInfo.get("id");
-                var remote = findRadRemote(mySelectedRepo, projectId.split(":")[1]);
-                if (remote == null) {
-                    logger.warn("Unable to find rad remote. Project ID : {}", projectId);
-                    RadAction.showErrorNotification(project, RadicleBundle.message("findRemoteError"),
-                            RadicleBundle.message("findRemoteErrorDesc"));
-                    return;
-                }
-                ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    newPatchButton.setEnabled(false);
-                    loadingPanel.setVisible(true);
-                    var gitPushRepoResult = radicleProjectService.pushChanges(mySelectedRepo, mySelectedBranch, remote);
-                    if (gitPushRepoResult == null) {
-                        RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), "");
-                        loadingPanel.setVisible(false);
-                        newPatchButton.setEnabled(true);
-                        return;
-                    }
-                    var isSuccess = radicleProjectService.isSuccessPush(gitPushRepoResult);
-                    if (!isSuccess) {
-                        var errorMsg = gitPushRepoResult.getError();
-                        RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), errorMsg);
-                        loadingPanel.setVisible(false);
-                        newPatchButton.setEnabled(true);
-                        return;
-                    }
-                    var branchRevision = radicleProjectService.getBranchRevision(project, mySelectedRepo, mySelectedBranch.getName());
-                    if (Strings.isNullOrEmpty(branchRevision)) {
-                        RadAction.showErrorNotification(project,
-                                RadicleBundle.message("resolveRevNumberError"),
-                                RadicleBundle.message("resolveRevNumberErrorDesc"));
-                        loadingPanel.setVisible(false);
-                        newPatchButton.setEnabled(true);
-                        return;
-                    }
-                    var success = api.createPatch(titleField.getText(), descriptionField.getText(), labelSelect.storeLabels, (String) projectInfo.get("head"),
-                            branchRevision, mySelectedRepo, (String) projectInfo.get("id"));
-                    if (success) {
-                        //Fetch the patch that created from the remote
-                        radicleProjectService.fetchPeerChanges(mySelectedRepo);
-                    }
-                    ApplicationManager.getApplication().invokeLater(() -> {
-                        if (success) {
-                            patchTabController.createPanel();
-                        }
-                        newPatchButton.setEnabled(true);
-                        loadingPanel.setVisible(false);
-                    }, ModalityState.any());
-                });
+                createPatch();
             }
         };
 
@@ -340,6 +286,67 @@ public class CreatePatchPanel {
         mainPanel.add(actionPanelHolder, BorderLayout.SOUTH);
 
         return progressStripe;
+    }
+
+    private void createPatch() {
+        var mySelectedBranch = (GitLocalBranch) selectedBranch.getSelectedItem();
+        var mySelectedRepo = (GitRepository) selectedRepo.getSelectedItem();
+        if (mySelectedRepo == null || mySelectedBranch == null) {
+            logger.warn("No selected values found");
+            return;
+        }
+        var projectId = (String) projectInfo.get("id");
+        var remote = findRadRemote(mySelectedRepo, projectId.split(":")[1]);
+        if (remote == null) {
+            logger.warn("Unable to find rad remote. Project ID : {}", projectId);
+            RadAction.showErrorNotification(project, RadicleBundle.message("findRemoteError"),
+                    RadicleBundle.message("findRemoteErrorDesc"));
+            return;
+        }
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            newPatchButton.setEnabled(false);
+            loadingPanel.setVisible(true);
+            var gitPushRepoResult = radicleProjectService.pushChanges(mySelectedRepo, mySelectedBranch, remote);
+            if (gitPushRepoResult == null) {
+                RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), "");
+                loadingPanel.setVisible(false);
+                newPatchButton.setEnabled(true);
+                return;
+            }
+            var isSuccess = radicleProjectService.isSuccessPush(gitPushRepoResult);
+            if (!isSuccess) {
+                var errorMsg = gitPushRepoResult.getError();
+                RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), errorMsg);
+                loadingPanel.setVisible(false);
+                newPatchButton.setEnabled(true);
+                return;
+            }
+            var branchRevision = radicleProjectService.getBranchRevision(project, mySelectedRepo, mySelectedBranch.getName());
+            if (Strings.isNullOrEmpty(branchRevision)) {
+                RadAction.showErrorNotification(project,
+                        RadicleBundle.message("resolveRevNumberError"),
+                        RadicleBundle.message("resolveRevNumberErrorDesc"));
+                loadingPanel.setVisible(false);
+                newPatchButton.setEnabled(true);
+                return;
+            }
+            var patchId = api.createPatch(titleField.getText(), descriptionField.getText(), labelSelect.storeLabels, (String) projectInfo.get("head"),
+                    branchRevision, mySelectedRepo, (String) projectInfo.get("id"));
+            if (patchId != null) {
+                //Fetch the patch that created from the remote
+                radicleProjectService.fetchPeerChanges(mySelectedRepo);
+                //Set the created patch as ref for the branch
+                radicleProjectService.setUpstream(mySelectedBranch.getName(), "rad/patches/" + patchId, mySelectedRepo);
+                mySelectedRepo.update();
+            }
+            ApplicationManager.getApplication().invokeLater(() -> {
+                if (patchId != null) {
+                    patchTabController.createPanel();
+                }
+                newPatchButton.setEnabled(true);
+                loadingPanel.setVisible(false);
+            }, ModalityState.any());
+        });
     }
 
     protected GitRemote findRadRemote(GitRepository repo, String myUrl) {
@@ -388,8 +395,14 @@ public class CreatePatchPanel {
         //Show only the branches that belong to the specific selected repo without showing patches
         selectedBranch.removeAllItems();
         var branches = ((GitRepository) Objects.requireNonNull(selectedRepo.getSelectedItem())).getBranches().getLocalBranches();
+        var mySelectedRepo = (GitRepository) selectedRepo.getSelectedItem();
         for (var branch : branches) {
-            if (!branch.getName().startsWith("patches")) {
+            var hasPatchAsUpstream = false;
+            var trackInfo = mySelectedRepo.getBranchTrackInfo(branch.getName());
+            if (trackInfo != null && trackInfo.getRemoteBranch().getName().contains("rad/patches")) {
+                hasPatchAsUpstream = true;
+            }
+            if (!branch.getName().startsWith("patches") && !hasPatchAsUpstream) {
                 selectedBranch.addItem(branch);
             }
         }

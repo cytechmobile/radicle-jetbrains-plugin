@@ -267,10 +267,10 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public boolean createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
+    public String createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
         var session = createAuthenticatedSession(repo);
         if (session == null) {
-            return false;
+            return null;
         }
         try {
             var patchReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/patches");
@@ -282,14 +282,15 @@ public class RadicleProjectApi {
             if (!resp.isSuccess()) {
                 logger.warn("error creating new patch, title : {}, description : {}, base_oid : {}, " + " " +
                         "patch_oid : {} " + "repo : {}, projectId : {}", title, description, baseOid, patchOid, repo, projectId);
-                return false;
+                return null;
             }
-            return true;
+            var map = (Map<String, String>) MAPPER.readValue(resp.body, new TypeReference<>() { });
+            return map.get("id");
         } catch (Exception e) {
             logger.warn("error creating new patch, title : {}, description : {}, base_oid : {}, " + " " +
                     "patch_oid : {} " + "repo : {}, projectId : {}", title, description, baseOid, patchOid, repo, projectId);
         }
-        return false;
+        return null;
     }
 
     public RadIssue fetchIssue(String projectId, GitRepository repo, String issueId) {

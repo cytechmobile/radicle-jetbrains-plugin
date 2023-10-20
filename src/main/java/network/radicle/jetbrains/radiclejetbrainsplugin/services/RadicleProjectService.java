@@ -7,6 +7,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
@@ -23,9 +25,11 @@ import git4idea.push.GitPushTarget;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +39,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
@@ -104,23 +110,35 @@ public class RadicleProjectService {
     public boolean isSuccessPush(GitPushRepoResult gitPushRepoResult) {
         var type = gitPushRepoResult.getType();
         return type == GitPushRepoResult.Type.SUCCESS || type == GitPushRepoResult.Type.NEW_BRANCH ||
-                type == GitPushRepoResult.Type.UP_TO_DATE || type == GitPushRepoResult.Type.FORCED ||
-                type == GitPushRepoResult.Type.REJECTED_NO_FF;
+                type == GitPushRepoResult.Type.UP_TO_DATE || type == GitPushRepoResult.Type.FORCED;
     }
 
+    public ProcessOutput setUpstream(String branch, String targetBranch, GitRepository repository) {
+        return executeCommand("git", "", repository.getRoot().getPath(),
+                List.of("branch", branch, "--set-upstream-to", targetBranch), repository, "");
+    }
 
     public ProcessOutput fetchPeerChanges(GitRepository repo) {
-        GitFetchSupport gfs = GitFetchSupport.fetchSupport(repo.getProject());
+        var countDown = new CountDownLatch(1);
+        GitVcs.runInBackground(new Task.Backgroundable(repo.getProject(), RadicleBundle.message("fetching"), true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+                final GitFetchSupport gfs = GitFetchSupport.fetchSupport(repo.getProject());
+                var gfr = gfs.fetchAllRemotes(List.of(repo));
+                gfr.showNotificationIfFailed();
+            }
+
+            @Override
+            public void onFinished() {
+                countDown.countDown();
+            }
+        });
         try {
-            var gfr = gfs.fetchAllRemotes(List.of(repo));
-            gfr.showNotificationIfFailed();
+            countDown.await(5, TimeUnit.SECONDS);
         } catch (Exception e) {
-            logger.warn("error fetching repo: {}", repo);
+            logger.warn("Error while fetching remotes");
         }
         return new ProcessOutput(0);
-        // var didParts = patch.author.id().split(":");
-        // return executeCommand("git", patch.repo.getRoot().getPath(), List.of("fetch",
-        //        didParts.length == 3 ? didParts[2] : ""), null);
     }
 
     public ProcessOutput clone(String urn, String directory) {

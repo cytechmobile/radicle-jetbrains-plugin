@@ -122,6 +122,11 @@ public class RadStub extends RadicleProjectService {
     }
 
     @Override
+    public ProcessOutput setUpstream(String branch, String targetBranch, GitRepository repository) {
+        return new ProcessOutput(0);
+    }
+
+    @Override
     public boolean isSuccessPush(GitPushRepoResult gitPushRepoResult) {
         return true;
     }

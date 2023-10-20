@@ -202,7 +202,7 @@ public class PatchComponentFactory {
 
     public JBList<GitCommit> findCommitList() {
         var jbScrollPane = ((JBScrollPane) commitBrowser.getComponents()[1]);
-        var jbViewPort = (JBViewport) jbScrollPane.getComponents()[0];
+        var jbViewPort =  UIUtil.findComponentOfType(jbScrollPane, JBViewport.class);
         return (JBList<GitCommit>) jbViewPort.getComponents()[0];
     }
 
