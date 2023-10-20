@@ -155,7 +155,7 @@ public class CreatePatchPanel {
 
     private void showPopUp(LinkLabel<?> fromLabel, JLabel toLabel) {
         var gridLayout = new JPanel(new GridLayoutManager(3, 2));
-        gridLayout.setPreferredSize(new Dimension(400, 100));
+        gridLayout.setPreferredSize(new Dimension(500, 100));
         var constraints = new GridConstraints();
         constraints.setAnchor(GridConstraints.ANCHOR_WEST);
         constraints.setIndent(1);
@@ -336,8 +336,10 @@ public class CreatePatchPanel {
                 //Fetch the patch that created from the remote
                 radicleProjectService.fetchPeerChanges(mySelectedRepo);
                 //Set the created patch as ref for the branch
-                radicleProjectService.setUpstream(mySelectedBranch.getName(), "rad/patches/" + patchId, mySelectedRepo);
-                mySelectedRepo.update();
+                var success = radicleProjectService.setUpstream(mySelectedBranch.getName(), "rad/patches/" + patchId, mySelectedRepo);
+                if (RadAction.isSuccess(success)) {
+                    mySelectedRepo.update();
+                }
             }
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (patchId != null) {
