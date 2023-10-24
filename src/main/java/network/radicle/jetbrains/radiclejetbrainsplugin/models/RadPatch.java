@@ -120,7 +120,7 @@ public class RadPatch {
 
     private boolean fetchCommits() {
         var service = this.repo.getProject().getService(RadicleProjectService.class);
-        var output = service.fetchPeerChanges(this);
+        var output = service.fetchPeerChanges(this.repo);
         return RadAction.isSuccess(output);
     }
 

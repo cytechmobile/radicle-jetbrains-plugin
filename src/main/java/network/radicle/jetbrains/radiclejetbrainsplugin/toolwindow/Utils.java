@@ -6,12 +6,15 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StyleSheetUtil;
 import net.miginfocom.layout.CC;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -85,5 +88,12 @@ public class Utils {
         var firstPart = id.substring(0, 6);
         var secondPart = id.substring(id.length() - 6);
         return didStr + firstPart + "..." + secondPart;
+    }
+
+    public static LinkLabel<?> createLinkLabel(String text, LinkListener listener) {
+        var linkLabel = new LinkLabel<>(text, null);
+        linkLabel.setListener(listener, null);
+        linkLabel.setBorder(JBUI.Borders.emptyRight(8));
+        return linkLabel;
     }
 }

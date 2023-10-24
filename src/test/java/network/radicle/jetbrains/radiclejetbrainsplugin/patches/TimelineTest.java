@@ -12,11 +12,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
+import git4idea.repo.GitRemote;
+import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
@@ -32,6 +35,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
@@ -44,9 +48,10 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
@@ -78,6 +83,9 @@ public class TimelineTest extends AbstractIT {
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
     private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
+    private static final String PATCH_NAME = "Test Patch";
+    private static final String PATCH_DESC = "Test Description";
+    private String currentRevision = null;
     @Rule
     public TestName testName = new TestName();
 
@@ -85,6 +93,7 @@ public class TimelineTest extends AbstractIT {
     public void beforeTest() throws IOException, InterruptedException {
         var api = replaceApiService();
         patch = createPatch();
+        currentRevision = firstRepo.getCurrentRevision();
         final var httpClient = api.getClient();
         final int[] statusCode = {200};
         when(httpClient.execute(any())).thenAnswer((i) -> {
@@ -119,6 +128,9 @@ public class TimelineTest extends AbstractIT {
                     statusCode[0] = 400;
                 }
                 se = new StringEntity("{}");
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(PROJECTS_URL + "/rad:123")) {
+                var map = Map.of("defaultBranch", "main", "id", "rad:123", "head", currentRevision);
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
                 var p = new RadPatch(patch);
                 p.repo = null;
@@ -143,6 +155,14 @@ public class TimelineTest extends AbstractIT {
                     }
                 }
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
+            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains(PATCHES_URL)) {
+                var obj = EntityUtils.toString(((HttpPost) req).getEntity());
+                var mapper = new ObjectMapper();
+                Map<String, Object> map = mapper.readValue(obj, Map.class);
+                response.add(map);
+                // We don't need to refresh the panel after the request
+                statusCode[0] = 400;
+                se = new StringEntity("{}");
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
@@ -193,6 +213,69 @@ public class TimelineTest extends AbstractIT {
         /* Wait to load the patches */
         Thread.sleep(200);
         executeUiTasks();
+    }
+
+    @Test
+    public void createNewPatchTest() throws InterruptedException {
+        var newPatchPanel = new CreatePatchPanel(patchTabController, myProject, List.of(firstRepo)) {
+            @Override
+            public GitRemote findRadRemote(GitRepository repo, String myUrl) {
+                return new GitRemote("test", List.of(), List.of(), List.of(), List.of());
+            }
+        };
+        var tabs = newPatchPanel.create();
+
+        var panel = (JPanel) tabs.getComponents()[6];
+        var children = ((JComponent) panel.getComponents()[0]).getComponents();
+
+        panel = (JPanel) children[0];
+        children = ((JPanel) panel.getComponents()[0]).getComponents();
+
+        var buttonsPanel = (JPanel) ((JPanel) children[2]).getComponents()[1];
+        var titleField = UIUtil.findComponentOfType((JComponent) children[0], JBTextArea.class);
+        titleField.setText(PATCH_NAME);
+        var descriptionField = UIUtil.findComponentOfType((JComponent) children[1], JBTextArea.class);
+        descriptionField.setText(PATCH_DESC);
+
+        // Get the panel where the actions select are
+        var actionsPanel = (JPanel) ((JPanel) children[2]).getComponents()[0];
+        var actionsPanelComponents = actionsPanel.getComponents();
+        assertThat(((JLabel) actionsPanelComponents[0]).getText()).isEqualTo(RadicleBundle.message("label"));
+
+        var labelSelect = newPatchPanel.getLabelSelect();
+        var label1 = "label1";
+        var label2 = "label2";
+        labelSelect.storeLabels.add(label1);
+        labelSelect.storeLabels.add(label2);
+
+        // Find label panel and trigger the open action
+        var labelPanel = (NonOpaquePanel) actionsPanelComponents[1];
+        var labelButton = UIUtil.findComponentOfType(labelPanel, InlineIconButton.class);
+        labelButton.getActionListener().actionPerformed(new ActionEvent(labelButton, 0, ""));
+        executeUiTasks();
+
+        var labelPopupListener = labelSelect.listener;
+        var labelJbList = UIUtil.findComponentOfType(labelSelect.jbPopup.getContent(), JBList.class);
+        var labelListModel = labelJbList.getModel();
+        var fakePopup = JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup();
+        fakePopup.getContent().removeAll();
+        fakePopup.getContent().add(new BorderLayoutPanel());
+        labelPopupListener.beforeShown(new LightweightWindowEvent(fakePopup));
+
+        //Wait to load labels
+        Thread.sleep(1000);
+        assertThat(labelListModel.getSize()).isEqualTo(2);
+
+        // Find create new patch button
+        var createPatchButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
+        createPatchButton.doClick();
+        var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("target")).isEqualTo(currentRevision);
+        assertThat(res.get("description")).isEqualTo(PATCH_DESC);
+        assertThat(res.get("title")).isEqualTo(PATCH_NAME);
+        var labels = (ArrayList) res.get("labels");
+        assertThat(labels.get(0)).isEqualTo(label1);
+        assertThat(labels.get(1)).isEqualTo(label2);
     }
 
     @Test

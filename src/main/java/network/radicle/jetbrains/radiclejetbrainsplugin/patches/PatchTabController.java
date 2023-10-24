@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
+import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
@@ -14,6 +15,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController
 import javax.swing.JComponent;
 import java.awt.BorderLayout;
 import java.util.Arrays;
+import java.util.List;
 
 public class PatchTabController extends TabController<RadPatch, PatchListSearchValue, PatchSearchPanelViewModel> {
     private final PatchListPanel patchListPanel;
@@ -37,6 +39,16 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
             }
             return null;
         });
+    }
+
+    public void createNewPatchPanel(List<GitRepository> gitRepos) {
+        final var mainPanel = tab.getComponent();
+        tab.setDisplayName(RadicleBundle.message("newPatch"));
+        var createPanel = new CreatePatchPanel(this, project, gitRepos).create();
+        mainPanel.removeAll();
+        mainPanel.add(createPanel, BorderLayout.CENTER);
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {

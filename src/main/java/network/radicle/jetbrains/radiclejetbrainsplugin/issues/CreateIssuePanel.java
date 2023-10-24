@@ -341,7 +341,7 @@ public class CreateIssuePanel {
     }
 
     public static class LabelSelect extends LabeledListPanelHandle<IssuePanel.LabelSelect.Label> {
-        List<String> storeLabels = new ArrayList<>();
+        public List<String> storeLabels = new ArrayList<>();
 
         @Override
         public String getSelectedValues() {
