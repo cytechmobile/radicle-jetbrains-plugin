@@ -12,17 +12,19 @@ public class RadDiscussion {
     public String replyTo;
     @JsonDeserialize(using = Reaction.Deserializer.class)
     public List<Reaction> reactions;
+    public List<Embed> embeds;
 
     public RadDiscussion() {
     }
 
     public RadDiscussion(String id, RadAuthor author, String body, Instant timestamp,
-                         String replyTo, List<Reaction> reactions) {
+                         String replyTo, List<Reaction> reactions, List<Embed> embeds) {
         this.id = id;
         this.author = author;
         this.body = body;
         this.timestamp = timestamp;
         this.replyTo = replyTo;
         this.reactions = reactions;
+        this.embeds = embeds;
     }
 }

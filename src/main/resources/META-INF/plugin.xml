@@ -15,6 +15,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.FileService"/>
         <projectConfigurable
                 parentId="project.propVCSSupport.Mappings"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
