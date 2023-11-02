@@ -29,19 +29,17 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class MarkDownEditorPane {
-    public static final String SPLIT_SYMBOL = ":";
+    public static final String IMG_WIDTH = "450px";
     private final RadicleProjectSettings settings;
-    private final List<Embed> embedList;
     private final String radProjectId;
     private final VirtualFile file;
     private final Project project;
     private final String rawContent;
     private String content;
 
-    public MarkDownEditorPane(String content, Project project, List<Embed> embedList, String radProjectId, VirtualFile file) {
+    public MarkDownEditorPane(String content, Project project, String radProjectId, VirtualFile file) {
         this.settings = new RadicleProjectSettingsHandler(project).loadSettings();
         this.content = content;
-        this.embedList = embedList;
         this.radProjectId = radProjectId;
         this.file = file;
         this.project = project;
@@ -55,7 +53,6 @@ public class MarkDownEditorPane {
     }
 
     private List<String> getAllImgHtmlTags() {
-        //Find all the imgs tag inside the text
         var imgTags = new ArrayList<String>();
         var imgPattern = "<img\\s+[^>]*>";
         var pattern = Pattern.compile(imgPattern);
@@ -66,7 +63,26 @@ public class MarkDownEditorPane {
         return imgTags;
     }
 
+    private List<Embed> findEmbedList() {
+        // Find all embeds from the content e.g [name.jpg](4f4ba)
+        String regex = "\\[([^\\]]+)\\]\\(([^)]+)\\)";
+        var pattern = Pattern.compile(regex);
+        var matcher = pattern.matcher(this.rawContent);
+        var embedList = new ArrayList<Embed>();
+        while (matcher.find()) {
+            String filename = matcher.group(1);
+            String gitObjectId = matcher.group(2);
+            embedList.add(new Embed(gitObjectId, filename, null));
+        }
+        return embedList;
+    }
+
+    private boolean isExternalFile(String objectId) {
+        return objectId.contains("https://") || objectId.contains("http://");
+    }
+
     private void replaceHtmlTags() {
+        var embedList = findEmbedList();
         if (embedList.isEmpty()) {
             return;
         }
@@ -77,15 +93,17 @@ public class MarkDownEditorPane {
         var map = new HashMap<String, String>();
         var tika = new Tika();
         for (var embed : embedList) {
-            var objectId = getObjectId(embed.getContent());
+            var objectId = embed.getOid();
             if (Strings.isNullOrEmpty(objectId)) {
                 continue;
             }
             var mime = tika.detect(embed.getName());
             var imgTag = imgTags.stream().filter(tag -> tag.contains(objectId)).findFirst();
             if (imgTag.isPresent()) {
-                String newTag = "";
+                String newTag;
                 var oldTag = imgTag.get();
+                //Remove old tag from the list because there is a case that the user upload the same file
+                imgTags.remove(oldTag);
                 if (!mime.contains("image")) {
                      newTag = getHrefTag(getBlobUrl(objectId, mime), embed.getName());
                 } else {
@@ -120,21 +138,18 @@ public class MarkDownEditorPane {
             @Override
             protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
                 //Open browser
-                BrowserUtil.browse(e.getURL());
+                if (e.getURL() != null) {
+                    BrowserUtil.browse(e.getURL());
+                }
             }
         });
         return textPane;
     }
 
-    private String getObjectId(String myContent) {
-        var parts = myContent.split(SPLIT_SYMBOL);
-        if (parts.length > 1) {
-            return parts[1];
-        }
-        return null;
-    }
-
     private String getBlobUrl(String objectId, String mimeType) {
+        if (isExternalFile(objectId)) {
+            return objectId;
+        }
         var url = settings.getSeedNode() + "/raw/" + radProjectId + "/blobs/" + objectId;
         if (!Strings.isNullOrEmpty(mimeType)) {
             //In order to know the browser what type of file is and open it
@@ -152,10 +167,10 @@ public class MarkDownEditorPane {
     }
 
     private String getImgTag(String url) {
-        return "<img src=\"" + url + "\"/>";
+        return "<div style=\"width:" + IMG_WIDTH + ";\"><img src=\"" + url + "\"/></div>";
     }
 
     private static String wrapHtml(String body) {
-        return "<html><head></head><body" + body + "</body></html>";
+        return "<html><head></head><body>" + body + "</body></html>";
     }
 }

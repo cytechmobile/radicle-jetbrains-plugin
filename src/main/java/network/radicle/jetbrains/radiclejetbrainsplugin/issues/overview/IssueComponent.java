@@ -115,7 +115,7 @@ public class IssueComponent {
             horizontalPanel.setOpaque(false);
             var contentPanel = new BorderLayoutPanel();
             contentPanel.setOpaque(false);
-            var editorPane = new MarkDownEditorPane(message, radIssue.project, com.embeds, radIssue.projectId, file);
+            var editorPane = new MarkDownEditorPane(message, radIssue.project, radIssue.projectId, file);
             contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
             emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
             emojiJPanel = emojiPanel.getEmojiPanel();
@@ -169,7 +169,7 @@ public class IssueComponent {
 
     private JComponent getDescription() {
         var bodyIssue = !radIssue.discussion.isEmpty() ? radIssue.discussion.get(0).body : "";
-        var editorPane = new MarkDownEditorPane(bodyIssue, radIssue.project, radIssue.discussion.get(0).embeds, radIssue.projectId, file);
+        var editorPane = new MarkDownEditorPane(bodyIssue, radIssue.project, radIssue.projectId, file);
         descPanel = Utils.descriptionPanel(editorPane, radIssue.project);
         return descPanel;
     }

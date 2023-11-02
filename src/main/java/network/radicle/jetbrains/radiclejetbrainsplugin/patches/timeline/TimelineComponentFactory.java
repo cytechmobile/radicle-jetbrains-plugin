@@ -77,7 +77,7 @@ public class TimelineComponentFactory {
     public JComponent createDescSection() {
         var description = !Strings.isNullOrEmpty(patch.description) ? patch.description :
                          RadicleBundle.message("noDescription");
-        var editorPane = new MarkDownEditorPane(description, patch.project, List.of(), patch.projectId, file);
+        var editorPane = new MarkDownEditorPane(description, patch.project, patch.projectId, file);
         descSection = Utils.descriptionPanel(editorPane, patch.project);
         return descSection;
     }
@@ -153,7 +153,7 @@ public class TimelineComponentFactory {
                 }
                 var panel = new BorderLayoutPanel();
                 panel.setOpaque(false);
-                var editorPane = new MarkDownEditorPane(message, patch.project, com.embeds, patch.projectId, file);
+                var editorPane = new MarkDownEditorPane(message, patch.project, patch.projectId, file);
                 panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
                 emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
                 emojiJPanel = emojiPanel.getEmojiPanel();
