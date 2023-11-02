@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBTextArea;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -43,7 +44,7 @@ public class DragAndDropField extends JBTextArea {
     }
 
     private void setDragAndDropTarget() {
-        if (enableDragAndDrop) {
+        if (enableDragAndDrop && !ApplicationManager.getApplication().isUnitTestMode()) {
             this.setDropTarget(new Target());
         }
     }
