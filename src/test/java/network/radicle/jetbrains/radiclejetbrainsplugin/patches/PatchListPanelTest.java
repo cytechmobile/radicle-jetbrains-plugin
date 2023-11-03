@@ -182,6 +182,18 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     @Test
+    public void testListPanel() {
+        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var listPanel = controller.getPatchListPanel();
+        var patchModel = listPanel.getModel();
+        assertThat(patchModel.getSize()).isEqualTo(1);
+        var firstPatch = patchModel.get(0);
+        assertThat(firstPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(firstPatch.title).isEqualTo(patches.get(0).title);
+        assertThat(firstPatch.labels).isEqualTo(patches.get(0).labels);
+    }
+
+    @Test
     public void testState() {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();

@@ -85,17 +85,11 @@ public class IssueListPanelTest extends AbstractIT {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
         var issueModel = listPanel.getModel();
-        assertThat(issueModel.getSize()).isEqualTo(2);
+        assertThat(issueModel.getSize()).isEqualTo(1);
         var firstRadIssue = issueModel.get(0);
-        var secondRadIssue = issueModel.get(1);
         assertThat(firstRadIssue.author.id).isEqualTo(issues.get(0).author.id);
-        assertThat(secondRadIssue.author.id).isEqualTo(issues.get(1).author.id);
-
         assertThat(firstRadIssue.title).isEqualTo(issues.get(0).title);
-        assertThat(secondRadIssue.title).isEqualTo(issues.get(1).title);
-
         assertThat(firstRadIssue.labels).isEqualTo(issues.get(0).labels);
-        assertThat(secondRadIssue.labels).isEqualTo(issues.get(1).labels);
     }
 
     @Test

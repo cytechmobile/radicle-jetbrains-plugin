@@ -11,6 +11,7 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
@@ -97,7 +98,10 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
 
     @Override
     public PatchListSearchValue getEmptySearchValueModel() {
-        return new PatchListSearchValue();
+        var model = new PatchListSearchValue();
+        //Set the state to open as default
+        model.state = RadIssue.State.OPEN.label;
+        return model;
     }
 
     public static class PatchListCellRenderer implements ListCellRenderer<RadPatch> {

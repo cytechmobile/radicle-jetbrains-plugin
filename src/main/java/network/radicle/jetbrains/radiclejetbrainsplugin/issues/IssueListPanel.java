@@ -99,7 +99,10 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public IssueListSearchValue getEmptySearchValueModel() {
-        return new IssueListSearchValue();
+        var model = new IssueListSearchValue();
+        //Set the state to open as default
+        model.state = RadIssue.State.OPEN.label;
+        return model;
     }
 
     public static class IssueListCellRenderer implements ListCellRenderer<RadIssue> {
