@@ -71,15 +71,15 @@ public class PatchComponentFactory {
     }
 
     private void calculatePatchChanges(RadPatch patch) {
-        List<Change> changes = new ArrayList<>();
-        for (var rev : patch.revisions) {
-            final var diff =  GitChangeUtils.getDiff(patch.repo, rev.base(), rev.oid(), true);
-            if (diff != null && !diff.isEmpty()) {
-                changes.addAll(diff);
-            }
+        if (patch.revisions.isEmpty()) {
+            return;
         }
-        changes = changes.stream().distinct().collect(Collectors.toList());
-        patchChanges.setValue(changes);
+        var latestRevision = patch.revisions.get(patch.revisions.size() - 1);
+        final var diff =  (ArrayList<Change>) GitChangeUtils.getDiff(patch.repo, latestRevision.base(), latestRevision.oid(), true);
+        if (diff == null) {
+            return;
+        }
+        patchChanges.setValue(diff);
     }
 
     private SimpleAsyncChangesBrowser getChangesBrowser() {
@@ -143,15 +143,14 @@ public class PatchComponentFactory {
     }
 
     private List<GitCommit> calculatePatchCommits(RadPatch patch) {
-        List<GitCommit> history = new ArrayList<>();
-        for (var rev : patch.revisions) {
-            var cmts = calculatePatchCommits(patch.repo, rev.base(), rev.oid());
-            Collections.reverse(cmts);
-            history.addAll(cmts);
+        if (patch.revisions.isEmpty()) {
+            return List.of();
         }
-        history = history.stream().distinct().collect(Collectors.toList());
-        logger.info("calculated history for patch: {} - {}", patch, history);
-        return history;
+        var latestRevision = patch.revisions.get(patch.revisions.size() - 1);
+        var cmts = calculatePatchCommits(patch.repo, latestRevision.base(), latestRevision.oid());
+        Collections.reverse(cmts);
+        logger.info("calculated history for patch: {} - {}", patch, cmts);
+        return cmts;
     }
 
     public void updateFilComponent(RadPatch patch) {
