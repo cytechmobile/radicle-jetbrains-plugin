@@ -75,6 +75,9 @@ public class IssueListPanelTest extends AbstractIT {
         var toolWindow = new MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), toolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
+        //Set issue content as selected in order to load the issues
+        var contents = radicleToolWindow.contentManager.getContents();
+        radicleToolWindow.contentManager.setSelectedContent(contents[1]);
         //Wait to load the issues
         Thread.sleep(100);
         executeUiTasks();
