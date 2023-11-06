@@ -35,6 +35,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
     public ContentManager contentManager;
     private Content issueContent;
     private Content patchContent;
+    private boolean isEnable = false;
 
     @Override
     public void init(@NotNull ToolWindow window) {
@@ -96,6 +97,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                 if (!radInited.isEmpty()) {
                     ApplicationManager.getApplication().invokeLater(() -> {
                         toolWindow.setAvailable(true);
+                        isEnable = true;
                     });
                 }
             });
@@ -104,6 +106,6 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-        return false;
+        return isEnable;
     }
 }
