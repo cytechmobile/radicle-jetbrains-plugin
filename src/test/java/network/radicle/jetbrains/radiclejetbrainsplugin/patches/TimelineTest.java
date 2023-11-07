@@ -361,6 +361,7 @@ public class TimelineTest extends AbstractIT {
         var checkoutCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(checkoutCommand);
         assertThat(checkoutCommand.getCommandLineString()).contains("patch checkout " + patch.id.substring(0, 6));
+        assertThat(checkoutButton.isEnabled()).isFalse();
     }
 
     @Test
