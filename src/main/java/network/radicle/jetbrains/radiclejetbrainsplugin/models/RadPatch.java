@@ -124,6 +124,10 @@ public class RadPatch {
         return RadAction.isSuccess(output);
     }
 
+    public boolean isMerged() {
+        return this.state.status.equals(State.MERGED.status);
+    }
+
     @Override
     public String toString() {
         try {

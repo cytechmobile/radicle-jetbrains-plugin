@@ -471,6 +471,21 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
+    public void testStateEditButtonWithMergedPatch() {
+        patch.state = RadPatch.State.MERGED;
+        patchTabController.createPatchProposalPanel(patch);
+        var panel = patchTabController.getPatchProposalJPanel();
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var statePanel = (NonOpaquePanel) components[1];
+        // Assert that if the patch has status merged then the edit button is disable
+        var openPopupButton = (InlineIconButton) UIUtil.findComponentOfType(statePanel, InlineIconButton.class);
+        assertThat(openPopupButton.isEnabled()).isFalse();
+        assertThat(openPopupButton.getTooltip()).isEqualTo(RadicleBundle.message("patchStateChangeTooltip"));
+    }
+
+    @Test
     public void changeStateTest() throws InterruptedException {
         var patchProposalPanel = patchTabController.getPatchProposalPanel();
         var panel = patchTabController.getPatchProposalJPanel();
