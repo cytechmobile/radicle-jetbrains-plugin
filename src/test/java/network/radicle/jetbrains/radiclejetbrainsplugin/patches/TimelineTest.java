@@ -361,6 +361,7 @@ public class TimelineTest extends AbstractIT {
         var checkoutCommand = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(checkoutCommand);
         assertThat(checkoutCommand.getCommandLineString()).contains("patch checkout " + patch.id.substring(0, 6));
+        assertThat(checkoutButton.isEnabled()).isFalse();
     }
 
     @Test
@@ -467,6 +468,22 @@ public class TimelineTest extends AbstractIT {
         assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
         assertThat(res.get("comment")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).discussions().get(0).id);
         assertThat(res.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
+    }
+
+    @Test
+    public void testStateEditButtonWithMergedPatch() {
+        patch.state = RadPatch.State.MERGED;
+        patchTabController.createPatchProposalPanel(patch);
+        var panel = patchTabController.getPatchProposalJPanel();
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var actionPanel = ef.getSecondComponent();
+        var components = actionPanel.getComponents();
+        var statePanel = (NonOpaquePanel) components[1];
+
+        // Assert that if the patch has status merged then the edit button is disable
+        var openPopupButton = (InlineIconButton) UIUtil.findComponentOfType(statePanel, InlineIconButton.class);
+        assertThat(openPopupButton.isEnabled()).isFalse();
+        assertThat(openPopupButton.getTooltip()).isEqualTo(RadicleBundle.message("patchStateChangeTooltip"));
     }
 
     @Test

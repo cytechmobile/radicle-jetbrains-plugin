@@ -18,10 +18,13 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
 import icons.CollaborationToolsIcons;
 import kotlin.Unit;
 import net.miginfocom.layout.CC;
@@ -63,6 +66,8 @@ public class PatchProposalPanel {
     private final LabelSelect labelSelect;
     private final StateSelect stateSelect;
     private final PatchComponentFactory patchComponentFactory;
+    private final MessageBusConnection messageBusConnection;
+    private JButton checkoutBtn;
 
     public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
@@ -72,6 +77,20 @@ public class PatchProposalPanel {
         this.labelSelect = new LabelSelect();
         this.stateSelect = new StateSelect();
         this.patchComponentFactory = new PatchComponentFactory(patch.getValue().project, this.controller.getDisposer());
+        this.messageBusConnection = this.patch.project.getMessageBus().connect();
+        this.listenForRepoChanges();
+    }
+
+    private void listenForRepoChanges() {
+        messageBusConnection.subscribe(GitRepository.GIT_REPO_CHANGE,
+                (GitRepositoryChangeListener) repository -> {
+                    var currentBranch = patch.repo.getCurrentBranch();
+                    if (currentBranch == null) {
+                        return;
+                    }
+                    var currentBranchName = patch.repo.getCurrentBranch().getName();
+                    checkoutBtn.setEnabled(!currentBranchName.contains(formatPatchId(patch.id)));
+                });
     }
 
     public JComponent createViewPatchProposalPanel() {
@@ -106,6 +125,7 @@ public class PatchProposalPanel {
     protected JComponent createReturnToListSideComponent() {
         return ReturnToListComponent.INSTANCE.createReturnToListSideComponent(RadicleBundle.message("backToList"),
                 () -> {
+                    this.messageBusConnection.disconnect();
                     controller.createPanel();
                     return Unit.INSTANCE;
                 });
@@ -155,8 +175,9 @@ public class PatchProposalPanel {
         var checkoutAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                checkoutBtn.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var formattedPatchId = patch.id.substring(0, 6);
+                    var formattedPatchId = formatPatchId(patch.id);
                     var countDown = new CountDownLatch(1);
                     UpdateBackgroundTask ubt = new UpdateBackgroundTask(patch.project, RadicleBundle.message("checkingOut", "", "patch/" + formattedPatchId),
                             countDown);
@@ -167,19 +188,28 @@ public class PatchProposalPanel {
                         var errorMsg = output.getStdout();
                         RadAction.showErrorNotification(patch.project, "", errorMsg);
                         countDown.countDown();
+                        ApplicationManager.getApplication().invokeLater(() -> checkoutBtn.setEnabled(true));
                         return;
                     }
                     refreshVcs();
                     countDown.countDown();
                     RadAction.showNotification(patch.project, "", RadicleBundle.message("successCheckingOut",
-                                    "", formattedPatchId), NotificationType.INFORMATION, List.of());
+                            "", formattedPatchId), NotificationType.INFORMATION, List.of());
                 });
             }
         };
-        var checkoutBtn = new JButton(checkoutAction);
+        checkoutBtn = new JButton(checkoutAction);
         checkoutBtn.setText(RadicleBundle.message("checkout"));
+        var currentBranch = patch.repo.getCurrentBranch();
+        if (currentBranch != null && currentBranch.getName().contains(formatPatchId(patch.id))) {
+            checkoutBtn.setEnabled(false);
+        }
         nonOpaquePanel.add(checkoutBtn, new CC().gapBottom(String.valueOf(UI.scale(8))));
         return nonOpaquePanel;
+    }
+
+    private String formatPatchId(String patchId) {
+        return patchId.substring(0, 6);
     }
 
     public void refreshVcs() {
@@ -240,7 +270,14 @@ public class PatchProposalPanel {
 
     public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
 
-        public record State(String status, String label) { }
+        public record State(String status, String label) {
+        }
+
+        public StateSelect() {
+            if (patch.isMerged()) {
+                disableEditButton(RadicleBundle.message("patchStateChangeTooltip"));
+            }
+        }
 
         public static class StateRender extends SelectionListCellRenderer<State> {
 
@@ -306,9 +343,11 @@ public class PatchProposalPanel {
             return true;
         }
     }
+
     public class LabelSelect extends LabeledListPanelHandle<LabelSelect.Label> {
 
-        public record Label(String label) { }
+        public record Label(String label) {
+        }
 
         public static class LabelRender extends SelectionListCellRenderer<LabelSelect.Label> {
 

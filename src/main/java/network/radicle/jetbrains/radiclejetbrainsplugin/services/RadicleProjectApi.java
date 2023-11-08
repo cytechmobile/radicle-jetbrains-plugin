@@ -91,6 +91,9 @@ public class RadicleProjectApi {
             for (var state : states) {
                 var url = node.url + "/api/v1/projects/" + projectId + "/issues?page=0&state=" + state + "&perPage=" + ALL_IN_ONE_PAGE;
                 var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchIssuesError"));
+                if (res.status == -1) {
+                    break;
+                }
                 if (res.isSuccess()) {
                     var issues = MAPPER.readValue(res.body, new TypeReference<List<RadIssue>>() { });
                     for (var issue : issues) {
@@ -121,6 +124,9 @@ public class RadicleProjectApi {
             for (var state : states) {
                 var url = node.url + "/api/v1/projects/" + projectId + "/patches?page=0&state=" + state + "&perPage=" + ALL_IN_ONE_PAGE;
                 var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchesError"));
+                if (res.status == -1) {
+                    break;
+                }
                 if (res.isSuccess()) {
                     var patches = MAPPER.readValue(res.body, new TypeReference<List<RadPatch>>() { });
                     for (var patch : patches) {
@@ -587,6 +593,9 @@ public class RadicleProjectApi {
         try {
             s = MAPPER.readValue(json, Session.class);
         } catch (Exception e) {
+            ApplicationManager.getApplication().invokeLater(() ->
+                    showNotification(project, RadicleBundle.message("errorParsingSession"), json,
+                            NotificationType.ERROR, List.of()));
             logger.warn("error parsing session info from cli: {}", json, e);
             return null;
         }
@@ -622,6 +631,9 @@ public class RadicleProjectApi {
             responseStatusBody = new HttpResponseStatusBody(status, body);
             return responseStatusBody;
         } catch (Exception e) {
+            ApplicationManager.getApplication().invokeLater(() ->
+                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), e.getMessage(),
+                            NotificationType.ERROR, List.of()));
             logger.warn("error executing request", e);
             return new HttpResponseStatusBody(-1, "");
         } finally {
