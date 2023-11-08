@@ -13,17 +13,18 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueTabController;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchTabController;
 import org.jetbrains.annotations.NotNull;
-
 import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.List;
-
 import static com.intellij.dvcs.repo.VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED;
 
 public class RadicleToolWindow extends VcsToolWindowFactory {
@@ -35,6 +36,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
     public ContentManager contentManager;
     private Content issueContent;
     private Content patchContent;
+    private boolean isListInitialized = false;
 
     @Override
     public void init(@NotNull ToolWindow window) {
@@ -48,8 +50,8 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
         contentManager = toolWindow.getContentManager();
-        issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), null, false);
-        patchContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), null, false);
+        issueContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), RadicleBundle.message("issues"), false);
+        patchContent = toolWindow.getContentManager().getFactory().createContent(new JPanel(null), RadicleBundle.message("patches"), false);
 
         patchContent.setDisposer(Disposer.newDisposable(toolWindow.getDisposable(), "RadiclePatchProposalsContent"));
         issueContent.setDisposer(Disposer.newDisposable(toolWindow.getDisposable(), "RadicleIssueContent"));
@@ -62,7 +64,6 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                     patchTabController = new PatchTabController(patchContent, project);
                     patchTabController.createPanel();
                     issueTabController = new IssueTabController(issueContent, project);
-                    issueTabController.createPanel();
                     toolWindow.setTitleActions(List.of(new AnAction(AllIcons.General.Add) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -82,6 +83,15 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                             }
                         }
                     }));
+                    contentManager.addContentManagerListener(new ContentManagerListener() {
+                        @Override
+                        public void selectionChanged(@NotNull ContentManagerEvent event) {
+                            if (contentManager.isSelected(issueContent) && issueTabController != null && !isListInitialized) {
+                                issueTabController.createPanel();
+                                isListInitialized = true;
+                            }
+                        }
+                    });
                 }
             }
         };
