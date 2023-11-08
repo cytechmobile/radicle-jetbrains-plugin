@@ -29,6 +29,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PublishDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
@@ -60,7 +61,7 @@ public class CreateIssuePanel {
     public CountDownLatch latch = new CountDownLatch(1);
     private JButton newIssueButton;
     private JBTextArea titleField;
-    private JBTextArea descriptionField;
+    private DragAndDropField descriptionField;
     protected IssueTabController issueTabController;
     private ComboBox<GitRepository> projectSelect;
 
@@ -133,7 +134,7 @@ public class CreateIssuePanel {
         borderPanel.add(projectSelect, BorderLayout.NORTH);
         borderPanel.add(titleField, BorderLayout.CENTER);
 
-        descriptionField = new JBTextArea(new PlainDocument());
+        descriptionField = new DragAndDropField(project);
         descriptionField.setBackground(UIUtil.getListBackground());
         descriptionField.setBorder(JBUI.Borders.empty(8, 8, 0, 8));
         descriptionField.setFont(JBFont.label());
@@ -173,7 +174,7 @@ public class CreateIssuePanel {
                         return;
                     }
                     var radProjectId = output.getStdout().trim();
-                    var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProjectId);
+                    var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProjectId, descriptionField.getEmbedList());
                     ApplicationManager.getApplication().invokeLater(() -> {
                         if (isSuccess) {
                             issueTabController.createPanel();

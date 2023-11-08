@@ -75,6 +75,9 @@ public class IssueListPanelTest extends AbstractIT {
         var toolWindow = new MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), toolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
+        //Set issue content as selected in order to load the issues
+        var contents = radicleToolWindow.contentManager.getContents();
+        radicleToolWindow.contentManager.setSelectedContent(contents[1]);
         //Wait to load the issues
         Thread.sleep(100);
         executeUiTasks();
@@ -266,6 +269,6 @@ public class IssueListPanelTest extends AbstractIT {
     }
 
     private static RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of());
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(), List.of());
     }
 }
