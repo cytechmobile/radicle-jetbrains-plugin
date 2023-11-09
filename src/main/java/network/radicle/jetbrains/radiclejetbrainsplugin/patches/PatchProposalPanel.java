@@ -242,6 +242,12 @@ public class PatchProposalPanel {
 
         public record State(String status, String label) { }
 
+        public StateSelect() {
+            if (patch.isMerged()) {
+                disableEditButton(RadicleBundle.message("patchStateChangeTooltip"));
+            }
+        }
+
         public static class StateRender extends SelectionListCellRenderer<State> {
 
             @Override
