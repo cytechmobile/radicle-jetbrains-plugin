@@ -37,6 +37,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
         super(controller, project);
         this.cntrl = controller;
         this.issueListSearchValue = getEmptySearchValueModel();
+        this.issueListSearchValue.state = RadIssue.State.OPEN.label;
     }
 
     @Override

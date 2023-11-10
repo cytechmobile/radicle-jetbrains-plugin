@@ -134,8 +134,6 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
         private final IssueListSearchValue issueListSearchValue;
         public IssueListQuickFilter() {
             issueListSearchValue = new IssueListSearchValue();
-            // Set OPEN as default filter
-            issueListSearchValue.state = RadIssue.State.OPEN.label;
         }
 
         @NotNull
