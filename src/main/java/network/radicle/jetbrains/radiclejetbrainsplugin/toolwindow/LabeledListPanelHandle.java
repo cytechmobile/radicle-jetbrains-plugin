@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+import com.google.common.base.Strings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -89,6 +90,13 @@ public abstract  class LabeledListPanelHandle<T> {
         jbPopup.showUnderneathOf(parent);
         listener = popUpBuilder.getListener();
         return result;
+    }
+
+    public void disableEditButton(String tooltip) {
+        if (!Strings.isNullOrEmpty(tooltip)) {
+            editButton.setTooltip(tooltip);
+        }
+        editButton.setEnabled(false);
     }
 
     public void updateValues() {
