@@ -26,14 +26,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 
-import javax.swing.JPanel;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.ScrollPaneConstants;
-
 import java.util.List;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.TimelineComponentFactory.createTimeLineItem;
@@ -111,12 +111,12 @@ public class IssueComponent {
                         " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
                         "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
             }
-            var markDown = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, message, radIssue.project);
             var horizontalPanel = getHorizontalPanel(8);
             horizontalPanel.setOpaque(false);
             var contentPanel = new BorderLayoutPanel();
             contentPanel.setOpaque(false);
-            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(Utils.htmlEditorPane(markDown), StatusMessageType.WARNING));
+            var editorPane = new MarkDownEditorPaneFactory(message, radIssue.project, radIssue.projectId, file);
+            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
             emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
             emojiJPanel = emojiPanel.getEmojiPanel();
             contentPanel.addToBottom(emojiJPanel);
@@ -146,7 +146,8 @@ public class IssueComponent {
 
     private EditablePanelHandler getCommentField() {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), new JPanel(),
-                RadicleBundle.message("issue.comment", "Comment"), new SingleValueModel<>(""), this::createComment)
+                RadicleBundle.message("issue.comment", "Comment"), new SingleValueModel<>(""),
+                this::createComment)
                 .hideCancelAction(true)
                 .closeEditorAfterSubmit(false)
                 .build();
@@ -154,11 +155,11 @@ public class IssueComponent {
         return panelHandle;
     }
 
-    public boolean createComment(String comment) {
-        if (Strings.isNullOrEmpty(comment)) {
+    public boolean createComment(DragAndDropField field) {
+        if (Strings.isNullOrEmpty(field.getText())) {
             return true;
         }
-        var edited = api.addIssueComment(radIssue, comment);
+        var edited = api.addIssueComment(radIssue, field.getText(), field.getEmbedList());
         final boolean success = edited != null;
         if (success) {
             issueModel.setValue(edited);
@@ -168,9 +169,8 @@ public class IssueComponent {
 
     private JComponent getDescription() {
         var bodyIssue = !radIssue.discussion.isEmpty() ? radIssue.discussion.get(0).body : "";
-        var description = !Strings.isNullOrEmpty(bodyIssue) ? bodyIssue :
-                RadicleBundle.message("noDescription");
-        descPanel = Utils.descriptionPanel(description, radIssue.project, file);
+        var editorPane = new MarkDownEditorPaneFactory(bodyIssue, radIssue.project, radIssue.projectId, file);
+        descPanel = Utils.descriptionPanel(editorPane, radIssue.project);
         return descPanel;
     }
 
@@ -181,16 +181,16 @@ public class IssueComponent {
         headerTitle.setBody(title);
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), headerTitle,
                 RadicleBundle.message("issue.change.title", "change title"),
-                new SingleValueModel<>(radIssue.title), (editedTitle) -> {
+                new SingleValueModel<>(radIssue.title), (field) -> {
             var issue = new RadIssue(radIssue);
-            issue.title = editedTitle;
+            issue.title = field.getText();
             var edited = api.changeIssueTitle(issue);
             final boolean success = edited != null;
             if (success) {
                 issueModel.setValue(edited);
             }
             return success;
-        }).build();
+        }).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {

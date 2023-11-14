@@ -16,11 +16,13 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadWeb;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
@@ -47,16 +49,19 @@ public class RadicleProjectApi {
     public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
     public static final int ALL_IN_ONE_PAGE = 10000;
+    public static final int TIMEOUT = 5000;
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectApi.class);
     private static final int PER_PAGE = 10;
 
     private final CloseableHttpClient client;
     private final Project project;
-
     protected Cache<String, Session> sessions;
 
     public RadicleProjectApi(Project project) {
-        this(project, HttpClientBuilder.create().build());
+        this(project, HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom()
+                .setSocketTimeout(TIMEOUT) // Socket timeout in milliseconds
+                .setConnectTimeout(TIMEOUT) // Connection timeout in milliseconds
+                .build()).build());
     }
 
     @NonInjectable
@@ -202,7 +207,7 @@ public class RadicleProjectApi {
     }
 
     public boolean createIssue(String title, String description, List<String> assignees,
-                               List<String> labels, GitRepository repo, String projectId) {
+                               List<String> labels, GitRepository repo, String projectId, List<Embed> embedList) {
         var session = createAuthenticatedSession(repo);
         if (session == null) {
             return false;
@@ -210,7 +215,7 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/issues");
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees, "embeds", List.of());
+            var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("createIssueError"));
@@ -459,7 +464,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadIssue addIssueComment(RadIssue issue, String comment) {
+    public RadIssue addIssueComment(RadIssue issue, String comment, List<Embed> embedList) {
         var session = createAuthenticatedSession(issue.repo);
         if (session == null) {
             return null;
@@ -467,10 +472,10 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "comment", "body", comment, "replyTo", issue.id);
+            var patchIssueData = Map.of("type", "comment", "body", comment, "replyTo", issue.id, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"), RadicleBundle.message("commentDescError"));
             if (!resp.isSuccess()) {
                 logger.warn("error adding comment: {} to patch:{} resp:{}", comment, issue, resp);
                 return null;
@@ -506,7 +511,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch changePatchComment(String revisionId, String commentId, String body, RadPatch patch) {
+    public RadPatch changePatchComment(String revisionId, String commentId, String body, RadPatch patch, List<Embed> embedList) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -514,7 +519,7 @@ public class RadicleProjectApi {
         try {
             var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchEditData = Map.of("type", "revision.comment.edit", "revision", revisionId, "comment", commentId, "body", body);
+            var patchEditData = Map.of("type", "revision.comment.edit", "revision", revisionId, "comment", commentId, "body", body, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchEditData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(patchReq, RadicleBundle.message("issueCommentError"));
@@ -557,7 +562,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch addPatchComment(RadPatch patch, String comment) {
+    public RadPatch addPatchComment(RadPatch patch, String comment, List<Embed> embedList) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -565,7 +570,8 @@ public class RadicleProjectApi {
         try {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(), "body", comment);
+            var data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                    "body", comment, "embeds", embedList);
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(commentReq, RadicleBundle.message("commentError"));
@@ -622,6 +628,10 @@ public class RadicleProjectApi {
     }
 
     protected HttpResponseStatusBody makeRequest(HttpRequestBase req, String errorMsg) {
+        return this.makeRequest(req, errorMsg, "");
+    }
+
+    protected HttpResponseStatusBody makeRequest(HttpRequestBase req, String errorMsg, String errorDesc) {
         CloseableHttpResponse resp = null;
         HttpResponseStatusBody responseStatusBody = null;
         try {
@@ -631,8 +641,9 @@ public class RadicleProjectApi {
             responseStatusBody = new HttpResponseStatusBody(status, body);
             return responseStatusBody;
         } catch (Exception e) {
+            var errorMessage = !Strings.isNullOrEmpty(errorDesc) ? errorDesc : e.getMessage();
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), e.getMessage(),
+                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), errorMessage,
                             NotificationType.ERROR, List.of()));
             logger.warn("error executing request", e);
             return new HttpResponseStatusBody(-1, "");
@@ -643,7 +654,7 @@ public class RadicleProjectApi {
                     if (responseStatusBody != null && !responseStatusBody.isSuccess() &&
                             !Strings.isNullOrEmpty(errorMsg)) {
                         ApplicationManager.getApplication().invokeLater(() ->
-                                showNotification(project, errorMsg, "",
+                                showNotification(project, errorMsg, errorDesc,
                                         NotificationType.ERROR, List.of()));
                     }
                 } catch (Exception e) {

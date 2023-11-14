@@ -24,6 +24,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
@@ -116,11 +117,11 @@ public class TimelineComponent {
         return null;
     }
 
-    public boolean createComment(String comment) {
-        if (Strings.isNullOrEmpty(comment)) {
+    public boolean createComment(DragAndDropField field) {
+        if (Strings.isNullOrEmpty(field.getText())) {
             return false;
         }
-        var ok = api.addPatchComment(radPatch, comment);
+        var ok = api.addPatchComment(radPatch, field.getText(), field.getEmbedList());
         if (ok != null) {
             radPatchModel.setValue(ok);
             return true;
@@ -129,8 +130,9 @@ public class TimelineComponent {
     }
 
     private EditablePanelHandler getCommentField() {
-       var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), new JPanel(),
-                RadicleBundle.message("patch.comment", "Comment"), new SingleValueModel<>(""), this::createComment)
+        var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), new JPanel(),
+                RadicleBundle.message("patch.comment", "Comment"), new SingleValueModel<>(""),
+                this::createComment)
                 .hideCancelAction(true)
                 .closeEditorAfterSubmit(false)
                 .build();
@@ -146,16 +148,16 @@ public class TimelineComponent {
         headerTitle.setBody(title);
 
         var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), headerTitle,
-                RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (editedTitle) -> {
+                RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (field) -> {
             var edit = new RadPatch(radPatch);
-            edit.title = editedTitle;
+            edit.title = field.getText();
             var edited = api.changePatchTitle(edit);
             final boolean success = edited != null;
             if (success) {
                 radPatchModel.setValue(edited);
             }
             return success;
-        }).build();
+        }).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
@@ -186,3 +188,4 @@ public class TimelineComponent {
         return componentsFactory;
     }
 }
+

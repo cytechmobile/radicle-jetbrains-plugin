@@ -29,8 +29,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPan
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -76,8 +76,9 @@ public class TimelineComponentFactory {
 
     public JComponent createDescSection() {
         var description = !Strings.isNullOrEmpty(patch.description) ? patch.description :
-                         RadicleBundle.message("noDescription");
-        descSection = Utils.descriptionPanel(description, patch.project, file);
+                RadicleBundle.message("noDescription");
+        var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.projectId, file);
+        descSection = Utils.descriptionPanel(editorPane, patch.project);
         return descSection;
     }
 
@@ -150,16 +151,16 @@ public class TimelineComponentFactory {
                             " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
                             "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
                 }
-                var markDown = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, message, patch.project);
                 var panel = new BorderLayoutPanel();
                 panel.setOpaque(false);
-                panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(Utils.htmlEditorPane(markDown), StatusMessageType.WARNING));
+                var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.projectId, file);
+                panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
                 emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
                 emojiJPanel = emojiPanel.getEmojiPanel();
                 panel.addToBottom(emojiJPanel);
                 var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
-                        RadicleBundle.message("save", "save"), new SingleValueModel<>(message), (editedTitle) -> {
-                    var edited = api.changePatchComment(rev.id(), com.id, editedTitle, patch);
+                        RadicleBundle.message("save", "save"), new SingleValueModel<>(message), (field) -> {
+                    var edited = api.changePatchComment(rev.id(), com.id, field.getText(), patch, field.getEmbedList());
                     final boolean success = edited != null;
                     if (success) {
                         patchModel.setValue(patch);
@@ -244,7 +245,7 @@ public class TimelineComponentFactory {
     }
 
     public static JComponent createTimeLineItem(JComponent contentPanel,
-                                          JComponent actionsPanel, String title, Instant date) {
+                                                JComponent actionsPanel, String title, Instant date) {
         var authorDid = HtmlChunk.link("#",
                 title).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground()))).bold();
         var titleText = new HtmlBuilder().append(authorDid)
@@ -267,5 +268,5 @@ public class TimelineComponentFactory {
     public JComponent getDescSection() {
         return descSection;
     }
-
 }
+

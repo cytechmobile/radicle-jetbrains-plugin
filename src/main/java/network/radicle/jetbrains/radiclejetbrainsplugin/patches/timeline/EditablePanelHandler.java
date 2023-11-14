@@ -4,23 +4,22 @@ import com.intellij.CommonBundle;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory;
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory;
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.collaboration.ui.util.ActionUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.LanguageTextField;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Function;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JPanel;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.event.DocumentEvent;
 import java.awt.BorderLayout;
 import java.util.List;
 
@@ -37,13 +36,16 @@ public class EditablePanelHandler {
     private final String actionName;
     //todo this needs to become dynamically editable
     private final SingleValueModel<String> content;
-    private final Function<String, Boolean> okAction;
+    private final Function<DragAndDropField, Boolean> okAction;
     private final boolean hideCancelAction;
     private final boolean closeEditorAfterSubmit;
+    private final boolean allowDragAndDrop;
+    private DragAndDropField dragAndDropField;
 
     public EditablePanelHandler(PanelBuilder builder) {
         this.closeEditorAfterSubmit = builder.closeEditorAfterSubmit;
         this.hideCancelAction = builder.hideCancelAction;
+        this.allowDragAndDrop = builder.allowDragAndDrop;
         this.project = builder.project;
         this.paneComponent = builder.paneComponent;
         this.editorPaneLayout = SizeRestrictedSingleComponentLayout.Companion.constant(null, null);
@@ -79,28 +81,30 @@ public class EditablePanelHandler {
                 hideEditor();
                 return null;
             });
-
-            var doc = LanguageTextField.createDocument(content.getValue(), PlainTextLanguage.INSTANCE, project,
-                    new LanguageTextField.SimpleDocumentCreator());
-            var field = CommentTextFieldFactory.INSTANCE.create(project, doc, CommentTextFieldFactory.ScrollOnChangePolicy.ScrollToField.INSTANCE,
-                    content.getValue());
+            dragAndDropField = new DragAndDropField(project, this.allowDragAndDrop);
+            dragAndDropField.setText(content.getValue());
             //CollaborationToolsUIUtil.installValidator(textField, model.errorValue.map { it?.localizedMessage })
             //var inputField = wrapWithProgressOverlay(textField, model.isBusyValue);
 
             var prAction = ActionUtilKt.swingAction(actionName, e -> {
                 logger.warn("primary action");
+                var actionButton = (JButton) e.getSource();
+                actionButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var res = okAction.fun(field.getText());
-                    if (res && closeEditorAfterSubmit) {
-                        ApplicationManager.getApplication().invokeLater(this::hideEditor);
-                    }
+                    var res = okAction.fun(dragAndDropField);
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        actionButton.setEnabled(true);
+                        if (res && closeEditorAfterSubmit) {
+                            this.hideEditor();
+                        }
+                    });
                 });
                 return null;
             });
-            field.addDocumentListener(new DocumentListener() {
+            dragAndDropField.getDocument().addDocumentListener(new DocumentAdapter() {
                 @Override
-                public void documentChanged(@NotNull DocumentEvent event) {
-                    var enable = !field.getText().isEmpty();
+                protected void textChanged(@NotNull DocumentEvent e) {
+                    var enable = !dragAndDropField.getText().isEmpty();
                     prAction.setEnabled(enable);
                 }
             });
@@ -111,7 +115,7 @@ public class EditablePanelHandler {
                     MutableStateFlow(!hideCancelAction ? cancelAction : null),
                     MutableStateFlow(RadicleBundle.message("patch.proposal.submit.hint", "{0} to {1}", submitShortcutText, actionName)));
 
-            editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(field, actions);
+            editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(dragAndDropField, actions);
             panel.remove(paneComponent);
 
             panel.setLayout(editorPaneLayout);
@@ -141,16 +145,23 @@ public class EditablePanelHandler {
         private final JComponent paneComponent;
         private final String actionName;
         private final SingleValueModel<String> content;
-        private final Function<String, Boolean> okAction;
+        private final Function<DragAndDropField, Boolean> okAction;
         private boolean hideCancelAction = false;
         private boolean closeEditorAfterSubmit = true;
+        private boolean allowDragAndDrop = true;
+
         public PanelBuilder(Project project, JComponent paneComponent, String actionName,
-                            SingleValueModel<String> content, Function<String, Boolean> okAction) {
+                            SingleValueModel<String> content, Function<DragAndDropField, Boolean> okAction) {
             this.project = project;
             this.paneComponent = paneComponent;
             this.actionName = actionName;
             this.content = content;
             this.okAction = okAction;
+        }
+
+        public PanelBuilder enableDragAndDrop(boolean allow) {
+            this.allowDragAndDrop = allow;
+            return this;
         }
 
         public PanelBuilder hideCancelAction(boolean hide) {

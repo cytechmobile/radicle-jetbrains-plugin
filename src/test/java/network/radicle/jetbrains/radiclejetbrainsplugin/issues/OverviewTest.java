@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextArea;
@@ -21,6 +20,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
@@ -28,6 +28,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
@@ -85,13 +86,18 @@ public class OverviewTest extends AbstractIT {
     private VirtualFile editorFile;
     private IssueTabController issueTabController;
     private static final String ISSUE_NAME = "Test Issue";
-    private static final String ISSUE_DESC = "Test Description";
+    private static String issueDescription = "Test Description";
+    private Embed txtEmbed;
+    private Embed imgEmbed;
+    private String commentDesc;
+    private String issueDesc;
     private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
     @Rule
     public TestName testName = new TestName();
 
     @Before
     public void beforeTest() throws IOException, InterruptedException {
+        dummyComment = "Hello";
         var api = replaceApiService();
         issue = createIssue();
         final var httpClient = api.getClient();
@@ -108,18 +114,12 @@ public class OverviewTest extends AbstractIT {
                 Map<String, Object> map = mapper.readValue(obj, Map.class);
                 var action = (HashMap<String, String>) map.get("action");
                 //Assert that we send the correct payload to the api
-                if (map.get("type").equals("comment")) {
-                    //Comment
-                    assertThat(map.get("type")).isEqualTo("comment");
-                    assertThat(map.get("body")).isEqualTo(dummyComment);
-                    assertThat(map.get("replyTo")).isEqualTo(issue.id);
-                    issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of()));
-                } else if (map.get("type").equals("edit")) {
+                if (map.get("type").equals("edit")) {
                     //Issue
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
                 } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label") ||
-                        map.get("type").equals("comment.react")) {
+                        map.get("type").equals("comment.react") || map.get("type").equals("comment")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -283,7 +283,8 @@ public class OverviewTest extends AbstractIT {
         //Remove first value
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
-
+        // Fix AlreadyDisposedException
+        Thread.sleep(1000);
         var res = response.poll(5, TimeUnit.SECONDS);
         var selectedLabels = (ArrayList<String>) res.get("labels");
         assertThat(selectedLabels.size()).isEqualTo(1);
@@ -303,8 +304,11 @@ public class OverviewTest extends AbstractIT {
 
         var titleField = UIUtil.findComponentOfType((JComponent) children[0], JBTextArea.class);
         titleField.setText(ISSUE_NAME);
-        var descriptionField = UIUtil.findComponentOfType((JComponent) children[1], JBTextArea.class);
-        descriptionField.setText(ISSUE_DESC);
+        var descriptionField = UIUtil.findComponentOfType((JComponent) children[1], DragAndDropField.class);
+        var dummyEmbed = new Embed("98db332aebc4505d7c55e7bfeb9556550220a796", "test.jpg", "data:image/jpeg;base64,test");
+        issueDescription = issueDescription + "![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
+        descriptionField.setEmbedList(List.of(dummyEmbed));
+        descriptionField.setText(issueDescription);
 
         // Get the panel where the actions select are
         var actionsPanel = (JPanel) ((JPanel) children[2]).getComponents()[0];
@@ -368,9 +372,13 @@ public class OverviewTest extends AbstractIT {
 
         var res = response.poll(5, TimeUnit.SECONDS);
 
-        assertThat((ArrayList) res.get("embeds")).isEmpty();
+        var embeds = (ArrayList<HashMap<String, String>>) res.get("embeds");
+        assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
+        assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
+        assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
+
         assertThat(res.get("title")).isEqualTo(ISSUE_NAME);
-        assertThat(res.get("description")).isEqualTo(ISSUE_DESC);
+        assertThat(res.get("description")).isEqualTo(issueDescription);
         assertThat(res.get("labels")).usingRecursiveAssertion().isEqualTo(List.of(label2));
         assertThat(res.get("assignees")).usingRecursiveAssertion().isEqualTo(List.of(getTestProjects().get(0).delegates.get(0)));
     }
@@ -423,7 +431,8 @@ public class OverviewTest extends AbstractIT {
 
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
-
+        // Fix AlreadyDisposedException
+        Thread.sleep(1000);
         var res = response.poll(5, TimeUnit.SECONDS);
         var state = (HashMap<String, String>) res.get("state");
         assertThat(state.get("status")).isEqualTo(RadIssue.State.CLOSED.status);
@@ -554,7 +563,7 @@ public class OverviewTest extends AbstractIT {
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
         executeUiTasks();
 
-        var ef = UIUtil.findComponentOfType(titlePanel, EditorTextField.class);
+        var ef = UIUtil.findComponentOfType(titlePanel, DragAndDropField.class);
         /* Test the header title */
         assertThat(ef.getText()).isEqualTo(issue.title);
 
@@ -590,7 +599,7 @@ public class OverviewTest extends AbstractIT {
         //send event that we clicked edit
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
         executeUiTasks();
-        ef = UIUtil.findComponentOfType(titlePanel, EditorTextField.class);
+        ef = UIUtil.findComponentOfType(titlePanel, DragAndDropField.class);
         assertThat(ef.getText()).isEqualTo(editedTitle);
 
         //Check that notification get triggered
@@ -628,7 +637,47 @@ public class OverviewTest extends AbstractIT {
         for (var el : elements) {
             timeline += el.getText();
         }
-        assertThat(timeline).contains(issue.discussion.get(0).body);
+        assertThat(timeline).contains(issueDesc);
+        assertThat(timeline).contains(getExpectedTag(txtEmbed));
+        assertThat(timeline).contains(getExpectedTag(imgEmbed));
+    }
+
+    @Test
+    public void testEmbeds() throws InterruptedException {
+        issueEditorProvider.createEditor(getProject(), editorFile);
+        var issueComponent = issueEditorProvider.getIssueComponent();
+        radStub.commands.clear();
+        executeUiTasks();
+        var commentPanel = issueComponent.getCommentFieldPanel();
+        var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
+        var dummyEmbed = new Embed("98db332aebc4505d7c55e7bfeb9556550220a796", "test.jpg", "data:image/jpeg;base64,test");
+        ef.setEmbedList(List.of(dummyEmbed));
+        UIUtil.markAsShowing((JComponent) ef.getParent(), true);
+        //matching UiUtil IS_SHOWING key
+        ((JComponent) ef.getParent()).putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
+        assertThat(UIUtil.isShowing(ef.getParent(), false)).isTrue();
+        for (var hl : ef.getParent().getHierarchyListeners()) {
+            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
+        }
+        executeUiTasks();
+        assertThat(ef.getText()).isEmpty();
+        dummyComment = dummyComment + "![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
+        ef.setText(dummyComment);
+        var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(0);
+        prBtn.doClick();
+        Thread.sleep(1000);
+
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("comment");
+        assertThat((String) map.get("body")).contains(dummyEmbed.getOid());
+        assertThat(map.get("replyTo")).isEqualTo(issue.id);
+
+        var embeds = (ArrayList<HashMap<String, String>>) map.get("embeds");
+        assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
+        assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
+        assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
     }
 
     @Test
@@ -639,7 +688,7 @@ public class OverviewTest extends AbstractIT {
         radStub.commands.clear();
         executeUiTasks();
         var commentPanel = issueComponent.getCommentFieldPanel();
-        var ef = UIUtil.findComponentOfType(commentPanel, EditorTextField.class);
+        var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
         UIUtil.markAsShowing((JComponent) ef.getParent(), true);
         //matching UiUtil IS_SHOWING key
         ((JComponent) ef.getParent()).putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
@@ -656,6 +705,13 @@ public class OverviewTest extends AbstractIT {
         prBtn.doClick();
         Thread.sleep(1000);
 
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("comment");
+        assertThat(map.get("body")).isEqualTo(dummyComment);
+        assertThat(map.get("replyTo")).isEqualTo(issue.id);
+        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of()));
+
+
         // Open createEditor
         issue.repo = firstRepo;
         issue.project = getProject();
@@ -669,7 +725,7 @@ public class OverviewTest extends AbstractIT {
             comments += el.getText();
         }
         assertThat(comments).contains(issue.discussion.get(1).author.id);
-        assertThat(comments).contains(issue.discussion.get(1).body);
+        assertThat(comments).contains(commentDesc);
         assertThat(comments).contains(issue.discussion.get(2).author.id);
         assertThat(comments).contains(issue.discussion.get(2).body);
         assertThat(comments).doesNotContain(issue.discussion.get(0).author.id);
@@ -701,25 +757,52 @@ public class OverviewTest extends AbstractIT {
             comments += el.getText();
         }
         assertThat(comments).contains(issue.discussion.get(1).author.id);
-        assertThat(comments).contains(issue.discussion.get(1).body);
+        assertThat(comments).contains(commentDesc);
+        assertThat(comments).contains(getExpectedTag(txtEmbed));
+        assertThat(comments).contains(getExpectedTag(imgEmbed));
         assertThat(comments).doesNotContain(issue.discussion.get(0).author.id);
         assertThat(comments).doesNotContain(issue.discussion.get(0).body);
     }
 
+    private String getExpectedTag(Embed dummyEmbed) {
+        var expectedUrl = radicleProjectSettingsHandler.loadSettings().getSeedNode().url + "/raw/" + issue.projectId + "/blobs/" + dummyEmbed.getOid();
+        if (dummyEmbed.getName().contains(".txt")) {
+            return "<a href=\"" + expectedUrl + "?mime=text/plain\">" + dummyEmbed.getName() + "</a>";
+        } else {
+            return "<img src=\"" + expectedUrl + "?mime=image/jpeg\">";
+        }
+    }
+
     private RadIssue createIssue() {
+        var txtGitObjectId = UUID.randomUUID().toString();
+        var imgGitObjectId = UUID.randomUUID().toString();
+
+        txtEmbed = new Embed(txtGitObjectId, "test.txt", "git:" + txtGitObjectId);
+        imgEmbed = new Embed(imgGitObjectId, "test.jpg", "git:" + imgGitObjectId);
+        var embeds = List.of(txtEmbed, imgEmbed);
+
+        var txtEmbedMarkDown = "![" + txtEmbed.getName() + "](" + txtEmbed.getOid() + ")";
+        var imgEmbedMarkDown = "![" + imgEmbed.getName() + "](" + imgEmbed.getOid() + ")";
+        commentDesc = "My Second Comment";
+        var commentDescription = commentDesc + txtEmbedMarkDown + imgEmbedMarkDown;
+
         var discussions = new ArrayList<RadDiscussion>();
-        var firstDiscussion = createDiscussion("123", "123", "How are you");
-        var secondDiscussion = createDiscussion("321", "321", "My Second Comment");
+        issueDesc = "How are you";
+        var myDescription = issueDesc + txtEmbedMarkDown + imgEmbedMarkDown;
+        var firstDiscussion = createDiscussion("123", "123", myDescription, embeds);
+        var secondDiscussion = createDiscussion("321", "321", commentDescription, embeds);
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
         var myIssue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
                 RadIssue.State.OPEN, List.of("did:key:test", "did:key:assignee2"), List.of("tag1", "tag2"), discussions);
         myIssue.project = getProject();
+        myIssue.projectId = UUID.randomUUID().toString();
         myIssue.repo = firstRepo;
         return myIssue;
     }
 
-    private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")));
+    private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList);
     }
 }
+

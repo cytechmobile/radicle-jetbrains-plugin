@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextArea;
@@ -22,6 +21,7 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
@@ -29,6 +29,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import org.apache.http.StatusLine;
@@ -85,6 +86,10 @@ public class TimelineTest extends AbstractIT {
     private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
     private static final String PATCH_NAME = "Test Patch";
     private static final String PATCH_DESC = "Test Description";
+    private Embed txtEmbed;
+    private Embed imgEmbed;
+    private String firstComment;
+    private String secondComment;
     private String currentRevision = null;
     @Rule
     public TestName testName = new TestName();
@@ -107,20 +112,14 @@ public class TimelineTest extends AbstractIT {
                 var mapper = new ObjectMapper();
                 Map<String, Object> map = mapper.readValue(obj, Map.class);
                 var action = (HashMap<String, String>) map.get("action");
-                if (map.get("type").equals("revision.comment")) {
-                    //Comment
-                    assertThat(map.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
-                    assertThat(map.get("body")).isEqualTo(dummyComment);
-                    var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of());
-                    patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
-                } else if (map.get("type").equals("edit")) {
+                if (map.get("type").equals("edit")) {
                     //patch
                     assertThat(map.get("target")).isEqualTo("delegates");
                     assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
                 } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react") ||
-                        map.get("type").equals("revision.comment.edit")) {
+                        map.get("type").equals("revision.comment.edit") || map.get("type").equals("revision.comment")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -287,7 +286,7 @@ public class TimelineTest extends AbstractIT {
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
         executeUiTasks();
 
-        var ef = UIUtil.findComponentOfType(titlePanel, EditorTextField.class);
+        var ef = UIUtil.findComponentOfType(titlePanel, DragAndDropField.class);
         /* Test the header title */
         assertThat(ef.getText()).isEqualTo(patch.title);
 
@@ -317,7 +316,7 @@ public class TimelineTest extends AbstractIT {
         //send event that we clicked edit
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
         executeUiTasks();
-        ef = UIUtil.findComponentOfType(titlePanel, EditorTextField.class);
+        ef = UIUtil.findComponentOfType(titlePanel, DragAndDropField.class);
         assertThat(ef.getText()).isEqualTo(editedTitle);
 
         //Check that error notification exists
@@ -575,10 +574,43 @@ public class TimelineTest extends AbstractIT {
         var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
         var elements = UIUtil.findComponentsOfType(revisionSection, JEditorPane.class);
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
-        assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
+        assertThat(comments).contains(firstComment);
         assertThat(comments).contains(patch.revisions.get(0).id());
-        assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
+        assertThat(comments).contains(secondComment);
         assertThat(comments).contains(patch.revisions.get(1).id());
+        assertThat(comments).contains(getExpectedTag(txtEmbed));
+        assertThat(comments).contains(getExpectedTag(imgEmbed));
+    }
+
+    @Test
+    public void testEmbeds() throws InterruptedException {
+        // Clear previous commands
+        radStub.commands.clear();
+        executeUiTasks();
+        var timelineComponent = patchEditorProvider.getTimelineComponent();
+        var commentPanel = timelineComponent.getCommentPanel();
+        var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
+        var dummyEmbed = new Embed("98db332aebc4505d7c55e7bfeb9556550220a796", "test.jpg", "data:image/jpeg;base64,test");
+        ef.setEmbedList(List.of(dummyEmbed));
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
+        executeUiTasks();
+        assertThat(ef.getText()).isEmpty();
+        dummyComment = dummyComment + "![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
+        ef.setText(dummyComment);
+        var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(0);
+        prBtn.doClick();
+        Thread.sleep(1000);
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("revision.comment");
+        assertThat((String) map.get("body")).contains(dummyEmbed.getOid());
+
+        var embeds = (ArrayList<HashMap<String, String>>) map.get("embeds");
+        assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
+        assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
+        assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
     }
 
     @Test
@@ -588,7 +620,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var timelineComponent = patchEditorProvider.getTimelineComponent();
         var commentPanel = timelineComponent.getCommentPanel();
-        var ef = UIUtil.findComponentOfType(commentPanel, EditorTextField.class);
+        var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
         assertThat(ef).isNotNull();
         markAsShowing(ef.getParent(), ef);
         executeUiTasks();
@@ -598,6 +630,13 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(0);
         prBtn.doClick();
+        Thread.sleep(1000);
+        //Comment
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
+        assertThat(map.get("body")).isEqualTo(dummyComment);
+        var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of());
+        patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
 
         // Open createEditor
         patch.repo = firstRepo;
@@ -614,9 +653,9 @@ public class TimelineTest extends AbstractIT {
         var elements = UIUtil.findComponentsOfType(revisionSection, JEditorPane.class);
         assertThat(elements).isNotEmpty();
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
-        assertThat(comments).contains(patch.revisions.get(0).discussions().get(0).body);
+        assertThat(comments).contains(firstComment);
         assertThat(comments).contains(patch.revisions.get(0).id());
-        assertThat(comments).contains(patch.revisions.get(1).discussions().get(0).body);
+        assertThat(comments).contains(secondComment);
         assertThat(comments).contains(patch.revisions.get(1).id());
         // Assert that the new comment exists
         assertThat(comments).contains(patch.revisions.get(1).discussions().get(1).body);
@@ -631,6 +670,7 @@ public class TimelineTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         Thread.sleep(1000);
+        response.poll(5, TimeUnit.SECONDS);
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
@@ -640,7 +680,7 @@ public class TimelineTest extends AbstractIT {
         var commPanel = timelineComponent.getComponentsFactory().getCommentPanel();
         var editBtn = UIUtil.findComponentOfType(commPanel, InlineIconButton.class);
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
-        ef = UIUtil.findComponentOfType(commPanel, EditorTextField.class);
+        ef = UIUtil.findComponentOfType(commPanel, DragAndDropField.class);
         markAsShowing(ef.getParent(), ef);
         executeUiTasks();
         var editedComment = "Edited comment to " + UUID.randomUUID();
@@ -658,17 +698,35 @@ public class TimelineTest extends AbstractIT {
     }
 
     private RadPatch createPatch() {
+        var txtGitObjectId = UUID.randomUUID().toString();
+        var imgGitObjectId = UUID.randomUUID().toString();
+
+        txtEmbed = new Embed(txtGitObjectId, "test.txt", "git:" + txtGitObjectId);
+        imgEmbed = new Embed(imgGitObjectId, "test.jpg", "git:" + imgGitObjectId);
+        var txtEmbedMarkDown = "![" + txtEmbed.getName() + "](" + txtEmbed.getOid() + ")";
+        var imgEmbedMarkDown = "![" + imgEmbed.getName() + "](" + imgEmbed.getOid() + ")";
+        firstComment = "hello";
+        secondComment = "hello back";
         var firstCommit = commitHistory.get(0);
         var secondCommit = commitHistory.get(1);
-        var firstDiscussion = createDiscussion("123", "123", "hello");
-        var secondDiscussion = createDiscussion("321", "321", "hello back");
+        var firstDiscussion = createDiscussion("123", "123", firstComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
+        var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
         var myPatch = new RadPatch("c5df12", "testPatch", new RadAuthor(AUTHOR), "testDesc",
                 "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
         myPatch.project = getProject();
         myPatch.repo = firstRepo;
+        myPatch.projectId = UUID.randomUUID().toString();
         return myPatch;
+    }
+    private String getExpectedTag(Embed dummyEmbed) {
+        var expectedUrl = radicleProjectSettingsHandler.loadSettings().getSeedNode().url + "/raw/" + patch.projectId + "/blobs/" + dummyEmbed.getOid();
+        if (dummyEmbed.getName().contains(".txt")) {
+            return "<a href=\"" + expectedUrl + "?mime=text/plain\">" + dummyEmbed.getName() + "</a>";
+        } else {
+            return "<img src=\"" + expectedUrl + "?mime=image/jpeg\">";
+        }
     }
 
     private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion) {
@@ -680,8 +738,7 @@ public class TimelineTest extends AbstractIT {
                 List.of("branch"), List.of(), Instant.now(), discussions, List.of());
     }
 
-    private RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")));
+    private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList);
     }
-
 }

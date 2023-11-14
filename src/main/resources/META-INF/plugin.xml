@@ -15,6 +15,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.FileService"/>
         <projectConfigurable
                 parentId="project.propVCSSupport.Mappings"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
@@ -60,8 +61,8 @@
 
         <!-- Radicle Group, under Git -->
         <group
-            id="Radicle.MainMenu" compact="true"
-            text="Radicle" popup="true">
+                id="Radicle.MainMenu" compact="true"
+                text="Radicle" popup="true">
             <add-to-group group-id="Git.MainMenu" relative-to-action="Git.Configure.Remotes" anchor="before"/>
         </group>
         <!-- Add your actions here -->
@@ -73,7 +74,7 @@
         <action id="Radicle.Sync.Fetch" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction"
                 text="Sync Fetch" description="Radicle sync fetch" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_FETCH">
             <add-to-group group-id="Radicle.MainMenu" anchor="first"  />
-<!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
+            <!--            <keyboard-shortcut keymap="$default" first-keystroke="alt T"/>-->
         </action>
 
         <action id="Radicle.Clone" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleCloneAction"
