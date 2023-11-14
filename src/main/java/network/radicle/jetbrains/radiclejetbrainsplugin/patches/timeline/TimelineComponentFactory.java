@@ -159,7 +159,7 @@ public class TimelineComponentFactory {
                 emojiJPanel = emojiPanel.getEmojiPanel();
                 panel.addToBottom(emojiJPanel);
                 var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
-                        RadicleBundle.message("save", "save"), new SingleValueModel<>(message), (field) -> {
+                        RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> {
                     var edited = api.changePatchComment(rev.id(), com.id, field.getText(), patch, field.getEmbedList());
                     final boolean success = edited != null;
                     if (success) {

@@ -39,8 +39,10 @@ public class RadPatch {
     }
 
     public RadPatch(
-            String id, String title, RadAuthor author, String description, String target, List<String> labels, State state, List<Revision> revisions) {
+            String id, String projectId, String title, RadAuthor author, String description, String target,
+            List<String> labels, State state, List<Revision> revisions) {
         this.id = id;
+        this.projectId = projectId;
         this.title = title;
         this.author = author;
         this.description = description;
@@ -64,39 +66,6 @@ public class RadPatch {
         this.labels = other.labels;
         this.state = other.state;
         this.revisions = other.revisions;
-    }
-
-    public record Revision(
-            String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews) { }
-
-    public record Merge(String node, String commit, Instant timestamp) { }
-
-
-    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-    public enum State {
-        OPEN("open", "Open"),
-        DRAFT("draft", "Draft"),
-        ARCHIVED("archived", "Archived"),
-        MERGED("merged", "Merged");
-
-        public final String status;
-        public final String label;
-
-        State(String status, String label) {
-            this.status = status;
-            this.label = label;
-        }
-
-        @JsonCreator
-        public static State forValues(@JsonProperty("status") String status) {
-            for (State state : State.values()) {
-                if (state.status.equals(status)) {
-                    return state;
-                }
-            }
-            return null;
-        }
     }
 
     public Map<String, List<GitCommit>> calculateCommits() {
@@ -138,6 +107,46 @@ public class RadPatch {
         } catch (Exception e) {
             logger.warn("error converting this to string", e);
             return "";
+        }
+    }
+
+    public Revision getLatestRevision() {
+        if (this.revisions == null || this.revisions.isEmpty()) {
+            return null;
+        }
+        return this.revisions.get(this.revisions.size() - 1);
+    }
+
+    public record Revision(
+            String id, String description, String base, String oid, List<String> refs,
+            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews) { }
+
+    public record Merge(String node, String commit, Instant timestamp) { }
+
+
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    public enum State {
+        OPEN("open", "Open"),
+        DRAFT("draft", "Draft"),
+        ARCHIVED("archived", "Archived"),
+        MERGED("merged", "Merged");
+
+        public final String status;
+        public final String label;
+
+        State(String status, String label) {
+            this.status = status;
+            this.label = label;
+        }
+
+        @JsonCreator
+        public static State forValues(@JsonProperty("status") String status) {
+            for (State state : State.values()) {
+                if (state.status.equals(status)) {
+                    return state;
+                }
+            }
+            return null;
         }
     }
 }

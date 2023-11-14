@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.intellij.openapi.diagnostic.Logger;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction;
@@ -22,7 +23,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class ActionsTest extends AbstractIT {
-
+    private static final Logger logger = Logger.getInstance(ActionsTest.class);
 
     @Test
     public void cloneTest() throws InterruptedException {
@@ -81,10 +82,13 @@ public class ActionsTest extends AbstractIT {
     public void radSyncAction() throws InterruptedException {
         var rfa = new RadicleSyncAction();
         rfa.performAction(getProject());
+        executeUiTasks();
+
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("sync");
         assertThat(cmd.getCommandLineString()).doesNotContain("-f");
+
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         var repo = mock(GitRepository.class);
@@ -96,6 +100,7 @@ public class ActionsTest extends AbstractIT {
     public void radFetchAction() throws InterruptedException {
         var rfa = new RadicleSyncFetchAction();
         rfa.performAction(getProject());
+        executeUiTasks();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("sync -f");
@@ -153,11 +158,15 @@ public class ActionsTest extends AbstractIT {
         var rsa = new RadicleSyncFetchAction();
         rsa.performAction(getProject());
 
+        executeUiTasks();
+
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));
 
         var syncAction = new RadicleSyncFetchAction();
         syncAction.performAction(getProject());
+
+        executeUiTasks();
 
         not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("initializationError"));

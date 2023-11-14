@@ -10,7 +10,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.I
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
-import org.apache.commons.lang.StringUtils;
 
 import javax.swing.JComponent;
 import java.awt.BorderLayout;
@@ -73,7 +72,7 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
     }
 
     protected void createInternalIssuePanel(SingleValueModel<RadIssue> issue, JComponent mainPanel) {
-        tab.setDisplayName("Issue : " + StringUtils.substring(issue.getValue().id, 0,  7));
+        tab.setDisplayName("Issue : " + issue.getValue().id.substring(0,  Math.min(7, issue.getValue().id.length())));
         issuePanel = new IssuePanel(this, issue);
         issueJPanel = issuePanel.createPanel();
         mainPanel.removeAll();

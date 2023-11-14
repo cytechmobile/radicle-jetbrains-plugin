@@ -179,7 +179,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
                     (resp == null ? "" :  "<br>" + resp.errorMessage()) +
                     "</html>");
         } else {
-            seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckSuccess", "", resp.id(), resp.version()));
+            seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckSuccess", resp.id(), resp.version()));
         }
     }
 

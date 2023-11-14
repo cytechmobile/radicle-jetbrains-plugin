@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.ui.JBColor;
@@ -26,6 +27,7 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import icons.CollaborationToolsIcons;
+import icons.DvcsImplIcons;
 import kotlin.Unit;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
@@ -41,12 +43,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
-
-import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -57,6 +58,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
 public class PatchProposalPanel {
+    private static final Logger logger = Logger.getInstance(PatchProposalPanel.class);
+
     protected RadPatch patch;
     protected SingleValueModel<RadPatch> patchModel;
     protected TabInfo commitTab;
@@ -68,6 +71,7 @@ public class PatchProposalPanel {
     private final PatchComponentFactory patchComponentFactory;
     private final MessageBusConnection messageBusConnection;
     private JButton checkoutBtn;
+    private JButton mergeBtn;
 
     public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
@@ -94,7 +98,6 @@ public class PatchProposalPanel {
     }
 
     public JComponent createViewPatchProposalPanel() {
-
         final var uiDisposable = Disposer.newDisposable(controller.getDisposer(), "RadiclePatchProposalDetailsPanel");
         var infoComponent = createInfoComponent();
         var tabInfo = new TabInfo(infoComponent);
@@ -153,6 +156,15 @@ public class PatchProposalPanel {
         actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         Utils.addListPanel(actionPanel, stateSelect);
         Utils.addListPanel(actionPanel, labelSelect);
+        if (RadPatch.State.OPEN.status.equals(patch.state.status)) {
+            mergeBtn = new JButton();
+            final var mergePatchAction = new MergePatchAction(mergeBtn, patchModel);
+            mergeBtn.setAction(mergePatchAction);
+            mergeBtn.setText(RadicleBundle.message("merge"));
+            actionPanel.add(mergeBtn);
+        } else {
+            mergeBtn = null;
+        }
         final var splitter = new OnePixelSplitter(true, "Radicle.PatchPanel.action.Component", 0.6f);
         splitter.setFirstComponent(borderPanel);
         splitter.setSecondComponent(actionPanel);
@@ -179,7 +191,7 @@ public class PatchProposalPanel {
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                     var formattedPatchId = formatPatchId(patch.id);
                     var countDown = new CountDownLatch(1);
-                    UpdateBackgroundTask ubt = new UpdateBackgroundTask(patch.project, RadicleBundle.message("checkingOut", "", "patch/" + formattedPatchId),
+                    UpdateBackgroundTask ubt = new UpdateBackgroundTask(patch.project, RadicleBundle.message("checkingOut", "patch/" + formattedPatchId),
                             countDown);
                     new Thread(ubt::queue).start();
                     var radCheckout = new RadCheckout(patch.repo, patch.id);
@@ -193,8 +205,8 @@ public class PatchProposalPanel {
                     }
                     refreshVcs();
                     countDown.countDown();
-                    RadAction.showNotification(patch.project, "", RadicleBundle.message("successCheckingOut",
-                            "", formattedPatchId), NotificationType.INFORMATION, List.of());
+                    RadAction.showNotification(patch.project, "", RadicleBundle.message("successCheckingOut", formattedPatchId),
+                            NotificationType.INFORMATION, List.of());
                 });
             }
         };
@@ -257,7 +269,7 @@ public class PatchProposalPanel {
     }
 
     private JBLabel createLabel(String branchName) {
-        var label = new JBLabel(CollaborationToolsIcons.Review.Branch);
+        var label = new JBLabel(DvcsImplIcons.BranchLabel);
         CollaborationToolsUIUtil.INSTANCE.overrideUIDependentProperty(label, jbLabel -> {
             jbLabel.setForeground(CurrentBranchComponent.TEXT_COLOR);
             jbLabel.setBackground(CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground()));
@@ -266,6 +278,29 @@ public class PatchProposalPanel {
         });
         label.setText(branchName);
         return label;
+    }
+
+    public LabelSelect getLabelSelect() {
+        return labelSelect;
+    }
+
+    public StateSelect getStateSelect() {
+        return stateSelect;
+    }
+
+
+    public void selectCommit(String oid) {
+        tabs.select(commitTab, true);
+        var list = patchComponentFactory.findCommitList();
+        var index = -1;
+        for (var i = 0; i < list.getItemsCount(); i++) {
+            var item = list.getModel().getElementAt(i);
+            if (oid.contains(item.getId().asString())) {
+                index = i;
+                break;
+            }
+        }
+        list.setSelectedIndex(index);
     }
 
     public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
@@ -426,28 +461,5 @@ public class PatchProposalPanel {
         public boolean isSingleSelection() {
             return false;
         }
-    }
-
-    public LabelSelect getLabelSelect() {
-        return labelSelect;
-    }
-
-    public StateSelect getStateSelect() {
-        return stateSelect;
-    }
-
-
-    public void selectCommit(String oid) {
-        tabs.select(commitTab, true);
-        var list = patchComponentFactory.findCommitList();
-        var index = -1;
-        for (var i = 0; i < list.getItemsCount(); i++) {
-            var item = list.getModel().getElementAt(i);
-            if (oid.contains(item.getId().asString())) {
-                index = i;
-                break;
-            }
-        }
-        list.setSelectedIndex(index);
     }
 }

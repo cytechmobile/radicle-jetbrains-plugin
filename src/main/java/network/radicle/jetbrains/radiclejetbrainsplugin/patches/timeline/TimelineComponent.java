@@ -131,7 +131,7 @@ public class TimelineComponent {
 
     private EditablePanelHandler getCommentField() {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), new JPanel(),
-                RadicleBundle.message("patch.comment", "Comment"), new SingleValueModel<>(""),
+                RadicleBundle.message("patch.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
                 .closeEditorAfterSubmit(false)
@@ -148,7 +148,7 @@ public class TimelineComponent {
         headerTitle.setBody(title);
 
         var panelHandle = new EditablePanelHandler.PanelBuilder(radPatch.repo.getProject(), headerTitle,
-                RadicleBundle.message("patch.proposal.change.title", "change title"), new SingleValueModel<>(radPatch.title), (field) -> {
+                RadicleBundle.message("patch.proposal.change.title"), new SingleValueModel<>(radPatch.title), (field) -> {
             var edit = new RadPatch(radPatch);
             edit.title = field.getText();
             var edited = api.changePatchTitle(edit);

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -45,6 +47,10 @@ public class GitTestUtil {
         }
     }
 
+    public static void addRadRemote(Project project, GitRepository repo) {
+        repo.getRemotes().add(new GitRemote("rad", List.of("rad://abcdef"), List.of("rad://abcdef"), List.of("rad://abcdef"), List.of("rad://abcdef")));
+    }
+
     @NotNull
     public static GitRepository registerRepo(Project project, String root) throws InterruptedException {
         ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(project);
@@ -61,6 +67,7 @@ public class GitTestUtil {
         });
         countDown.await();
         assertThat(repository).as("Couldn't find repository for root " + root).isNotNull();
+        addRadRemote(project, repository.get());
         return repository.get();
     }
 

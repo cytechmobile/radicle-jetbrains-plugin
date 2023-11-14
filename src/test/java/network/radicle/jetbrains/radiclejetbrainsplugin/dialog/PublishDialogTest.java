@@ -29,17 +29,18 @@ public class PublishDialogTest extends AbstractIT {
         assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
 
         publishDialog.getSeedNodeSelect().setSelectedIndex(0);
-        Thread.sleep(100);
+        executeUiTasks();
         publishDialog.doOKAction();
+        executeUiTasks();
 
-         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+         var cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
          assertCmd(cmd);
          assertThat(cmd.getCommandLineString()).contains("init");
 
          cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
          assertThat(cmd).isNull();
 
-         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
          assertThat(not).isNotNull();
          assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
          removeRemoteRadUrl(secondRepo);
@@ -74,15 +75,16 @@ public class PublishDialogTest extends AbstractIT {
         publishDialog.getNameField().setText(NAME);
         publishDialog.getDescriptionField().setText(DESCRIPTION);
 
-        Thread.sleep(1000);
+        executeUiTasks();
         publishDialog.doOKAction();
+        executeUiTasks();
 
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("init --name " + NAME + " --description " + DESCRIPTION +
                 " --default-branch " + BRANCHNAME + " --no-confirm");
 
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
     }

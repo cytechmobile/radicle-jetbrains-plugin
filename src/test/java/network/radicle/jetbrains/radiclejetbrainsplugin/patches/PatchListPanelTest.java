@@ -29,10 +29,10 @@ import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class PatchListPanelTest extends AbstractIT {
-    private static final String AUTHOR = "did:key:testAuthor";
-    private static final String AUTHOR1 = "did:key:testAuthor1";
-    private RadicleToolWindow radicleToolWindow;
+    public static final String AUTHOR = "did:key:testAuthor";
+    public static final String AUTHOR1 = "did:key:testAuthor1";
     private static List<RadPatch> patches;
+    private RadicleToolWindow radicleToolWindow;
 
     @Before
     public void setUpToolWindow() throws InterruptedException, IOException {
@@ -267,19 +267,19 @@ public class PatchListPanelTest extends AbstractIT {
 
     public static List<RadProject> getTestProjects() {
         return List.of(new RadProject("test-rad-project", "test project", "test project description",
-                        "main", List.of("did:key:test", "did:key:assignee2", "did:key:assignee3")),
+                        "master", List.of("did:key:test", "did:key:assignee2", "did:key:assignee3")),
                 new RadProject("test-rad-project-second", "test project 2", "test project 2 description",
-                        "main", List.of("did:key:test")));
+                        "master", List.of("did:key:test")));
     }
 
     public static List<RadPatch> getTestPatches() {
         var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
                 List.of(), List.of(), Instant.now(), List.of(), List.of());
 
-        var radPatch = new RadPatch("c5df12", "testPatch", new RadAuthor(AUTHOR), "testDesc", "testTarget",
+        var radPatch = new RadPatch("c5df12", "test-rad-project", "testPatch", new RadAuthor(AUTHOR), "testDesc", "testTarget",
                 List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
 
-        var radPatch2 = new RadPatch("c4d12", "secondProposal", new RadAuthor(AUTHOR1),
+        var radPatch2 = new RadPatch("c4d12", "test-rad-project-second", "secondProposal", new RadAuthor(AUTHOR1),
                 "My description", "testTarget", List.of("firstTag", "secondTag", "tag1"),
                 RadPatch.State.DRAFT, List.of(revision));
         patches = List.of(radPatch, radPatch2);

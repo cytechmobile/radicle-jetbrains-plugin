@@ -306,16 +306,16 @@ public class CreatePatchPanel {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             newPatchButton.setEnabled(false);
             loadingPanel.setVisible(true);
-            var gitPushRepoResult = radicleProjectService.pushChanges(mySelectedRepo, mySelectedBranch, remote);
-            if (gitPushRepoResult == null) {
+            var result = radicleProjectService.pushChanges(mySelectedRepo, mySelectedBranch, remote);
+            if (result == null) {
                 RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), "");
                 loadingPanel.setVisible(false);
                 newPatchButton.setEnabled(true);
                 return;
             }
-            var isSuccess = radicleProjectService.isSuccessPush(gitPushRepoResult);
+            var isSuccess = (boolean) result.get("success");
             if (!isSuccess) {
-                var errorMsg = gitPushRepoResult.getError();
+                var errorMsg = (String) result.get("message");
                 RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), errorMsg);
                 loadingPanel.setVisible(false);
                 newPatchButton.setEnabled(true);

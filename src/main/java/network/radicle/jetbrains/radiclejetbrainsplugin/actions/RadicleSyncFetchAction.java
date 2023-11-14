@@ -52,9 +52,11 @@ public class RadicleSyncFetchAction extends AnAction {
                 return;
             }
             updateCountDown = new CountDownLatch(radInitializedRepos.size());
-            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radFetchProgressTitle"),
-                    updateCountDown);
+            UpdateBackgroundTask ubt = new UpdateBackgroundTask(project, RadicleBundle.message("radFetchProgressTitle"), updateCountDown);
+            // run in new thread, otherwise it would be called synchronously on current thread and would block forever
+            // since we haven't issued yet the commands that will count down the latch
             new Thread(ubt::queue).start();
+
             radInitializedRepos.forEach(repo -> {
                 var fetch = new RadSync(repo, true);
                 fetch.perform(updateCountDown);

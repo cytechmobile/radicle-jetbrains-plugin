@@ -32,7 +32,7 @@ public class Utils {
 
     public static JPanel descriptionPanel(MarkDownEditorPaneFactory editorPane, Project project) {
         var panelHandle = new EditablePanelHandler.PanelBuilder(project, editorPane.htmlEditorPane(),
-                RadicleBundle.message("issue.change.title", "change title"),
+                RadicleBundle.message("issue.change.title"),
                 new SingleValueModel<>(editorPane.getRawContent()), (editedTitle) -> true).build();
         var contentPanel = panelHandle.panel;
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,

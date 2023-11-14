@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 public abstract class AbstractIT extends HeavyPlatformTestCase {
-    private static final Logger logger = Logger.getInstance(ActionsTest.class);
+    private static final Logger logger = Logger.getInstance(AbstractIT.class);
     public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
     public static final String RAD_VERSION = "0.6.1";
     public static final String RAD_PATH = "/usr/bin/rad";
@@ -116,25 +116,29 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             assertThat(params).hasSize(1);
             assertThat(params[0]).isInstanceOf(Notification.class);
             Notification n = (Notification) params[0];
-            logger.warn("captured notification: " + n);
+            logger.warn("captured project notification: " + n);
             notificationsQueue.add(n);
         });
         applicationMbc.setDefaultHandler((event1, params) -> {
             assertThat(params).hasSize(1);
             assertThat(params[0]).isInstanceOf(Notification.class);
             Notification n = (Notification) params[0];
-            logger.warn("captured notification: " + n);
+            logger.warn("captured application notification: " + n);
             notificationsQueue.add(n);
+            logger.warn("notifications queue: " + notificationsQueue);
         });
         applicationMbc.subscribe(Notifications.TOPIC);
         mbc.subscribe(Notifications.TOPIC);
-        logger.warn("created message bus connection and subscribed to notifications: {}" + mbc);
+        logger.warn("created message bus connection and subscribed to notifications: " + mbc);
     }
 
     @After
     public final void after() {
         if (mbc != null) {
             mbc.disconnect();
+        }
+        if (applicationMbc != null) {
+            applicationMbc.disconnect();
         }
         try {
             firstRepo.dispose();
@@ -195,7 +199,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     public void executeUiTasks() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 50; i++) {
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
             CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();

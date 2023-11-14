@@ -1,9 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -49,11 +49,11 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.swing.JPanel;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.time.Instant;
@@ -77,8 +77,11 @@ import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
+    private static final Logger logger = Logger.getInstance(TimelineTest.class);
     private static final String AUTHOR = "did:key:testAuthor";
-    private static String dummyComment = "Hello";
+    private static final String RAD_PROJECT_ID = "rad:123";
+
+    private String dummyComment = "Hello";
     private RadPatch patch;
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
@@ -103,15 +106,14 @@ public class TimelineTest extends AbstractIT {
         final int[] statusCode = {200};
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = i.getArgument(0);
+            logger.warn("captured request:" + req);
             StringEntity se;
             statusCode[0] = 200;
             if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains(SESSIONS_URL)) {
                 se = new StringEntity("{}");
             } else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
                 var obj = EntityUtils.toString(((HttpPatch) req).getEntity());
-                var mapper = new ObjectMapper();
-                Map<String, Object> map = mapper.readValue(obj, Map.class);
-                var action = (HashMap<String, String>) map.get("action");
+                Map<String, Object> map = RadicleProjectApi.MAPPER.readValue(obj, new TypeReference<>() { });
                 if (map.get("type").equals("edit")) {
                     //patch
                     assertThat(map.get("target")).isEqualTo("delegates");
@@ -127,8 +129,8 @@ public class TimelineTest extends AbstractIT {
                     statusCode[0] = 400;
                 }
                 se = new StringEntity("{}");
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(PROJECTS_URL + "/rad:123")) {
-                var map = Map.of("defaultBranch", "main", "id", "rad:123", "head", currentRevision);
+            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(PROJECTS_URL + "/" + RAD_PROJECT_ID)) {
+                var map = Map.of("defaultBranch", "main", "id", RAD_PROJECT_ID, "head", currentRevision);
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
                 var p = new RadPatch(patch);
@@ -156,8 +158,7 @@ public class TimelineTest extends AbstractIT {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains(PATCHES_URL)) {
                 var obj = EntityUtils.toString(((HttpPost) req).getEntity());
-                var mapper = new ObjectMapper();
-                Map<String, Object> map = mapper.readValue(obj, Map.class);
+                Map<String, Object> map = RadicleProjectApi.MAPPER.readValue(obj, new TypeReference<>() { });
                 response.add(map);
                 // We don't need to refresh the panel after the request
                 statusCode[0] = 400;
@@ -210,6 +211,7 @@ public class TimelineTest extends AbstractIT {
         // Open createEditor
         patchEditorProvider.createEditor(getProject(), editorFile);
         /* Wait to load the patches */
+        executeUiTasks();
         Thread.sleep(200);
         executeUiTasks();
     }
@@ -263,11 +265,13 @@ public class TimelineTest extends AbstractIT {
 
         //Wait to load labels
         Thread.sleep(1000);
+        executeUiTasks();
         assertThat(labelListModel.getSize()).isEqualTo(2);
 
         // Find create new patch button
         var createPatchButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
         createPatchButton.doClick();
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("target")).isEqualTo(currentRevision);
         assertThat(res.get("description")).isEqualTo(PATCH_DESC);
@@ -301,6 +305,7 @@ public class TimelineTest extends AbstractIT {
         patch.title = editedTitle;
         prBtn.doClick();
         /* Wait for the reload */
+        executeUiTasks();
         Thread.sleep(1000);
         var updatedPatchModel = patchTabController.getPatchModel();
         var updatedPatch = updatedPatchModel.getValue();
@@ -333,6 +338,7 @@ public class TimelineTest extends AbstractIT {
         patch.title = editedTitle;
         prBtn.doClick();
         /* Wait for the reload */
+        executeUiTasks();
         Thread.sleep(1000);
         executeUiTasks();
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
@@ -398,6 +404,7 @@ public class TimelineTest extends AbstractIT {
 
         popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
         //Wait to load tags
+        executeUiTasks();
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
@@ -439,6 +446,7 @@ public class TimelineTest extends AbstractIT {
         popUpListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
 
         //Wait for the emojis to load
+        executeUiTasks();
         Thread.sleep(1000);
         var listmodel = jblist.getModel();
         assertThat(listmodel.getSize()).isEqualTo(8);
@@ -516,6 +524,7 @@ public class TimelineTest extends AbstractIT {
         // Trigger beforeShown method
         popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
         //Wait to load state
+        executeUiTasks();
         Thread.sleep(1000);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
@@ -602,6 +611,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(0);
         prBtn.doClick();
+        executeUiTasks();
         Thread.sleep(1000);
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("type")).isEqualTo("revision.comment");
@@ -630,6 +640,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(0);
         prBtn.doClick();
+        executeUiTasks();
         Thread.sleep(1000);
         //Comment
         var map = response.poll(5, TimeUnit.SECONDS);
@@ -669,6 +680,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         prBtn = prBtns.get(1);
         prBtn.doClick();
+        executeUiTasks();
         Thread.sleep(1000);
         response.poll(5, TimeUnit.SECONDS);
         executeUiTasks();
@@ -713,7 +725,7 @@ public class TimelineTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
-        var myPatch = new RadPatch("c5df12", "testPatch", new RadAuthor(AUTHOR), "testDesc",
+        var myPatch = new RadPatch("c5df12", RAD_PROJECT_ID, "testPatch", new RadAuthor(AUTHOR), "testDesc",
                 "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
         myPatch.project = getProject();
         myPatch.repo = firstRepo;

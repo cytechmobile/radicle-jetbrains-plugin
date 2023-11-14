@@ -113,7 +113,7 @@ public class EditablePanelHandler {
                     MutableStateFlow(prAction),
                     MutableStateFlow(List.of()), MutableStateFlow(List.of()),
                     MutableStateFlow(!hideCancelAction ? cancelAction : null),
-                    MutableStateFlow(RadicleBundle.message("patch.proposal.submit.hint", "{0} to {1}", submitShortcutText, actionName)));
+                    MutableStateFlow(RadicleBundle.message("patch.proposal.submit.hint", submitShortcutText, actionName)));
 
             editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(dragAndDropField, actions);
             panel.remove(paneComponent);

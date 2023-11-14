@@ -119,7 +119,7 @@ public class IssueComponent {
             emojiJPanel = emojiPanel.getEmojiPanel();
             panel.addToBottom(emojiJPanel);
             var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.project, panel,
-                    RadicleBundle.message("save", "save"), new SingleValueModel<>(message), (field) -> {
+                    RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> {
                 var edited = api.editIssueComment(radIssue, field.getText(), com.id, field.getEmbedList());
                 final boolean success = edited != null;
                 if (success) {
@@ -159,7 +159,7 @@ public class IssueComponent {
 
     private EditablePanelHandler getCommentField() {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), new JPanel(),
-                RadicleBundle.message("issue.comment", "Comment"), new SingleValueModel<>(""),
+                RadicleBundle.message("issue.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
                 .closeEditorAfterSubmit(false)
@@ -193,7 +193,7 @@ public class IssueComponent {
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), headerTitle,
-                RadicleBundle.message("issue.change.title", "change title"),
+                RadicleBundle.message("issue.change.title"),
                 new SingleValueModel<>(radIssue.title), (field) -> {
             var issue = new RadIssue(radIssue);
             issue.title = field.getText();

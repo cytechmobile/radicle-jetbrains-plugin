@@ -5,12 +5,15 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import git4idea.GitLocalBranch;
 import git4idea.push.GitPushRepoResult;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsViewTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
 
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -134,6 +137,11 @@ public class RadStub extends RadicleProjectService {
     @Override
     public String getBranchRevision(Project project, GitRepository repo, String branchName) {
         return repo.getCurrentRevision();
+    }
+
+    @Override
+    public Map<String, Object> pushChanges(GitRepository gitRepository, GitLocalBranch gitLocalBranch, GitRemote gitRemote) {
+        return Map.of("success", true, "message", "");
     }
 
     public ProcessOutput fetchPeerChanges(GitRepository repository) {

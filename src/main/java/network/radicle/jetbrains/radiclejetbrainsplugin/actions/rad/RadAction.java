@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.EDT;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -172,7 +173,8 @@ public abstract class RadAction {
         var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleProjectService.class));
         latch.countDown();
         if (!success) {
-            logger.warn(this.getErrorMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+            logger.warn(this.getActionName() + ": " + this.getErrorMessage() + ": exit:{}, out:{} err:{}",
+                    output.getExitCode(), output.getStdout(), output.getStderr());
             if (shouldShowNotification()) {
                 var errorMsg = output.getStderr();
                 var outputMsg = output.getStdout();
@@ -180,24 +182,24 @@ public abstract class RadAction {
             }
             return output;
         }
-        logger.info(this.getSuccessMessage() + ": exit:{}, out:{} err:{}", output.getExitCode(), output.getStdout(), output.getStderr());
+        logger.warn(this.getActionName() + ": " + this.getSuccessMessage() + ": exit:{}, out:{} err:{}",
+                output.getExitCode(), output.getStdout(), output.getStderr());
         if (!this.getNotificationSuccessMessage().isEmpty() && shouldShowNotification()) {
-            showNotification(project, "", this.getNotificationSuccessMessage(),
-                    NotificationType.INFORMATION, this.notificationActions());
+            showNotification(project, "", this.getNotificationSuccessMessage(), NotificationType.INFORMATION, this.notificationActions());
         }
         return output;
     }
 
     public String getErrorMessage() {
-        return RadicleBundle.message("radError_" + getActionName(), "");
+        return RadicleBundle.messageOrEmpty("radError_" + getActionName());
     }
 
     public String getSuccessMessage() {
-        return RadicleBundle.message("radSuccess_" + getActionName(), "");
+        return RadicleBundle.messageOrEmpty("radSuccess_" + getActionName());
     }
 
     public String getNotificationSuccessMessage() {
-        return RadicleBundle.message("radNotification_" + getActionName(), "");
+        return RadicleBundle.messageOrEmpty("radNotification_" + getActionName());
     }
 
     public GitRepository getRepo() {
@@ -285,15 +287,19 @@ public abstract class RadAction {
     public static void showNotification(
             Project project, String title, String content, NotificationType type,
             List<NotificationAction> actions) {
-        type = type != null ? type : NotificationType.ERROR;
-        var notif = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP).createNotification(RadicleBundle.message(content), type);
-        notif.setTitle(Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title));
+        final var nfType = type != null ? type : NotificationType.ERROR;
+        if (!EDT.isCurrentThreadEdt()) {
+            ApplicationManager.getApplication().invokeLater(() -> showNotification(project, title, content, nfType, actions));
+            return;
+        }
+        var nf = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP).createNotification(RadicleBundle.message(content), nfType);
+        nf.setTitle(Strings.isNullOrEmpty(title) ? "" : RadicleBundle.message(title));
         if (actions != null && !actions.isEmpty()) {
             for (var action : actions) {
-                notif.addAction(action);
+                nf.addAction(action);
             }
         }
-        notif.notify(project);
+        nf.notify(project);
     }
 
     public static boolean isSuccess(ProcessOutput out) {

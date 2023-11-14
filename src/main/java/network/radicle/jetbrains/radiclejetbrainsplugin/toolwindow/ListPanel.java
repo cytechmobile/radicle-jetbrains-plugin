@@ -108,7 +108,9 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
 
     public void updateListPanel() {
         var countDown = new CountDownLatch(1);
-        searchVm.setCountDown(countDown);
+        if (searchVm != null) {
+            searchVm.setCountDown(countDown);
+        }
         var settings =  radicleProjectSettingsHandler.loadSettings();
         var seedNode = settings.getSeedNode();
         if (seedNode == null || Strings.isNullOrEmpty(seedNode.url)) {

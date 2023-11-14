@@ -20,8 +20,8 @@ public class RadicleBundle extends DynamicBundle {
         return INSTANCE.messageOrDefault(key, key, params);
     }
 
-    public static @Nls @NotNull String message(@NotNull @NonNls String key, String defaultMessage, @NotNull Object... params) {
-        return INSTANCE.messageOrDefault(key, defaultMessage, params);
+    public static @Nls @NotNull String messageOrEmpty(@NotNull @NonNls String key, @NotNull Object... params) {
+        return INSTANCE.messageOrDefault(key, "", params);
     }
 
     public static Supplier<String> lazyMessage(@NotNull @NonNls String key, @NotNull Object... params) {

@@ -224,14 +224,13 @@ public class OverviewTest extends AbstractIT {
         var issueStateLabel = UIUtil.findComponentOfType((JPanel) allPanels[5], JLabel.class);
         var issueCreatedLabel = UIUtil.findComponentOfType((JPanel) allPanels[6], JLabel.class);
 
-        assertThat(titleLabel.getText()).isEqualTo(RadicleBundle.message("title", "", Strings.nullToEmpty(issue.title)));
-        assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", "", Strings.nullToEmpty(issue.id)));
-        assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id)));
-        assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueLabels", "", String.join(",", issue.labels)));
-        assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees", "", String.join(",", issue.assignees)));
-        assertThat(issueStateLabel.getText()).isEqualTo(RadicleBundle.message("issueState", "", Strings.nullToEmpty(issue.state.label)));
-        assertThat(issueCreatedLabel.getText()).isEqualTo(RadicleBundle.message("issueCreated", "",
-                DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
+        assertThat(titleLabel.getText()).isEqualTo(RadicleBundle.message("title", Strings.nullToEmpty(issue.title)));
+        assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", Strings.nullToEmpty(issue.id)));
+        assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.id)));
+        assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueLabels", String.join(",", issue.labels)));
+        assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees", String.join(",", issue.assignees)));
+        assertThat(issueStateLabel.getText()).isEqualTo(RadicleBundle.message("issueState", Strings.nullToEmpty(issue.state.label)));
+        assertThat(issueCreatedLabel.getText()).isEqualTo(RadicleBundle.message("issueCreated", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
     }
 
     @Test

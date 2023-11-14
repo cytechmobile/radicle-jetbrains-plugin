@@ -90,29 +90,29 @@ public class IssuePanel {
         detailsSection.setOpaque(false);
         detailsSection.setBorder(JBUI.Borders.empty(8));
 
-        var issueTitle = getLabelPanel(RadicleBundle.message("title", "", Strings.nullToEmpty(issue.title)));
+        var issueTitle = getLabelPanel(RadicleBundle.message("title", Strings.nullToEmpty(issue.title)));
         detailsSection.add(issueTitle, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        var issueId = getLabelPanel(RadicleBundle.message("issueId", "", Strings.nullToEmpty(issue.id)));
+        var issueId = getLabelPanel(RadicleBundle.message("issueId", Strings.nullToEmpty(issue.id)));
         detailsSection.add(issueId, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", "", Strings.nullToEmpty(issue.author.id)));
+        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.id)));
         detailsSection.add(issueAuthor, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
         if (!issue.labels.isEmpty()) {
-            var issueTag = getLabelPanel(RadicleBundle.message("issueLabels", "", String.join(",", issue.labels)));
+            var issueTag = getLabelPanel(RadicleBundle.message("issueLabels", String.join(",", issue.labels)));
             detailsSection.add(issueTag, new CC().gapBottom(String.valueOf(UI.scale(4))));
         }
 
         if (!issue.assignees.isEmpty()) {
-            var issueAssignees = getLabelPanel(RadicleBundle.message("issueAssignees", "", String.join(",", issue.assignees)));
+            var issueAssignees = getLabelPanel(RadicleBundle.message("issueAssignees", String.join(",", issue.assignees)));
             detailsSection.add(issueAssignees, new CC().gapBottom(String.valueOf(UI.scale(4))));
         }
 
-        var issueState = getLabelPanel(RadicleBundle.message("issueState", "", Strings.nullToEmpty(issue.state.label)));
+        var issueState = getLabelPanel(RadicleBundle.message("issueState", Strings.nullToEmpty(issue.state.label)));
         detailsSection.add(issueState, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        var issueCreated = getLabelPanel(RadicleBundle.message("issueCreated", "", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
+        var issueCreated = getLabelPanel(RadicleBundle.message("issueCreated", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
         detailsSection.add(issueCreated, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
         var borderPanel = new JPanel(new BorderLayout());

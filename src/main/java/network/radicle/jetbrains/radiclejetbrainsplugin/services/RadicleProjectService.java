@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
 import git4idea.GitLocalBranch;
 import git4idea.GitStandardRemoteBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.fetch.GitFetchSupport;
@@ -92,7 +93,7 @@ public class RadicleProjectService {
         return gitRevisionNumber;
     }
 
-    public GitPushRepoResult pushChanges(GitRepository gitRepository, GitLocalBranch gitLocalBranch, GitRemote gitRemote) {
+    public Map<String, Object> pushChanges(GitRepository gitRepository, GitLocalBranch gitLocalBranch, GitRemote gitRemote) {
         var isNewBranch = gitLocalBranch.findTrackedBranch(gitRepository) == null;
         var pushTarget = new GitPushTarget(new GitStandardRemoteBranch(gitRemote, gitLocalBranch.getName()), isNewBranch);
         var pushSource = GitPushSource.create(gitLocalBranch);
@@ -104,7 +105,10 @@ public class RadicleProjectService {
         var pushOperation = new GitPushOperation(gitRepository.getProject(), (GitPushSupport) gitPushSupport,
                 Map.of(gitRepository, pushSpec), null, false, false);
         var results = pushOperation.execute().getResults();
-        return results.get(gitRepository);
+        GitUtil.refreshVfsInRoots(List.of(gitRepository.getRoot()));
+        var gitPushRepoResult = results.get(gitRepository);
+        var isSuccess = isSuccessPush(gitPushRepoResult);
+        return Map.of("success", isSuccess, "message", Strings.nullToEmpty(gitPushRepoResult.getError()));
     }
 
     public boolean isSuccessPush(GitPushRepoResult gitPushRepoResult) {

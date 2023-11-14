@@ -314,15 +314,15 @@ public class RadicleProjectApi {
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(patchReq, RadicleBundle.message("createPatchError"));
             if (!resp.isSuccess()) {
-                logger.warn("error creating new patch, title : {}, description : {}, base_oid : {}, " + " " +
-                        "patch_oid : {} " + "repo : {}, projectId : {}", title, description, baseOid, patchOid, repo, projectId);
+                logger.warn("error creating new patch title:{} description:{} base_oid:{} patch_oid:{} repo:{} projectId:{}",
+                        title, description, baseOid, patchOid, repo, projectId);
                 return null;
             }
             var map = (Map<String, String>) MAPPER.readValue(resp.body, new TypeReference<>() { });
             return map.get("id");
         } catch (Exception e) {
-            logger.warn("error creating new patch, title : {}, description : {}, base_oid : {}, " + " " +
-                    "patch_oid : {} " + "repo : {}, projectId : {}", title, description, baseOid, patchOid, repo, projectId);
+            logger.warn("exception creating new patch title:{} description:{} base_oid:{} patch_oid:{} repo:{} projectId:{}",
+                    title, description, baseOid, patchOid, repo, projectId, e);
         }
         return null;
     }
@@ -409,12 +409,12 @@ public class RadicleProjectApi {
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(patchReq, RadicleBundle.message("reactionError"));
             if (!resp.isSuccess()) {
-                logger.warn("error reacting to revision : {} , comment : {} , resp:{}", revId, commendId, resp);
+                logger.warn("error reacting to revision:{} comment:{} resp:{}", revId, commendId, resp);
                 return null;
             }
             return patch;
         } catch (Exception e) {
-            logger.warn("error reacting to revision : {} , comment : {}", revId, commendId, e);
+            logger.warn("error reacting to revision:{} comment:{}", revId, commendId, e);
         }
 
         return null;
@@ -433,7 +433,7 @@ public class RadicleProjectApi {
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("reactionError"));
             if (!resp.isSuccess()) {
-                logger.warn("error reacting to discussion : {} , resp:{}", discussionId, resp);
+                logger.warn("error reacting to discussion:{} resp:{}", discussionId, resp);
                 return null;
             }
             return issue;
@@ -477,12 +477,12 @@ public class RadicleProjectApi {
             req.setHeader("Authorization", "Bearer " + session.sessionId);
             var resp = makeRequest(req, RadicleBundle.message("fetchProjectError"));
             if (!resp.isSuccess()) {
-                logger.warn("Unable to get project information, projectId {}, repo {}, resp {}", projectId, repo, resp);
+                logger.warn("Unable to get project information, projectId:{} repo:{} resp:{}", projectId, repo, resp);
                 return null;
             }
             return MAPPER.readValue(resp.body, new TypeReference<>() { });
         } catch (Exception e) {
-            logger.warn("Unable to get project information, projectId {}, repo {}", projectId, repo, e);
+            logger.warn("Unable to get project information projectId:{} repo:{}", projectId, repo, e);
         }
         return null;
     }
