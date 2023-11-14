@@ -37,6 +37,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
         super(ctrl, project);
         this.controller = ctrl;
         this.patchListSearchValue = getEmptySearchValueModel();
+        this.patchListSearchValue.state = RadPatch.State.OPEN.label;
     }
 
     @Override
