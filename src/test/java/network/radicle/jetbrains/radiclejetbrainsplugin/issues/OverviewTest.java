@@ -119,7 +119,7 @@ public class OverviewTest extends AbstractIT {
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(issue.title);
                 } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label") ||
-                        map.get("type").equals("comment.react") || map.get("type").equals("comment")) {
+                        map.get("type").equals("comment.react") || map.get("type").equals("comment") || map.get("type").equals("comment.edit")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -711,7 +711,6 @@ public class OverviewTest extends AbstractIT {
         assertThat(map.get("replyTo")).isEqualTo(issue.id);
         issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of()));
 
-
         // Open createEditor
         issue.repo = firstRepo;
         issue.project = getProject();
@@ -745,6 +744,25 @@ public class OverviewTest extends AbstractIT {
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
+
+        // Test edit issue functionality
+        response.clear();
+        commentPanel = issueComponent.getCommentSection();
+        var editBtn = UIUtil.findComponentOfType(commentPanel, InlineIconButton.class);
+        editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
+        ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
+        markAsShowing(ef.getParent(), ef);
+        executeUiTasks();
+        var editedComment = "Edited comment to " + UUID.randomUUID();
+        ef.setText(editedComment);
+        prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        prBtn = prBtns.get(1);
+        prBtn.doClick();
+        var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(res.get("id")).isEqualTo(issue.id);
+        assertThat(res.get("type")).isEqualTo("comment.edit");
+        assertThat(res.get("body")).isEqualTo(editedComment);
     }
 
     @Test

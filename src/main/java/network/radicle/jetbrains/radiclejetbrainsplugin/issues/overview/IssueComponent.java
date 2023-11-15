@@ -111,16 +111,29 @@ public class IssueComponent {
                         " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
                         "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
             }
-            var horizontalPanel = getHorizontalPanel(8);
-            horizontalPanel.setOpaque(false);
-            var contentPanel = new BorderLayoutPanel();
-            contentPanel.setOpaque(false);
+            var panel = new BorderLayoutPanel();
+            panel.setOpaque(false);
             var editorPane = new MarkDownEditorPaneFactory(message, radIssue.project, radIssue.projectId, file);
-            contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
+            panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
             emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
             emojiJPanel = emojiPanel.getEmojiPanel();
-            contentPanel.addToBottom(emojiJPanel);
-            mainPanel.add(createTimeLineItem(contentPanel, horizontalPanel, com.author.generateLabelText(), com.timestamp));
+            panel.addToBottom(emojiJPanel);
+            var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.project, panel,
+                    RadicleBundle.message("save", "save"), new SingleValueModel<>(message), (field) -> {
+                var edited = api.editIssueComment(radIssue, field.getText(), com.id, field.getEmbedList());
+                final boolean success = edited != null;
+                if (success) {
+                    issueModel.setValue(radIssue);
+                }
+                return success;
+            }).build();
+            var contentPanel = panelHandle.panel;
+            var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
+            actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+                panelHandle.showAndFocusEditor();
+                return null;
+            }));
+            mainPanel.add(createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp));
         }
         return mainPanel;
     }

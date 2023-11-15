@@ -88,6 +88,29 @@ public class RadicleProjectApi {
         }
     }
 
+    public RadIssue editIssueComment(RadIssue issue, String comment, String id, List<Embed> embedList) {
+        var session = createAuthenticatedSession(issue.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
+            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchIssueData = Map.of("type", "comment.edit", "id", id, "body", comment, "replyTo", issue.id, "embeds", embedList);
+            var json = MAPPER.writeValueAsString(patchIssueData);
+            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(issueReq, RadicleBundle.message("commentEditError"), RadicleBundle.message("commentDescError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error editing comment: {} to issue:{} resp:{}", comment, issue, resp);
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error editing issue comment: {}", issue, e);
+        }
+        return null;
+    }
+
     public List<RadIssue> fetchIssues(String projectId, GitRepository repo) {
         var node = getSeedNode();
         var allIssues = new ArrayList<RadIssue>();
@@ -218,7 +241,7 @@ public class RadicleProjectApi {
             var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("createIssueError"));
+            var resp = makeRequest(issueReq, RadicleBundle.message("createIssueError"), RadicleBundle.message("commentDescError"));
             if (!resp.isSuccess()) {
                 logger.warn("error creating new issue, title : {}, assignees : {}, labels : {}, " +
                         "repo : {}, projectId : {}", title, assignees, labels, repo, projectId);
@@ -522,7 +545,7 @@ public class RadicleProjectApi {
             var patchEditData = Map.of("type", "revision.comment.edit", "revision", revisionId, "comment", commentId, "body", body, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchEditData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(patchReq, RadicleBundle.message("issueCommentError"));
+            var resp = makeRequest(patchReq, RadicleBundle.message("commentEditError"), RadicleBundle.message("commentDescError"));
             if (!resp.isSuccess()) {
                 logger.warn("received invalid response with status:{} and body:{} while editing patch: {}",
                         resp.status, resp.body, patch);
@@ -574,7 +597,7 @@ public class RadicleProjectApi {
                     "body", comment, "embeds", embedList);
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(commentReq, RadicleBundle.message("commentError"));
+            var resp = makeRequest(commentReq, RadicleBundle.message("commentError"), RadicleBundle.message("commentDescError"));
             if (!resp.isSuccess()) {
                 logger.warn("error adding comment: {} to patch:{} resp:{}", comment, patch, resp);
                 return null;
