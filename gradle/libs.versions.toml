@@ -1,6 +1,6 @@
 [versions]
 # libraries
-annotations = "24.0.1"
+annotations = "24.1.0"
 jacksonJsr310 = "2.15.2"
 
 # test libraries
