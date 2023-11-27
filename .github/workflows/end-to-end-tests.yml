@@ -15,27 +15,28 @@ jobs:
 
       - name: Create New Radicle Identity
         run: |
-          echo "test" | RAD_HOME=$(pwd)/test_rad_home /home/runner/.radicle/bin/rad auth --alias test_user --stdin
+          echo "test" | RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad auth --alias test_user --stdin
 
       - name: Start Radicle Node and http API
         run: |
-          RAD_HOME=$(pwd)/test_rad_home RAD_PASSPHRASE=test /home/runner/.radicle/bin/rad node start &
-          RAD_HOME=$(pwd)/test_rad_home RAD_PASSPHRASE=test /home/runner/.radicle/bin/radicle-httpd --listen 0.0.0.0:8888 &
+          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/rad node start &
+          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/radicle-httpd --listen 0.0.0.0:8888 &
           echo "allowing node to start up..."
           sleep 5
-          RAD_HOME=$(pwd)/test_rad_home /home/runner/.radicle/bin/rad node status
+          RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad node status
 
       - name: Create a new Radicle Repository
         run: |
           mkdir a_blog
           cd a_blog
-          git init .
+          git config --global init.defaultBranch main
           git config --local user.email "test@radicle.xyz"
           git config --local user.name "Radicle Test"
+          git init .
           echo "# A Blog" > README.md
           git add README.md
           git commit -m 'adds readme'
-          RAD_HOME=$(pwd)/../tmp /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo"
+          RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo"
           pwd
           cd ..
 
