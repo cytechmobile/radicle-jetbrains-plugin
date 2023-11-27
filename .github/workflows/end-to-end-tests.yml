@@ -12,6 +12,7 @@ jobs:
       - name: Install Radicle
         run: |
           sh <(curl -sSf https://radicle.xyz/install)
+          export PATH=/home/runner/.radicle/bin:${PATH}
 
       - name: Create New Radicle Identity
         run: |
