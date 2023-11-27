@@ -19,31 +19,7 @@ jobs:
 
       - name: Start Radicle Node and http API
         run: |
-          # create node config file
-          cat <<EOF > ${{ github.workspace }}/.radicle/config.json
-          {
-            "node": {
-              "alias": "",
-              "connect": ["z6Mkg5ZTteJyyfVxJ3v6vkAAiFcxK7YX1Y7SeoWJK4Q8qCHw@radicle.yorgos.net.gr:7777"],
-              "externalAddresses": [],
-              "network": "main",
-              "relay": true,
-              "peers": {
-                "type": "dynamic",
-                "target": 8
-              },
-              "limits": {
-                "routingMaxSize": 1000,
-                "routingMaxAge": 604800,
-                "gossipMaxAge": 1209600,
-                "fetchConcurrency": 1
-              },
-              "policy": "block",
-              "scope": "trusted"
-            }
-          }
-          EOF
-
+          export PATH=/home/runner/.radicle/bin:${PATH}
           RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/rad node start &
           RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/radicle-httpd --listen 0.0.0.0:8888 &
           echo "allowing node to start up..."
