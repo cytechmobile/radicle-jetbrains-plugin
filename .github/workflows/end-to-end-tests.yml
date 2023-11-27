@@ -30,9 +30,9 @@ jobs:
           mkdir a_blog
           cd a_blog
           git config --global init.defaultBranch main
+          git init .
           git config --local user.email "test@radicle.xyz"
           git config --local user.name "Radicle Test"
-          git init .
           echo "# A Blog" > README.md
           git add README.md
           git commit -m 'adds readme'
