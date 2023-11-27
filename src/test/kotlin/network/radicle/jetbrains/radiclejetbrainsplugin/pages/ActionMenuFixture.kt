@@ -9,8 +9,14 @@ import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.remoterobot.utils.waitFor
 
-fun RemoteRobot.actionMenu(text: String): ActionMenuFixture {
-    val xpath = byXpath("text '$text'", "//div[@class='ActionMenu' and @text='$text']")
+fun RemoteRobot.actionMenu(menuText: String, parentMenuText: String): ActionMenuFixture {
+    val path =
+        if (parentMenuText.isNotEmpty())
+            "//div[@class='ActionMenu' and @text='$parentMenuText']//div[@text='$menuText']"
+        else
+            "//div[@class='ActionMenu' and @text='$menuText']"
+
+    val xpath = byXpath("text '$menuText'", path)
     waitFor {
         findAll<ActionMenuFixture>(xpath).isNotEmpty()
     }

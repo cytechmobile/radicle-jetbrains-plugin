@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot;
+package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.endToEnd;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
@@ -22,21 +22,17 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Comparator;
 
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
-import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static java.time.Duration.ofMinutes;
-import static java.time.Duration.ofSeconds;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
 
 @ExtendWith(RemoteRobotExtension.class)
 @Tag("UI")
-public class RadicleMenusJavaTest {
-    private static final Logger logger = LoggerFactory.getLogger(RadicleMenusJavaTest.class);
+public class RadicleEndToEndTest {
+    private static final Logger logger = LoggerFactory.getLogger(RadicleEndToEndTest.class);
     Path tmpDir;
 
     @BeforeAll
@@ -63,8 +59,8 @@ public class RadicleMenusJavaTest {
             // close any possibly open menu
             keyboard.hotKey(VK_ESCAPE);
 
-            CommonSteps steps = new CommonSteps(remoteRobot);
-            steps.closeProject();
+            var commonSteps = new CommonSteps(remoteRobot);
+            commonSteps.closeProject();
 
             logger.warn("deleting tmp dir: {}", tmpDir.toFile());
             try {
@@ -78,37 +74,44 @@ public class RadicleMenusJavaTest {
 
     @Test
     @Tag("video")
-    void initialiseRadicleProject(final RemoteRobot remoteRobot) {
+    void radicleIssueIsShowing(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
-        sharedSteps.importProjectFromVCS(tmpDir);
-//        sharedSteps.closeTipOfTheDay();
+        sharedSteps.closeTipOfTheDay();
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
-        waitFor(ofMinutes(5), () -> !idea.isDumbMode());
-        step("Ensure Radicle sub-menu category is visible", () -> {
+        // TODO: setup plugin
+        openRadicleToolWindow(remoteRobot, keyboard);
+        switchToRadicleIssues();
+        createRadicleIssue();
+        openFirstRadicleIssue();
+
+    }
+
+    private void openFirstRadicleIssue() {
+        // TODO: click on first issue
+        // TODO: verify editor tab opens and it shows the issue title
+
+    }
+
+    private void createRadicleIssue() {
+        // TODO: create an issue
+
+    }
+
+    private void switchToRadicleIssues() {
+        // TODO: click on issues
+
+    }
+
+    private void openRadicleToolWindow(RemoteRobot remoteRobot, Keyboard keyboard) {
+        // TODO:
+        step("Open Radicle Tool Window", () -> {
             keyboard.hotKey(VK_ESCAPE);
-            actionMenu(remoteRobot, "Git", "").click();
-            actionMenu(remoteRobot, "Radicle", "Git").isShowing();
+            final var radicleToolWindow = byXpath("//div[contains(@text.key, 'radicle')]");
+            remoteRobot.find(ComponentFixture.class, radicleToolWindow, Duration.ofSeconds(20)).click();
+
         });
 
-        step("Ensure Radicle sub-menu items (fetch, pull) show", () -> {
-            keyboard.hotKey(VK_ESCAPE);
-            actionMenu(remoteRobot, "Git", "").click();
-            actionMenu(remoteRobot, "Radicle", "Git").click();
-            actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
-            actionMenuItem(remoteRobot, "Sync").isShowing();
-            actionMenuItem(remoteRobot, "Clone").isShowing();
-            actionMenuItem(remoteRobot, "Track").isShowing();
-            actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
-        });
-
-        step("Ensure Radicle toolbar actions show", () -> {
-            keyboard.hotKey(VK_ESCAPE);
-            isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
-            isXPathComponentVisible(idea, "//div[@myicon='rad_fetch.svg']");
-            isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");
-        });
     }
 
     private void isXPathComponentVisible(IdeaFrame idea, String xpath) {
