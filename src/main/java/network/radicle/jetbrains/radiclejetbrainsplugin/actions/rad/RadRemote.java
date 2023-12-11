@@ -12,15 +12,16 @@ public class RadRemote extends RadAction {
         super(repo);
     }
 
-    @Override
-    public String getActionName() {
-        return "Remotee";
-    }
 
     @Override
     public ProcessOutput run() {
         var rad = repo.getProject().getService(RadicleProjectService.class);
         return rad.remoteList(repo);
+    }
+
+    @Override
+    public String getActionName() {
+        return "";
     }
 
     public List<Peer> findTrackedPeers() {
