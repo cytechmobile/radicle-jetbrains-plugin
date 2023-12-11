@@ -13,11 +13,7 @@ public class RadRemote extends RadAction {
     }
 
 
-    @Override
-    public ProcessOutput run() {
-        var rad = repo.getProject().getService(RadicleProjectService.class);
-        return rad.remoteList(repo);
-    }
+
 
     @Override
     public String getActionName() {
@@ -50,6 +46,12 @@ public class RadRemote extends RadAction {
             peers.add(new Peer(name.trim(), id.trim()));
         }
         return peers;
+    }
+
+    @Override
+    public ProcessOutput run() {
+        var rad = repo.getProject().getService(RadicleProjectService.class);
+        return rad.remoteList(repo);
     }
 
     public record Peer(String name, String id) { }
