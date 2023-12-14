@@ -27,6 +27,7 @@ jobs:
           RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad node status
 
       - name: Create a new Radicle Repository
+        id: radicle-init
         run: |
           mkdir a_blog
           cd a_blog
@@ -40,6 +41,7 @@ jobs:
           RAD_PASSPHRASE=test RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo" --no-confirm --verbose
           pwd
           cd ..
+          echo "RADICLE_REPO=${{ github.workspace }}/a_blog" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
       - name: Setup Java
@@ -56,12 +58,15 @@ jobs:
       - name: Clean
         run: gradle :clean
       - name: Run Idea
+        env:
+          RADICLE_REPO: ${{ steps.radicle-init.outputs.RADICLE_REPO }}
         run: |
           export DISPLAY=:99.0
           Xvfb -ac :99 -screen 0 1920x1080x24 &
           sleep 10
           mkdir -p build/reports
-          gradle :runIdeForUiTests > build/reports/idea.log &
+          echo "Opening ${RADICLE_REPO} in IDE...
+          gradle :runIdeForUiTests -Dargs=${RADICLE_REPO} > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v3
         with:
