@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot;
+package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.endToEnd;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
