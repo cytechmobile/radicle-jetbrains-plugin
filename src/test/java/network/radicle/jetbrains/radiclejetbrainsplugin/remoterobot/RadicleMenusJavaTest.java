@@ -88,14 +88,14 @@ public class RadicleMenusJavaTest {
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
         step("Ensure Radicle sub-menu category is visible", () -> {
             keyboard.hotKey(VK_ESCAPE);
-            actionMenu(remoteRobot, "Git").click();
-            actionMenu(remoteRobot, "Radicle").isShowing();
+            actionMenu(remoteRobot, "Git", "").click();
+            actionMenu(remoteRobot, "Radicle", "Git").isShowing();
         });
 
         step("Ensure Radicle sub-menu items (fetch, pull) show", () -> {
             keyboard.hotKey(VK_ESCAPE);
-            actionMenu(remoteRobot, "Git").click();
-            actionMenu(remoteRobot, "Radicle").click();
+            actionMenu(remoteRobot, "Git", "").click();
+            actionMenu(remoteRobot, "Radicle", "Git").click();
             actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
             actionMenuItem(remoteRobot, "Sync").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();

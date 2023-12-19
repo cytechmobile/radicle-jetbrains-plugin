@@ -3,12 +3,18 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.endToEnd;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.search.locators.Locator;
+import com.intellij.remoterobot.steps.CommonSteps;
 import com.intellij.remoterobot.utils.Keyboard;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.steps.ReusableSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +27,7 @@ import java.util.Comparator;
 
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
-import static java.awt.event.KeyEvent.*;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
 
 @ExtendWith(RemoteRobotExtension.class)
 @Tag("UI")
@@ -55,14 +59,8 @@ public class RadicleEndToEndTest {
             // close any possibly open menu
             keyboard.hotKey(VK_ESCAPE);
 
-            if (remoteRobot.isMac()) {
-                keyboard.hotKey(VK_SHIFT, VK_META, VK_A);
-                keyboard.enterText("Close Project");
-                keyboard.enter();
-            } else {
-                actionMenu(remoteRobot, "File").click();
-                actionMenuItem(remoteRobot, "Close Project").click();
-            }
+            var commonSteps = new CommonSteps(remoteRobot);
+            commonSteps.closeProject();
 
             logger.warn("deleting tmp dir: {}", tmpDir.toFile());
             try {
