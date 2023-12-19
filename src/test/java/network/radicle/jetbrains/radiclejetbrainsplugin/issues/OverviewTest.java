@@ -154,6 +154,8 @@ public class OverviewTest extends AbstractIT {
                     }
                     discussion.remove("reactions");
                     discussion.put("reactions", allReactions);
+                    discussion.remove("timestamp");
+                    discussion.put("timestamp", Instant.now().getEpochSecond());
                 }
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
@@ -708,7 +710,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(map.get("type")).isEqualTo("comment");
         assertThat(map.get("body")).isEqualTo(dummyComment);
         assertThat(map.get("replyTo")).isEqualTo(issue.id);
-        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of()));
+        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of(), null));
 
         // Open createEditor
         issue.repo = firstRepo;
@@ -819,7 +821,7 @@ public class OverviewTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList);
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList, null);
     }
 }
 

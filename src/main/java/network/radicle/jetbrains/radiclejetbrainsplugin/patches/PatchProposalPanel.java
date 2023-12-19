@@ -57,6 +57,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.formatPatchId;
+
 public class PatchProposalPanel {
     private static final Logger logger = Logger.getInstance(PatchProposalPanel.class);
 
@@ -80,7 +82,7 @@ public class PatchProposalPanel {
         this.patchModel = patch;
         this.labelSelect = new LabelSelect();
         this.stateSelect = new StateSelect();
-        this.patchComponentFactory = new PatchComponentFactory(patch.getValue().project, this.controller.getDisposer());
+        this.patchComponentFactory = new PatchComponentFactory(patch.getValue().project, this.controller.getDisposer(), patch.getValue());
         this.messageBusConnection = this.patch.project.getMessageBus().connect();
         this.listenForRepoChanges();
     }
@@ -218,10 +220,6 @@ public class PatchProposalPanel {
         }
         nonOpaquePanel.add(checkoutBtn, new CC().gapBottom(String.valueOf(UI.scale(8))));
         return nonOpaquePanel;
-    }
-
-    private String formatPatchId(String patchId) {
-        return patchId.substring(0, 6);
     }
 
     public void refreshVcs() {

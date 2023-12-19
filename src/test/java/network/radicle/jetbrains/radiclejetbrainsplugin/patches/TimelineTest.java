@@ -1,13 +1,32 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.intellij.collaboration.ui.JPanelWithBackground;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel;
+import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
+import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
@@ -27,9 +46,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.PatchDiffEditorGutterIconFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PatchDiffWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import org.apache.http.StatusLine;
@@ -42,6 +63,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,8 +75,8 @@ import org.junit.runners.JUnit4;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JLabel;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.time.Instant;
@@ -78,8 +101,10 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
     private static final Logger logger = Logger.getInstance(TimelineTest.class);
+    private FileEditor myEditor;
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String RAD_PROJECT_ID = "rad:123";
+    private static final String DISCUSSION_ID = UUID.randomUUID().toString();
 
     private String dummyComment = "Hello";
     private RadPatch patch;
@@ -121,7 +146,8 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
                 } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react") ||
-                        map.get("type").equals("revision.comment.edit") || map.get("type").equals("revision.comment")) {
+                        map.get("type").equals("revision.comment.edit") || map.get("type").equals("revision.comment") ||
+                        map.get("type").equals("revision.comment.redact")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -153,6 +179,12 @@ public class TimelineTest extends AbstractIT {
                         }
                         discussion.remove("reactions");
                         discussion.put("reactions", allReactions);
+                        discussion.remove("timestamp");
+                        discussion.put("timestamp", Instant.now().getEpochSecond());
+                        if (discussion.get("id").equals(DISCUSSION_ID)) {
+                            discussion.remove("location");
+                            discussion.put("location", patch.revisions.get(1).discussions().get(1).location.getMapObject());
+                        }
                     }
                 }
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
@@ -209,11 +241,152 @@ public class TimelineTest extends AbstractIT {
         assertThat(providers.length).isEqualTo(1);
         patchEditorProvider = (PatchEditorProvider) providers[0];
         // Open createEditor
-        patchEditorProvider.createEditor(getProject(), editorFile);
+        myEditor = patchEditorProvider.createEditor(getProject(), editorFile);
+
         /* Wait to load the patches */
         executeUiTasks();
         Thread.sleep(200);
         executeUiTasks();
+    }
+
+    @Test
+    public void testReviewCommentsExists() {
+        var authorId = "did:key:fakeDid";
+        var comment = "This is a comment";
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var fileName = firstChange.getVirtualFile().getName();
+        var location = new RadDiscussion.Location(fileName, "range", 0, 0);
+        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        var patchDiffWindow = initializeDiffWindow();
+        var editor = patchDiffWindow.getEditor();
+        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
+        var panel = (JPanel) contentComponent.getComponents()[0];
+        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
+        var timelineThreadPanel = UIUtil.findComponentOfType(roundedPanel, TimelineThreadCommentsPanel.class);
+        var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
+        var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
+        var authorLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[0], JLabel.class);
+        var commentLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[1], JEditorPane.class);
+        assertThat(authorLabel.getText()).contains(authorId);
+        assertThat(commentLabel.getText()).contains(comment);
+        EditorFactory.getInstance().releaseEditor(editor);
+    }
+
+    @Test
+    public void testDeleteReviewsComments() throws InterruptedException {
+        var authorId = "did:key:fakeDid";
+        var comment = "This is a comment";
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var fileName = firstChange.getVirtualFile().getName();
+        var location = new RadDiscussion.Location(fileName, "range", 0, 0);
+        var discussion = createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location);
+        patch.revisions.get(1).discussions().add(discussion);
+        var patchDiffWindow = initializeDiffWindow();
+        var editor = patchDiffWindow.getEditor();
+        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
+        var panel = (JPanel) contentComponent.getComponents()[0];
+        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
+
+        var timelineThreadPanel = UIUtil.findComponentOfType(roundedPanel, TimelineThreadCommentsPanel.class);
+        var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
+        var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
+        var myPanel = (JPanel) scrollablePanel.getComponents()[0];
+        var actionPanel = (JPanel) myPanel.getComponents()[1];
+        var deleteIcon = (InlineIconButton) actionPanel.getComponents()[1];
+
+        deleteIcon.setActionListener(e -> patchDiffWindow.getPatchReviewThreadsController()
+                .getPatchDiffEditorComponentsFactory().getPatchReviewThreadComponentFactory().deleteComment(discussion));
+        deleteIcon.getActionListener().actionPerformed(new ActionEvent(deleteIcon, 0, ""));
+        executeUiTasks();
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("comment")).isEqualTo(discussion.id);
+        assertThat(map.get("type")).isEqualTo("revision.comment.redact");
+        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        EditorFactory.getInstance().releaseEditor(editor);
+    }
+
+    @Test
+    public void testEditReviewComments() throws InterruptedException {
+        var authorId = "did:key:fakeDid";
+        var comment = "This is a comment";
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var fileName = firstChange.getVirtualFile().getName();
+        var location = new RadDiscussion.Location(fileName, "range", 0, 0);
+        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        var patchDiffWindow = initializeDiffWindow();
+        var editor = patchDiffWindow.getEditor();
+        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
+        var panel = (JPanel) contentComponent.getComponents()[0];
+        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
+
+        var editBtn = UIUtil.findComponentOfType(roundedPanel, InlineIconButton.class);
+        //send event that we clicked edit
+        editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
+        var ef = UIUtil.findComponentOfType(roundedPanel, DragAndDropField.class);
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
+        executeUiTasks();
+
+        var editedComment = "Edited comment to " + UUID.randomUUID();
+        ef.setText(editedComment);
+        var prBtns = UIUtil.findComponentsOfType(roundedPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(1);
+        /* click the button to edit the patch */
+
+        prBtn.doClick();
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("revision.comment.edit");
+        assertThat(map.get("body")).isEqualTo(editedComment);
+        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        EditorFactory.getInstance().releaseEditor(editor);
+    }
+
+    @Test
+    public void testAddReviewComments() throws InterruptedException {
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var fileName = firstChange.getVirtualFile().getName();
+        var patchDiffWindow = initializeDiffWindow();
+        var gutterIconFactory = patchDiffWindow.getPatchDiffEditorGutterIconFactory();
+        var commentRenderer = (PatchDiffEditorGutterIconFactory.CommentIconRenderer) gutterIconFactory.createCommentRenderer(0);
+
+        commentRenderer.createComment().actionPerformed(new AnActionEvent(null, new DataContext() {
+            @Override
+            public @Nullable Object getData(@NotNull String dataId) {
+                return null;
+            }
+        }, "", new Presentation(""), ActionManager.getInstance(), 0));
+        var editor = patchDiffWindow.getEditor();
+        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
+        var panel = (JPanel) contentComponent.getComponents()[0];
+        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
+        var ef = UIUtil.findComponentOfType(roundedPanel, DragAndDropField.class);
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
+        executeUiTasks();
+        ef.setText(dummyComment);
+        var prBtns = UIUtil.findComponentsOfType(roundedPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(0);
+        prBtn.doClick();
+        //Comment
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        assertThat(map.get("body")).isEqualTo(dummyComment);
+        assertThat(map.get("type")).isEqualTo("revision.comment");
+        assertThat(map.get("location")).isNotNull();
+        var locationObj = (HashMap<String, Object>) map.get("location");
+        assertThat((String) locationObj.get("path")).isEqualTo(fileName);
+        var newObj = (HashMap<String, Object>) locationObj.get("new");
+        assertThat((String) newObj.get("type")).isEqualTo("lines");
+        var range = (HashMap<String, Integer>) newObj.get("range");
+        assertThat(range.get("start")).isEqualTo(0);
+        assertThat(range.get("end")).isEqualTo(0);
+        EditorFactory.getInstance().releaseEditor(editor);
     }
 
     @Test
@@ -646,7 +819,7 @@ public class TimelineTest extends AbstractIT {
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
         assertThat(map.get("body")).isEqualTo(dummyComment);
-        var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of());
+        var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of(), null);
         patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
 
         // Open createEditor
@@ -741,6 +914,46 @@ public class TimelineTest extends AbstractIT {
         }
     }
 
+    private PatchDiffWindow initializeDiffWindow() {
+        var patchDiffWindow = new PatchDiffWindow();
+        var diffContext = new DiffContext() {
+            @Override
+            public boolean isFocusedInWindow() {
+                return true;
+            }
+
+            @Override
+            public void requestFocusInWindow() {
+
+            }
+
+            @Override
+            public @Nullable Project getProject() {
+                return null;
+            }
+
+            @Override
+            public boolean isWindowFocused() {
+                return true;
+            }
+        };
+        diffContext.putUserData(PatchComponentFactory.PATCH_DIFF, patch);
+        var beforeDiffContent = DiffContentFactory.getInstance().create("My Change");
+        var afterDiffContent = DiffContentFactory.getInstance().create("My Change 1");
+        var req = new SimpleDiffRequest("Diff", beforeDiffContent, afterDiffContent, "", "");
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        req.putUserData(ChangeDiffRequestProducer.CHANGE_KEY, firstChange);
+        var viewer =  mock(TwosideTextDiffViewer.class);
+        Document editorDocument = EditorFactory.getInstance().createDocument("");
+        var editorFactory = new EditorFactoryImpl();
+        var editor = (EditorEx) editorFactory.createEditor(editorDocument);
+        when(viewer.getEditor(Side.RIGHT)).thenReturn(editor);
+        patchDiffWindow.onViewerCreated(viewer, diffContext, req);
+        executeUiTasks();
+        return patchDiffWindow;
+    }
+
     private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion) {
         var firstChange = commit.getChanges().stream().findFirst().orElseThrow();
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
@@ -751,6 +964,10 @@ public class TimelineTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList);
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList, null);
+    }
+
+    private RadDiscussion createDiscussionWithLocation(String id, String authorId, String body, List<Embed> embedList, RadDiscussion.Location location) {
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList, location);
     }
 }

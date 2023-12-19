@@ -18,6 +18,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadWeb;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
@@ -40,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -396,6 +398,29 @@ public class RadicleProjectApi {
         return null;
     }
 
+    public RadPatch deleteRevisionComment(RadPatch patch, String revId, String commentId) {
+        var session = createAuthenticatedSession(patch.repo);
+        if (session == null) {
+            return null;
+        }
+        try {
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            HashMap<String, Object> patchData = new HashMap<>(Map.of("type", "revision.comment.redact", "revision", revId, "comment", commentId));
+            var json = MAPPER.writeValueAsString(patchData);
+            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(patchReq, RadicleBundle.message("revisionDeleteError"));
+            if (!resp.isSuccess()) {
+                logger.warn("error deleting revision comment {} , resp:{}", revId, resp);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error deleting revision comment {}", revId);
+        }
+        return null;
+    }
+
     public RadPatch patchCommentReact(RadPatch patch, String commendId, String revId, String reaction, boolean active) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
@@ -585,7 +610,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch addPatchComment(RadPatch patch, String comment, List<Embed> embedList) {
+    public RadPatch addPatchComment(RadPatch patch, String comment, RadDiscussion.Location location, List<Embed> embedList) {
         var session = createAuthenticatedSession(patch.repo);
         if (session == null) {
             return null;
@@ -593,8 +618,14 @@ public class RadicleProjectApi {
         try {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
-                    "body", comment, "embeds", embedList);
+            Map<String, Object> data;
+            if (location == null) {
+                 data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                        "body", comment, "embeds", embedList);
+            } else {
+                 data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                        "body", comment, "embeds", embedList, "location", location.getMapObject());
+            }
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(commentReq, RadicleBundle.message("commentError"), RadicleBundle.message("commentDescError"));

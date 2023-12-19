@@ -24,6 +24,7 @@
                 nonDefaultProject="true"
                 displayName="Radicle"/>
 
+        <diff.DiffExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PatchDiffWindow"/>
         <fileIconProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider$PatchVirtualFileIconProvider"/>
         <fileEditorProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider"/>
         <fileEditorProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider"/>

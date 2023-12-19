@@ -30,6 +30,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
     private final RadicleProjectSettingsHandler projectSettingsHandler;
+    private RadDetails radDetails;
 
     public RadicleProjectService(Project project) {
         this(new RadicleProjectSettingsHandler(project));
@@ -55,6 +57,14 @@ public class RadicleProjectService {
     @NonInjectable
     public RadicleProjectService(RadicleProjectSettingsHandler radicleProjectSettingsHandler) {
         this.projectSettingsHandler = radicleProjectSettingsHandler;
+    }
+
+    public void setRadDetails(RadDetails details) {
+        this.radDetails = details;
+    }
+
+    public RadDetails getRadDetails() {
+        return this.radDetails;
     }
 
     public ProcessOutput homePath(String radPath) {
