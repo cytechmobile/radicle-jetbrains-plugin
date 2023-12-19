@@ -182,7 +182,6 @@ val uiTestTask = tasks.register<Test>("uiTest") {
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
 }
 
-/*
-tasks.check {
-    //dependsOn(uiTestTask)
-}*/
+tasks.register<Test>("endToEndTests") {
+    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
+}
