@@ -75,7 +75,7 @@ public class TimelineComponentFactory {
     }
 
     public JComponent createDescSection() {
-        var description = !Strings.isNullOrEmpty(patch.description) ? patch.description :
+        var description = !Strings.isNullOrEmpty(patch.getLatestRevision().description()) ? patch.getLatestRevision().description() :
                 RadicleBundle.message("noDescription");
         var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.projectId, file);
         descSection = Utils.descriptionPanel(editorPane, patch.project);
@@ -106,18 +106,13 @@ public class TimelineComponentFactory {
                 }
                 for (var rev : patch.revisions) {
                     var contentPanel = getVerticalPanel(4);
-                    var textHtmlEditor = new BaseHtmlEditorPane();
-                    var description = !Strings.isNullOrEmpty(rev.description()) ? rev.description() :
-                            RadicleBundle.message("noDescription");
-                    textHtmlEditor.setBody(description);
-                    contentPanel.add(textHtmlEditor);
                     var patchCommits = groupedCommits.get(rev.id());
                     Collections.reverse(patchCommits);
-                    contentPanel.add(StatusMessageComponentFactory.INSTANCE.create(createCommitsSection(patchCommits), StatusMessageType.INFO));
                     contentPanel.setOpaque(false);
                     var horizontalPanel = getHorizontalPanel(8);
                     horizontalPanel.setOpaque(false);
-                    var item = createTimeLineItem(contentPanel, horizontalPanel, "Revision " + rev.id() + " was published",
+                    var revAuthor = !Strings.isNullOrEmpty(rev.author().alias) ? rev.author().alias : rev.author().id;
+                    var item = createTimeLineItem(contentPanel, horizontalPanel, RadicleBundle.message("revisionPublish", rev.id(), revAuthor),
                             rev.timestamp());
                     mainPanel.add(item);
                     mainPanel.add(createCommentSection(List.of(rev)));

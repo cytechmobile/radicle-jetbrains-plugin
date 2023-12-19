@@ -85,7 +85,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
              var loadedRadPatches = loadedData;
              List<RadPatch> filteredPatches = loadedRadPatches.stream()
                      .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
-                             p.title.contains(searchFilter) || (Strings.nullToEmpty(p.description).contains(searchFilter)))
+                             p.title.contains(searchFilter) || (Strings.nullToEmpty(p.getLatestRevision().description()).contains(searchFilter)))
                      .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
                      .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
                              p.author.id.equals(peerAuthorFilter))

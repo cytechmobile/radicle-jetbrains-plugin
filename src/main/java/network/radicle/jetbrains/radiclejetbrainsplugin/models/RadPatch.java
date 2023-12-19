@@ -28,7 +28,6 @@ public class RadPatch {
     public String id;
     public String title;
     public RadAuthor author;
-    public String description;
     public String target;
     public List<String> labels;
     public State state;
@@ -39,13 +38,12 @@ public class RadPatch {
     }
 
     public RadPatch(
-            String id, String projectId, String title, RadAuthor author, String description, String target,
+            String id, String projectId, String title, RadAuthor author, String target,
             List<String> labels, State state, List<Revision> revisions) {
         this.id = id;
         this.projectId = projectId;
         this.title = title;
         this.author = author;
-        this.description = description;
         this.target = target;
         this.labels = labels;
         this.state = state;
@@ -61,7 +59,6 @@ public class RadPatch {
         this.id = other.id;
         this.title = other.title;
         this.author = other.author;
-        this.description = other.description;
         this.target = other.target;
         this.labels = other.labels;
         this.state = other.state;
@@ -119,7 +116,7 @@ public class RadPatch {
 
     public record Revision(
             String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews) { }
+            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews, RadAuthor author) { }
 
     public record Merge(String node, String commit, Instant timestamp) { }
 

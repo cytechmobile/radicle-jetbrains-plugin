@@ -117,7 +117,6 @@ public class TimelineTest extends AbstractIT {
                 if (map.get("type").equals("edit")) {
                     //patch
                     assertThat(map.get("target")).isEqualTo("delegates");
-                    assertThat(map.get("description")).isEqualTo(patch.description);
                     assertThat(map.get("type")).isEqualTo("edit");
                     assertThat(map.get("title")).isEqualTo(patch.title);
                 } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react") ||
@@ -560,7 +559,8 @@ public class TimelineTest extends AbstractIT {
         for (var el : elements) {
             timeline += el.getText();
         }
-        assertThat(timeline).contains(patch.description);
+        var latestRevision = patch.revisions.get(patch.revisions.size() - 1);
+        assertThat(timeline).contains(latestRevision.description());
     }
 
     @Test
@@ -725,7 +725,7 @@ public class TimelineTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
-        var myPatch = new RadPatch("c5df12", RAD_PROJECT_ID, "testPatch", new RadAuthor(AUTHOR), "testDesc",
+        var myPatch = new RadPatch("c5df12", RAD_PROJECT_ID, "testPatch", new RadAuthor(AUTHOR),
                 "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
         myPatch.project = getProject();
         myPatch.repo = firstRepo;
@@ -747,7 +747,7 @@ public class TimelineTest extends AbstractIT {
         var discussions = new ArrayList<RadDiscussion>();
         discussions.add(discussion);
         return new RadPatch.Revision(id, description, base, commit.getId().asString(),
-                List.of("branch"), List.of(), Instant.now(), discussions, List.of());
+                List.of("branch"), List.of(), Instant.now(), discussions, List.of(), new RadAuthor(UUID.randomUUID().toString()));
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {

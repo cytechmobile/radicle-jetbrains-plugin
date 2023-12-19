@@ -20,6 +20,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -274,14 +275,13 @@ public class PatchListPanelTest extends AbstractIT {
 
     public static List<RadPatch> getTestPatches() {
         var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
-                List.of(), List.of(), Instant.now(), List.of(), List.of());
+                List.of(), List.of(), Instant.now(), List.of(), List.of(), new RadAuthor(UUID.randomUUID().toString()));
 
-        var radPatch = new RadPatch("c5df12", "test-rad-project", "testPatch", new RadAuthor(AUTHOR), "testDesc", "testTarget",
+        var radPatch = new RadPatch("c5df12", "test-rad-project", "testPatch", new RadAuthor(AUTHOR), "testTarget",
                 List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
 
         var radPatch2 = new RadPatch("c4d12", "test-rad-project-second", "secondProposal", new RadAuthor(AUTHOR1),
-                "My description", "testTarget", List.of("firstTag", "secondTag", "tag1"),
-                RadPatch.State.DRAFT, List.of(revision));
+                "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, List.of(revision));
         patches = List.of(radPatch, radPatch2);
         return patches;
     }

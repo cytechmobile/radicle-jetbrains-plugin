@@ -175,7 +175,7 @@ public class PatchProposalPanel {
     private JComponent descriptionComponent() {
         var titlePane = new BaseHtmlEditorPane();
         titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody(Strings.nullToEmpty(patch.description));
+        titlePane.setBody(Strings.nullToEmpty(patch.getLatestRevision().description()));
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
         nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
         final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {

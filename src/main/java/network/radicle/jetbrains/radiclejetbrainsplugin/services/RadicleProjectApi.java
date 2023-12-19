@@ -568,7 +568,7 @@ public class RadicleProjectApi {
             var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
             var patchEditData = Map.of("type", "edit", "target", "delegates", "title",
-                    Strings.nullToEmpty(patch.title), "description", Strings.nullToEmpty(patch.description));
+                    Strings.nullToEmpty(patch.title));
             var json = MAPPER.writeValueAsString(patchEditData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(patchReq, RadicleBundle.message("patchTitleError"));
