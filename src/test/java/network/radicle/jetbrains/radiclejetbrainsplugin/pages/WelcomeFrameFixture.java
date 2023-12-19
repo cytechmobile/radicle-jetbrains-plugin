@@ -32,7 +32,7 @@ public class WelcomeFrameFixture extends CommonContainerFixture {
     }
 
     private ComponentFixture welcomeFrameLink(String text) {
-        if (hasAnyComponent(this, byXpath("//div[@class='NewRecentProjectPanel']"))) {
+        if (hasAnyComponent(this, byXpath("//div[@class='JBScrollPane']"))) {
             return find(ComponentFixture.class, byXpath("//div[@class='JBOptionButton' and @text='" + text + "']"), Duration.ofSeconds(50));
         }
         return find(

@@ -4,6 +4,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.steps;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
+import com.intellij.remoterobot.fixtures.JLabelFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.Keyboard;
 import kotlin.Unit;
@@ -32,7 +33,7 @@ public class ReusableSteps {
     public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
-            welcomeFrame.find(DialogFixture.class, byXpath("//div[@tooltiptext.key='group.WelcomeScreen.Options.text']")).click();
+            welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
             welcomeFrame.importProjectLink().click();
 
             final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"),
