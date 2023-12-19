@@ -5,7 +5,7 @@ import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.Keyboard;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
-import network.radicle.jetbrains.radiclejetbrainsplugin.steps.CommonSteps;
+import network.radicle.jetbrains.radiclejetbrainsplugin.steps.ReusableSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
 import org.junit.jupiter.api.*;
@@ -78,7 +78,7 @@ public class RadicleEndToEndTest {
     @Tag("video")
     void radicleIssueIsShowing(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
-        var sharedSteps = new CommonSteps(remoteRobot);
+        var sharedSteps = new ReusableSteps(remoteRobot);
         sharedSteps.closeTipOfTheDay();
 
         // TODO: setup plugin
