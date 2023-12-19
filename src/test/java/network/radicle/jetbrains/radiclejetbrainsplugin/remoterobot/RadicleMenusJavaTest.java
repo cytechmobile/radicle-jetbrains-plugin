@@ -3,9 +3,10 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.search.locators.Locator;
+import com.intellij.remoterobot.steps.CommonSteps;
 import com.intellij.remoterobot.utils.Keyboard;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
-import network.radicle.jetbrains.radiclejetbrainsplugin.steps.CommonSteps;
+import network.radicle.jetbrains.radiclejetbrainsplugin.steps.ReusableSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
 import org.junit.jupiter.api.AfterEach;
@@ -26,10 +27,7 @@ import java.util.Comparator;
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
-import static java.awt.event.KeyEvent.VK_A;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static java.awt.event.KeyEvent.VK_META;
-import static java.awt.event.KeyEvent.VK_SHIFT;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
@@ -65,14 +63,8 @@ public class RadicleMenusJavaTest {
             // close any possibly open menu
             keyboard.hotKey(VK_ESCAPE);
 
-            if (remoteRobot.isMac()) {
-                keyboard.hotKey(VK_SHIFT, VK_META, VK_A);
-                keyboard.enterText("Close Project");
-                keyboard.enter();
-            } else {
-                actionMenu(remoteRobot, "File").click();
-                actionMenuItem(remoteRobot, "Close Project").click();
-            }
+            CommonSteps steps = new CommonSteps(remoteRobot);
+            steps.closeProject();
 
             logger.warn("deleting tmp dir: {}", tmpDir.toFile());
             try {
@@ -88,7 +80,7 @@ public class RadicleMenusJavaTest {
     @Tag("video")
     void initialiseRadicleProject(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
-        var sharedSteps = new CommonSteps(remoteRobot);
+        var sharedSteps = new ReusableSteps(remoteRobot);
         sharedSteps.importProjectFromVCS(tmpDir);
 //        sharedSteps.closeTipOfTheDay();
 

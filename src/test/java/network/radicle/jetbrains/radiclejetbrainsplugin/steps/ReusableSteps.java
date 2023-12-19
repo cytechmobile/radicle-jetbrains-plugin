@@ -22,10 +22,10 @@ import static com.intellij.remoterobot.utils.UtilsKt.hasSingleComponent;
 import static java.time.Duration.ofSeconds;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture.byTitle;
 
-public class CommonSteps {
+public class ReusableSteps {
     private final RemoteRobot remoteRobot;
 
-    public CommonSteps(RemoteRobot remoteRobot) {
+    public ReusableSteps(RemoteRobot remoteRobot) {
         this.remoteRobot = remoteRobot;
     }
 
