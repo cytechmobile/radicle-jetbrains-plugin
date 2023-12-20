@@ -31,7 +31,9 @@ import java.util.Comparator;
 
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
+import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
 @ExtendWith(RemoteRobotExtension.class)
@@ -85,6 +87,8 @@ public class RadicleEndToEndTest {
 //        sharedSteps.closeTipOfTheDay();
 
         //assuming we've opened up a radicle project
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
+        waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
         sharedSteps.openRadicleToolWindow();
         sharedSteps.configureRadicleSettings();
