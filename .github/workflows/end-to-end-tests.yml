@@ -15,13 +15,13 @@ jobs:
 
       - name: Create New Radicle Identity
         run: |
-          echo "test" | RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad auth --alias test_user --stdin
+          RAD_PASSPHRASE="" RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad auth --alias test_user
 
       - name: Start Radicle Node and http API
         run: |
           export PATH=/home/runner/.radicle/bin:${PATH}
-          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/rad node start &
-          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/radicle-httpd --listen 0.0.0.0:8888 &
+          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE="" /home/runner/.radicle/bin/rad node start &
+          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE="" /home/runner/.radicle/bin/radicle-httpd --listen 0.0.0.0:8888 &
           echo "allowing node to start up..."
           sleep 5
           RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad node status
@@ -38,7 +38,7 @@ jobs:
           echo "# A Blog" > README.md
           git add README.md
           git commit -m 'adds readme'
-          RAD_PASSPHRASE=test RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo" --no-confirm --verbose
+          RAD_PASSPHRASE="" RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo" --no-confirm --verbose
           pwd
           cd ..
           echo "RADICLE_REPO=${{ github.workspace }}/a_blog" >> "$GITHUB_OUTPUT"
@@ -66,7 +66,7 @@ jobs:
           sleep 10
           mkdir -p build/reports
           echo "Opening ${RADICLE_REPO} in IDE..."
-          gradle :runIdeForUiTests -Dargs=${RADICLE_REPO} > build/reports/idea.log &
+          PROJECT_PATH=${RADICLE_REPO} gradle :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v3
         with:
