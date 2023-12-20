@@ -40,7 +40,7 @@ jobs:
           echo "# A Blog" > README.md
           git add README.md
           git commit -m 'adds readme'
-          RAD_PASSPHRASE="" RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo" --no-confirm --verbose
+          RAD_PASSPHRASE="" RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "a-test-blog" --description "Some repo" --no-confirm --verbose
           pwd
           cd ..
           echo "RADICLE_REPO=${{ github.workspace }}/a_blog" >> "$GITHUB_OUTPUT"
