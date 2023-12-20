@@ -30,6 +30,9 @@ public class WelcomeFrameFixture extends CommonContainerFixture {
     public ComponentFixture importProjectLink() {
         return welcomeFrameLink("Get from VCS");
     }
+    public ComponentFixture openProjectLink() {
+        return welcomeFrameLink("Open");
+    }
 
     private ComponentFixture welcomeFrameLink(String text) {
         if (hasAnyComponent(this, byXpath("//div[@class='JBScrollPane']"))) {

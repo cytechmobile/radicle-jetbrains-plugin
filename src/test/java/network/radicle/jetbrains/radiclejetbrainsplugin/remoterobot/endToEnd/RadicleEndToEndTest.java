@@ -2,9 +2,13 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.endToEnd;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
+import com.intellij.remoterobot.fixtures.JLabelFixture;
+import com.intellij.remoterobot.fixtures.JTextAreaFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.steps.CommonSteps;
 import com.intellij.remoterobot.utils.Keyboard;
+import com.intellij.remoterobot.utils.WaitForConditionTimeoutException;
+import network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.steps.ReusableSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
@@ -28,6 +32,7 @@ import java.util.Comparator;
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.time.Duration.ofSeconds;
 
 @ExtendWith(RemoteRobotExtension.class)
 @Tag("UI")
@@ -74,45 +79,78 @@ public class RadicleEndToEndTest {
 
     @Test
     @Tag("video")
-    void radicleIssueIsShowing(final RemoteRobot remoteRobot) {
+    void createAndDisplayRadicleIssue(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
-        sharedSteps.closeTipOfTheDay();
+//        sharedSteps.closeTipOfTheDay();
 
-        // TODO: setup plugin
-        openRadicleToolWindow(remoteRobot, keyboard);
-        switchToRadicleIssues();
-        createRadicleIssue();
-        openFirstRadicleIssue();
+        //assuming we've opened up a radicle project
 
-    }
-
-    private void openFirstRadicleIssue() {
-        // TODO: click on first issue
-        // TODO: verify editor tab opens and it shows the issue title
+        sharedSteps.openRadicleToolWindow(remoteRobot, keyboard);
+        sharedSteps.configureRadicleSettings(remoteRobot, keyboard);
+        switchToRadicleIssues(remoteRobot);
+        var time = System.currentTimeMillis();
+        final String issueTitle = "Automated issue [%d]".formatted(time);
+        createRadicleIssue(remoteRobot, issueTitle);
+        openFirstRadicleIssue(remoteRobot, issueTitle);
 
     }
 
-    private void createRadicleIssue() {
-        // TODO: create an issue
+    private void openFirstRadicleIssue(RemoteRobot remoteRobot, String issueTitle) {
+        remoteRobot.find(
+                ComponentFixture.class,
+                byXpath("//div[@class='JBList']"),
+                Duration.ofSeconds(20)
+        )
+        .findText(issueTitle)
+        .doubleClick();
+
+        // assert new editor tab has opened
+        remoteRobot.find(JLabelFixture.class, byXpath("//div[@class='SimpleColoredComponent' and contains(@visible_text, '" + issueTitle + "')]"), ofSeconds(20)).isShowing();
 
     }
 
-    private void switchToRadicleIssues() {
-        // TODO: click on issues
+    private void createRadicleIssue(RemoteRobot remoteRobot, String issueTitle) {
+        step("Create Radicle Issue", () -> {
+            final var keyboard = new Keyboard(remoteRobot);
 
-    }
+            final var issuesTab = byXpath("//div[@class='ToolWindowHeader'][.//div[@text='Issues']]//div[@myicon='add.svg']");
+            remoteRobot.find(ComponentFixture.class, issuesTab, Duration.ofSeconds(20)).click();
 
-    private void openRadicleToolWindow(RemoteRobot remoteRobot, Keyboard keyboard) {
-        // TODO:
-        step("Open Radicle Tool Window", () -> {
-            keyboard.hotKey(VK_ESCAPE);
-            final var radicleToolWindow = byXpath("//div[contains(@text.key, 'radicle')]");
-            remoteRobot.find(ComponentFixture.class, radicleToolWindow, Duration.ofSeconds(20)).click();
+            final var issueTitleInput = byXpath("//div[@class='JBTextArea' and @visible_text='Title']");
+            remoteRobot.find(JTextAreaFixture.class, issueTitleInput, Duration.ofSeconds(20)).click();
+
+            keyboard.enterText(issueTitle, 0);
+
+            final var issueDescriptionInput = byXpath("//div[@class='DragAndDropField' and @visible_text='Description']");
+            remoteRobot.find(JTextAreaFixture.class, issueDescriptionInput, Duration.ofSeconds(20)).click();
+
+            keyboard.enterText("Automated issue. Please ignore", 0);
+            keyboard.enter();
+
+            final var createButton = byXpath("//div[@class='JButton' and @visible_text='Create Issue']");
+            remoteRobot.find(JTextAreaFixture.class, createButton, Duration.ofSeconds(20)).click();
+
+            try {
+                var unlockIdentityDialog = remoteRobot.find(DialogFixture.class, byXpath("//div[@class='MyDialog' and @title='Unlock Identity']"), ofSeconds(10));
+                if(unlockIdentityDialog.isShowing())
+                    unlockIdentityDialog.button("OK").click();
+            } catch (WaitForConditionTimeoutException ignored){}
 
         });
 
     }
+
+    private void switchToRadicleIssues(RemoteRobot remoteRobot) {
+        step("Open Radicle Issues", () -> {
+
+            final var issuesTab = byXpath("//div[@text.key='issues open.in.browser.group.issues' and @text='Issues']");
+            remoteRobot.find(ComponentFixture.class, issuesTab, Duration.ofSeconds(20)).click();
+
+        });
+
+    }
+
 
     private void isXPathComponentVisible(IdeaFrame idea, String xpath) {
         final Locator locator = byXpath(xpath);
