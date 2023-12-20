@@ -74,7 +74,7 @@ public class RadicleProjectService {
         }
         var pathInfo = output.getStdoutLines();
         // which command return empty and where command return INFO if the os cant find the program path
-        if (pathInfo.size() > 0 && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
+        if (!pathInfo.isEmpty() && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
             return pathInfo.get(0);
         }
         return "";

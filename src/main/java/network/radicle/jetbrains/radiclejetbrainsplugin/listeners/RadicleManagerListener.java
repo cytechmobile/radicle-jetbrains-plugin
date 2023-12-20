@@ -28,8 +28,6 @@ public class RadicleManagerListener implements ProjectActivity {
         final String radPath = project.getService(RadicleProjectService.class).detectRadPath();
         radicleSettingsHandler.savePath(radPath);
         radicleSettingsHandler.saveRadHome(project.getService(RadicleProjectService.class).detectRadHome(radPath));
-//        radicleSettingsHandler.savePath("");
-//        radicleSettingsHandler.saveRadHome("");
         var settings = radicleSettingsHandler.loadSettings();
         if (Strings.isNullOrEmpty(settings.getPath())) {
             RadAction.showNotification(project, "radicle", "installedSuccessfully", NotificationType.INFORMATION,

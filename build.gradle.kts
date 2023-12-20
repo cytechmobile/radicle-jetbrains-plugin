@@ -44,9 +44,9 @@ dependencies {
     // Deserialize timestamps to Instant
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${libs.versions.jacksonJsr310.get()}")
     implementation("org.apache.tika:tika-core:${libs.versions.tika.get()}")
+    implementation("com.automation-remarks:video-recorder-junit5:2.+")
     implementation("com.sshtools:maverick-synergy-client:${libs.versions.sshTools.get()}")
 }
-
 
 checkstyle {
 //    configFile = File("./checkstyle.xml");
@@ -151,7 +151,10 @@ tasks {
         systemProperty("ide.show.tips.on.startup.default.value", "false")
         //    systemProperty "eap.require.license", "true"
 
-        args( environment("PROJECT_PATH").getOrElse("") )
+//        val projectPath = environment("PROJECT_PATH").getOrElse("")
+//        if (projectPath.isNotEmpty()) {
+//            args (projectPath)
+//        }
 
     }
 
@@ -182,9 +185,12 @@ tasks {
 }
 
 val uiTestTask = tasks.register<Test>("uiTest") {
+    useJUnitPlatform()
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
+    exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
 }
 
 tasks.register<Test>("endToEndTests") {
+    useJUnitPlatform()
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
 }

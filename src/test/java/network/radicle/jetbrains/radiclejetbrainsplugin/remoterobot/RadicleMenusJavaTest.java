@@ -82,16 +82,18 @@ public class RadicleMenusJavaTest {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
         sharedSteps.importProjectFromVCS(tmpDir);
-//        sharedSteps.closeTipOfTheDay();
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+
+        ReusableSteps.takeScreenshot(remoteRobot, "1_project_imported.png");
         step("Ensure Radicle sub-menu category is visible", () -> {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git", "").click();
             actionMenu(remoteRobot, "Radicle", "Git").isShowing();
         });
 
+        ReusableSteps.takeScreenshot(remoteRobot, "2_sub_menu.png");
         step("Ensure Radicle sub-menu items (fetch, pull) show", () -> {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git", "").click();
@@ -103,6 +105,7 @@ public class RadicleMenusJavaTest {
             actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
         });
 
+        ReusableSteps.takeScreenshot(remoteRobot, "3_toolbar.png");
         step("Ensure Radicle toolbar actions show", () -> {
             keyboard.hotKey(VK_ESCAPE);
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");

@@ -4,33 +4,49 @@ on:
   schedule:
     # every night, at 2:30
     - cron:  '30 2 * * *'
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  e2e-test-linux:
-    runs-on: ubuntu-latest
+
+  e2e-test-matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install Radicle
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
         run: |
           sh <(curl -sSf https://radicle.xyz/install)
+          echo "${RAD_HOME}/bin" >> $GITHUB_PATH
 
       - name: Create New Radicle Identity
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
         run: |
-          echo "test" | RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad auth --alias test_user --stdin
+          RAD_PASSPHRASE="" rad auth --alias test_user
 
       - name: Start Radicle Node and http API
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
         run: |
-          export PATH=/home/runner/.radicle/bin:${PATH}
-          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/rad node start &
-          RAD_HOME=${{ github.workspace }}/.radicle RAD_PASSPHRASE=test /home/runner/.radicle/bin/radicle-httpd --listen 0.0.0.0:8888 &
+          RAD_PASSPHRASE="" rad node start &
           echo "allowing node to start up..."
           sleep 5
-          RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad node status
+          RAD_PASSPHRASE="" radicle-httpd --listen 0.0.0.0:8080 &
+          rad node status
+          rad self
 
       - name: Create a new Radicle Repository
         id: radicle-init
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
         run: |
-          mkdir a_blog
-          cd a_blog
+          mkdir ${{ github.workspace }}/a_blog
+          cd ${{ github.workspace }}/a_blog
           git config --global init.defaultBranch main
           git init .
           git config --local user.email "test@radicle.xyz"
@@ -38,12 +54,15 @@ jobs:
           echo "# A Blog" > README.md
           git add README.md
           git commit -m 'adds readme'
-          RAD_PASSPHRASE=test RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "A test blog" --description "Some repo" --no-confirm --verbose
+          RAD_PASSPHRASE="" rad init --private --default-branch main --name "a-test-blog" --description "Some repo" --no-confirm --verbose
           pwd
           cd ..
+          chmod -R 777 a_blog
           echo "RADICLE_REPO=${{ github.workspace }}/a_blog" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
+        with:
+          path: ${{ github.workspace }}/radicle-jetbrains-plugin
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
@@ -55,18 +74,18 @@ jobs:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Clean
-        run: gradle :clean
       - name: Run Idea
         env:
-          RADICLE_REPO: ${{ steps.radicle-init.outputs.RADICLE_REPO }}
+          RADICLE_REPO: ${{ github.workspace }}/a_blog
+        working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
         run: |
           export DISPLAY=:99.0
           Xvfb -ac :99 -screen 0 1920x1080x24 &
           sleep 10
           mkdir -p build/reports
+          ls -alh ${RADICLE_REPO}
           echo "Opening ${RADICLE_REPO} in IDE..."
-          gradle :runIdeForUiTests -Dargs=${RADICLE_REPO} > build/reports/idea.log &
+          gradle :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v3
         with:
@@ -74,92 +93,28 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
+        env:
+          RADICLE_REPO: ${{ github.workspace }}/a_blog
+          PROJECT_PATH: ${{ github.workspace }}/a_blog
+          RAD_HOME: ${{ github.workspace }}/.radicle
+          RAD_PATH: ${{ github.workspace }}/.radicle/bin/rad
+        working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
         run: |
           export DISPLAY=:99.0
-          ./gradlew :endToEndTests
+          gradle :endToEndTests  -Dargs="--add-opens=java.base/java.lang=ALL-UNNAMED"
       - name: Move video
         if: ${{ failure() }}
+        working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
         run: mv video/ build/reports/
+
+      - name: Copy logs
+        if: ${{ failure() }}
+        working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
+        run: mv build/idea-sandbox/system/log/ build/reports
       - name: Save fails report
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ui-test-fails-report-linux
+          name: e2e-test-fails-report-${{ matrix.os }}
           path: |
-            build/reports
-#  build-for-ui-test-mac-os:
-#    runs-on: macos-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Setup Java
-#        uses: actions/setup-java@v3
-#        with:
-#          distribution: corretto
-#          java-version: 17
-#      - name: Setup FFmpeg
-#        uses: FedericoCarboni/setup-ffmpeg@v2
-#        with:
-#          # Not strictly necessary, but it may prevent rate limit
-#          # errors especially on GitHub-hosted macos machines.
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Clean
-#        run: gradle :clean
-#      - name: Run Idea
-#        run: |
-#          mkdir -p build/reports
-#          gradle :runIdeForUiTests > build/reports/idea.log &
-#      - name: Wait for Idea started
-#        uses: jtalk/url-health-check-action@v3
-#        with:
-#          url: http://127.0.0.1:8082
-#          max-attempts: 15
-#          retry-delay: 30s
-#      - name: Tests
-#        run: ./gradlew :uiTest
-#      - name: Move video
-#        if: ${{ failure() }}
-#        run: mv video/ build/reports/
-#      - name: Save fails report
-#        if: ${{ failure() }}
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: ui-test-fails-report-mac
-#          path: |
-#            build/reports
-#  build-for-ui-test-windows:
-#    runs-on: windows-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Setup Java
-#        uses: actions/setup-java@v3
-#        with:
-#          distribution: corretto
-#          java-version: 17
-#      - name: Setup FFmpeg
-#        uses: FedericoCarboni/setup-ffmpeg@v2
-#        with:
-#          # Not strictly necessary, but it may prevent rate limit
-#          # errors especially on GitHub-hosted macos machines.
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Clean
-#        run: gradle :clean
-#      - name: Run Idea
-#        run: start gradlew.bat :runIdeForUiTests
-#      - name: Wait for Idea started
-#        uses: jtalk/url-health-check-action@v3
-#        with:
-#          url: http://localhost:8082
-#          max-attempts: 15
-#          retry-delay: 30s
-#      - name: Tests
-#        run: ./gradlew :uiTest
-#      - name: Move video
-#        if: ${{ failure() }}
-#        run: mv video/ build/reports/
-#      - name: Save fails report
-#        if: ${{ failure() }}
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: ui-test-fails-report-windows
-#          path: |
-#            build/reports
+            ${{ github.workspace }}/radicle-jetbrains-plugin/build/reports
