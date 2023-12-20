@@ -86,9 +86,9 @@ public class RadicleEndToEndTest {
 
         //assuming we've opened up a radicle project
 
-        sharedSteps.openRadicleToolWindow(remoteRobot, keyboard);
-        sharedSteps.configureRadicleSettings(remoteRobot, keyboard);
-        switchToRadicleIssues(remoteRobot);
+        sharedSteps.openRadicleToolWindow();
+        sharedSteps.configureRadicleSettings();
+        sharedSteps.switchToRadicleIssues();
         var time = System.currentTimeMillis();
         final String issueTitle = "Automated issue [%d]".formatted(time);
         createRadicleIssue(remoteRobot, issueTitle);
@@ -106,7 +106,11 @@ public class RadicleEndToEndTest {
         .doubleClick();
 
         // assert new editor tab has opened
-        remoteRobot.find(JLabelFixture.class, byXpath("//div[@class='SimpleColoredComponent' and contains(@visible_text, '" + issueTitle + "')]"), ofSeconds(20)).isShowing();
+        remoteRobot.find(
+                JLabelFixture.class,
+                byXpath("//div[@class='SimpleColoredComponent' and contains(@visible_text, '" + issueTitle + "')]"),
+                ofSeconds(20)
+        ).isShowing();
 
     }
 
@@ -132,24 +136,20 @@ public class RadicleEndToEndTest {
             remoteRobot.find(JTextAreaFixture.class, createButton, Duration.ofSeconds(20)).click();
 
             try {
-                var unlockIdentityDialog = remoteRobot.find(DialogFixture.class, byXpath("//div[@class='MyDialog' and @title='Unlock Identity']"), ofSeconds(10));
-                if(unlockIdentityDialog.isShowing())
+                var unlockIdentityDialog = remoteRobot.find(
+                        DialogFixture.class,
+                        byXpath("//div[@class='MyDialog' and @title='Unlock Identity']"),
+                        ofSeconds(10)
+                );
+                if (unlockIdentityDialog.isShowing()) {
                     unlockIdentityDialog.button("OK").click();
-            } catch (WaitForConditionTimeoutException ignored){}
+                }
+            } catch (WaitForConditionTimeoutException ignored) { }
 
         });
 
     }
 
-    private void switchToRadicleIssues(RemoteRobot remoteRobot) {
-        step("Open Radicle Issues", () -> {
-
-            final var issuesTab = byXpath("//div[@text.key='issues open.in.browser.group.issues' and @text='Issues']");
-            remoteRobot.find(ComponentFixture.class, issuesTab, Duration.ofSeconds(20)).click();
-
-        });
-
-    }
 
 
     private void isXPathComponentVisible(IdeaFrame idea, String xpath) {

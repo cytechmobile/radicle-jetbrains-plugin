@@ -31,9 +31,12 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixtu
 
 public class ReusableSteps {
     private final RemoteRobot remoteRobot;
+    private final Keyboard keyboard;
 
     public ReusableSteps(RemoteRobot remoteRobot) {
+
         this.remoteRobot = remoteRobot;
+        keyboard = new Keyboard(remoteRobot);
     }
 
     public void importProjectFromVCS(Path localDir) {
@@ -46,7 +49,6 @@ public class ReusableSteps {
                     Duration.ofSeconds(50));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
-            final var keyboard = new Keyboard(remoteRobot);
             keyboard.enterText("https://github.com/radicle-dev/radicle-cli", 0);
 
             final var dirInputFieldLocator = byXpath("//div[@class='TextFieldWithBrowseButton']");
@@ -71,7 +73,6 @@ public class ReusableSteps {
 
             final var projectPathFieldLocator = byXpath("//div[@class='BorderlessTextField']");
             remoteRobot.find(ComponentFixture.class, projectPathFieldLocator, Duration.ofSeconds(20)).click();
-            final var keyboard = new Keyboard(remoteRobot);
             keyboard.selectAll();
             keyboard.backspace();
             keyboard.enterText("/" + localDir.toAbsolutePath(), 0);
@@ -80,14 +81,14 @@ public class ReusableSteps {
         });
     }
 
-    public void openRadicleToolWindow(RemoteRobot remoteRobot, Keyboard keyboard) {
+    public void openRadicleToolWindow() {
 
         step("Open Radicle Tool Window", () -> {
             keyboard.hotKey(VK_ESCAPE);
 
-            try{
+            try {
                 remoteRobot.find(JLabelFixture.class, byXpath("//div[@text='Patches']"), ofSeconds(10));
-            }catch (WaitForConditionTimeoutException timeout){
+            } catch (WaitForConditionTimeoutException timeout) {
                 final var radicleToolWindow = byXpath("//div[@text='Radicle']");
                 remoteRobot.find(ComponentFixture.class, radicleToolWindow, ofSeconds(20)).click();
             }
@@ -96,7 +97,7 @@ public class ReusableSteps {
 
     }
 
-    public void configureRadicleSettings(RemoteRobot remoteRobot, Keyboard keyboard) {
+    public void configureRadicleSettings() {
 
         step("Configure Radicle Settings", () -> {
 
@@ -114,6 +115,17 @@ public class ReusableSteps {
         });
 
     }
+
+    public void switchToRadicleIssues() {
+        step("Open Radicle Issues", () -> {
+
+            final var issuesTab = byXpath("//div[@text.key='issues open.in.browser.group.issues' and @text='Issues']");
+            remoteRobot.find(ComponentFixture.class, issuesTab, Duration.ofSeconds(20)).click();
+
+        });
+
+    }
+
 
     private static void applyAndSaveSettings(RemoteRobot remoteRobot) {
         var settingsDialog = remoteRobot.find(
@@ -178,7 +190,6 @@ public class ReusableSteps {
     public void autocomplete(String text) {
         step("Autocomplete '" + text + "'", () -> {
             final Locator completionMenu = byXpath("//div[@class='HeavyWeightWindow']");
-            final Keyboard keyboard = new Keyboard(remoteRobot);
             keyboard.enterText(text);
             waitFor(ofSeconds(5), () -> hasSingleComponent(remoteRobot, completionMenu));
             remoteRobot.find(ComponentFixture.class, completionMenu)
