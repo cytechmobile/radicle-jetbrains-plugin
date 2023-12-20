@@ -52,6 +52,8 @@ public class IdentityDialog extends DialogWrapper {
             aliasField.setVisible(false);
             aliasLabel.setVisible(false);
         }
+        var isFormValid =  !aliasField.getText().isEmpty() || !aliasField.isVisible();
+        setOKActionEnabled(isFormValid);
         return super.showAndGet();
     }
 
@@ -77,21 +79,14 @@ public class IdentityDialog extends DialogWrapper {
 
     protected void init() {
         super.init();
-        var isFormValid =  !passphraseField.getText().isEmpty();
-        setOKActionEnabled(isFormValid);
         var textFieldListener = new TextFieldListener();
-        passphraseField.getDocument().addDocumentListener(textFieldListener);
         aliasField.getDocument().addDocumentListener(textFieldListener);
     }
 
     public class TextFieldListener extends DocumentAdapter {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {
-            if (passphraseField.getText().isEmpty() || (aliasField.getText().isEmpty() && aliasField.isVisible())) {
-                setOKActionEnabled(false);
-            } else {
-                setOKActionEnabled(true);
-            }
+            setOKActionEnabled(!aliasField.getText().isEmpty() || !aliasField.isVisible());
         }
     }
 }
