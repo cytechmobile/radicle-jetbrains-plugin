@@ -14,7 +14,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
@@ -97,29 +96,12 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     protected String getRadPath() {
         var rad = myProject.getService(RadicleProjectService.class);
-        ProcessOutput output = rad.radPath();
-        if (!RadAction.isSuccess(output)) {
-            return "";
-        }
-        var pathInfo = output.getStdoutLines();
-        // which command return empty and where command return INFO if the os cant find the program path
-        if (pathInfo.size() > 0 && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
-            return pathInfo.get(0);
-        }
-        return "";
+        return rad.detectRadPath();
     }
 
     protected String getRadHome() {
         var radPath = getPathFromTextField(radPathField);
-        if (Strings.isNullOrEmpty(radPath)) {
-            return "";
-        }
-        var radHome = new RadPath(myProject, radPath);
-        var output = radHome.perform();
-        if (!RadAction.isSuccess(output)) {
-            return "";
-        }
-        return output.getStdout().replace("\n", "");
+        return myProject.getService(RadicleProjectService.class).detectRadHome(radPath);
     }
 
     private boolean isRadHomeValidPath(String radPath, String radHome, IdentityDialog dialog) {

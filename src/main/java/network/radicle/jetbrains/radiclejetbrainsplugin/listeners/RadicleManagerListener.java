@@ -9,6 +9,7 @@ import kotlin.coroutines.Continuation;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,11 @@ public class RadicleManagerListener implements ProjectActivity {
 
     private void showSuccessNotification(Project project) {
         var radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
+        final String radPath = project.getService(RadicleProjectService.class).detectRadPath();
+        radicleSettingsHandler.savePath(radPath);
+        radicleSettingsHandler.saveRadHome(project.getService(RadicleProjectService.class).detectRadHome(radPath));
+//        radicleSettingsHandler.savePath("");
+//        radicleSettingsHandler.saveRadHome("");
         var settings = radicleSettingsHandler.loadSettings();
         if (Strings.isNullOrEmpty(settings.getPath())) {
             RadAction.showNotification(project, "radicle", "installedSuccessfully", NotificationType.INFORMATION,
