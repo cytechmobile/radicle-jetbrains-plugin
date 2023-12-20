@@ -4,6 +4,8 @@ on:
   schedule:
     # every night, at 2:30
     - cron:  '30 2 * * *'
+  pull_request:
+    branches: [ main ]
 
 jobs:
   e2e-test-linux:
