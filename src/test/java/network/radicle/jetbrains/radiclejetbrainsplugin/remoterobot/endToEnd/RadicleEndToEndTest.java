@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.endToEnd;
 
+import com.automation.remarks.junit5.Video;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.fixtures.JLabelFixture;
@@ -35,6 +36,7 @@ import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
+
 
 @ExtendWith(RemoteRobotExtension.class)
 @Tag("UI")
@@ -81,6 +83,7 @@ public class RadicleEndToEndTest {
 
     @Test
     @Tag("video")
+    @Video
     void createAndDisplayRadicleIssue(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
