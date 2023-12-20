@@ -183,6 +183,7 @@ tasks {
 val uiTestTask = tasks.register<Test>("uiTest") {
     useJUnitPlatform()
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
+    exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
 }
 
 tasks.register<Test>("endToEndTests") {
