@@ -22,6 +22,8 @@ public class RadicleProjectSettingsHandler {
         saveDefaultSeedNodes();
     }
 
+    public Project getProject() { return project; }
+
     public String getRadHome() {
         return getApplicationProperties().getValue(RAD_HOME_KEY, "");
     }

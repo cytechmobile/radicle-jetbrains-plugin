@@ -28,6 +28,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
@@ -58,13 +59,37 @@ public class RadicleProjectService {
     public RadicleProjectService(RadicleProjectSettingsHandler radicleProjectSettingsHandler) {
         this.projectSettingsHandler = radicleProjectSettingsHandler;
     }
-
     public void setRadDetails(RadDetails details) {
         this.radDetails = details;
     }
 
     public RadDetails getRadDetails() {
         return this.radDetails;
+    }
+
+    public String detectRadPath() {
+        ProcessOutput output = radPath();
+        if (!RadAction.isSuccess(output)) {
+            return "";
+        }
+        var pathInfo = output.getStdoutLines();
+        // which command return empty and where command return INFO if the os cant find the program path
+        if (pathInfo.size() > 0 && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
+            return pathInfo.get(0);
+        }
+        return "";
+    }
+
+    public String detectRadHome(String radPath) {
+        if (Strings.isNullOrEmpty(radPath)) {
+            return "";
+        }
+        var radHome = new RadPath(projectSettingsHandler.getProject(), radPath);
+        var output = radHome.perform();
+        if (!RadAction.isSuccess(output)) {
+            return "";
+        }
+        return output.getStdout().replace("\n", "");
     }
 
     public ProcessOutput homePath(String radPath) {
