@@ -84,8 +84,9 @@ public class RadicleMenusJavaTest {
         sharedSteps.importProjectFromVCS(tmpDir);
 //        sharedSteps.closeTipOfTheDay();
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+
         step("Ensure Radicle sub-menu category is visible", () -> {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git", "").click();

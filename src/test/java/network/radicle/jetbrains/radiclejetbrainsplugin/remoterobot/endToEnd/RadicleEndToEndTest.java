@@ -85,7 +85,6 @@ public class RadicleEndToEndTest {
     @Tag("video")
     @Video
     void createAndDisplayRadicleIssue(final RemoteRobot remoteRobot) {
-        var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
 //        sharedSteps.closeTipOfTheDay();
 
