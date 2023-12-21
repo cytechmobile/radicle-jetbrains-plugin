@@ -96,7 +96,7 @@ public class RadicleEndToEndTest {
             commonSteps.openProject(projectPath);
         }
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
         sharedSteps.openRadicleToolWindow();
