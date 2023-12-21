@@ -77,6 +77,8 @@ jobs:
           max-attempts: 15
           retry-delay: 30s
       - name: Tests
+        env:
+          RADICLE_REPO: ${{ steps.radicle-init.outputs.RADICLE_REPO }}
         run: |
           export DISPLAY=:99.0
           PROJECT_PATH=${RADICLE_REPO} gradle :endToEndTests  -Dargs="--add-opens=java.base/java.lang=ALL-UNNAMED"
