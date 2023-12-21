@@ -86,7 +86,7 @@ jobs:
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
         with:
-          name: ui-test-fails-report-linux
+          name: e2e-test-fails-report-linux
           path: |
             build/reports
 #  build-for-ui-test-mac-os:
