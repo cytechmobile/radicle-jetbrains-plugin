@@ -25,9 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -89,44 +87,31 @@ public class RadicleEndToEndTest {
         var sharedSteps = new ReusableSteps(remoteRobot);
 //        sharedSteps.closeTipOfTheDay();
 
-        try {
-            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "1.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        ReusableSteps.takeScreenshot(remoteRobot, "1.png");
 
         final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
         welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
 
-        try {
-            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "2.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        ReusableSteps.takeScreenshot(remoteRobot, "2.png");
 
         var commonSteps = new CommonSteps(remoteRobot);
         final String projectPath = System.getenv("PROJECT_PATH");
+        final String radicleRepo = System.getenv("RADICLE_REPO");
         if (Strings.isNotEmpty(projectPath)) {
             commonSteps.openProject(projectPath);
+            ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
+        }else if (Strings.isNotEmpty(radicleRepo)){
+            commonSteps.openProject(radicleRepo);
+            ReusableSteps.takeScreenshot(remoteRobot, "3_radicle_repo.png");
         }
 
-        try {
-            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "3.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        ReusableSteps.takeScreenshot(remoteRobot, "4.png");
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(60));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
 
-
-        try {
-            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "4.png"));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        ReusableSteps.takeScreenshot(remoteRobot, "5.png");
 
         sharedSteps.openRadicleToolWindow();
         sharedSteps.configureRadicleSettings();

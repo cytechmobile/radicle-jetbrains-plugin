@@ -15,6 +15,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.WelcomeFrameFixture;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -37,6 +40,14 @@ public class ReusableSteps {
 
         this.remoteRobot = remoteRobot;
         keyboard = new Keyboard(remoteRobot);
+    }
+
+    public static void takeScreenshot(RemoteRobot remoteRobot, String image) {
+        try {
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", image));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void importProjectFromVCS(Path localDir) {
