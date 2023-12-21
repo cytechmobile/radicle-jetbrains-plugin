@@ -43,6 +43,7 @@ jobs:
           RAD_PASSPHRASE="" RAD_HOME=${{ github.workspace }}/.radicle /home/runner/.radicle/bin/rad init --private --default-branch main --name "a-test-blog" --description "Some repo" --no-confirm --verbose
           pwd
           cd ..
+          chmod -R 777 a_blog
           echo "RADICLE_REPO=${{ github.workspace }}/a_blog" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
@@ -78,7 +79,7 @@ jobs:
       - name: Tests
         run: |
           export DISPLAY=:99.0
-          PROJECT_PATH=${RADICLE_REPO}/ gradle :endToEndTests  -Dargs="--add-opens=java.base/java.lang=ALL-UNNAMED"
+          PROJECT_PATH=${RADICLE_REPO} gradle :endToEndTests  -Dargs="--add-opens=java.base/java.lang=ALL-UNNAMED"
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
