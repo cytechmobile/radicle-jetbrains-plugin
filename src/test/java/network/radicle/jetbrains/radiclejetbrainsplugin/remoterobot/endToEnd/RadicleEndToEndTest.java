@@ -117,13 +117,12 @@ public class RadicleEndToEndTest {
         }
 
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(60));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
 
 
         try {
-            wait(30000);
             ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "4.png"));
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
