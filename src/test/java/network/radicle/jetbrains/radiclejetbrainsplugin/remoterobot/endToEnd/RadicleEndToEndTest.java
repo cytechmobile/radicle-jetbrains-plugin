@@ -25,7 +25,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -87,12 +89,20 @@ public class RadicleEndToEndTest {
         var sharedSteps = new ReusableSteps(remoteRobot);
 //        sharedSteps.closeTipOfTheDay();
 
-        remoteRobot.getScreenshot();
+        try {
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "1.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
         welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
 
-        remoteRobot.getScreenshot();
+        try {
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "2.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         var commonSteps = new CommonSteps(remoteRobot);
         final String projectPath = System.getenv("PROJECT_PATH");
@@ -100,12 +110,21 @@ public class RadicleEndToEndTest {
             commonSteps.openProject(projectPath);
         }
 
-        remoteRobot.getScreenshot();
+        try {
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "3.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
-        remoteRobot.getScreenshot();
+        try {
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "1.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         sharedSteps.openRadicleToolWindow();
         sharedSteps.configureRadicleSettings();
