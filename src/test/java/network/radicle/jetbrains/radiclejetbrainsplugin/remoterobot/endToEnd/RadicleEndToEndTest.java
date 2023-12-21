@@ -124,7 +124,7 @@ public class RadicleEndToEndTest {
 
         try {
             ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "4.png"));
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
