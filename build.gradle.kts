@@ -150,10 +150,10 @@ tasks {
         systemProperty("ide.show.tips.on.startup.default.value", "false")
         //    systemProperty "eap.require.license", "true"
 
-        val projectPath = environment("PROJECT_PATH").getOrElse("")
-        if (projectPath.isNotEmpty()) {
-            args (projectPath)
-        }
+//        val projectPath = environment("PROJECT_PATH").getOrElse("")
+//        if (projectPath.isNotEmpty()) {
+//            args (projectPath)
+//        }
 
     }
 
