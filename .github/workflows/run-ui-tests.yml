@@ -37,7 +37,7 @@ jobs:
       - name: Tests
         run: |
           export DISPLAY=:99.0
-          ./gradlew :uiTest
+          ./gradlew :uiTest -Dvideo.folder=./video
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/

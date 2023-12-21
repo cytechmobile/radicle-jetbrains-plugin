@@ -68,7 +68,7 @@ jobs:
           sleep 10
           mkdir -p build/reports
           echo "Opening ${RADICLE_REPO} in IDE..."
-          PROJECT_PATH=${RADICLE_REPO} gradle :runIdeForUiTests > build/reports/idea.log &
+          PROJECT_PATH=${RADICLE_REPO}/ gradle :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v3
         with:
