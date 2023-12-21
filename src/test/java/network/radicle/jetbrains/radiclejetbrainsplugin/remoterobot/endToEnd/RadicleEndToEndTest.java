@@ -9,8 +9,10 @@ import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.steps.CommonSteps;
 import com.intellij.remoterobot.utils.Keyboard;
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException;
+import com.jgoodies.common.base.Strings;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
+import network.radicle.jetbrains.radiclejetbrainsplugin.pages.WelcomeFrameFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.steps.ReusableSteps;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
 import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
@@ -88,7 +90,15 @@ public class RadicleEndToEndTest {
         var sharedSteps = new ReusableSteps(remoteRobot);
 //        sharedSteps.closeTipOfTheDay();
 
-        //assuming we've opened up a radicle project
+        final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
+        welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
+
+        var commonSteps = new CommonSteps(remoteRobot);
+        final String projectPath = System.getenv("PROJECT_PATH");
+        if (Strings.isNotEmpty(projectPath)) {
+            commonSteps.openProject(projectPath);
+        }
+
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 

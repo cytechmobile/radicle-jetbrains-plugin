@@ -68,7 +68,7 @@ jobs:
           sleep 10
           mkdir -p build/reports
           echo "Opening ${RADICLE_REPO} in IDE..."
-          PROJECT_PATH=${RADICLE_REPO}/ gradle :runIdeForUiTests > build/reports/idea.log &
+          gradle :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v3
         with:
@@ -78,7 +78,7 @@ jobs:
       - name: Tests
         run: |
           export DISPLAY=:99.0
-          ./gradlew :endToEndTests -Dvideo.folder=./video
+          PROJECT_PATH=${RADICLE_REPO}/ gradle :endToEndTests -Dvideo.folder=./video
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
