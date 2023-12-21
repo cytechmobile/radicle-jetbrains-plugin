@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction;
@@ -113,18 +114,23 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void testSuccessNotificationAfterInstalled() throws InterruptedException {
-        radicleProjectSettingsHandler.savePath("");
         var rm = new RadicleManagerListener();
         rm.execute(getProject(), NoopContinuation.NOOP);
 
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not).isNotNull();
-        assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
-
-        radicleProjectSettingsHandler.savePath(RAD_PATH);
-        rm.execute(getProject(), NoopContinuation.NOOP);
-        not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
+        assertThat(radicleProjectSettingsHandler.getRadHome()).isEqualTo(RAD_HOME);
+        assertThat(radicleProjectSettingsHandler.getPath()).isEqualTo(RAD_PATH);
+
+        rm = new RadicleManagerListener() {
+            @Override
+            public String detectRadPath(Project project) {
+                return "";
+            }
+        };
+        rm.execute(getProject(), NoopContinuation.NOOP);
+        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
     }
 
     @Test

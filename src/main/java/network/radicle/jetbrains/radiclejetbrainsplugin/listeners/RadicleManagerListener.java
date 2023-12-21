@@ -25,7 +25,7 @@ public class RadicleManagerListener implements ProjectActivity {
 
     private void showSuccessNotification(Project project) {
         var radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
-        final String radPath = project.getService(RadicleProjectService.class).detectRadPath();
+        final String radPath = detectRadPath(project);
         radicleSettingsHandler.savePath(radPath);
         radicleSettingsHandler.saveRadHome(project.getService(RadicleProjectService.class).detectRadHome(radPath));
 //        radicleSettingsHandler.savePath("");
@@ -36,4 +36,9 @@ public class RadicleManagerListener implements ProjectActivity {
                     List.of(new RadAction.ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
         }
     }
+
+    public String detectRadPath(Project project) {
+        return project.getService(RadicleProjectService.class).detectRadPath();
+    }
+
 }
