@@ -82,6 +82,10 @@ jobs:
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
+
+      - name: Copy logs
+        if: ${{ failure() }}
+        run: mv build/idea-sandbox/system/log/ build/reports
       - name: Save fails report
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
