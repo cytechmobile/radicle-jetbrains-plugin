@@ -41,6 +41,10 @@ public class Utils {
         return (JPanel) b.build();
     }
 
+    public static String formatPatchId(String patchId) {
+        return patchId.substring(0, 6);
+    }
+
     public static String formatDid(String did) {
         var didStr = "did:key:";
         var parts = did.split(SPLIT_CHAR);

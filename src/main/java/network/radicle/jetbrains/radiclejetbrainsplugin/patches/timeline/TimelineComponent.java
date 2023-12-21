@@ -121,7 +121,7 @@ public class TimelineComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return false;
         }
-        var ok = api.addPatchComment(radPatch, field.getText(), field.getEmbedList());
+        var ok = api.addPatchComment(radPatch, field.getText(), null, field.getEmbedList());
         if (ok != null) {
             radPatchModel.setValue(ok);
             return true;

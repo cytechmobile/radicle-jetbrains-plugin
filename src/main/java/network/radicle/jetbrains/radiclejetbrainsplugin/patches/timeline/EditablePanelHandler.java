@@ -41,6 +41,7 @@ public class EditablePanelHandler {
     private final boolean closeEditorAfterSubmit;
     private final boolean allowDragAndDrop;
     private DragAndDropField dragAndDropField;
+    private SingleValueModel<Boolean> isLoading = new SingleValueModel<>(false);
 
     public EditablePanelHandler(PanelBuilder builder) {
         this.closeEditorAfterSubmit = builder.closeEditorAfterSubmit;
@@ -91,8 +92,10 @@ public class EditablePanelHandler {
                 var actionButton = (JButton) e.getSource();
                 actionButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    this.isLoading.setValue(true);
                     var res = okAction.fun(dragAndDropField);
                     ApplicationManager.getApplication().invokeLater(() -> {
+                        this.isLoading.setValue(false);
                         actionButton.setEnabled(true);
                         if (res && closeEditorAfterSubmit) {
                             this.hideEditor();
@@ -115,7 +118,12 @@ public class EditablePanelHandler {
                     MutableStateFlow(!hideCancelAction ? cancelAction : null),
                     MutableStateFlow(RadicleBundle.message("patch.proposal.submit.hint", submitShortcutText, actionName)));
 
-            editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(dragAndDropField, actions);
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+                editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(dragAndDropField, actions);
+            } else {
+                var inputField = CollaborationToolsUIUtil.INSTANCE.wrapWithProgressOverlay(dragAndDropField, isLoading);
+                editor = CommentInputActionsComponentFactory.INSTANCE.attachActions(inputField, actions);
+            }
             panel.remove(paneComponent);
 
             panel.setLayout(editorPaneLayout);

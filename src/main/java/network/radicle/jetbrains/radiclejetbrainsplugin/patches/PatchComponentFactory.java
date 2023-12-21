@@ -6,11 +6,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor;
+import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
-import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -31,6 +32,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +44,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PatchComponentFactory {
+    public static final Key<RadPatch> PATCH_DIFF = Key.create("Patch.Diff");
     private static final Logger logger = LoggerFactory.getLogger(PatchComponentFactory.class);
     private final RadicleProjectService radicleProjectService;
     private final Project project;
     private final Disposable disposable;
+    private final RadPatch myPatch;
     private final SingleValueModel<List<Change>> patchChanges = new SingleValueModel<>(List.of());
     private final SingleValueModel<List<GitCommit>> patchCommits = new SingleValueModel<>(List.of());
     private JComponent filesComponent;
@@ -54,9 +59,14 @@ public class PatchComponentFactory {
     private TabInfo commitTab;
 
     public PatchComponentFactory(Project project, Disposable disposer) {
+        this(project, disposer, null);
+    }
+
+    public PatchComponentFactory(Project project, Disposable disposer, RadPatch patch) {
         this.radicleProjectService = project.getService(RadicleProjectService.class);
         this.project = project;
         this.disposable = disposer;
+        this.myPatch = patch;
     }
 
     private void calculatePatchChanges(GitRepository repo, GitLocalBranch localBranch, String head) {
@@ -84,8 +94,19 @@ public class PatchComponentFactory {
 
     private SimpleAsyncChangesBrowser getChangesBrowser() {
         var simpleChangesTree = new SimpleAsyncChangesBrowser(project, false, true);
-        DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, simpleChangesTree, disposable);
-        simpleChangesTree.setShowDiffActionPreview(diffPreview);
+        var diffRequestProcessor = new SimpleTreeDiffRequestProcessor(project, "ChangesToolWindowPreview", simpleChangesTree.getViewer(), disposable);
+        var diffContext = diffRequestProcessor.getContext();
+        diffContext.putUserData(PATCH_DIFF, myPatch);
+        var simpleTreeEditorDiffPreview = new SimpleTreeEditorDiffPreview(diffRequestProcessor, simpleChangesTree.getViewer()) {
+            @Nullable
+            @Override
+            protected String getCurrentName() {
+                var name = myPatch != null ? RadicleBundle.message("patch.diff.label", "", Utils.formatPatchId(myPatch.id)) :
+                        RadicleBundle.message("changes");
+                return name;
+            }
+        };
+        simpleChangesTree.setShowDiffActionPreview(simpleTreeEditorDiffPreview);
         return simpleChangesTree;
     }
 

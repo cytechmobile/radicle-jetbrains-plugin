@@ -177,8 +177,8 @@ public class MarkDownEditorPaneFactory {
         return "<div style=\"width:" + IMG_WIDTH + ";\"><img src=\"" + url + "\"/></div>";
     }
 
-    private static String wrapHtml(String body) {
-        return "<html><head></head><body>" + body + "</body></html>";
+    public static String wrapHtml(String body) {
+        return "<html><head><style>p, h1, h2, h3, h4, h5, h6 { margin: 0; padding: 0; }</head><body>" + body + "</body></html>";
     }
 
     private void convertMarkdownToHtml() {
