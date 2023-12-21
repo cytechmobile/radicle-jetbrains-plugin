@@ -30,7 +30,7 @@ public class RadicleProjectSettingsHandler {
         return getApplicationProperties().getValue(RAD_HOME_KEY, "");
     }
 
-    private String getPath() {
+    public String getPath() {
         return getApplicationProperties().getValue(PATH_KEY, "");
     }
 
