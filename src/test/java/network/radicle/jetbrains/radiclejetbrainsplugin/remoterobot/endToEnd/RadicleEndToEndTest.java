@@ -121,7 +121,7 @@ public class RadicleEndToEndTest {
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
         try {
-            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "1.png"));
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", "4.png"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
