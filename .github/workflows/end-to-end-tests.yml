@@ -78,7 +78,7 @@ jobs:
       - name: Tests
         run: |
           export DISPLAY=:99.0
-          PROJECT_PATH=${RADICLE_REPO}/ gradle :endToEndTests -Dvideo.folder=./video
+          PROJECT_PATH=${RADICLE_REPO}/ gradle :endToEndTests
       - name: Move video
         if: ${{ failure() }}
         run: mv video/ build/reports/
