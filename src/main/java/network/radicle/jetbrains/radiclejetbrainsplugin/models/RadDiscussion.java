@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +24,6 @@ public class RadDiscussion {
     @JsonDeserialize(using = Reaction.Deserializer.class)
     public List<Reaction> reactions;
     public List<Embed> embeds;
-    @JsonDeserialize(using = Location.Deserializer.class)
     public Location location;
 
     public RadDiscussion() {
@@ -65,6 +66,7 @@ public class RadDiscussion {
 
     public static class Location {
         public String path;
+        public Object old;
         public String type;
         public int start;
         public int end;
@@ -84,31 +86,12 @@ public class RadDiscussion {
                     Map.of("type", "lines", "range", Map.of("start", start, "end", end)));
         }
 
-        public static class Deserializer extends StdDeserializer<Location> {
-            private static final Logger logger = LoggerFactory.getLogger(Location.Deserializer.class);
-
-            protected Deserializer() {
-                super(Location.class);
-            }
-
-            @Override
-            public Location deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
-                try {
-                    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-                    if (node == null) {
-                        return null;
-                    }
-                    var path = node.get("path").asText();
-                    var type = node.get("new").get("type").asText();
-                    var range = node.get("new").get("range");
-                    var start = range.get("start").asInt();
-                    var end = range.get("end").asInt();
-                    return new Location(path, type, start, end);
-                } catch (Exception e) {
-                    logger.warn("Unable to deserialize locations", e);
-                    return null;
-                }
-            }
+        @JsonProperty("new")
+        private void unpackNewObject(Map<String, Object> line) {
+            var range = (HashMap<String, Integer>) line.get("range");
+            type = (String) line.get("type");
+            start = range.get("start");
+            end = range.get("end");
         }
     }
 }

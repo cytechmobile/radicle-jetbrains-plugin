@@ -14,6 +14,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.Editabl
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.ImageIcon;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 public class Utils {
     private static final String SPLIT_CHAR = ":";
@@ -65,5 +68,23 @@ public class Utils {
         linkLabel.setListener(listener, null);
         linkLabel.setBorder(JBUI.Borders.emptyRight(8));
         return linkLabel;
+    }
+
+    public static class RemoveNewLineFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                throws BadLocationException {
+            if (!string.contains("\n")) {
+                super.insertString(fb, offset, string, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                throws BadLocationException {
+            if (!text.contains("\n")) {
+                super.replace(fb, offset, length, text, attrs);
+            }
+        }
     }
 }
