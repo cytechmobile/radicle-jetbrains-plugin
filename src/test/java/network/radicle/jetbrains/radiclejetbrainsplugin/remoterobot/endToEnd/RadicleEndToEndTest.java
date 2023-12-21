@@ -87,8 +87,12 @@ public class RadicleEndToEndTest {
         var sharedSteps = new ReusableSteps(remoteRobot);
 //        sharedSteps.closeTipOfTheDay();
 
+        remoteRobot.getScreenshot();
+
         final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
         welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
+
+        remoteRobot.getScreenshot();
 
         var commonSteps = new CommonSteps(remoteRobot);
         final String projectPath = System.getenv("PROJECT_PATH");
@@ -96,8 +100,12 @@ public class RadicleEndToEndTest {
             commonSteps.openProject(projectPath);
         }
 
+        remoteRobot.getScreenshot();
+
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+
+        remoteRobot.getScreenshot();
 
         sharedSteps.openRadicleToolWindow();
         sharedSteps.configureRadicleSettings();
