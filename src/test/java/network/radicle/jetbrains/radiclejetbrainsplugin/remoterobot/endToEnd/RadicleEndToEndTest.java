@@ -98,8 +98,16 @@ public class RadicleEndToEndTest {
         final String projectPath = System.getenv("PROJECT_PATH");
         final String radicleRepo = System.getenv("RADICLE_REPO");
         if (Strings.isNotEmpty(projectPath)) {
-            commonSteps.openProject(projectPath);
+            remoteRobot.find(ComponentFixture.class, byXpath("//div[@accessiblename.key='action.WelcomeScreen.OpenProject.text']")).click();
+            remoteRobot.find(ComponentFixture.class, byXpath("//div[@class='BorderlessTextField']")).click();
+            final var keyboard = new Keyboard(remoteRobot);
+            keyboard.selectAll();
+            keyboard.enterText(projectPath);
             ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
+            remoteRobot.find(ComponentFixture.class, byXpath("//div[@text.key='button.ok']")).click();
+            //ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
+           // commonSteps.openProject(projectPath);
+
         }else if (Strings.isNotEmpty(radicleRepo)){
             commonSteps.openProject(radicleRepo);
             ReusableSteps.takeScreenshot(remoteRobot, "3_radicle_repo.png");
