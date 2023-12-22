@@ -9,7 +9,6 @@ import com.intellij.remoterobot.fixtures.JLabelFixture;
 import com.intellij.remoterobot.fixtures.JTreeFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.Keyboard;
-import com.intellij.remoterobot.utils.WaitForConditionTimeoutException;
 import kotlin.Unit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
@@ -30,6 +29,8 @@ import static java.awt.event.KeyEvent.VK_COMMA;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
 import static java.awt.event.KeyEvent.VK_META;
 import static java.time.Duration.ofSeconds;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture.byTitle;
 
 public class ReusableSteps {
@@ -98,12 +99,17 @@ public class ReusableSteps {
         step("Open Radicle Tool Window", () -> {
             keyboard.hotKey(VK_ESCAPE);
 
-            try {
-                remoteRobot.find(JLabelFixture.class, byXpath("//div[@text='Patches']"), ofSeconds(10));
-            } catch (WaitForConditionTimeoutException timeout) {
-                final var radicleToolWindow = byXpath("//div[@text='Radicle']");
-                remoteRobot.find(ComponentFixture.class, radicleToolWindow, ofSeconds(componentSearchTimeoutInSeconds)).click();
-            }
+//            try {
+//                remoteRobot.find(JLabelFixture.class, byXpath("//div[@text='Patches']"), ofSeconds(10));
+//            } catch (WaitForConditionTimeoutException timeout) {
+//                final var radicleToolWindow = byXpath("//div[@text='Radicle']");
+//                remoteRobot.find(ComponentFixture.class, radicleToolWindow, ofSeconds(componentSearchTimeoutInSeconds)).click();
+//            }
+            actionMenu(remoteRobot, "View", "").click();
+            actionMenu(remoteRobot, "Tool Windows", "View").click();
+            actionMenuItem(remoteRobot, "Radicle").click();
+
+
 
         });
 
