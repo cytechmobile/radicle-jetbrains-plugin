@@ -31,7 +31,7 @@ jobs:
       - name: Create a new Radicle Repository
         id: radicle-init
         run: |
-          mkdir a_blog
+          mkdir ${{ github.workspace }}/a_blog
           cd a_blog
           git config --global init.defaultBranch main
           git init .
