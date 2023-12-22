@@ -25,9 +25,12 @@ import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
 import static com.intellij.remoterobot.utils.UtilsKt.hasSingleComponent;
+import static java.awt.event.KeyEvent.VK_ALT;
 import static java.awt.event.KeyEvent.VK_COMMA;
+import static java.awt.event.KeyEvent.VK_CONTROL;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
 import static java.awt.event.KeyEvent.VK_META;
+import static java.awt.event.KeyEvent.VK_S;
 import static java.time.Duration.ofSeconds;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
@@ -120,7 +123,7 @@ public class ReusableSteps {
         step("Configure Radicle Settings", () -> {
 
             //shortcut to open settings
-            keyboard.hotKey(VK_META, VK_COMMA);
+            keyboard.hotKey(VK_CONTROL,VK_ALT,VK_S);
 
             clickOnVersionControlSetting(remoteRobot);
 

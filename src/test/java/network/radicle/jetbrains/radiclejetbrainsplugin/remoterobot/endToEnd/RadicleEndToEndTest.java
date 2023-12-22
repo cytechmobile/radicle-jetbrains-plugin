@@ -95,6 +95,7 @@ public class RadicleEndToEndTest {
         ReusableSteps.takeScreenshot(remoteRobot, "2.png");
 
         var commonSteps = new CommonSteps(remoteRobot);
+        //final String projectPath = "\\\\\\\\wsl$\\\\\\\\Ubuntu-20.04\\\\\\\\home\\\\\\\\stelios\\\\\\\\endToEndTest";
         final String projectPath = System.getenv("PROJECT_PATH");
         final String radicleRepo = System.getenv("RADICLE_REPO");
         if (Strings.isNotEmpty(projectPath)) {
@@ -102,7 +103,7 @@ public class RadicleEndToEndTest {
             remoteRobot.find(ComponentFixture.class, byXpath("//div[@class='BorderlessTextField']")).click();
             final var keyboard = new Keyboard(remoteRobot);
             keyboard.selectAll();
-            keyboard.enterText(projectPath);
+            keyboard.enterText("/home/runner");
             ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
             remoteRobot.find(ComponentFixture.class, byXpath("//div[@text.key='button.ok']")).click();
             //ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
@@ -121,7 +122,9 @@ public class RadicleEndToEndTest {
 
         ReusableSteps.takeScreenshot(remoteRobot, "5.png");
 
-        sharedSteps.openRadicleToolWindow();
+        remoteRobot.find(ComponentFixture.class, byXpath("//div[contains(@text.key, 'radicle')]")).click();
+
+        //sharedSteps.openRadicleToolWindow();
         sharedSteps.configureRadicleSettings();
         sharedSteps.switchToRadicleIssues();
         var time = System.currentTimeMillis();
