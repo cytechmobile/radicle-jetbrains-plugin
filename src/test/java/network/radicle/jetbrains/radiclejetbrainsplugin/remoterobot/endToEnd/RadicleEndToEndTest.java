@@ -34,7 +34,11 @@ import java.util.Comparator;
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
+import static java.awt.event.KeyEvent.VK_ALT;
+import static java.awt.event.KeyEvent.VK_CONTROL;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_S;
+import static java.awt.event.KeyEvent.VK_Y;
 import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
@@ -99,9 +103,10 @@ public class RadicleEndToEndTest {
         final String projectPath = System.getenv("PROJECT_PATH");
         final String radicleRepo = System.getenv("RADICLE_REPO");
         if (Strings.isNotEmpty(projectPath)) {
-            remoteRobot.find(ComponentFixture.class, byXpath("//div[@accessiblename.key='action.WelcomeScreen.OpenProject.text']")).click();
-            remoteRobot.find(ComponentFixture.class, byXpath("//div[@class='BorderlessTextField']")).click();
             final var keyboard = new Keyboard(remoteRobot);
+            remoteRobot.find(ComponentFixture.class, byXpath("//div[@accessiblename.key='action.WelcomeScreen.OpenProject.text']")).click();
+            keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
+            remoteRobot.find(ComponentFixture.class, byXpath("//div[@class='BorderlessTextField']")).click();
             keyboard.selectAll();
             keyboard.enterText("/home/runner/work/radicle-jetbrains-plugin");
             ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
@@ -113,13 +118,18 @@ public class RadicleEndToEndTest {
             commonSteps.openProject(radicleRepo);
             ReusableSteps.takeScreenshot(remoteRobot, "3_radicle_repo.png");
         }
-
+        var keyboard = new Keyboard(remoteRobot);
+        keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
         ReusableSteps.takeScreenshot(remoteRobot, "4.png");
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(60));
         waitFor(ofMinutes(5), () -> !idea.isDumbMode());
 
-
+        keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
+        keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
+        keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
+        keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
+        keyboard.hotKey(VK_CONTROL,VK_ALT,VK_Y);
         ReusableSteps.takeScreenshot(remoteRobot, "5.png");
 
         remoteRobot.find(ComponentFixture.class, byXpath("//div[contains(@text.key, 'radicle')]")).click();
