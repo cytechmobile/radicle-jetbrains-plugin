@@ -103,7 +103,7 @@ public class RadicleEndToEndTest {
             remoteRobot.find(ComponentFixture.class, byXpath("//div[@class='BorderlessTextField']")).click();
             final var keyboard = new Keyboard(remoteRobot);
             keyboard.selectAll();
-            keyboard.enterText("/home/runner");
+            keyboard.enterText("/home/runner/work");
             ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
             remoteRobot.find(ComponentFixture.class, byXpath("//div[@text.key='button.ok']")).click();
             //ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
