@@ -25,11 +25,13 @@ public class ObservableThreadModel {
     private static final Logger logger = LoggerFactory.getLogger(ObservableThreadModel.class);
     private final EventDispatcher<ChangeListener> changeEventDispatcher = EventDispatcher.create(ChangeListener.class);
     private final RadicleProjectApi api;
+    private final List<LineRange> modifiedLines;
     private final Change change;
 
     public ObservableThreadModel(Change change, Project project) {
         this.api = project.getService(RadicleProjectApi.class);
         this.change = change;
+        this.modifiedLines = calculateModifiedLines();
     }
 
     public void addChangesListener(ChangeListener listener) {
@@ -51,7 +53,7 @@ public class ObservableThreadModel {
         }
     }
 
-    public List<LineRange> getModifiedLines() {
+    private List<LineRange> calculateModifiedLines() {
         try {
             if (change.getBeforeRevision() == null && change.getAfterRevision() == null) {
                 return List.of();
@@ -83,15 +85,6 @@ public class ObservableThreadModel {
         return groupedDiscussions;
     }
 
-    public String getFileName() {
-        return change.getVirtualFile().getName();
-    }
-
-    public interface ChangeListener extends EventListener {
-        void threadAdded(ThreadModel threadModel);
-        void clearThreads();
-    }
-
     private void updateEditorCommentsUi(RadPatch patch) {
         var fetched = this.api.fetchPatch(patch.projectId, patch.repo, patch.id);
         boolean success = fetched != null;
@@ -104,11 +97,28 @@ public class ObservableThreadModel {
     }
 
     private boolean isCommentInModifiedLine(int line) {
-        for (var modifiedLine : getModifiedLines()) {
+        for (var modifiedLine : modifiedLines) {
             if (line >= modifiedLine.start && line <= modifiedLine.end) {
                 return true;
             }
         }
         return false;
+    }
+
+    public String getCommitHash() {
+        return change.getAfterRevision().getRevisionNumber().asString();
+    }
+
+    public String getFileName() {
+        return change.getVirtualFile().getName();
+    }
+
+    public List<LineRange> getModifiedLines() {
+        return modifiedLines;
+    }
+
+    public interface ChangeListener extends EventListener {
+        void threadAdded(ThreadModel threadModel);
+        void clearThreads();
     }
 }

@@ -39,7 +39,8 @@ public class PatchDiffEditorComponentsFactory {
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, new JPanel(),
                 RadicleBundle.message("patch.comment", "Comment"),
                 new SingleValueModel<>(""), field -> {
-            var location = new RadDiscussion.Location(observableThreadModel.getFileName(), "ranges", (editorLine), (editorLine));
+            var location = new RadDiscussion.Location(observableThreadModel.getFileName(), "ranges",
+                    observableThreadModel.getCommitHash(), editorLine, editorLine);
             var res = this.api.addPatchComment(patch, field.getText(), location, field.getEmbedList());
             boolean success = res != null;
             if (success) {

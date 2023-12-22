@@ -255,7 +255,7 @@ public class TimelineTest extends AbstractIT {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = firstChange.getVirtualFile().getName();
-        var location = new RadDiscussion.Location(fileName, "range", 0, 0);
+        var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
         var editor = patchDiffWindow.getEditor();
@@ -279,7 +279,7 @@ public class TimelineTest extends AbstractIT {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = firstChange.getVirtualFile().getName();
-        var location = new RadDiscussion.Location(fileName, "range", 0, 0);
+        var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         var discussion = createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location);
         patch.revisions.get(1).discussions().add(discussion);
         var patchDiffWindow = initializeDiffWindow();
@@ -313,7 +313,7 @@ public class TimelineTest extends AbstractIT {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = firstChange.getVirtualFile().getName();
-        var location = new RadDiscussion.Location(fileName, "range", 0, 0);
+        var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
         var editor = patchDiffWindow.getEditor();

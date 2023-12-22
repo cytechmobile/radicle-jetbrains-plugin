@@ -56,6 +56,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JList;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.PlainDocument;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -228,6 +229,7 @@ public class CreatePatchPanel {
         titleField.setFont(JBFont.label());
         titleField.getEmptyText().setText(RadicleBundle.message("myTitle"));
         titleField.setLineWrap(true);
+        ((AbstractDocument) titleField.getDocument()).setDocumentFilter(new Utils.RemoveNewLineFilter());
         CollaborationToolsUIUtil.INSTANCE.registerFocusActions(titleField);
 
         var borderPanel = new JPanel(new BorderLayout());

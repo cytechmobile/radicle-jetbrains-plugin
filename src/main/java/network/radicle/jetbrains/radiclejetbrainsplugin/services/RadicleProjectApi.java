@@ -44,6 +44,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
@@ -619,16 +621,19 @@ public class RadicleProjectApi {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
             Map<String, Object> data;
+            boolean isReviewComment = false;
             if (location == null) {
                  data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
                         "body", comment, "embeds", embedList);
             } else {
                  data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
                         "body", comment, "embeds", embedList, "location", location.getMapObject());
+                isReviewComment = true;
             }
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(commentReq, RadicleBundle.message("commentError"), RadicleBundle.message("commentDescError"));
+            var errorDescMsg = !isReviewComment ? RadicleBundle.message("commentDescError") : "";
+            var resp = makeRequest(commentReq, RadicleBundle.message("commentError"), errorDescMsg);
             if (!resp.isSuccess()) {
                 logger.warn("error adding comment: {} to patch:{} resp:{}", comment, patch, resp);
                 return null;
@@ -649,14 +654,11 @@ public class RadicleProjectApi {
         var radWeb = new RadWeb(repo);
         var output = radWeb.perform();
         var json = output.getStdout();
-        Session s;
-        try {
-            s = MAPPER.readValue(json, Session.class);
-        } catch (Exception e) {
+        var s = parseSession(json);
+        if (s == null) {
             ApplicationManager.getApplication().invokeLater(() ->
                     showNotification(project, RadicleBundle.message("errorParsingSession"), json,
                             NotificationType.ERROR, List.of()));
-            logger.warn("error parsing session info from cli: {}", json, e);
             return null;
         }
 
@@ -765,5 +767,22 @@ public class RadicleProjectApi {
         public boolean isSuccess() {
             return status >= 200 && status < 300;
         }
+    }
+
+    private Session parseSession(String json) {
+        try {
+            String regexPattern = "/session/([^/?]+)?\\?.*pk=([^&]+).*sig=([^&]+)";
+            Pattern pattern = Pattern.compile(regexPattern);
+            Matcher matcher = pattern.matcher(json);
+            if (matcher.find()) {
+                String sessionId = matcher.group(1);
+                String pkValue = matcher.group(2);
+                String sigValue = matcher.group(3);
+                return new Session(sessionId, pkValue, sigValue);
+            }
+        } catch (Exception e) {
+            logger.warn("error parsing session info from cli: {}", json);
+        }
+        return null;
     }
 }

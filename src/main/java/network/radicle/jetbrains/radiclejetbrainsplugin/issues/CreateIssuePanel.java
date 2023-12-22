@@ -44,6 +44,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.PlainDocument;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -127,6 +128,7 @@ public class CreateIssuePanel {
         titleField.setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM), JBUI.Borders.empty(8)));
         titleField.setFont(JBFont.label());
         titleField.getEmptyText().setText(RadicleBundle.message("myTitle"));
+        ((AbstractDocument) titleField.getDocument()).setDocumentFilter(new Utils.RemoveNewLineFilter());
         titleField.setLineWrap(true);
         CollaborationToolsUIUtil.INSTANCE.registerFocusActions(titleField);
 
