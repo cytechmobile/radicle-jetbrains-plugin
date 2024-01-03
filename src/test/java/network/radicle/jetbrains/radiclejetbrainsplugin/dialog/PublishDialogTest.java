@@ -82,7 +82,7 @@ public class PublishDialogTest extends AbstractIT {
         var cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("init --name " + NAME + " --description " + DESCRIPTION +
-                " --default-branch " + BRANCHNAME + " --no-confirm");
+                " --default-branch " + BRANCHNAME + " --public --no-confirm");
 
         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNotNull();

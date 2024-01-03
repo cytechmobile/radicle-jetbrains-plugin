@@ -202,7 +202,7 @@ public class RadicleProjectService {
 
     public ProcessOutput init(GitRepository root, String name, String description, String branch) {
         return executeCommand(root.getRoot().getPath(), List.of("init", "--name", name, "--description", description,
-                "--default-branch", branch, "--no-confirm"), root);
+                "--default-branch", branch, "--public", "--no-confirm"), root);
     }
 
     public ProcessOutput auth(String passphrase, String alias, String radHome, String radPath) {
@@ -213,7 +213,8 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput radWebJson(GitRepository repo) {
-        return executeCommand(repo.getRoot().getPath(), List.of("web", "--no-open"), repo);
+        var url = projectSettingsHandler.loadSettings().getSeedNode().url.replace("http://", "");
+        return executeCommand(repo.getRoot().getPath(), List.of("web", "--no-open", "--connect", "--listen", url), repo);
     }
 
     public ProcessOutput remoteList(GitRepository root) {
