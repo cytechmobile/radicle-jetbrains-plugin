@@ -41,6 +41,8 @@ public class PublishDialog extends DialogWrapper {
     private JLabel nameLabel;
     private JLabel descrLabel;
     private JLabel seedNodeLabel;
+    private JComboBox<Visibility> visibilitySelect;
+    private JLabel visibilityLabel;
     private final List<GitRepository> repos;
     private final Project project;
     private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
@@ -66,7 +68,8 @@ public class PublishDialog extends DialogWrapper {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             var repo = (GitRepository) projectSelect.getSelectedItem();
             if (!isSelectedRepoInitialized && repo != null) {
-                var init = new RadInit(repo, nameField.getText(), descriptionField.getText(), branchField.getText());
+                var visibility = ((Visibility) visibilitySelect.getSelectedItem()).value;
+                var init = new RadInit(repo, nameField.getText(), descriptionField.getText(), branchField.getText(), visibility);
                 var output = init.perform();
                 if (RadAction.isSuccess(output)) {
                     // Show radicle tool window
@@ -100,7 +103,12 @@ public class PublishDialog extends DialogWrapper {
         descriptionField.setLineWrap(true);
         descriptionField.getDocument().addDocumentListener(textFieldListener);
         projectSelect.addItemListener(e -> updateLayout());
-        projectSelect.setRenderer(new ComboBoxCellRenderer());
+        var comboBoxRenderer = new ComboBoxCellRenderer();
+        projectSelect.setRenderer(comboBoxRenderer);
+        visibilitySelect.setRenderer(comboBoxRenderer);
+        for (var vi : Visibility.values()) {
+            visibilitySelect.addItem(vi);
+        }
         seedNodeSelect.addItem(seedNode.url);
         for (var repo : repos) {
             projectSelect.addItem(repo);
@@ -142,6 +150,10 @@ public class PublishDialog extends DialogWrapper {
                 var repo = (GitRepository) value;
                 setText(repo.getRoot().getName());
             }
+            if (value instanceof Visibility) {
+                var val = ((Visibility) value).label;
+                setText(val);
+            }
             return this;
         }
     }
@@ -174,6 +186,10 @@ public class PublishDialog extends DialogWrapper {
         return seedNodeSelect;
     }
 
+    public JComboBox<Visibility> getVisibilitySelect() {
+        return visibilitySelect;
+    }
+
     public JLabel getSeedNodeLabel() {
         return seedNodeLabel;
     }
@@ -184,5 +200,18 @@ public class PublishDialog extends DialogWrapper {
 
     public JLabel getProjectNameLabel() {
         return projectNameLabel;
+    }
+
+    public enum Visibility {
+        PUBLIC("--public", "Public"),
+        PRIVATE("--private", "Private");
+
+        public final String value;
+        public final String label;
+
+        Visibility(String value, String label) {
+            this.value = value;
+            this.label = label;
+        }
     }
 }

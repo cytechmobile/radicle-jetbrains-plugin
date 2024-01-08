@@ -70,6 +70,7 @@ public class PublishDialogTest extends AbstractIT {
         assertThat(publishDialog.getSeedNodeSelect().isVisible()).isTrue();
         assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
 
+        publishDialog.getVisibilitySelect().setSelectedIndex(0);
         publishDialog.getSeedNodeSelect().setSelectedIndex(0);
         publishDialog.getBranchField().setText(BRANCHNAME);
         publishDialog.getNameField().setText(NAME);
@@ -87,6 +88,15 @@ public class PublishDialogTest extends AbstractIT {
         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
+
+        publishDialog.getVisibilitySelect().setSelectedIndex(1);
+        executeUiTasks();
+        publishDialog.doOKAction();
+        executeUiTasks();
+        cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
+        assertCmd(cmd);
+        assertThat(cmd.getCommandLineString()).contains("init --name " + NAME + " --description " + DESCRIPTION +
+                " --default-branch " + BRANCHNAME + " --private --no-confirm");
     }
 
 }

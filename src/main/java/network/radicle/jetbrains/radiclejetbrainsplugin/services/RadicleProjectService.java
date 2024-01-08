@@ -200,9 +200,9 @@ public class RadicleProjectService {
         return executeCommand(".", args, null);
     }
 
-    public ProcessOutput init(GitRepository root, String name, String description, String branch) {
+    public ProcessOutput init(GitRepository root, String name, String description, String branch, String visibility) {
         return executeCommand(root.getRoot().getPath(), List.of("init", "--name", name, "--description", description,
-                "--default-branch", branch, "--public", "--no-confirm"), root);
+                "--default-branch", branch, visibility, "--no-confirm"), root);
     }
 
     public ProcessOutput auth(String passphrase, String alias, String radHome, String radPath) {
