@@ -146,6 +146,20 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     @Test
+    public void testButtonWithStoredEmptyPassword() throws InterruptedException {
+        radicleSettingsHandler.savePassphrase(RadStub.nodeId, "");
+        radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
+        radicleSettingsView = new RadicleSettingsView(getProject());
+        radStub.commands.poll(10, TimeUnit.SECONDS);
+        var testButton = radicleSettingsView.getRadHomeTestButton();
+        testButton.doClick();
+        assertSelfCommands(AbstractIT.RAD_HOME1);
+        var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
+        assertThat(auth.getEnvironment().get("stdin")).isEqualTo("");
+    }
+
+    @Test
     public void testButtonWithStoredPassword() throws InterruptedException {
         radicleSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);

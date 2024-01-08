@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.EDT;
@@ -24,6 +23,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsVi
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public abstract class RadAction {
@@ -112,30 +110,14 @@ public abstract class RadAction {
         if (hasIdentity) {
             storedPassword = projectSettings.getPassword(radDetails.nodeId);
         }
-        var hasStoredPassword = !Strings.isNullOrEmpty(storedPassword);
+        var hasStoredPassword = storedPassword != null;
         var showDialog = ((!hasIdentity || !isIdentityUnlocked) && !hasStoredPassword);
-        AtomicBoolean okButton = new AtomicBoolean(false);
-        AtomicReference<String> passphrase = new AtomicReference<>("");
-        AtomicReference<String> alias = new AtomicReference<>("");
+        IdentityDialog.IdentityDialogData dialogData = null;
         if (showDialog) {
-            var latch = new CountDownLatch(1);
-            ApplicationManager.getApplication().invokeLater(() -> {
-                var title = !hasIdentity ? RadicleBundle.message("newIdentity") :
-                        RadicleBundle.message("unlockIdentity");
-                var myDialog = dialog == null ? new IdentityDialog() : dialog;
-                myDialog.setTitle(title);
-                myDialog.hasIdentity(hasIdentity);
-                okButton.set(myDialog.showAndGet());
-                passphrase.set(myDialog.getPassword());
-                alias.set(myDialog.getAlias());
-                latch.countDown();
-            }, ModalityState.any());
-            try {
-                latch.await();
-            } catch (InterruptedException e) {
-                logger.error("error awaiting update latch!", e);
-                return new ProcessOutput(-1);
-            }
+            var authService = project.getService(AuthService.class);
+            var title = !hasIdentity ? RadicleBundle.message("newIdentity") :
+                    RadicleBundle.message("unlockIdentity");
+            dialogData = authService.showIdentityDialog(title, hasIdentity, dialog);
         }
         if (!isIdentityUnlocked && hasIdentity && hasStoredPassword) {
             var authOutput = rad.auth(storedPassword, "", radHome, radPath);
@@ -145,14 +127,14 @@ public abstract class RadAction {
             }
             return success;
         }
-        if (okButton.get()) {
-              var authOutput = rad.auth(passphrase.get(), alias.get(), radHome, radPath);
+        if (dialogData != null) {
+              var authOutput = rad.auth(dialogData.passphrase(), dialogData.alias(), radHome, radPath);
               var success = RadAuth.validateOutput(authOutput);
               if (RadAction.isSuccess(success)) {
                   output = rad.self(radHome, radPath);
                   lines = output.getStdoutLines(true);
                   radDetails = new RadDetails(lines);
-                  projectSettings.savePassphrase(radDetails.nodeId, passphrase.get());
+                  projectSettings.savePassphrase(radDetails.nodeId, dialogData.passphrase());
               }
               return success;
         }

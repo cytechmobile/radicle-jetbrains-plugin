@@ -3,6 +3,7 @@
 annotations = "24.1.0"
 jacksonJsr310 = "2.15.2"
 tika = "2.9.1"
+sshTools = "3.0.11"
 
 # test libraries
 junitJupiter = "5.10.0"

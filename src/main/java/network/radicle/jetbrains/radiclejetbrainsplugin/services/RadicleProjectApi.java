@@ -14,7 +14,6 @@ import com.intellij.serviceContainer.NonInjectable;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadWeb;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
@@ -23,6 +22,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -44,8 +44,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
@@ -93,7 +91,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue editIssueComment(RadIssue issue, String comment, String id, List<Embed> embedList) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -235,7 +233,7 @@ public class RadicleProjectApi {
 
     public boolean createIssue(String title, String description, List<String> assignees,
                                List<String> labels, GitRepository repo, String projectId, List<Embed> embedList) {
-        var session = createAuthenticatedSession(repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return false;
         }
@@ -260,7 +258,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch changePatchState(RadPatch patch, String state) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -283,7 +281,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch addRemovePatchLabel(RadPatch patch, List<String> addLabelList) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -306,7 +304,7 @@ public class RadicleProjectApi {
     }
 
     public String createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
-        var session = createAuthenticatedSession(repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -355,7 +353,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue changeIssueState(RadIssue issue, String state) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -378,7 +376,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue addRemoveIssueAssignees(RadIssue issue, List<String> addAssigneesList) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -401,7 +399,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch deleteRevisionComment(RadPatch patch, String revId, String commentId) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -424,7 +422,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch patchCommentReact(RadPatch patch, String commendId, String revId, String reaction, boolean active) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -448,7 +446,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction, boolean active) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -472,7 +470,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue addRemoveIssueLabel(RadIssue issue, List<String> addTagList) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -495,7 +493,7 @@ public class RadicleProjectApi {
     }
 
     public Map<String, Object> getProjectInfo(String projectId, GitRepository repo) {
-        var session = createAuthenticatedSession(repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -515,7 +513,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue addIssueComment(RadIssue issue, String comment, List<Embed> embedList) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -539,7 +537,7 @@ public class RadicleProjectApi {
     }
 
     public RadIssue changeIssueTitle(RadIssue issue) {
-        var session = createAuthenticatedSession(issue.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -562,7 +560,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch changePatchComment(String revisionId, String commentId, String body, RadPatch patch, List<Embed> embedList) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -587,7 +585,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch changePatchTitle(RadPatch patch) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -613,7 +611,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch addPatchComment(RadPatch patch, String comment, RadDiscussion.Location location, List<Embed> embedList) {
-        var session = createAuthenticatedSession(patch.repo);
+        var session = createAuthenticatedSession();
         if (session == null) {
             return null;
         }
@@ -645,19 +643,33 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public Session createAuthenticatedSession(GitRepository repo) {
+    private Session createSession() {
+        var url = getHttpNodeUrl() + "/api/v1/sessions";
+        try {
+            var post = new HttpPost(url);
+            var resp = makeRequest(post, RadicleBundle.message("createSessionError"));
+            if (!resp.isSuccess()) {
+                return null;
+            }
+            var session = MAPPER.readValue(resp.body, Session.class);
+            var authService = project.getService(AuthService.class);
+            var signSession = authService.authenticate(session);
+            return session.withSig(signSession);
+        } catch (Exception e) {
+            logger.warn("Unable to create session");
+            return null;
+        }
+    }
+
+    public Session createAuthenticatedSession() {
         var session = getCurrentSession();
         if (session != null) {
             return session;
         }
-
-        var radWeb = new RadWeb(repo);
-        var output = radWeb.perform();
-        var json = output.getStdout();
-        var s = parseSession(json);
-        if (s == null) {
+        var s = createSession();
+        if (s == null || Strings.isNullOrEmpty(s.signature)) {
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(project, RadicleBundle.message("errorParsingSession"), json,
+                    showNotification(project, RadicleBundle.message("authenticationError"), "",
                             NotificationType.ERROR, List.of()));
             return null;
         }
@@ -761,7 +773,11 @@ public class RadicleProjectApi {
 
     public record SeedNodeInfo(String id, String version, String errorMessage) { }
 
-    public record Session(String sessionId, String publicKey, String signature) { }
+    public record Session(String sessionId, String publicKey, String signature) {
+        public Session withSig(String sig) {
+            return new Session(sessionId(), publicKey(), sig);
+        }
+    }
 
     public record HttpResponseStatusBody(int status, String body) {
         public boolean isSuccess() {
@@ -769,20 +785,4 @@ public class RadicleProjectApi {
         }
     }
 
-    private Session parseSession(String json) {
-        try {
-            String regexPattern = "/session/([^/?]+)?\\?.*pk=([^&]+).*sig=([^&]+)";
-            Pattern pattern = Pattern.compile(regexPattern);
-            Matcher matcher = pattern.matcher(json);
-            if (matcher.find()) {
-                String sessionId = matcher.group(1);
-                String pkValue = matcher.group(2);
-                String sigValue = matcher.group(3);
-                return new Session(sessionId, pkValue, sigValue);
-            }
-        } catch (Exception e) {
-            logger.warn("error parsing session info from cli: {}", json);
-        }
-        return null;
-    }
 }

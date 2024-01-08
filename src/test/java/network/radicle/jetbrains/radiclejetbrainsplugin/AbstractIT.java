@@ -25,7 +25,9 @@ import kotlin.coroutines.Continuation;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -107,6 +109,8 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 
+        replaceAuthService();
+
         /* add seed node in config */
         initializeProject(firstRepo);
         addSeedNodeInConfig(firstRepo);
@@ -186,14 +190,26 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         }
     }
 
-    public RadicleProjectApi replaceApiService() {
-        var client = mock(CloseableHttpClient.class);
-        var api = new RadicleProjectApi(myProject, client) {
+    public void replaceAuthService() {
+        var identityDialog = new IdentityDialog() {
             @Override
-            public Session createAuthenticatedSession(GitRepository repo) {
-                return new Session("testId", "testPublicKey", "testSignature");
+            public boolean showAndGet() {
+                assertThat(getTitle()).isEqualTo(RadicleBundle.message("unlockIdentity"));
+                return true;
             }
         };
+        var authService = new AuthService(myProject, identityDialog) {
+            @Override
+            protected String sign(RadicleProjectApi.Session session, String password) {
+                return "okisign";
+            }
+        };
+        ServiceContainerUtil.replaceService(myProject, AuthService.class, authService, this.getTestRootDisposable());
+    }
+
+    public RadicleProjectApi replaceApiService() {
+        var client = mock(CloseableHttpClient.class);
+        var api = new RadicleProjectApi(myProject, client);
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
     }
