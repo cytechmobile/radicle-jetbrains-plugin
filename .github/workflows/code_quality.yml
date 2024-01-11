@@ -21,6 +21,6 @@ jobs:
 
       # Upload Qodana report as GitHub code scanning SARIF file
       - name: Qodana - Upload Github code scanning report
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
