@@ -77,6 +77,10 @@ public class IdentityDialog extends DialogWrapper {
         passphraseField.setText(passphrase);
     }
 
+    public IdentityDialogData getData() {
+       return new IdentityDialogData(passphraseField.getText(), aliasField.getText());
+    }
+
     protected void init() {
         super.init();
         var textFieldListener = new TextFieldListener();
@@ -89,4 +93,6 @@ public class IdentityDialog extends DialogWrapper {
             setOKActionEnabled(!aliasField.getText().isEmpty() || !aliasField.isVisible());
         }
     }
+
+    public record IdentityDialogData(String passphrase, String alias) { }
 }

@@ -161,6 +161,9 @@ public class OverviewTest extends AbstractIT {
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains("/sessions")) {
+                var session = new RadicleProjectApi.Session("testId", "testPublicKey", "testSignature");
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(session));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
                 // request to fetch issues
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
@@ -286,6 +289,7 @@ public class OverviewTest extends AbstractIT {
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
         // Fix AlreadyDisposedException
         Thread.sleep(1000);
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         var selectedLabels = (ArrayList<String>) res.get("labels");
         assertThat(selectedLabels.size()).isEqualTo(1);
@@ -370,8 +374,8 @@ public class OverviewTest extends AbstractIT {
         // Find create new issue button
         var createIssueButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
         createIssueButton.doClick();
-
-        var res = response.poll(5, TimeUnit.SECONDS);
+        executeUiTasks();
+        var res = response.poll(10, TimeUnit.SECONDS);
 
         var embeds = (ArrayList<HashMap<String, String>>) res.get("embeds");
         assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
@@ -434,6 +438,7 @@ public class OverviewTest extends AbstractIT {
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
         // Fix AlreadyDisposedException
         Thread.sleep(1000);
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         var state = (HashMap<String, String>) res.get("state");
         assertThat(state.get("status")).isEqualTo(RadIssue.State.CLOSED.status);
@@ -502,6 +507,7 @@ public class OverviewTest extends AbstractIT {
 
         popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
         Thread.sleep(1000);
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         var assignees = (ArrayList<String>) res.get("assignees");
         assertThat(assignees.size()).isEqualTo(1);
@@ -537,6 +543,7 @@ public class OverviewTest extends AbstractIT {
         jblist.getMouseListeners()[4].mouseClicked(null);
         var selectedEmoji = jblist.getSelectedValue();
         var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
@@ -547,7 +554,7 @@ public class OverviewTest extends AbstractIT {
         var reactorsPanel = ((JPanel) borderPanel.getComponents()[1]).getComponents()[1];
         var listeners = reactorsPanel.getMouseListeners();
         listeners[0].mouseClicked(null);
-
+        executeUiTasks();
         res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
@@ -589,13 +596,14 @@ public class OverviewTest extends AbstractIT {
         var updatedIssueModel = issueTabController.getIssueModel();
         var updatedIssue = updatedIssueModel.getValue();
         assertThat(editedTitle).isEqualTo(updatedIssue.title);
-
+        executeUiTasks();
         // Open createEditor
         issue.repo = firstRepo;
         issue.project = getProject();
         issueEditorProvider.createEditor(getProject(), editorFile);
         issueComponent = issueEditorProvider.getIssueComponent();
         titlePanel = issueComponent.getHeaderPanel();
+        executeUiTasks();
         editBtn = UIUtil.findComponentOfType(titlePanel, InlineIconButton.class);
         //send event that we clicked edit
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
@@ -621,6 +629,8 @@ public class OverviewTest extends AbstractIT {
         prBtn = prBtns.get(1);
         /* click the button to edit the patch */
         issue.title = editedTitle;
+        issue.repo = firstRepo;
+        issue.project = getProject();
         prBtn.doClick();
         /* Wait for the reload */
         Thread.sleep(1000);
@@ -669,7 +679,7 @@ public class OverviewTest extends AbstractIT {
         var prBtn = prBtns.get(0);
         prBtn.doClick();
         Thread.sleep(1000);
-
+        executeUiTasks();
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("type")).isEqualTo("comment");
         assertThat((String) map.get("body")).contains(dummyEmbed.getOid());
@@ -705,7 +715,7 @@ public class OverviewTest extends AbstractIT {
         var prBtn = prBtns.get(0);
         prBtn.doClick();
         Thread.sleep(1000);
-
+        executeUiTasks();
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("type")).isEqualTo("comment");
         assertThat(map.get("body")).isEqualTo(dummyComment);
@@ -760,6 +770,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         prBtn = prBtns.get(1);
         prBtn.doClick();
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("id")).isEqualTo(issue.id);
         assertThat(res.get("type")).isEqualTo("comment.edit");

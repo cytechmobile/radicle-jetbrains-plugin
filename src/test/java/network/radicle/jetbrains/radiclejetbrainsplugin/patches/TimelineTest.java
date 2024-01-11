@@ -197,6 +197,9 @@ public class TimelineTest extends AbstractIT {
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
+            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains("/sessions")) {
+                var session = new RadicleProjectApi.Session("testId", "testPublicKey", "testSignature");
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(session));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
@@ -274,6 +277,8 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testDeleteReviewsComments() throws InterruptedException {
+        //Save the password in order to bypass the identity dialog
+        radicleProjectSettingsHandler.savePassphrase("testPublicKey", "test");
         var authorId = "did:key:fakeDid";
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
@@ -337,6 +342,7 @@ public class TimelineTest extends AbstractIT {
         /* click the button to edit the patch */
 
         prBtn.doClick();
+        executeUiTasks();
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("type")).isEqualTo("revision.comment.edit");
         assertThat(map.get("body")).isEqualTo(editedComment);
@@ -373,6 +379,7 @@ public class TimelineTest extends AbstractIT {
         var prBtn = prBtns.get(0);
         prBtn.doClick();
         //Comment
+        executeUiTasks();
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
         assertThat(map.get("body")).isEqualTo(dummyComment);
@@ -591,7 +598,7 @@ public class TimelineTest extends AbstractIT {
         //Remove first tag
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
-
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         var addList = (ArrayList<String>) res.get("labels");
         assertThat(addList.size()).isEqualTo(1);
@@ -628,6 +635,7 @@ public class TimelineTest extends AbstractIT {
         jblist.getMouseListeners()[4].mouseClicked(null);
         var selectedEmoji =  jblist.getSelectedValue();
         var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.react");
         assertThat((Boolean) res.get("active")).isTrue();
@@ -640,7 +648,7 @@ public class TimelineTest extends AbstractIT {
         var reactorsPanel = ((JPanel) borderPanel.getComponents()[1]).getComponents()[1];
         var listeners = reactorsPanel.getMouseListeners();
         listeners[0].mouseClicked(null);
-
+        executeUiTasks();
         res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.react");
         assertThat((Boolean) res.get("active")).isFalse();
@@ -718,7 +726,7 @@ public class TimelineTest extends AbstractIT {
 
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
-
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         var state = (HashMap<String, String>) res.get("state");
         assertThat(state.get("status")).isEqualTo(RadPatch.State.DRAFT.status);
@@ -786,6 +794,7 @@ public class TimelineTest extends AbstractIT {
         prBtn.doClick();
         executeUiTasks();
         Thread.sleep(1000);
+        executeUiTasks();
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("type")).isEqualTo("revision.comment");
         assertThat((String) map.get("body")).contains(dummyEmbed.getOid());
@@ -855,6 +864,7 @@ public class TimelineTest extends AbstractIT {
         prBtn.doClick();
         executeUiTasks();
         Thread.sleep(1000);
+        executeUiTasks();
         response.poll(5, TimeUnit.SECONDS);
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
@@ -874,7 +884,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         prBtn = prBtns.get(1);
         prBtn.doClick();
-
+        executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.edit");
         assertThat(res.get("revision")).isEqualTo(patch.revisions.get(1).id());

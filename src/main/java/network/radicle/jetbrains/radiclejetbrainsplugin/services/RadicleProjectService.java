@@ -76,10 +76,10 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput self(String radHome, String radPath) {
-        var alias = executeCommand(radPath, radHome, ".", List.of("self", "--alias"), null, "");
-        var nid = executeCommand(radPath, radHome, ".", List.of("self", "--nid"), null, "");
-        var did = executeCommand(radPath, radHome, ".", List.of("self", "--did"), null, "");
-        var sshFingerPrint = executeCommand(radPath, radHome, ".", List.of("self", "--ssh-fingerprint"), null, "");
+        var alias = executeCommand(radPath, radHome, ".", List.of("self", "--alias"), null);
+        var nid = executeCommand(radPath, radHome, ".", List.of("self", "--nid"), null);
+        var did = executeCommand(radPath, radHome, ".", List.of("self", "--did"), null);
+        var sshFingerPrint = executeCommand(radPath, radHome, ".", List.of("self", "--ssh-fingerprint"), null);
         if (!RadAction.isSuccess(alias) || !RadAction.isSuccess(nid) || !RadAction.isSuccess(did) ||
                 !RadAction.isSuccess(sshFingerPrint)) {
             return new ProcessOutput(-1);
@@ -129,7 +129,7 @@ public class RadicleProjectService {
 
     public ProcessOutput setUpstream(String branch, String targetBranch, GitRepository repository) {
         return executeCommand("git", "", repository.getRoot().getPath(),
-                List.of("branch", branch, "--set-upstream-to", targetBranch), repository, "");
+                List.of("branch", branch, "--set-upstream-to", targetBranch), repository);
     }
 
     public ProcessOutput fetchPeerChanges(GitRepository repo) {
@@ -163,7 +163,7 @@ public class RadicleProjectService {
         if (Strings.isNullOrEmpty(key)) {
             return false;
         }
-        var output = executeCommand("ssh-add", "", ".", List.of("-l"), null, "");
+        var output = executeCommand("ssh-add", "", ".", List.of("-l"), null);
         if (!RadAction.isSuccess(output)) {
             return false;
         }
@@ -176,6 +176,39 @@ public class RadicleProjectService {
         } else {
             return executeCommand(path, ".", List.of("--version"), null);
         }
+    }
+
+    private String getWindowPathManually(String path) {
+        var output = executeCommand("echo", "", ".", List.of("$WSL_DISTRO_NAME"), null);
+        if (RadAction.isSuccess(output)) {
+            var distroName = output.getStdout().trim();
+            if (!distroName.isEmpty()) {
+                return "\\\\wsl$\\" + distroName + path;
+            }
+        }
+        return null;
+    }
+
+    private String getWindowPathUsingWslPath(String path) {
+        /*
+        wlspath is a command that is installed by default with the Ubuntu distributions and translate
+        linux path to windows path
+        */
+        var output = executeCommand("wslpath", "", ".", List.of("-w", path), null);
+        if (RadAction.isSuccess(output)) {
+            return output.getStdout().trim();
+        }
+        return null;
+    }
+
+    public String getWindowsPath(String path) {
+        // Attempt to get the Windows path using wslpath utility function
+        String windowsPath = getWindowPathUsingWslPath(path);
+        if (windowsPath != null) {
+            return windowsPath;
+        }
+        // If wslpath fails, try to construct the Windows path manually
+        return getWindowPathManually(path);
     }
 
     public ProcessOutput trackRepo(RadTrack.Repo repo) {
@@ -210,11 +243,6 @@ public class RadicleProjectService {
             return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin", "--alias", alias), null, passphrase);
         }
         return executeCommandWithStdin(".", radHome, radPath, List.of("auth", "--stdin"), null, passphrase);
-    }
-
-    public ProcessOutput radWebJson(GitRepository repo) {
-        var url = projectSettingsHandler.loadSettings().getSeedNode().url.replace("http://", "");
-        return executeCommand(repo.getRoot().getPath(), List.of("web", "--no-open", "--connect", "--listen", url), repo);
     }
 
     public ProcessOutput remoteList(GitRepository root) {
@@ -255,13 +283,17 @@ public class RadicleProjectService {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radPath = projectSettings.getPath();
         final var radHome = projectSettings.getRadHome();
-        return executeCommand(radPath, radHome, workDir, args, repo, "");
+        return executeCommand(radPath, radHome, workDir, args, repo);
     }
 
     public ProcessOutput executeCommand(String exePath, String workDir, List<String> args, @Nullable GitRepository repo) {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radHome = projectSettings.getRadHome();
-        return executeCommand(exePath, radHome, workDir, args, repo, "");
+        return executeCommand(exePath, radHome, workDir, args, repo);
+    }
+
+    public ProcessOutput executeCommand(String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo) {
+        return executeCommand(exePath, radHome, workDir, args, repo, null);
     }
 
     public ProcessOutput executeCommand(
@@ -293,7 +325,7 @@ public class RadicleProjectService {
             if (console != null) {
                 console.showCommandLine("[" + workDir + "] " + cmdLine.getCommandLineString());
             }
-            if (!Strings.isNullOrEmpty(stdin)) {
+            if (stdin != null) {
                 result = execAndGetOutputWithStdin(cmdLine, stdin);
             } else {
                 result = execAndGetOutput(cmdLine);

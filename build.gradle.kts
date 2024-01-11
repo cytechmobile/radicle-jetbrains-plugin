@@ -44,6 +44,7 @@ dependencies {
     // Deserialize timestamps to Instant
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${libs.versions.jacksonJsr310.get()}")
     implementation("org.apache.tika:tika-core:${libs.versions.tika.get()}")
+    implementation("com.sshtools:maverick-synergy-client:${libs.versions.sshTools.get()}")
 }
 
 
