@@ -21,7 +21,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
-    private static final DefaultArtifactVersion MIN_VERSION = new DefaultArtifactVersion("0.8.0");
-    private static final DefaultArtifactVersion MAX_VERSION = new DefaultArtifactVersion("0.9.0");
+    private static final Version MIN_VERSION = new Version("0.8.0");
+    private static final Version MAX_VERSION = new Version("0.9.0");
     private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
     public static final String ID = RadicleBundle.message("radicle");
 
@@ -349,8 +348,12 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         if (Strings.isNullOrEmpty(v)) {
             return false;
         }
-        var version = new DefaultArtifactVersion(v.replace("\n", "").trim());
-        return version.compareTo(MIN_VERSION) >= 0 && version.compareTo(MAX_VERSION) <= 0;
+        try {
+            var radVersion = new Version(v.replace("\n", "").trim());
+            return radVersion.compareTo(MIN_VERSION) >= 0 && radVersion.compareTo(MAX_VERSION) <= 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void showHideEnforceLabel(String radVersion) {
@@ -460,6 +463,38 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             if (!textField.getText().contains(RadicleBundle.message("autoDetected"))) {
                 textField.getTextField().setForeground(JBColor.BLACK);
             }
+        }
+    }
+
+    public static class Version implements Comparable<Version> {
+        private final String version;
+
+        public Version(String version) {
+            if (version == null) {
+                throw new IllegalArgumentException("Version can not be null");
+            }
+            if (!version.matches("[0-9]+(\\.[0-9]+)*")) {
+                throw new IllegalArgumentException("Invalid version format");
+            }
+            this.version = version;
+        }
+
+        @Override
+        public int compareTo(@NotNull Version ver) {
+            String[] thisParts = this.version.split("\\.");
+            String[] verParts = ver.version.split("\\.");
+            int length = Math.max(thisParts.length, verParts.length);
+            for (var i = 0; i < length; i++) {
+                var thisPart = i < thisParts.length ? Integer.parseInt(thisParts[i]) : 0;
+                var thatPart = i < verParts.length ? Integer.parseInt(verParts[i]) : 0;
+                if (thisPart < thatPart) {
+                    return -1;
+                }
+                if (thisPart > thatPart) {
+                    return 1;
+                }
+            }
+            return 0;
         }
     }
 }
