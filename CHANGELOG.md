@@ -4,18 +4,82 @@
 
 ## Unreleased
 
+## 0.8.0 - 2024-01-12
+
+- Edit patch comments by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/388
+
+- Create patch proposal by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/397
+
+- Support attachments in issues / patches by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/415
+
+- Edit issue comments by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/420
+
+- merge patch by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/418
+
+- inline comments by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/433
+
+- Show a notification error if the httpd server is down by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/403
+
+- Show the diff from the latest revision only by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/409
+
+- Preselected Filters by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/417
+
+- Fetch all issues / patches by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/383
+
+- Add embeds parameter to create issue api by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/386
+
+- Run `rad sync` synchronously by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/389
+
+- Fix radicle tool window disappearing by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/402
+
+- Patch Checkout by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/411
+
+- Patch overview panel by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/435
+
+- unencrypted identities by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/437
+
+- Review Comments & Session: by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/441
+
+- Publish to radicle by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/444
+
+- Publish Dialog by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/449
+
+- Authenticate User by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/448
+
+- Fix settings dialog in Rust Rover & GoLand Ides by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/452
+
+- Changelog update - `v0.7.3` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/382
+
+- Bump org.jetbrains.intellij from 1.15.0 to 1.16.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/390
+
+- Build/updates by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/428
+
+- Update remote robot by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/436
+
+- Bump org.jetbrains:annotations from 24.0.1 to 24.1.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/421
+
+- Bump org.jetbrains.intellij from 1.16.0 to 1.16.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/426
+
+- Bump JetBrains/qodana-action from 2023.2.9 to 2023.3.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/430
+
+- Bump github/codeql-action from 2 to 3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/431
+
+- Bump actions/upload-artifact from 3 to 4 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/432
+
+- Bump org.jetbrains.kotlin.jvm from 1.9.20 to 1.9.22 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/439
+
+- bump FedericoCarboni/setup-ffmpeg from 2 to 3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/445
+
+- Patches/304a5512dae85c38dac47b600496302ccdcabad4 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/451
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.3...v0.8.0
+
 ## 0.7.3 - 2023-09-28
 
 - Synchronizing your Radicle project with the network is something that the `radicle-node` automagically takes care of you behind the scenes. But not always (as the node is sometimes not running, or offline, etc.) That's why it's important to allow the user to manually `rad sync` their project! 🔛  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/376
-
 - Let's be honest, markdown is much prettier when rendered! We weren't rendering, so this PR adds markdown support in Radicle Issue and Patch description and comments! 🤩  ( by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/375
-
 - Small fix when we didn't show the radicle tool window after the user first published a project.  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/374
-
 - Few (successful) projects have less than 10 issues or patches. Our test projects did though(!!), so we were previously only loading the latest 10... That's now fixed, so the plugin is ready for some real-world projects! 1️⃣ 0️⃣  by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/378
-
 - It's now possible to add arbitrary Decentralized Identifiers (DIDs) as assignees to an issue (and not just assign an issue to delegates) ✅  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/379
-
 - Improved the emoji reaction button look and feel, so it should hopefully be easier to add reactions now! 👌 by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/381
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.2...v0.7.3
 
