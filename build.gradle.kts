@@ -151,6 +151,11 @@ tasks {
         systemProperty("ide.show.tips.on.startup.default.value", "false")
         //    systemProperty "eap.require.license", "true"
 
+//        val projectPath = environment("PROJECT_PATH").getOrElse("")
+//        if (projectPath.isNotEmpty()) {
+//            args (projectPath)
+//        }
+
     }
 
     test {
@@ -180,10 +185,12 @@ tasks {
 }
 
 val uiTestTask = tasks.register<Test>("uiTest") {
+    useJUnitPlatform()
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
+    exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
 }
 
-/*
-tasks.check {
-    //dependsOn(uiTestTask)
-}*/
+tasks.register<Test>("endToEndTests") {
+    useJUnitPlatform()
+    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
+}

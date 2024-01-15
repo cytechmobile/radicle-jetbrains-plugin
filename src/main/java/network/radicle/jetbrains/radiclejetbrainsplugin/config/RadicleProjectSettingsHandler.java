@@ -22,11 +22,15 @@ public class RadicleProjectSettingsHandler {
         saveDefaultSeedNodes();
     }
 
+    public Project getProject() {
+        return project;
+    }
+
     public String getRadHome() {
         return getApplicationProperties().getValue(RAD_HOME_KEY, "");
     }
 
-    private String getPath() {
+    public String getPath() {
         return getApplicationProperties().getValue(PATH_KEY, "");
     }
 

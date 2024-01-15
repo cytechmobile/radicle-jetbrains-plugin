@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright componentSearchTimeoutInSeconds00-componentSearchTimeoutInSecondscomponentSearchTimeoutInSeconds JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package network.radicle.jetbrains.radiclejetbrainsplugin.steps;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
+import com.intellij.remoterobot.fixtures.JButtonFixture;
 import com.intellij.remoterobot.fixtures.JLabelFixture;
+import com.intellij.remoterobot.fixtures.JTreeFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.Keyboard;
 import kotlin.Unit;
@@ -12,6 +14,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.WelcomeFrameFixture;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -20,14 +25,34 @@ import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
 import static com.intellij.remoterobot.utils.UtilsKt.hasSingleComponent;
+import static java.awt.event.KeyEvent.VK_ALT;
+import static java.awt.event.KeyEvent.VK_COMMA;
+import static java.awt.event.KeyEvent.VK_CONTROL;
+import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_META;
+import static java.awt.event.KeyEvent.VK_S;
 import static java.time.Duration.ofSeconds;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture.byTitle;
 
 public class ReusableSteps {
     private final RemoteRobot remoteRobot;
+    private final Keyboard keyboard;
+    private static final int componentSearchTimeoutInSeconds = 60;
 
     public ReusableSteps(RemoteRobot remoteRobot) {
+
         this.remoteRobot = remoteRobot;
+        keyboard = new Keyboard(remoteRobot);
+    }
+
+    public static void takeScreenshot(RemoteRobot remoteRobot, String image) {
+        try {
+            ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", image));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void importProjectFromVCS(Path localDir) {
@@ -39,12 +64,11 @@ public class ReusableSteps {
             final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"),
                     Duration.ofSeconds(50));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
-            remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(20)).click();
-            final var keyboard = new Keyboard(remoteRobot);
+            remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(componentSearchTimeoutInSeconds)).click();
             keyboard.enterText("https://github.com/radicle-dev/radicle-cli", 0);
 
             final var dirInputFieldLocator = byXpath("//div[@class='TextFieldWithBrowseButton']");
-            remoteRobot.find(ComponentFixture.class, dirInputFieldLocator, Duration.ofSeconds(20)).click();
+            remoteRobot.find(ComponentFixture.class, dirInputFieldLocator, Duration.ofSeconds(componentSearchTimeoutInSeconds)).click();
             //create tmp dir to clone project to:
             keyboard.selectAll();
             keyboard.backspace();
@@ -54,10 +78,127 @@ public class ReusableSteps {
         });
     }
 
+    public void importRadicleProject(Path localDir) {
+
+        step("Import Project from Radicle", () -> {
+
+            // get from VCS
+            final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
+            welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
+            welcomeFrame.openProjectLink().click();
+
+            final var projectPathFieldLocator = byXpath("//div[@class='BorderlessTextField']");
+            remoteRobot.find(ComponentFixture.class, projectPathFieldLocator, Duration.ofSeconds(componentSearchTimeoutInSeconds)).click();
+            keyboard.selectAll();
+            keyboard.backspace();
+            keyboard.enterText("/" + localDir.toAbsolutePath(), 0);
+            keyboard.enter();
+
+        });
+    }
+
+    public void openRadicleToolWindow() {
+
+        step("Open Radicle Tool Window", () -> {
+            keyboard.hotKey(VK_ESCAPE);
+
+//            try {
+//                remoteRobot.find(JLabelFixture.class, byXpath("//div[@text='Patches']"), ofSeconds(10));
+//            } catch (WaitForConditionTimeoutException timeout) {
+//                final var radicleToolWindow = byXpath("//div[@text='Radicle']");
+//                remoteRobot.find(ComponentFixture.class, radicleToolWindow, ofSeconds(componentSearchTimeoutInSeconds)).click();
+//            }
+            actionMenu(remoteRobot, "View", "").click();
+            actionMenu(remoteRobot, "Tool Windows", "View").click();
+            actionMenuItem(remoteRobot, "Radicle").click();
+
+
+
+        });
+
+    }
+
+    public void configureRadicleSettings() {
+
+        step("Configure Radicle Settings", () -> {
+
+            //shortcut to open settings
+            keyboard.hotKey(VK_CONTROL,VK_ALT,VK_S);
+
+            clickOnVersionControlSetting(remoteRobot);
+
+            clickOnRadicleSetting(remoteRobot);
+
+            unlockIdentity(remoteRobot);
+
+            applyAndSaveSettings(remoteRobot);
+
+        });
+
+    }
+
+    public void switchToRadicleIssues() {
+        step("Open Radicle Issues", () -> {
+
+            final var issuesTab = byXpath("//div[@text.key='issues open.in.browser.group.issues' and @text='Issues']");
+            remoteRobot.find(ComponentFixture.class, issuesTab, Duration.ofSeconds(componentSearchTimeoutInSeconds)).click();
+
+        });
+
+    }
+
+
+    private static void applyAndSaveSettings(RemoteRobot remoteRobot) {
+        var settingsDialog = remoteRobot.find(
+                DialogFixture.class,
+                byXpath("//div[@class='MyDialog' and @title='Settings']")
+        );
+        settingsDialog.button("OK").click();
+    }
+
+    private static void unlockIdentity(RemoteRobot remoteRobot) {
+        remoteRobot.find(
+                JButtonFixture.class,
+                byXpath("//div[@class='JLabel' and @text='Path to Profile Storage (RAD_HOME)']/following-sibling::div[@class='JButton' and @text='Test']"),
+                ofSeconds(componentSearchTimeoutInSeconds)
+            )
+            .click();
+
+        var unlockIdentityDialog = remoteRobot.find(
+                DialogFixture.class,
+                byXpath("//div[@class='MyDialog' and @title='Unlock Identity']"),
+                ofSeconds(componentSearchTimeoutInSeconds)
+        );
+        unlockIdentityDialog.button("OK").click();
+
+    }
+
+    private static void clickOnRadicleSetting(RemoteRobot remoteRobot) {
+        remoteRobot.find(
+                JTreeFixture.class,
+                byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
+                ofSeconds(componentSearchTimeoutInSeconds)
+            )
+            .findText("Radicle")
+            .click();
+    }
+
+    private static void clickOnVersionControlSetting(RemoteRobot remoteRobot) {
+        remoteRobot.find(
+                JTreeFixture.class,
+                byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
+                ofSeconds(componentSearchTimeoutInSeconds)
+            )
+            .findText("Version Control")
+            .click();
+    }
+
     public void closeTipOfTheDay() {
         step("Close Tip of the Day if it appears", () -> {
-            waitFor(Duration.ofSeconds(20), () -> remoteRobot.findAll(DialogFixture.class,
-                    byXpath("//div[@class='MyDialog'][.//div[@text='Running startup activities...']]")).size() == 0);
+            waitFor(Duration.ofSeconds(componentSearchTimeoutInSeconds), () -> remoteRobot.findAll(
+                    DialogFixture.class,
+                    byXpath("//div[@class='MyDialog'][.//div[@text='Running startup activities...']]")
+            ).isEmpty());
             final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(10));
             idea.dumbAware(() -> {
                 try {
@@ -72,7 +213,6 @@ public class ReusableSteps {
     public void autocomplete(String text) {
         step("Autocomplete '" + text + "'", () -> {
             final Locator completionMenu = byXpath("//div[@class='HeavyWeightWindow']");
-            final Keyboard keyboard = new Keyboard(remoteRobot);
             keyboard.enterText(text);
             waitFor(ofSeconds(5), () -> hasSingleComponent(remoteRobot, completionMenu));
             remoteRobot.find(ComponentFixture.class, completionMenu)
