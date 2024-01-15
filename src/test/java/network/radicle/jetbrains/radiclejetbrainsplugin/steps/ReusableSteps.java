@@ -38,7 +38,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixtu
 public class ReusableSteps {
     private final RemoteRobot remoteRobot;
     private final Keyboard keyboard;
-    private static final int COMPONENT_SEARCH_TIMEOUT_IN_SECONDS = 60;
+    public static final int COMPONENT_SEARCH_TIMEOUT_IN_SECONDS = 60;
 
     public ReusableSteps(RemoteRobot remoteRobot) {
 
@@ -73,7 +73,6 @@ public class ReusableSteps {
             welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
             welcomeFrame.importProjectLink().click();
 
-            ReusableSteps.takeScreenshot(remoteRobot, "00_import_project.png");
 
             final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"),
                     Duration.ofSeconds(50));
@@ -86,9 +85,8 @@ public class ReusableSteps {
             //create tmp dir to clone project to:
             keyboard.selectAll();
             keyboard.backspace();
-            keyboard.enterText(localDir.toAbsolutePath().toString(), 0);
+            keyboard.enterText(localDir.toAbsolutePath().toString().replaceAll("\\\\", "\\\\"), 0);
 
-            ReusableSteps.takeScreenshot(remoteRobot, "01_clone.png");
 
             importProjectDialog.button("Clone").click();
         });
@@ -120,7 +118,6 @@ public class ReusableSteps {
             final var radicleToolWindow = byXpath("//div[@accessiblename='Left Stripe']/div[@text='Radicle']");
             remoteRobot.find(ComponentFixture.class, radicleToolWindow, ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)).click();
 
-            ReusableSteps.takeScreenshot(remoteRobot, "radicle_tool_window.png");
 
         });
 
@@ -128,19 +125,7 @@ public class ReusableSteps {
 
     public void configureRadicleSettings() {
 
-        step("Open Settings", () -> {
-
-            //shortcut to open settings
-            if (SystemInfo.isWindows || SystemInfo.isLinux) {
-                keyboard.hotKey(VK_CONTROL, VK_ALT, VK_S);
-            } else {
-                keyboard.hotKey(VK_META, VK_COMMA);
-            }
-            ReusableSteps.takeScreenshot(remoteRobot, "settings.png");
-
-        });
-
-        clickOnVersionControlSetting(remoteRobot);
+        clickOnVersionControlSetting(remoteRobot, keyboard);
 
         clickOnRadicleSetting(remoteRobot);
 
@@ -164,9 +149,10 @@ public class ReusableSteps {
 
     private static void applyAndSaveSettings(RemoteRobot remoteRobot) {
         step("Apply and Save Settings", () -> {
+            var settingsTitle = (SystemInfo.isMac) ? "Preferences" : "Settings";
             var settingsDialog = remoteRobot.find(
                     DialogFixture.class,
-                    byXpath("//div[@class='MyDialog' and @title='Settings']")
+                    byXpath("//div[@class='MyDialog' and @title='" + settingsTitle + "']")
             );
             settingsDialog.button("OK").click();
         });
@@ -174,30 +160,38 @@ public class ReusableSteps {
 
     private static void unlockIdentity(RemoteRobot remoteRobot, Keyboard keyboard) {
         step("set RAD HOME", () -> {
-            remoteRobot.find(
+            var profile = remoteRobot.find(
                     JButtonFixture.class,
                     byXpath("//div[@class='JLabel' and @text='Path to Profile Storage (RAD_HOME)']/following-sibling::div[@class='TextFieldWithBrowseButton']"),
                     ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-                )
-                .click();
-            keyboard.selectAll();
-            keyboard.backspace();
-            keyboard.enterText(System.getenv("RAD_HOME"));
-            ReusableSteps.takeScreenshot(remoteRobot, "rad_home.png");
+                );
+            if (!profile.getText().equals(System.getenv("RAD_HOME"))) {
 
+                profile.click();
+                ReusableSteps.takeScreenshot(remoteRobot, "rad_home_click.png");
+                keyboard.selectAll();
+                ReusableSteps.takeScreenshot(remoteRobot, "rad_home_select.png");
+                keyboard.backspace();
+                ReusableSteps.takeScreenshot(remoteRobot, "rad_home_empty.png");
+                keyboard.enterText(System.getenv("RAD_HOME"));
+                ReusableSteps.takeScreenshot(remoteRobot, "rad_home.png");
+            }
         });
 
         step("set path to RAD CLI", () -> {
-            remoteRobot.find(
+            var radPath = remoteRobot.find(
                     JButtonFixture.class,
                     byXpath("//div[@class='JLabel' and @text='Path to Rad executable:']/following-sibling::div[@class='TextFieldWithBrowseButton']"),
                     ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-                )
-                .click();
-            keyboard.selectAll();
-            keyboard.backspace();
-            keyboard.enterText(System.getenv("RAD_PATH"));
-            ReusableSteps.takeScreenshot(remoteRobot, "rad_path.png");
+                );
+            if (!radPath.getText().equals(System.getenv("RAD_PATH"))) {
+
+                radPath.click();
+                keyboard.selectAll();
+                keyboard.backspace();
+                keyboard.enterText(System.getenv("RAD_PATH"));
+                ReusableSteps.takeScreenshot(remoteRobot, "rad_path.png");
+            }
 
             remoteRobot.find(
                 JButtonFixture.class,
@@ -235,17 +229,39 @@ public class ReusableSteps {
                 )
                 .findText("Radicle")
                 .doubleClick();
+            ReusableSteps.takeScreenshot(remoteRobot, "radicle_settings.png");
         });
     }
 
-    private static void clickOnVersionControlSetting(RemoteRobot remoteRobot) {
+    private static void clickOnVersionControlSetting(RemoteRobot remoteRobot, Keyboard keyboard) {
+        JTreeFixture settingsTree;
+
+        step("Open Settings", () -> {
+
+            openSettingsWithHotKey(keyboard);
+
+        });
+
         step("Click on Version Control Setting", () -> {
-            remoteRobot.find(
-                    JTreeFixture.class,
-                    byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
-                    ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-            ).findText("Version Control")
-            .doubleClick();
+            try {
+                remoteRobot.find(
+                        JTreeFixture.class,
+                        byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
+                        ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
+                    ).findText("Version Control")
+                    .doubleClick();
+                ReusableSteps.takeScreenshot(remoteRobot, "settings.png");
+
+            } catch (WaitForConditionTimeoutException e) {
+                openSettingsWithHotKey(keyboard);
+                remoteRobot.find(
+                        JTreeFixture.class,
+                        byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
+                        ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
+                    ).findText("Version Control")
+                    .doubleClick();
+                ReusableSteps.takeScreenshot(remoteRobot, "settings_retry.png");
+            }
             ReusableSteps.takeScreenshot(remoteRobot, "Version_Control.png");
         });
     }
@@ -277,5 +293,14 @@ public class ReusableSteps {
                     .click();
             keyboard.enter();
         });
+    }
+
+    private static void openSettingsWithHotKey(Keyboard keyboard) {
+        //shortcut to open settings
+        if (SystemInfo.isWindows || SystemInfo.isLinux) {
+            keyboard.hotKey(VK_CONTROL, VK_ALT, VK_S);
+        } else {
+            keyboard.hotKey(VK_META, VK_COMMA);
+        }
     }
 }

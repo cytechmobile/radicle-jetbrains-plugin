@@ -1,6 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.endToEnd;
 
-import com.automation.remarks.video.annotations.Video;
+import com.automation.remarks.junit5.Video;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.fixtures.JLabelFixture;
@@ -109,10 +109,8 @@ public class RadicleEndToEndTest {
 
         if (Strings.isNotEmpty(projectPath)) {
             commonSteps.openProject(projectPath);
-            ReusableSteps.takeScreenshot(remoteRobot, "3_project_path.png");
         } else if (Strings.isNotEmpty(radicleRepo)) {
             commonSteps.openProject(radicleRepo);
-            ReusableSteps.takeScreenshot(remoteRobot, "3_radicle_repo.png");
         }
 
         commonSteps.waitForSmartMode(5);

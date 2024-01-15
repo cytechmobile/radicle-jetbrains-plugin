@@ -64,16 +64,19 @@ jobs:
         with:
           path: ${{ github.workspace }}/radicle-jetbrains-plugin
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: corretto
           java-version: 17
       - name: Setup FFmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v2
+        uses: FedericoCarboni/setup-ffmpeg@v3
         with:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Clean
+        working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
+        run: ./gradlew :clean
       - name: Run Idea
         env:
           RADICLE_REPO: ${{ github.workspace }}/a_blog
@@ -85,7 +88,7 @@ jobs:
           mkdir -p build/reports
           ls -alh ${RADICLE_REPO}
           echo "Opening ${RADICLE_REPO} in IDE..."
-          gradle :runIdeForUiTests > build/reports/idea.log &
+          ./gradlew :runIdeForUiTests > build/reports/idea.log &
       - name: Wait for Idea started
         uses: jtalk/url-health-check-action@v3
         with:
@@ -101,7 +104,7 @@ jobs:
         working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
         run: |
           export DISPLAY=:99.0
-          gradle :endToEndTests  -Dargs="--add-opens=java.base/java.lang=ALL-UNNAMED"
+          ./gradlew :endToEndTests
       - name: Move video
         if: ${{ failure() }}
         working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin

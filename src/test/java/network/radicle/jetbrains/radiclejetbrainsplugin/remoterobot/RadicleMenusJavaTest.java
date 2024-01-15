@@ -1,7 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot;
 
+import com.automation.remarks.junit5.Video;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
+import com.intellij.remoterobot.fixtures.ContainerFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.steps.CommonSteps;
 import com.intellij.remoterobot.utils.Keyboard;
@@ -78,22 +80,34 @@ public class RadicleMenusJavaTest {
 
     @Test
     @Tag("video")
+    @Video
     void initialiseRadicleProject(final RemoteRobot remoteRobot) {
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
         sharedSteps.importProjectFromVCS(tmpDir);
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofSeconds(20));
-        waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofMinutes(5));
 
-        ReusableSteps.takeScreenshot(remoteRobot, "1_project_imported.png");
+        step("Wait for project to load", () -> {
+            waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+
+            var projectView = remoteRobot.find(ContainerFixture.class, byXpath("ProjectViewTree", "//div[@class='ProjectViewTree']"), ofMinutes(5));
+            waitFor(ofMinutes(5), () -> projectView.hasText(".cargo"));
+        });
+
+
         step("Ensure Radicle sub-menu category is visible", () -> {
+
+            remoteRobot.find(ComponentFixture.class,
+                            byXpath("//div[@accessiblename='Git' and @class='ActionMenu' and @text='Git']"),
+                            ofSeconds(ReusableSteps.COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
+            ).isShowing();
+
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git", "").click();
             actionMenu(remoteRobot, "Radicle", "Git").isShowing();
         });
 
-        ReusableSteps.takeScreenshot(remoteRobot, "2_sub_menu.png");
         step("Ensure Radicle sub-menu items (fetch, pull) show", () -> {
             keyboard.hotKey(VK_ESCAPE);
             actionMenu(remoteRobot, "Git", "").click();
@@ -105,7 +119,6 @@ public class RadicleMenusJavaTest {
             actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
         });
 
-        ReusableSteps.takeScreenshot(remoteRobot, "3_toolbar.png");
         step("Ensure Radicle toolbar actions show", () -> {
             keyboard.hotKey(VK_ESCAPE);
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
