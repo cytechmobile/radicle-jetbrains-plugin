@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 jobs:
   ui-tests:
-    name: run UI tests for ${{ matrix.os }}
+    name: Run UI tests for ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
