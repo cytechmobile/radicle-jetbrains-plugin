@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
@@ -20,7 +21,9 @@ import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
@@ -53,8 +56,16 @@ public class IssueListPanelTest extends AbstractIT {
                 var query = req.getURI().getQuery();
                 var parts = query.split("&");
                 var state = parts[1].split("=")[1];
-                var issue = getTestIssues().stream().filter(is -> is.state.status.equals(state)).toList();
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(issue));
+                var myIssues = getTestIssues().stream().filter(is -> is.state.status.equals(state)).toList();
+                var serializeIssues = RadicleProjectApi.MAPPER.convertValue(myIssues, new TypeReference<List<Map<String, Object>>>() { });
+                for (var is : serializeIssues) {
+                    var discussions = (ArrayList<Map<String, Object>>) is.get("discussion");
+                    for (var disc : discussions) {
+                        disc.remove("timestamp");
+                        disc.put("timestamp", Instant.now().getEpochSecond());
+                    }
+                }
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(serializeIssues));
             } else if (req.getURI().getPath().endsWith(PATCHES_URL)) {
                 // request to fetch patches
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
@@ -76,8 +87,8 @@ public class IssueListPanelTest extends AbstractIT {
         radicleToolWindow.createToolWindowContent(super.getProject(), toolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(toolWindow);
         //Set issue content as selected in order to load the issues
-        var contents = radicleToolWindow.contentManager.getContents();
-        radicleToolWindow.contentManager.setSelectedContent(contents[1]);
+        var contents = radicleToolWindow.getContentManager().getContents();
+        radicleToolWindow.getContentManager().setSelectedContent(contents[1]);
         //Wait to load the issues
         Thread.sleep(100);
         executeUiTasks();
