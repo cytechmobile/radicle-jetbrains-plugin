@@ -493,13 +493,8 @@ public class RadicleProjectApi {
     }
 
     public Map<String, Object> getProjectInfo(String projectId, GitRepository repo) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
         try {
             var req = new HttpGet(getHttpNodeUrl() + "/api/v1/projects/" + projectId);
-            req.setHeader("Authorization", "Bearer " + session.sessionId);
             var resp = makeRequest(req, RadicleBundle.message("fetchProjectError"));
             if (!resp.isSuccess()) {
                 logger.warn("Unable to get project information, projectId:{} repo:{} resp:{}", projectId, repo, resp);

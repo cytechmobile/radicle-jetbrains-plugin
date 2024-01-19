@@ -166,7 +166,15 @@ public class OverviewTest extends AbstractIT {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(session));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
                 // request to fetch issues
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
+                var serializeIssues = RadicleProjectApi.MAPPER.convertValue(getTestIssues(), new TypeReference<List<Map<String, Object>>>() { });
+                for (var is : serializeIssues) {
+                    var discussions = (ArrayList<Map<String, Object>>) is.get("discussion");
+                    for (var disc : discussions) {
+                        disc.remove("timestamp");
+                        disc.put("timestamp", Instant.now().getEpochSecond());
+                    }
+                }
+                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(serializeIssues));
             } else if ((req instanceof HttpGet)) {
                 // request to fetch specific project
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
@@ -190,6 +198,8 @@ public class OverviewTest extends AbstractIT {
         var mockToolWindow = new PatchListPanelTest.MockToolWindow(super.getProject());
         radicleToolWindow.createToolWindowContent(super.getProject(), mockToolWindow);
         radicleToolWindow.toolWindowManagerListener.toolWindowShown(mockToolWindow);
+        var contents = radicleToolWindow.getContentManager().getContents();
+        radicleToolWindow.getContentManager().setSelectedContent(contents[1]);
         issueTabController = radicleToolWindow.issueTabController;
         if (testName.getMethodName().equals("testReactions")) {
             // Don't recreate IssuePanel after success request for this test

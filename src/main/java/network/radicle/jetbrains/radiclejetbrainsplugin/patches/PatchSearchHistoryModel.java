@@ -26,6 +26,6 @@ public class PatchSearchHistoryModel implements ReviewListSearchHistoryModel<Pat
     @NotNull
     @Override
     public List<PatchListSearchValue> getHistory() {
-        return null;
+        return List.of();
     }
 }

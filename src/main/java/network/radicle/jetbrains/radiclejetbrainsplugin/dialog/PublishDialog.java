@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextArea;
 import git4idea.repo.GitRepository;
@@ -28,6 +29,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.Component;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow.RAD_REPOS_KEY;
 
 public class PublishDialog extends DialogWrapper {
     private JPanel contentPane;
@@ -77,8 +80,10 @@ public class PublishDialog extends DialogWrapper {
                     if (radToolWindow == null || radToolWindow.isAvailable()) {
                         return;
                     }
-                    ApplicationManager.getApplication().invokeLater(() ->
-                            radToolWindow.setAvailable(true), ModalityState.any());
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        ClientProperty.put(radToolWindow.getComponent(), RAD_REPOS_KEY, List.of(repo));
+                        radToolWindow.setAvailable(true);
+                    }, ModalityState.any());
                 }
             }
         });
