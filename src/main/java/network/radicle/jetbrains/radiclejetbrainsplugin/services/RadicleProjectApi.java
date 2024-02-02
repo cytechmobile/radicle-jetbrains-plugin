@@ -80,7 +80,7 @@ public class RadicleProjectApi {
             if (res.isSuccess()) {
                 var json = new ObjectMapper().readTree(res.body);
                 String version = json.get("version").asText("");
-                String id = json.get("node").get("id").asText("");
+                String id = json.get("nid").asText("");
                 return new SeedNodeInfo(id, version, null);
             }
             return new SeedNodeInfo(null, null, "HTTP Status code: " + res.status + " " + res.body);
