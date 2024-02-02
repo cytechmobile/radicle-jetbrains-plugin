@@ -138,7 +138,7 @@ public class ReusableSteps {
     public void switchToRadicleIssues() {
         step("Open Radicle Issues", () -> {
 
-            final var issuesTab = byXpath("//div[@text.key='issues open.in.browser.group.issues' and @text='Issues']");
+            final var issuesTab = byXpath("//div[contains(@text.key, 'issues') and @text='Issues']");
             remoteRobot.find(ComponentFixture.class, issuesTab, Duration.ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)).click();
             remoteRobot.find(ComponentFixture.class, byXpath("//div[@myicon='refresh.svg']"), Duration.ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)).click();
 
