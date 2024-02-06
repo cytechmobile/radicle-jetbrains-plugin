@@ -74,11 +74,11 @@ public class ReusableSteps {
             welcomeFrame.importProjectLink().click();
 
 
-            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//*[@title.key='get.from.version.control']"),
+            final var importProjectDialog = welcomeFrame.find(DialogFixture.class, byXpath("//div[@text.key='Vcs.VcsClone.Tabbed.Welcome.text']"),
                     Duration.ofSeconds(50));
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, Duration.ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)).click();
-            keyboard.enterText("https://github.com/radicle-dev/radicle-cli", 0);
+            keyboard.enterText("https://seed.radicle.xyz/z3gqcJUoA1n9HaHKufZs5FCSGazv5.git", 0);
 
             final var dirInputFieldLocator = byXpath("//div[@class='TextFieldWithBrowseButton']");
             remoteRobot.find(ComponentFixture.class, dirInputFieldLocator, Duration.ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)).click();
@@ -88,7 +88,7 @@ public class ReusableSteps {
             keyboard.enterText(localDir.toAbsolutePath().toString().replaceAll("\\\\", "\\\\"), 0);
 
 
-            importProjectDialog.button("Clone").click();
+            remoteRobot.find(JButtonFixture.class, byXpath("//div[@text='Clone']")).click();
         });
     }
 
