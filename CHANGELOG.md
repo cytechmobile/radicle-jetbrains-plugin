@@ -7,13 +7,9 @@
 ## 0.8.1 - 2024-02-05
 
 - Changelog update - `v0.8.0` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/453
-
 - Our first end-to-end tests by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/423
-
 - fix(RadicleToolWindow): Multiple radicle toolwindows by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/456
-
 - fix(api): fix node id deserialization by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/467
-
 - chore(version): bump version for next release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/469
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.0...v0.8.1
 
