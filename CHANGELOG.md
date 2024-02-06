@@ -4,6 +4,15 @@
 
 ## Unreleased
 
+## 0.8.2 - 2024-02-06
+
+- Changelog update - `v0.8.1` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/474
+
+- chore(version): bump to next release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/475
+
+- Limit intellij platform until build 2023.3.3
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.1...v0.8.2
+
 ## 0.8.1 - 2024-02-05
 
 - Changelog update - `v0.8.0` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/453
