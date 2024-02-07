@@ -166,18 +166,6 @@ public class TimelineTest extends AbstractIT {
                 for (var rev : revisions) {
                     var discussions = (ArrayList<Map<String, Object>>) rev.get("discussions");
                     for (var discussion : discussions) {
-                        var allReactions = new ArrayList<>();
-                        var reactions = (ArrayList<Map<String, Object>>) discussion.get("reactions");
-                        for (var reaction : reactions) {
-                            var reactionList = new ArrayList<>();
-                            var nid = reaction.get("nid");
-                            var emoji = reaction.get("emoji");
-                            reactionList.add(nid);
-                            reactionList.add(emoji);
-                            allReactions.add(reactionList);
-                        }
-                        discussion.remove("reactions");
-                        discussion.put("reactions", allReactions);
                         discussion.remove("timestamp");
                         discussion.put("timestamp", Instant.now().getEpochSecond());
                         if (discussion.get("id").equals(DISCUSSION_ID)) {
@@ -614,7 +602,7 @@ public class TimelineTest extends AbstractIT {
 
         var borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
         var myEmojiLabel = ((JLabel) ((BorderLayoutPanel) ((JPanel) borderPanel.getComponent(1)).getComponent(1)).getComponent(0));
-        assertThat(myEmojiLabel.getText()).isEqualTo(patch.revisions.get(0).discussions().get(0).reactions.get(0).emoji);
+        assertThat(myEmojiLabel.getText()).isEqualTo(patch.revisions.get(0).discussions().get(0).reactions.get(0).emoji());
 
         // Make new reaction
         var emojiPanel = patchEditorProvider.getTimelineComponent().getComponentsFactory().getEmojiPanel();
@@ -639,7 +627,7 @@ public class TimelineTest extends AbstractIT {
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.react");
         assertThat((Boolean) res.get("active")).isTrue();
-        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
         assertThat(res.get("comment")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).discussions().get(0).id);
         assertThat(res.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
 
@@ -652,7 +640,7 @@ public class TimelineTest extends AbstractIT {
         res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.react");
         assertThat((Boolean) res.get("active")).isFalse();
-        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
         assertThat(res.get("comment")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).discussions().get(0).id);
         assertThat(res.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
     }
@@ -954,7 +942,7 @@ public class TimelineTest extends AbstractIT {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         req.putUserData(ChangeDiffRequestProducer.CHANGE_KEY, firstChange);
-        var viewer =  mock(TwosideTextDiffViewer.class);
+        var viewer = mock(TwosideTextDiffViewer.class);
         Document editorDocument = EditorFactory.getInstance().createDocument("");
         var editorFactory = new EditorFactoryImpl();
         var editor = (EditorEx) editorFactory.createEditor(editorDocument);
@@ -974,10 +962,12 @@ public class TimelineTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList, null);
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
+                List.of(new Reaction("\uD83D\uDC4D", List.of("fakeDid"))), embedList, null);
     }
 
     private RadDiscussion createDiscussionWithLocation(String id, String authorId, String body, List<Embed> embedList, RadDiscussion.Location location) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList, location);
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
+                List.of(new Reaction("\uD83D\uDC4D", List.of("fakeDid"))), embedList, location);
     }
 }

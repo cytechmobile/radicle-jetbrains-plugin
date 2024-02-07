@@ -34,8 +34,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.HyperlinkEvent;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -186,38 +186,6 @@ public class TimelineComponentFactory {
         return emojiPanel;
     }
 
-    private class PatchEmojiPanel extends EmojiPanel<RadPatch> {
-
-        public PatchEmojiPanel(SingleValueModel<RadPatch> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
-            super(model, reactions, discussionId, radDetails);
-        }
-
-        @Override
-        public RadPatch addEmoji(Emoji emoji, String commentId) {
-            var revisionId = findRevisionId(commentId);
-            return api.patchCommentReact(patch, commentId, revisionId, emoji.getUnicode(), true);
-        }
-
-        @Override
-        public RadPatch removeEmoji(String emojiUnicode, String commentId) {
-            var revisionId = findRevisionId(commentId);
-            return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
-        }
-
-        private String findRevisionId(String commentId) {
-            String revisionId = "";
-            for (var rev : patch.revisions) {
-                for (var com : rev.discussions()) {
-                    if (com.id.equals(commentId)) {
-                        revisionId = rev.id();
-                        break;
-                    }
-                }
-            }
-            return revisionId;
-        }
-    }
-
     public BaseHtmlEditorPane createCommitsSection(List<GitCommit> commits) {
         var builder = new HtmlBuilder();
         for (var commit : commits) {
@@ -265,6 +233,38 @@ public class TimelineComponentFactory {
 
     public JComponent getDescSection() {
         return descSection;
+    }
+
+    private class PatchEmojiPanel extends EmojiPanel<RadPatch> {
+
+        public PatchEmojiPanel(SingleValueModel<RadPatch> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
+            super(model, reactions, discussionId, radDetails);
+        }
+
+        @Override
+        public RadPatch addEmoji(Emoji emoji, String commentId) {
+            var revisionId = findRevisionId(commentId);
+            return api.patchCommentReact(patch, commentId, revisionId, emoji.unicode(), true);
+        }
+
+        @Override
+        public RadPatch removeEmoji(String emojiUnicode, String commentId) {
+            var revisionId = findRevisionId(commentId);
+            return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
+        }
+
+        private String findRevisionId(String commentId) {
+            String revisionId = "";
+            for (var rev : patch.revisions) {
+                for (var com : rev.discussions()) {
+                    if (com.id.equals(commentId)) {
+                        revisionId = rev.id();
+                        break;
+                    }
+                }
+            }
+            return revisionId;
+        }
     }
 }
 

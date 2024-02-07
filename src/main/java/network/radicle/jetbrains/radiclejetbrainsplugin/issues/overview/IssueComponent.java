@@ -138,25 +138,6 @@ public class IssueComponent {
         return mainPanel;
     }
 
-    public class IssueEmojiPanel extends EmojiPanel<RadIssue> {
-
-
-        protected IssueEmojiPanel(SingleValueModel<RadIssue> model, List<Reaction> reactions,
-                                  String discussionId, RadDetails radDetails) {
-            super(model, reactions, discussionId, radDetails);
-        }
-
-        @Override
-        public RadIssue addEmoji(Emoji emoji, String discussionId) {
-            return api.issueCommentReact(radIssue, discussionId, emoji.getUnicode(), true);
-        }
-
-        @Override
-        public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
-            return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
-        }
-    }
-
     private EditablePanelHandler getCommentField() {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), new JPanel(),
                 RadicleBundle.message("issue.comment"), new SingleValueModel<>(""),
@@ -240,5 +221,21 @@ public class IssueComponent {
 
     public JComponent getCommentSection() {
         return commentSection;
+    }
+
+    public class IssueEmojiPanel extends EmojiPanel<RadIssue> {
+        protected IssueEmojiPanel(SingleValueModel<RadIssue> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
+            super(model, reactions, discussionId, radDetails);
+        }
+
+        @Override
+        public RadIssue addEmoji(Emoji emoji, String discussionId) {
+            return api.issueCommentReact(radIssue, discussionId, emoji.unicode(), true);
+        }
+
+        @Override
+        public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
+            return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
+        }
     }
 }

@@ -24,7 +24,7 @@ public class  RadicleIcons {
 
     public static final Icon RADICLE_SYNC = getIcon("rad_sync", true, "svg");
 
-    public static final Icon EMOJI = getIcon("emoji", false, "png");
+    public static final Icon EMOJI = getIcon("emoji", false, "svg");
 
     private static boolean isNewUiEnabled() {
         return Registry.get("ide.experimental.ui").asBoolean();

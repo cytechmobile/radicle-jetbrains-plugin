@@ -28,8 +28,8 @@ public class RadStub extends RadicleProjectService {
     public static final String SECOND_COMMIT_HASH = "970b7ceb6678bc42e4fb0b9e3628914e1e1b8dae";
     public static final String FIRST_PEER_ID = "hyy7y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ibyw";
     public static final String SECOND_PEER_ID = "hyy8y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ww";
-    public static final String FIRST_BRANCH_NAME = "master";
-    public static final String SECOND_BRANCH_NAME = "master2";
+    public static final String FIRST_BRANCH_NAME = "main";
+    public static final String SECOND_BRANCH_NAME = "main2";
     public String trackResponse = "{exitCode=0, timeout=false, cancelled=false, stdout=asd " +
             "rad:git:hnrkqxsqc8oz8cth167tua786mof7btgrubto (pine.radicle.garden)\n" +
             "├── " + FIRST_PEER_ID + "\n" +
@@ -75,7 +75,7 @@ public class RadStub extends RadicleProjectService {
         var pr = new ProcessOutput(0);
         var stdout = "stdout";
         if (cmdLine.getCommandLineString().contains("--version")) {
-            stdout = "rad 0.6.1";
+            stdout = "rad " + AbstractIT.RAD_VERSION;
         } else if (cmdLine.getCommandLineString().contains("path")) {
             stdout = RAD_HOME;
         } else if (cmdLine.getCommandLineString().contains("which")) {

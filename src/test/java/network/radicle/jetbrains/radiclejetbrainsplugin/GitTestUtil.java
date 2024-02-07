@@ -34,7 +34,7 @@ public class GitTestUtil {
             @NotNull Project project, @NotNull String remotePath) {
         try {
             cd(remotePath);
-            git("init");
+            git("init --initial-branch=main");
             setupGitConfig();
             tac("initial_file.txt");
             tac("initial_file_2.txt");
@@ -80,8 +80,8 @@ public class GitTestUtil {
    }
 
     public static void setupGitConfig() {
-        git("config user.name 'stelios'");
-        git("config user.email 'steliosmavr@cytech.gr'");
+        git("config user.name 'tester'");
+        git("config user.email 'tester@cytech.gr'");
         git("config push.default simple");
     }
 

@@ -52,7 +52,7 @@ import static org.mockito.Mockito.mock;
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(AbstractIT.class);
     public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
-    public static final String RAD_VERSION = "0.6.1";
+    public static final String RAD_VERSION = "0.8.0";
     public static final String RAD_PATH = "/usr/bin/rad";
     public static final String RAD_HOME = "/home/test/radicle";
     public static final String RAD_HOME1 = "/test2/secondInstallation";

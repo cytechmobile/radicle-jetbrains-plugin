@@ -13,20 +13,20 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.BorderFactory;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
 
@@ -63,7 +63,7 @@ public abstract class EmojiPanel<T> {
 
         @Override
         public String getText(Emoji emoji) {
-            return emoji.getUnicode();
+            return emoji.unicode();
         }
 
         @Override
@@ -124,8 +124,7 @@ public abstract class EmojiPanel<T> {
                 emojisPopUp.showUnderneathOf(emojiButton);
                 result.thenComposeAsync(selectedEmoji -> {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                        ApplicationManager.getApplication().invokeLater(() ->
-                                emojisPopUp.closeOk(null), ModalityState.any());
+                        ApplicationManager.getApplication().invokeLater(() -> emojisPopUp.closeOk(null), ModalityState.any());
                         progressLabel.setVisible(true);
                         var res = addEmoji(selectedEmoji.get(0), discussionId);
                         progressLabel.setVisible(false);
@@ -211,11 +210,7 @@ public abstract class EmojiPanel<T> {
     }
 
     private Map<String, List<String>> groupEmojis(List<Reaction> myReactions) {
-        HashMap<String, List<String>> map = new HashMap<>();
-        for (var react : myReactions) {
-            map.computeIfAbsent(react.emoji, k -> new ArrayList<>()).add(react.nid);
-        }
-        return map;
+        return myReactions.stream().collect(Collectors.toMap(Reaction::emoji, Reaction::authors));
     }
 
     public abstract T addEmoji(Emoji emoji, String id);

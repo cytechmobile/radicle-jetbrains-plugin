@@ -534,7 +534,7 @@ public class OverviewTest extends AbstractIT {
         //Check that our reaction exists
         var borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
         var myEmojiLabel = ((JLabel) ((BorderLayoutPanel) ((JPanel) borderPanel.getComponent(1)).getComponent(1)).getComponent(0));
-        assertThat(myEmojiLabel.getText()).isEqualTo(issue.discussion.get(0).reactions.get(0).emoji);
+        assertThat(myEmojiLabel.getText()).isEqualTo(issue.discussion.get(0).reactions.get(0).emoji());
 
         // Make new reaction
         var emojiPanel = issueEditorProvider.getIssueComponent().getEmojiPanel();
@@ -557,7 +557,7 @@ public class OverviewTest extends AbstractIT {
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
         assertThat((Boolean) res.get("active")).isTrue();
 
         borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
@@ -568,7 +568,7 @@ public class OverviewTest extends AbstractIT {
         res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(res.get("reaction")).isEqualTo(emoji.getUnicode());
+        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
         assertThat((Boolean) res.get("active")).isFalse();
     }
 
@@ -842,7 +842,8 @@ public class OverviewTest extends AbstractIT {
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(new Reaction("fakeDid", "\uD83D\uDC4D")), embedList, null);
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
+                List.of(new Reaction("\uD83D\uDC4D", List.of("fakeDid"))), embedList, null);
     }
 }
 

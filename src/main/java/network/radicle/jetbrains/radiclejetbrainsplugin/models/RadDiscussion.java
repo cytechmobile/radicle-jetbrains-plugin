@@ -21,7 +21,6 @@ public class RadDiscussion {
     @JsonDeserialize(using = TimestampDeserializer.class)
     public Instant timestamp;
     public String replyTo;
-    @JsonDeserialize(using = Reaction.Deserializer.class)
     public List<Reaction> reactions;
     public List<Embed> embeds;
     public Location location;
