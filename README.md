@@ -4,6 +4,7 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/19664.svg)](https://plugins.jetbrains.com/plugin/19664)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/19664.svg)](https://plugins.jetbrains.com/plugin/19664)
 
+
 <!-- Plugin description -->
 This plugin allows you to start using [Radicle](https://radicle.xyz) (the decentralized Code Collaboration protocol) directly from your Jetbrains IDE.
 
