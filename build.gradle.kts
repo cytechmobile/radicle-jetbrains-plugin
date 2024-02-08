@@ -186,11 +186,13 @@ tasks {
 
 val uiTestTask = tasks.register<Test>("uiTest") {
     useJUnitPlatform()
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
     exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
 }
 
 val e2eTestTask = tasks.register<Test>("endToEndTests") {
     useJUnitPlatform()
+    testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
 }
