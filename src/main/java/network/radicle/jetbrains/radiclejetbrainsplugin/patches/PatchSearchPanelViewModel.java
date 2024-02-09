@@ -13,7 +13,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SearchViewMod
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter, RadPatch> {
@@ -58,6 +60,11 @@ public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSear
                     copyPatchSearchValue.label = (String) label;
                     return copyPatchSearchValue;
                 });
+    }
+
+    public CompletableFuture<List<String>> getStateLabels() {
+        return CompletableFuture.supplyAsync(() ->
+                Arrays.stream(RadPatch.State.values()).map(e -> e.label).collect(Collectors.toList()));
     }
 
     @Override

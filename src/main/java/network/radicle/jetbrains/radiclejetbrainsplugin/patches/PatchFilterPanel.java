@@ -1,21 +1,15 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil;
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation;
-import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory;
-import com.intellij.collaboration.ui.codereview.list.search.PopupConfig;
+
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory;
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DropdownFilter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSearchValue,
         PatchSearchPanelViewModel.PatchListQuickFilter, PatchSearchPanelViewModel> {
@@ -29,34 +23,23 @@ public class PatchFilterPanel extends ReviewListSearchPanelFactory<PatchListSear
     @NotNull
     @Override
     protected List<JComponent> createFilters(@NotNull CoroutineScope coroutineScope) {
-        var stateFilter = new DropDownComponentFactory<>(this.viewModel.stateFilter()).create(coroutineScope, RadicleBundle.message("state"), o -> o,
-                (relativePoint, continuation) -> ChooserPopupUtil.INSTANCE.showChooserPopup(relativePoint,
-                        Arrays.stream(RadPatch.State.values()).map(e -> e.label).collect(Collectors.toList()),
-                        state -> new PopupItemPresentation.Simple(state, null, null),
-                        PopupConfig.Companion.getDEFAULT(), continuation));
+        var stateFilter = new DropdownFilter(RadicleBundle.message("state"),
+                this.viewModel.stateFilter(), coroutineScope.getCoroutineContext());
+        stateFilter.setShowPopupAction(() -> stateFilter.showPopup(this.viewModel.getStateLabels(), this.viewModel.getCountDown()));
 
-        var projectFilter = new DropDownComponentFactory<>(this.viewModel.projectFilterState()).create(coroutineScope, RadicleBundle.message("project"), o -> o,
-                (relativePoint, continuation) -> {
-                    var popUpBuilder = new PopupBuilder();
-                    var popUp = popUpBuilder.createPopup(this.viewModel.getProjectNames(), this.viewModel.getCountDown());
-                    return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
-                });
+        var projectFilter = new DropdownFilter(RadicleBundle.message("project"),
+                this.viewModel.projectFilterState(), coroutineScope.getCoroutineContext());
+        projectFilter.setShowPopupAction(() -> projectFilter.showPopup(this.viewModel.getProjectNames(), this.viewModel.getCountDown()));
 
-        var authorFilter = new DropDownComponentFactory<>(this.viewModel.authorFilterState()).create(coroutineScope, RadicleBundle.message("author"), o -> o,
-                (relativePoint, continuation) -> {
-                    var popUpBuilder = new PopupBuilder();
-                    var popUp = popUpBuilder.createPopup(this.viewModel.getAuthors(), this.viewModel.getCountDown());
-                    return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
-                });
+        var authorFilter = new DropdownFilter(RadicleBundle.message("author"),
+                this.viewModel.authorFilterState(), coroutineScope.getCoroutineContext());
+        authorFilter.setShowPopupAction(() -> authorFilter.showPopup(this.viewModel.getAuthors(), this.viewModel.getCountDown()));
 
-        var labelFilter = new DropDownComponentFactory<>(this.viewModel.labelFilter()).create(coroutineScope, RadicleBundle.message("label"), o -> o,
-                (relativePoint, continuation) -> {
-                    var popUpBuilder = new PopupBuilder();
-                    var popUp = popUpBuilder.createPopup(this.viewModel.getLabels(), this.viewModel.getCountDown());
-                    return ChooserPopupUtil.INSTANCE.showAndAwaitListSubmission(popUp, relativePoint, continuation);
-                });
+        var labelFilter = new DropdownFilter(RadicleBundle.message("label"),
+                this.viewModel.labelFilter(), coroutineScope.getCoroutineContext());
+        labelFilter.setShowPopupAction(() -> labelFilter.showPopup(this.viewModel.getLabels(), this.viewModel.getCountDown()));
 
-        return List.of(stateFilter, projectFilter, authorFilter, labelFilter);
+        return List.of(stateFilter.init(), projectFilter.init(), authorFilter.init(), labelFilter.init());
     }
 
     @NotNull

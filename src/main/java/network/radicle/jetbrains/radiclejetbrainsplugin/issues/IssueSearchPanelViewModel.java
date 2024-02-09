@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -68,6 +69,11 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
                     copyIssueSearchValue.label = (String) label;
                     return copyIssueSearchValue;
                 });
+    }
+
+    public CompletableFuture<List<String>> getStateLabels() {
+        return CompletableFuture.supplyAsync(() ->
+                Arrays.stream(RadIssue.State.values()).map(e -> e.label).collect(Collectors.toList()));
     }
 
     public CompletableFuture<List<String>> getAssignees() {

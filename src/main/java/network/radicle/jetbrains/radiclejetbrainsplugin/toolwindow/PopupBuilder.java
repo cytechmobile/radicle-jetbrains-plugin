@@ -1,7 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -203,8 +202,6 @@ public class PopupBuilder {
                 .setResizable(true)
                 .setMovable(true)
                 .setFilterAlwaysVisible(true)
-                .setRenderer(new ChooserPopupUtil.SimplePopupItemRenderer<>(s ->
-                        new ChooserPopupUtil.PopupItemPresentation.Simple(s, null, null)))
                 .setNamerForFiltering(s -> s)
                 .addListener(new JBPopupListener() {
                     @Override
