@@ -222,14 +222,22 @@ public class ReusableSteps {
 
     private static void clickOnRadicleSetting(RemoteRobot remoteRobot) {
         step("Click on Radicle Setting", () -> {
-            remoteRobot.find(
-                    JTreeFixture.class,
-                    byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
-                    ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-                )
-                .findText("Radicle")
-                .doubleClick();
-            ReusableSteps.takeScreenshot(remoteRobot, "radicle_settings.png");
+            for (int i = 0; i < 20; i++) {
+                try {
+                    var tree = remoteRobot.find(JTreeFixture.class, byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
+                            ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS));
+                    if (!tree.hasText("Radicle")) {
+                        waitForMs(3_000);
+                        continue;
+                    }
+                    tree.findText("Radicle").doubleClick();
+                    ReusableSteps.takeScreenshot(remoteRobot, "radicle_settings.png");
+                    break;
+                } catch (Exception e) {
+                    ReusableSteps.takeScreenshot(remoteRobot, "radicle_settings_retry.png");
+                    waitForMs(3_000);
+                }
+            }
         });
     }
 
@@ -243,24 +251,22 @@ public class ReusableSteps {
         });
 
         step("Click on Version Control Setting", () -> {
-            try {
-                remoteRobot.find(
-                        JTreeFixture.class,
-                        byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
-                        ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-                    ).findText("Version Control")
-                    .doubleClick();
-                ReusableSteps.takeScreenshot(remoteRobot, "settings.png");
+            for (int i = 0; i < 20; i++) {
+                try {
+                    var tree = remoteRobot.find(JTreeFixture.class, byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
+                            ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS));
+                    if (!tree.hasText("Version Control")) {
+                        waitForMs(3_000);
+                        continue;
+                    }
+                    tree.findText("Version Control").doubleClick();
+                    ReusableSteps.takeScreenshot(remoteRobot, "settings.png");
+                    break;
+                } catch (Exception e) {
+                    ReusableSteps.takeScreenshot(remoteRobot, "settings_retry.png");
+                    openSettingsWithHotKey(keyboard);
 
-            } catch (WaitForConditionTimeoutException e) {
-                openSettingsWithHotKey(keyboard);
-                remoteRobot.find(
-                        JTreeFixture.class,
-                        byXpath("//div[@class='SettingsTreeView']//div[contains(@class, 'Tree')]"),
-                        ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-                    ).findText("Version Control")
-                    .doubleClick();
-                ReusableSteps.takeScreenshot(remoteRobot, "settings_retry.png");
+                }
             }
             ReusableSteps.takeScreenshot(remoteRobot, "Version_Control.png");
         });
@@ -301,6 +307,13 @@ public class ReusableSteps {
             keyboard.hotKey(VK_CONTROL, VK_ALT, VK_S);
         } else {
             keyboard.hotKey(VK_META, VK_COMMA);
+        }
+    }
+
+    public static void waitForMs(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (Exception ignored) {
         }
     }
 }

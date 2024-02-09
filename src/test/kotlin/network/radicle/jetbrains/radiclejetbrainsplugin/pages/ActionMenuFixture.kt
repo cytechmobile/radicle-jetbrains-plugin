@@ -26,7 +26,7 @@ fun RemoteRobot.actionMenu(menuText: String, parentMenuText: String): ActionMenu
 
 fun RemoteRobot.actionMenuItem(text: String): ActionMenuItemFixture {
     val xpath = byXpath("text '$text'", "//div[@class='ActionMenuItem' and @text='$text']")
-    waitFor (duration = Duration.ofSeconds(60)) {
+    waitFor (duration = Duration.ofSeconds(5)) {
         findAll<ActionMenuItemFixture>(xpath).isNotEmpty()
     }
     return findAll<ActionMenuItemFixture>(xpath).first()

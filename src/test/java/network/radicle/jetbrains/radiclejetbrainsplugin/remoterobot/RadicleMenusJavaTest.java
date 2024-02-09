@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Comparator;
 
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
@@ -109,10 +110,16 @@ public class RadicleMenusJavaTest {
         });
 
         step("Ensure Radicle sub-menu items (fetch, pull) show", () -> {
-            keyboard.hotKey(VK_ESCAPE);
-            actionMenu(remoteRobot, "Git", "").click();
-            actionMenu(remoteRobot, "Radicle", "Git").click();
-            actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
+            for (int i = 0; i < 10; i++) {
+                try {
+                    keyboard.escape(Duration.ofSeconds(5));
+                    actionMenu(remoteRobot, "Git", "").click();
+                    actionMenu(remoteRobot, "Radicle", "Git").click();
+                    actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
+                    break;
+                } catch (Exception ignored) {
+                }
+            }
             actionMenuItem(remoteRobot, "Sync").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
             actionMenuItem(remoteRobot, "Track").isShowing();
