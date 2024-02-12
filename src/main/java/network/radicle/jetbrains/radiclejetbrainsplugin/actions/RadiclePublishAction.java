@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -49,5 +50,10 @@ public class RadiclePublishAction extends AnAction {
         } catch (InterruptedException ex) {
             logger.warn("Unable to open publish dialog");
         }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 }
