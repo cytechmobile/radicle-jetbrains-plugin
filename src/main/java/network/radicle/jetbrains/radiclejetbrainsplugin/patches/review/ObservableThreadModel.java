@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ObservableThreadModel {
     private static final Logger logger = LoggerFactory.getLogger(ObservableThreadModel.class);
@@ -27,10 +26,12 @@ public class ObservableThreadModel {
     private final RadicleProjectApi api;
     private final List<LineRange> modifiedLines;
     private final Change change;
+    private final boolean isLeft;
 
-    public ObservableThreadModel(Change change, Project project) {
+    public ObservableThreadModel(Change change, Project project, boolean isLeft) {
         this.api = project.getService(RadicleProjectApi.class);
         this.change = change;
+        this.isLeft = isLeft;
         this.modifiedLines = calculateModifiedLines();
     }
 
@@ -62,8 +63,15 @@ public class ObservableThreadModel {
             var afterContent = change.getAfterRevision() != null ? change.getAfterRevision().getContent() : "";
             var fragments = ComparisonManager.getInstance().compareLines(Strings.nullToEmpty(beforeContent), Strings.nullToEmpty(afterContent),
                     ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
-            return fragments.stream().map(fragment -> new LineRange(fragment.getStartLine1(), fragment.getEndLine2()))
-                    .collect(Collectors.toList());
+            var lineRanges = new ArrayList<LineRange>();
+            for (var fragment : fragments) {
+                if (isLeft) {
+                    lineRanges.add(new LineRange(fragment.getStartLine1(), fragment.getEndLine1()));
+                } else {
+                    lineRanges.add(new LineRange(fragment.getStartLine2(), fragment.getEndLine2()));
+                }
+            }
+            return lineRanges;
         } catch (Exception e) {
             logger.warn("Unable to find modified lines");
             return List.of();
@@ -73,7 +81,7 @@ public class ObservableThreadModel {
     public List<ThreadModel> getInlineComments(RadPatch patch) {
         var lastRevision = patch.revisions.get(patch.revisions.size() - 1);
         var discussions = lastRevision.discussions().stream().filter(discussion -> discussion.isReviewComment() &&
-                discussion.location.path.equals(getFileName())).toList();
+                (discussion.location.path.equals(getFileName()) && discussion.location.commit.equals(getCommitHash()))).toList();
         var groupedDiscussions = new ArrayList<ThreadModel>();
         for (var discussion : discussions) {
             var line = discussion.location.start;
@@ -106,11 +114,17 @@ public class ObservableThreadModel {
     }
 
     public String getCommitHash() {
+        if (isLeft) {
+            return change.getBeforeRevision().getRevisionNumber().asString();
+        }
         return change.getAfterRevision().getRevisionNumber().asString();
     }
 
     public String getFileName() {
-        return change.getVirtualFile().getName();
+        if (isLeft) {
+            return change.getBeforeRevision().getFile().getName();
+        }
+        return change.getAfterRevision().getFile().getName();
     }
 
     public List<LineRange> getModifiedLines() {

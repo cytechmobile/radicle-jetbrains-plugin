@@ -1,13 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -18,7 +11,6 @@ public class RadDiscussion {
     public String id;
     public RadAuthor author;
     public String body;
-    @JsonDeserialize(using = TimestampDeserializer.class)
     public Instant timestamp;
     public String replyTo;
     public List<Reaction> reactions;
@@ -42,25 +34,6 @@ public class RadDiscussion {
 
     public boolean isReviewComment() {
         return location != null;
-    }
-
-    public static class TimestampDeserializer extends StdDeserializer<Instant> {
-        private static final Logger logger = LoggerFactory.getLogger(TimestampDeserializer.class);
-
-        protected TimestampDeserializer() {
-            super(Instant.class);
-        }
-
-        @Override
-        public Instant deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
-            try {
-                JsonNode millis = jsonParser.getCodec().readTree(jsonParser);
-                return Instant.ofEpochMilli(Long.parseLong(millis.toString()));
-            } catch (Exception e) {
-                logger.warn("Unable to deserialize timestamp", e);
-                return null;
-            }
-        }
     }
 
     public static class Location {

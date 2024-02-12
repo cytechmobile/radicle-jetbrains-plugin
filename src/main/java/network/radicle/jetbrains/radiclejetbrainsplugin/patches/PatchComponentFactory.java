@@ -101,9 +101,8 @@ public class PatchComponentFactory {
             @Nullable
             @Override
             protected String getCurrentName() {
-                var name = myPatch != null ? RadicleBundle.message("patch.diff.label", "", Utils.formatPatchId(myPatch.id)) :
+                return myPatch != null ? RadicleBundle.message("patch.diff.label", Utils.formatPatchId(myPatch.id)) :
                         RadicleBundle.message("changes");
-                return name;
             }
         };
         simpleChangesTree.setShowDiffActionPreview(simpleTreeEditorDiffPreview);

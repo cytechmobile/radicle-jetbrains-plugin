@@ -947,6 +947,7 @@ public class TimelineTest extends AbstractIT {
         var editorFactory = new EditorFactoryImpl();
         var editor = (EditorEx) editorFactory.createEditor(editorDocument);
         when(viewer.getEditor(Side.RIGHT)).thenReturn(editor);
+        when(viewer.getEditor(Side.LEFT)).thenReturn(editor);
         patchDiffWindow.onViewerCreated(viewer, diffContext, req);
         executeUiTasks();
         return patchDiffWindow;
