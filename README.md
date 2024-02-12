@@ -6,6 +6,7 @@
 
 
 <!-- Plugin description -->
+
 This plugin allows you to start using [Radicle](https://radicle.xyz) (the decentralized Code Collaboration protocol) directly from your Jetbrains IDE.
 
 Radicle enables developers to securely collaborate on software over a peer-to-peer network, built on top of Git,
