@@ -111,7 +111,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         replaceAuthService();
 
-        /* add seed node in config */
+        /* add HTTP daemon in config */
         initializeProject(firstRepo);
         addSeedNodeInConfig(firstRepo);
         applicationMbc = ApplicationManager.getApplication().getMessageBus().connect();
@@ -186,7 +186,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         try {
             GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "https://maple.radicle.garden");
         } catch (Exception e) {
-            logger.warn("unable to write seed node in config file");
+            logger.warn("unable to write HTTP daemon in config file");
         }
     }
 

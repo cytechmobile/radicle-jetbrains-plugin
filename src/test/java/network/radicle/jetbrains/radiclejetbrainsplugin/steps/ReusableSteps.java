@@ -162,7 +162,7 @@ public class ReusableSteps {
         step("set RAD HOME", () -> {
             var profile = remoteRobot.find(
                     JButtonFixture.class,
-                    byXpath("//div[@class='JLabel' and @text='Path to Profile Storage (RAD_HOME)']/following-sibling::div[@class='TextFieldWithBrowseButton']"),
+                    byXpath("//div[@class='JLabel' and @text='Path to Profile Storage (RAD_HOME):']/following-sibling::div[@class='TextFieldWithBrowseButton']"),
                     ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
                 );
             if (!profile.getText().equals(System.getenv("RAD_HOME"))) {
@@ -207,7 +207,7 @@ public class ReusableSteps {
         step("Unlock Identity", () -> {
             remoteRobot.find(
                     JButtonFixture.class,
-                    byXpath("//div[@class='JLabel' and @text='Path to Profile Storage (RAD_HOME)']/following-sibling::div[@class='JButton' and @text='Test']"),
+                    byXpath("//div[@class='JLabel' and @text='Path to Profile Storage (RAD_HOME):']/following-sibling::div[@class='JButton' and @text='Test']"),
                     ofSeconds(COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
                 )
                 .click();

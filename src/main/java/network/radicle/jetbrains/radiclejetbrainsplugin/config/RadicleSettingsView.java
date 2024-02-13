@@ -58,7 +58,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private final RadicleProjectSettingsHandler radicleSettingsHandler;
     private JButton seedNodeApiUrlTestBtn;
     private JLabel seedNodeApiUrlLabel;
-    private JLabel seedNodeApiUrlMsgLabel;
+    private javax.swing.JTextArea seedNodeApiUrlMsgLabel;
     private JTextField seedNodeApiUrl;
     private IdentityDialog identityDialog;
     private RadDetails radDetails;
@@ -155,10 +155,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         var api = myProject.getService(RadicleProjectApi.class);
         var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
         if (!isValidNodeApi()) {
-            seedNodeApiUrlMsgLabel.setText("<html>" +
-                    RadicleBundle.message("seedNodeCheckError") +
-                    (resp == null ? "" :  "<br>" + resp.errorMessage()) +
-                    "</html>");
+            seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckError") + (resp == null ? "" :  "\n" + resp.errorMessage()));
         } else {
             seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckSuccess", resp.id(), resp.version()));
         }
@@ -305,7 +302,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
                 try {
                     //We have to wait for RAD_PATH, in order to find RAD_HOME
                     latch.await(5, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     logger.warn("Unable to wait for rad path");
                 }
                 var radHome = autoDetect.detect();
@@ -315,6 +312,8 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             });
         }
         seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
+        seedNodeApiUrlMsgLabel.setWrapStyleWord(true);
+        seedNodeApiUrlMsgLabel.setLineWrap(true);
         initListeners();
         // Show a warning label if the rad version is incompatible
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
