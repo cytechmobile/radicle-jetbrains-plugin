@@ -1,28 +1,28 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.controllers;
 
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager;
+import com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.ObservableThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.PatchDiffEditorComponentsFactory;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class PatchReviewThreadsController {
-    private final EditorComponentInlaysManager editorComponentInlaysManager;
+    private final EditorImpl editor;
     private final ObservableThreadModel observableThreadModel;
     private final HashMap<Integer, List<Disposable>> inlay = new HashMap<>();
     private final RadPatch patch;
     private PatchDiffEditorComponentsFactory patchDiffEditorComponentsFactory;
 
-    public PatchReviewThreadsController(EditorComponentInlaysManager editorComponentInlaysManager,
-                                        ObservableThreadModel observableThreadModel, RadPatch patch) {
+    public PatchReviewThreadsController(EditorImpl editor, ObservableThreadModel observableThreadModel, RadPatch patch) {
+        this.editor = editor;
         this.observableThreadModel = observableThreadModel;
-        this.editorComponentInlaysManager = editorComponentInlaysManager;
         this.patch = patch;
         init();
     }
@@ -49,7 +49,7 @@ public class PatchReviewThreadsController {
     private void insertThread(ThreadModel threadModel) {
         patchDiffEditorComponentsFactory = new PatchDiffEditorComponentsFactory(this.patch, threadModel.getLine(), observableThreadModel);
         var threadComponent = patchDiffEditorComponentsFactory.createThreadComponent(threadModel);
-        var disposable = editorComponentInlaysManager.insertAfter(threadModel.getLine(), threadComponent, 0, null);
+        var disposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, threadModel.getLine(), threadComponent, 0, d -> null);
         inlay.computeIfAbsent(threadModel.getLine(), l -> new ArrayList<>()).add(disposable);
     }
 

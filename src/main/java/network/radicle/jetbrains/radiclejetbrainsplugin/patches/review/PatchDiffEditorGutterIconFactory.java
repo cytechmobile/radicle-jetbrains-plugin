@@ -3,12 +3,13 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches.review;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer;
 import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory;
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager;
+import com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
@@ -22,13 +23,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRendererFactory {
-    private final EditorComponentInlaysManager editorComponentInlaysManager;
+    private final EditorImpl editor;
     private final ObservableThreadModel observableThreadModel;
     private final RadPatch patch;
 
-    public PatchDiffEditorGutterIconFactory(EditorComponentInlaysManager editorComponentInlaysManager,
-                                            RadPatch patch, ObservableThreadModel observableThreadModel) {
-        this.editorComponentInlaysManager = editorComponentInlaysManager;
+    public PatchDiffEditorGutterIconFactory(EditorImpl editor, RadPatch patch, ObservableThreadModel observableThreadModel) {
+        this.editor = editor;
         this.patch = patch;
         this.observableThreadModel = observableThreadModel;
     }
@@ -41,7 +41,7 @@ public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRen
 
     public class CommentIconRenderer extends AddCommentGutterIconRenderer {
         private final int editorLine;
-        private final Map<Integer, Map<JComponent, Disposable>> inlay = new HashMap<>();
+        private final Map<Integer, Map.Entry<JComponent, Disposable>> inlay = new HashMap<>();
 
         private CommentIconRenderer(int line) {
             this.editorLine = line;
@@ -49,12 +49,12 @@ public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRen
 
         @Override
         public @Nullable AnAction getClickAction() {
-            var map = inlay.get(editorLine);
-            if (map == null) {
+            var entry = inlay.get(editorLine);
+            if (entry == null) {
                 return null;
             }
-            var component = map.keySet().toArray()[0];
-            return new FocusInlayAction((JComponent) component);
+            var component = entry.getKey();
+            return new FocusInlayAction(component);
         }
 
         @Override
@@ -73,7 +73,12 @@ public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRen
 
         @Override
         public void disposeInlay() {
-
+            var entry = inlay.get(editorLine);
+            if (entry == null) {
+                return;
+            }
+            entry.getValue().dispose();
+            inlay.remove(editorLine);
         }
 
         public class AddSingleCommentAction extends InlayAction {
@@ -99,12 +104,11 @@ public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRen
 
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                    CollaborationToolsUIUtil.INSTANCE.focusPanel(component);
+                CollaborationToolsUIUtil.INSTANCE.focusPanel(component);
             }
         }
 
         private abstract class InlayAction extends DumbAwareAction {
-
             public InlayAction(@Nullable @NlsActions.ActionText String text) {
                 super(text);
             }
@@ -112,22 +116,22 @@ public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRen
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
                 HideCommentComponent hideComponent = (line) -> {
-                    var map = inlay.get(editorLine);
-                    if (map == null) {
+                    var entry = inlay.get(editorLine);
+                    if (entry == null) {
                         return;
                     }
-                    var component = (JComponent) map.keySet().toArray()[0];
-                    var disposable = map.get(component);
+                    var disposable = entry.getValue();
                     if (disposable != null) {
                         Disposer.dispose(disposable);
                         inlay.remove(editorLine);
                     }
                 };
                 var component = this.createComponent(hideComponent);
-                var myDisposable = editorComponentInlaysManager.insertAfter(editorLine, component, 0, null);
+                var myDisposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, editorLine, component, 0, (d) -> null);
+                //var myDisposable = editorComponentInlaysManager.insertAfter(editorLine, component, 0, null);
                 CollaborationToolsUIUtil.INSTANCE.focusPanel(component);
                 if (myDisposable != null) {
-                    inlay.put(editorLine, Map.of(component, myDisposable));
+                    inlay.put(editorLine, Map.entry(component, myDisposable));
                 }
             }
 

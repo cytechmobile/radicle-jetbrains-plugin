@@ -4,8 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.intellij.collaboration.ui.JPanelWithBackground;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel;
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContext;
@@ -16,6 +14,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -75,8 +74,8 @@ import org.junit.runners.JUnit4;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JEditorPane;
-import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.time.Instant;
@@ -250,10 +249,8 @@ public class TimelineTest extends AbstractIT {
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
         var editor = patchDiffWindow.getEditor();
-        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
-        var panel = (JPanel) contentComponent.getComponents()[0];
-        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
-        var timelineThreadPanel = UIUtil.findComponentOfType(roundedPanel, TimelineThreadCommentsPanel.class);
+        var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
+        var timelineThreadPanel = UIUtil.findComponentOfType(contentComponent, TimelineThreadCommentsPanel.class);
         var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
         var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
         var authorLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[0], JLabel.class);
@@ -277,11 +274,9 @@ public class TimelineTest extends AbstractIT {
         patch.revisions.get(1).discussions().add(discussion);
         var patchDiffWindow = initializeDiffWindow();
         var editor = patchDiffWindow.getEditor();
-        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
-        var panel = (JPanel) contentComponent.getComponents()[0];
-        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
+        var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
-        var timelineThreadPanel = UIUtil.findComponentOfType(roundedPanel, TimelineThreadCommentsPanel.class);
+        var timelineThreadPanel = UIUtil.findComponentOfType(contentComponent, TimelineThreadCommentsPanel.class);
         var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
         var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
         var myPanel = (JPanel) scrollablePanel.getComponents()[0];
@@ -310,21 +305,19 @@ public class TimelineTest extends AbstractIT {
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
         var editor = patchDiffWindow.getEditor();
-        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
-        var panel = (JPanel) contentComponent.getComponents()[0];
-        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
+        var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
-        var editBtn = UIUtil.findComponentOfType(roundedPanel, InlineIconButton.class);
+        var editBtn = UIUtil.findComponentOfType(contentComponent, InlineIconButton.class);
         //send event that we clicked edit
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
-        var ef = UIUtil.findComponentOfType(roundedPanel, DragAndDropField.class);
+        var ef = UIUtil.findComponentOfType(contentComponent, DragAndDropField.class);
         assertThat(ef).isNotNull();
         markAsShowing(ef.getParent(), ef);
         executeUiTasks();
 
         var editedComment = "Edited comment to " + UUID.randomUUID();
         ef.setText(editedComment);
-        var prBtns = UIUtil.findComponentsOfType(roundedPanel, JButton.class);
+        var prBtns = UIUtil.findComponentsOfType(contentComponent, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(1);
         /* click the button to edit the patch */
@@ -354,15 +347,13 @@ public class TimelineTest extends AbstractIT {
             }
         }, "", new Presentation(""), ActionManager.getInstance(), 0));
         var editor = patchDiffWindow.getEditor();
-        var contentComponent = (JPanel) editor.getContentComponent().getComponents()[0];
-        var panel = (JPanel) contentComponent.getComponents()[0];
-        var roundedPanel = (RoundedPanel) panel.getComponents()[0];
-        var ef = UIUtil.findComponentOfType(roundedPanel, DragAndDropField.class);
+        var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
+        var ef = UIUtil.findComponentOfType(contentComponent, DragAndDropField.class);
         assertThat(ef).isNotNull();
         markAsShowing(ef.getParent(), ef);
         executeUiTasks();
         ef.setText(dummyComment);
-        var prBtns = UIUtil.findComponentsOfType(roundedPanel, JButton.class);
+        var prBtns = UIUtil.findComponentsOfType(contentComponent, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         var prBtn = prBtns.get(0);
         prBtn.doClick();

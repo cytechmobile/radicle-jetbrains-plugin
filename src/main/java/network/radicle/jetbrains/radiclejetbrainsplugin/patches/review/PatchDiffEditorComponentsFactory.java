@@ -36,8 +36,7 @@ public class PatchDiffEditorComponentsFactory {
     }
 
     public JComponent createSingleCommentComponent(PatchDiffEditorGutterIconFactory.HideCommentComponent hideComponent) {
-        var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, new JPanel(),
-                RadicleBundle.message("patch.comment", "Comment"),
+        var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, new JPanel(), RadicleBundle.message("patch.comment", "Comment"),
                 new SingleValueModel<>(""), field -> {
             var location = new RadDiscussion.Location(observableThreadModel.getFileName(), "ranges",
                     observableThreadModel.getCommitHash(), editorLine, editorLine);
@@ -52,8 +51,8 @@ public class PatchDiffEditorComponentsFactory {
             return success;
         }).enableDragAndDrop(false).hideCancelAction(true).build();
         panelHandle.showAndFocusEditor();
-        var builder = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.COMPACT, integer ->
-                new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), panelHandle.panel);
+        var builder = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.COMPACT,
+                integer -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), panelHandle.panel);
         var component = builder.build();
         return CodeReviewCommentUIUtil.INSTANCE.createEditorInlayPanel(component);
     }

@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JButton;
 import javax.swing.event.DocumentEvent;
 import java.awt.BorderLayout;
 import java.util.List;
@@ -88,15 +87,13 @@ public class EditablePanelHandler {
             //var inputField = wrapWithProgressOverlay(textField, model.isBusyValue);
 
             var prAction = ActionUtilKt.swingAction(actionName, e -> {
-                logger.warn("primary action");
-                var actionButton = (JButton) e.getSource();
-                actionButton.setEnabled(false);
+                dragAndDropField.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                     this.isLoading.setValue(true);
                     var res = okAction.fun(dragAndDropField);
                     ApplicationManager.getApplication().invokeLater(() -> {
                         this.isLoading.setValue(false);
-                        actionButton.setEnabled(true);
+                        dragAndDropField.setEnabled(true);
                         if (res && closeEditorAfterSubmit) {
                             this.hideEditor();
                         }
