@@ -61,7 +61,12 @@
         </action>
 
 
-        <!-- Radicle Group, under Git -->
+        <action id="Radicle.Open" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleOpenInBrowserAction"
+                text="Radicle" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_TOOL_WINDOW">
+            <add-to-group group-id="Git.Hosting.Open.In.Browser.Group" anchor="first"  />
+        </action>
+
+
         <group
                 id="Radicle.MainMenu" compact="true"
                 text="Radicle" popup="true">

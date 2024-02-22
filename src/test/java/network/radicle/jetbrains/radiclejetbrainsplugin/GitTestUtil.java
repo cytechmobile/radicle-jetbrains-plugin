@@ -47,6 +47,10 @@ public class GitTestUtil {
         }
     }
 
+    public static void removeRadRemotes(GitRepository repo) {
+        repo.getRemotes().removeAll(repo.getRemotes());
+    }
+
     public static void addRadRemote(Project project, GitRepository repo) {
         repo.getRemotes().add(new GitRemote("rad", List.of("rad://abcdef"), List.of("rad://abcdef"), List.of("rad://abcdef"), List.of("rad://abcdef")));
     }

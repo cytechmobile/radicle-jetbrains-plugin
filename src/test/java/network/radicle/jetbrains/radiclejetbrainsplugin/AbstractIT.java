@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil.addRadRemote;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -168,7 +169,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     protected void removeRemoteRadUrl(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "");
+            repo.getRemotes().removeAll(new ArrayList<>());
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
@@ -176,7 +177,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     protected void initializeProject(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "rad://hrrkbjxncopa15doj7qobxip8fotbcemjro4o.git");
+            addRadRemote(super.getProject(), repo);
         } catch (Exception e) {
             logger.warn("unable to write remote rad url in config file");
         }
