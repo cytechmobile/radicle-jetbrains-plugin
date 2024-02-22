@@ -759,6 +759,7 @@ public class OverviewTest extends AbstractIT {
         prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         prBtn = prBtns.get(1);
+        notificationsQueue.clear();
         prBtn.doClick();
         Thread.sleep(1000);
         executeUiTasks();

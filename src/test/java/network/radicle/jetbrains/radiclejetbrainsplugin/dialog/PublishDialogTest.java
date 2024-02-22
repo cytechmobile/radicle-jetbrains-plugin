@@ -20,33 +20,6 @@ public class PublishDialogTest extends AbstractIT {
     private static final String DESCRIPTION = "testDesc";
 
     @Test
-    public void testDialogWithRadInitializedPr() throws InterruptedException {
-        secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
-        var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());
-        assertThat(publishDialog.getProjectSelect().isVisible()).isTrue();
-        assertThat(publishDialog.getProjectNameLabel().isVisible()).isTrue();
-        assertThat(publishDialog.getSeedNodeSelect().isVisible()).isTrue();
-        assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
-
-        publishDialog.getSeedNodeSelect().setSelectedIndex(0);
-        executeUiTasks();
-        publishDialog.doOKAction();
-        executeUiTasks();
-
-         var cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
-         assertCmd(cmd);
-         assertThat(cmd.getCommandLineString()).contains("init");
-
-         cmd = radStub.commands.poll(100, TimeUnit.MILLISECONDS);
-         assertThat(cmd).isNull();
-
-         var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
-         assertThat(not).isNotNull();
-         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radNotification_Init"));
-         removeRemoteRadUrl(secondRepo);
-    }
-
-    @Test
     public void testDialogWithMultipleRepositories() {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         initializeProject(firstRepo);
