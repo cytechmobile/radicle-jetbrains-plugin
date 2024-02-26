@@ -1,25 +1,33 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.intellij.ide.browsers.BrowserLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleOpenInBrowserAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
@@ -156,6 +164,24 @@ public class ActionsTest extends AbstractIT {
         assertThat(not.getContent()).isEqualTo(RadicleBundle.message("radCliPathMissingText"));
 
         radicleProjectSettingsHandler.savePath(RAD_PATH);
+    }
+
+    @Test
+    public void radOpenInBrowser() throws InterruptedException {
+        BrowserLauncher browserUtilMock = mock(BrowserLauncher.class);
+        doNothing().when(browserUtilMock).browse(URI.create(anyString()));
+        var radOpen = new RadicleOpenInBrowserAction();
+        var fileToOpen = "/initial.txt";
+        radOpen.openInBrowser(getProject(), firstRepo, fileToOpen, browserUtilMock);
+        Thread.sleep(1000);
+        ArgumentCaptor<URI> urlCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(browserUtilMock).browse(urlCaptor.capture());
+        String url = String.valueOf(urlCaptor.getValue());
+        var settings = new RadicleProjectSettingsHandler(getProject());
+        var seedNodeUrl = settings.loadSettings().getSeedNode().url;
+        var host = seedNodeUrl.replace("http://", "").replace("https://", "");
+        var expected = RadicleOpenInBrowserAction.UI_URL + host + "/rad:123/tree" + fileToOpen;
+        assertThat(url).isEqualTo(expected);
     }
 
     @Test

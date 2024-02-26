@@ -11,9 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.EDT;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -211,14 +208,16 @@ public abstract class RadAction {
     }
 
     public static boolean isProjectRadInitialized(GitRepository repo) {
-        try {
-            var handler = new GitLineHandler(repo.getProject(), repo.getRoot(), GitCommand.CONFIG);
-            handler.setSilent(true);
-            handler.addParameters("--null", "--local", "--get", "remote.rad.url");
-            var remote = Git.getInstance().runCommand(handler).getOutputOrThrow(1).trim();
-            return !Strings.isNullOrEmpty(remote);
-        } catch (Exception e) {
-            logger.warn("unable to read git config file", e);
+        if (repo == null) {
+            return false;
+        }
+        var remotes = repo.getRemotes();
+        for (var remote : remotes) {
+            for (var url : remote.getUrls()) {
+                if (url.startsWith("rad://")) {
+                    return true;
+                }
+            }
         }
         return false;
     }

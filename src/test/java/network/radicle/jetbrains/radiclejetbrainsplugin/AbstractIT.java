@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.CoroutineContext;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil.addRadRemote;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -167,19 +169,13 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     protected void removeRemoteRadUrl(GitRepository repo) {
-        try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "");
-        } catch (Exception e) {
-            logger.warn("unable to write remote rad url in config file");
+        for (GitRemote remote : repo.getRemotes()) {
+            repo.getRemotes().remove(remote);
         }
     }
 
     protected void initializeProject(GitRepository repo) {
-        try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "remote.rad.url", "rad://hrrkbjxncopa15doj7qobxip8fotbcemjro4o.git");
-        } catch (Exception e) {
-            logger.warn("unable to write remote rad url in config file");
-        }
+        addRadRemote(super.getProject(), repo);
     }
 
     protected void addSeedNodeInConfig(GitRepository repo) {
