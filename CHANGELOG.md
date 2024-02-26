@@ -4,12 +4,21 @@
 
 ## Unreleased
 
+## 0.8.3 - 2024-02-21
+
+- fix(Filters Compatibility): Patch / Issues filtering by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/479
+
+- fix(settings): Fix label widths by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/482
+
+- fix(comments): Remove deprecated by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/483
+
+- fix(reactions): Resolve updated httpd reaction json model by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/478
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.2...v0.8.3
+
 ## 0.8.2 - 2024-02-06
 
 - Changelog update - `v0.8.1` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/474
-
 - chore(version): bump to next release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/475
-
 - Limit intellij platform until build 2023.3.3
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.1...v0.8.2
 
