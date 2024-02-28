@@ -159,6 +159,7 @@ public class PatchProposalPanel {
         Utils.addListPanel(actionPanel, stateSelect);
         Utils.addListPanel(actionPanel, labelSelect);
         if (RadPatch.State.OPEN.status.equals(patch.state.status)) {
+            // TODO: check if current user is delegate?
             mergeBtn = new JButton();
             final var mergePatchAction = new MergePatchAction(mergeBtn, patchModel);
             mergeBtn.setAction(mergePatchAction);
@@ -176,9 +177,10 @@ public class PatchProposalPanel {
 
     private JComponent descriptionComponent() {
         var titlePane = new BaseHtmlEditorPane();
-        titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
-        titlePane.setBody(Strings.nullToEmpty(patch.getLatestRevision().description()));
-        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        //titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
+        //HtmlEditorPaneUtilKt.setHtmlBody(titlePane, patch.getLatestNonEmptyRevisionDescription());
+        titlePane.setBody(patch.getLatestNonEmptyRevisionDescription());
+        var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid().flowY()));
         nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
         final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {
             controller.openPatchTimelineOnEditor(patchModel, this, false);

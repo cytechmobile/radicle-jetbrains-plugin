@@ -13,6 +13,7 @@ import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.JComponent;
@@ -112,6 +113,8 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
             var cell = new Cell(index, value);
             cell.setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
             cell.title.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
+            cell.setToolTipText("<p>" + RadicleBundle.message("patchId") + ": " + cell.patch.id + "</p>" +
+                    "<p>" + RadicleBundle.message("created") + " " + RadicleBundle.message("by") + ": " + cell.patch.author.id + "</p>");
             return cell;
         }
 
@@ -128,25 +131,35 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 var patchPanel = new JPanel();
                 patchPanel.setOpaque(false);
                 patchPanel.setBorder(JBUI.Borders.empty(10, 8));
-                patchPanel.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0")
-                        .insets("0", "0", "0", "0")
-                        .fillX()));
-
-                setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0").noGrid()
-                        .insets("0", "0", "0", "0")
-                        .fillX()));
-
-                var innerPanel = new JPanel();
-                innerPanel.setLayout(new BorderLayout());
+                patchPanel.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0").insets("0", "0", "0", "0").fillX()));
+                setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0").noGrid().insets("0", "0", "0", "0").fillX()));
 
                 title = new JLabel(patch.title);
                 patchPanel.add(title, BorderLayout.NORTH);
-                var revision = patch.revisions.get(patch.revisions.size() - 1);
-                var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(revision.timestamp().atZone(ZoneId.systemDefault()));
-                var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " +
-                        RadicleBundle.message("by") + " " + patch.author.generateLabelText());
+                final var infoPanel = new JPanel();
+                infoPanel.setLayout(new MigLayout(new LC().gridGap(gapAfter + "px", "0").insets("0", "0", "0", "0").fillX()));
+                infoPanel.setForeground(JBColor.GRAY);
+                infoPanel.setOpaque(false);
+
+                var patchId = new JLabel(Utils.formatPatchId(patch.id));
+                patchId.setForeground(JBColor.GRAY);
+                infoPanel.add(patchId);
+
+                final var revision = patch.revisions.get(patch.revisions.size() - 1);
+                final var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(revision.timestamp().atZone(ZoneId.systemDefault()));
+                var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " + RadicleBundle.message("by"));
                 info.setForeground(JBColor.GRAY);
-                patchPanel.add(info, BorderLayout.SOUTH);
+                infoPanel.add(info);
+
+                var authorLabel = new JLabel(Strings.isNullOrEmpty(patch.author.alias) ? patch.author.generateLabelText() : patch.author.alias);
+                // TODO cannot enable tooltip specifically on author
+                authorLabel.setForeground(JBColor.GRAY);
+                infoPanel.add(authorLabel);
+                if (patch.state != RadPatch.State.OPEN) {
+                    var stateLabel = new JLabel(patch.state.label);
+                    infoPanel.add(stateLabel);
+                }
+                patchPanel.add(infoPanel, BorderLayout.SOUTH);
                 add(patchPanel, new CC().minWidth("0").gapAfter("push"));
             }
 

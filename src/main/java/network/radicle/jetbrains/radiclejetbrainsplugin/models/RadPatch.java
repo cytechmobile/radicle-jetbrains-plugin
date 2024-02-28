@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
@@ -112,6 +113,16 @@ public class RadPatch {
             return null;
         }
         return this.revisions.get(this.revisions.size() - 1);
+    }
+
+    public String getLatestNonEmptyRevisionDescription() {
+        for (int i = this.revisions.size() - 1; i >= 0; i--) {
+            var rev = this.revisions.get(i);
+            if (!Strings.isNullOrEmpty(rev.description)) {
+                return Strings.nullToEmpty(rev.description);
+            }
+        }
+        return "";
     }
 
     public record Revision(
