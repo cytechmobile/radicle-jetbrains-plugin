@@ -15,7 +15,7 @@ public class RadAuthor {
 
     public String generateLabelText() {
         if (!Strings.isNullOrEmpty(alias)) {
-            return alias + " (" + id + ")";
+            return alias;
         }
         return id;
     }

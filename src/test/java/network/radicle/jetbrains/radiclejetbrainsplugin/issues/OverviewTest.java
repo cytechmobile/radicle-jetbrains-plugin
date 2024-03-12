@@ -844,7 +844,7 @@ public class OverviewTest extends AbstractIT {
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
         return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of("fakeDid"))), embedList, null);
+                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null);
     }
 }
 

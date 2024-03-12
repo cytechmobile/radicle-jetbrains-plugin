@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 
@@ -95,11 +96,11 @@ public abstract class EmojiPanel<T> {
         });
     }
 
-    private static CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<String>>> getReactors(List<String> reactorsList) {
+    private static CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<String>>> getReactors(List<RadAuthor> reactorsList) {
         return CompletableFuture.supplyAsync(() -> {
             var reactors = new ArrayList<SelectionListCellRenderer.SelectableWrapper<String>>();
             for (var reactor : reactorsList) {
-                reactors.add(new SelectionListCellRenderer.SelectableWrapper<>(reactor, false));
+                reactors.add(new SelectionListCellRenderer.SelectableWrapper<>(reactor.generateLabelText(), false));
             }
             return reactors;
         });
@@ -197,8 +198,8 @@ public abstract class EmojiPanel<T> {
         return borderPanel;
     }
 
-    private boolean isEmojiFromCurrentUser(String currentUserId, List<String> reactorsIds) {
-        return reactorsIds.contains(currentUserId);
+    private boolean isEmojiFromCurrentUser(String currentUserId, List<RadAuthor> reactorsIds) {
+        return reactorsIds.stream().anyMatch(r -> r.id.contains(currentUserId));
     }
 
     public JBPopupListener getPopupListener() {
@@ -209,7 +210,7 @@ public abstract class EmojiPanel<T> {
         return emojisPopUp;
     }
 
-    private Map<String, List<String>> groupEmojis(List<Reaction> myReactions) {
+    private Map<String, List<RadAuthor>> groupEmojis(List<Reaction> myReactions) {
         return myReactions.stream().collect(Collectors.toMap(Reaction::emoji, Reaction::authors));
     }
 

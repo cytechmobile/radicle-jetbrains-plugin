@@ -955,11 +955,11 @@ public class TimelineTest extends AbstractIT {
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
         return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of("fakeDid"))), embedList, null);
+                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null);
     }
 
     private RadDiscussion createDiscussionWithLocation(String id, String authorId, String body, List<Embed> embedList, RadDiscussion.Location location) {
         return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of("fakeDid"))), embedList, location);
+                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, location);
     }
 }

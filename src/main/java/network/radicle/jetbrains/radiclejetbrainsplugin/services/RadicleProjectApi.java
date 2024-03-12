@@ -201,7 +201,7 @@ public class RadicleProjectApi {
     }
 
     public List<RadProject> fetchRadProjects(int page) {
-        var url = getHttpNodeUrl() + "/api/v1/projects?per-page=" + PER_PAGE + "&page=" + page;
+        var url = getHttpNodeUrl() + "/api/v1/projects?show=all&perPage=" + PER_PAGE + "&page=" + page;
         try {
             var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchProjectsError"));
             if (res.isSuccess()) {
