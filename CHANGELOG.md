@@ -4,14 +4,28 @@
 
 ## Unreleased
 
+## 0.8.4 - 2024-03-13
+
+- feat: Open file in browser by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/490
+
+- fix patches info and timeline by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/495
+
+- fix: Emojis Deserialization by @Stelios123 in 4f9fae6d72990ea744515525fa1dcd4423127c86
+
+- release: bump version to 0.8.4 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/498
+
+- Changelog update - `v0.8.3` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/488
+
+- build(deps): update dependencies by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/494
+
+- ci: Change jobs trigger to push by @JChrist 
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.3...v0.8.4
+
 ## 0.8.3 - 2024-02-21
 
 - fix(Filters Compatibility): Patch / Issues filtering by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/479
-
 - fix(settings): Fix label widths by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/482
-
 - fix(comments): Remove deprecated by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/483
-
 - fix(reactions): Resolve updated httpd reaction json model by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/478
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.2...v0.8.3
 
