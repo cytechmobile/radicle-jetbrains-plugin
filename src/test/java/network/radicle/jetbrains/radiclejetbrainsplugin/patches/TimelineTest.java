@@ -244,7 +244,7 @@ public class TimelineTest extends AbstractIT {
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getName();
+        var fileName = firstChange.getVirtualFile().getPath();
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
@@ -268,7 +268,7 @@ public class TimelineTest extends AbstractIT {
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getName();
+        var fileName = firstChange.getVirtualFile().getPath();
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         var discussion = createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location);
         patch.revisions.get(1).discussions().add(discussion);
@@ -300,7 +300,7 @@ public class TimelineTest extends AbstractIT {
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getName();
+        var fileName = firstChange.getVirtualFile().getPath();
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
@@ -335,7 +335,7 @@ public class TimelineTest extends AbstractIT {
     public void testAddReviewComments() throws InterruptedException {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getName();
+        var fileName = firstChange.getVirtualFile().getPath();
         var patchDiffWindow = initializeDiffWindow();
         var gutterIconFactory = patchDiffWindow.getPatchDiffEditorGutterIconFactory();
         var commentRenderer = (PatchDiffEditorGutterIconFactory.CommentIconRenderer) gutterIconFactory.createCommentRenderer(0);

@@ -137,9 +137,6 @@ public class TimelineComponentFactory {
         var mainPanel = getVerticalPanel(0);
         for (var rev : revisions) {
             for (var com : rev.discussions()) {
-                if (com.isReviewComment()) {
-                    continue;
-                }
                 var textHtmlEditor = new BaseHtmlEditorPane();
                 textHtmlEditor.setOpaque(false);
                 var message = com.body;
