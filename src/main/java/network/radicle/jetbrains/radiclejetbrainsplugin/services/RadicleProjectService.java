@@ -341,10 +341,12 @@ public class RadicleProjectService {
         }
         cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
                 // we need parent environment to be present to our rad execution
-                .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
-                // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
-                .withEnvironment("PATH", new File(exePath).getParent() + File.pathSeparator +
-                        cmdLine.getParentEnvironment().get("PATH"));
+                .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
+        var path = new File(exePath).getParent();
+        if (!Strings.isNullOrEmpty(path)) {
+            // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
+            cmdLine.withEnvironment("PATH", path + File.pathSeparator + cmdLine.getParentEnvironment().get("PATH"));
+        }
         try {
             var console = repo == null ? null : GitVcsConsoleWriter.getInstance(repo.getProject());
             if (console != null) {

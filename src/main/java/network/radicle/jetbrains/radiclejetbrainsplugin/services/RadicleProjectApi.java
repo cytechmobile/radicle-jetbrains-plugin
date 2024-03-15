@@ -706,7 +706,7 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             var errorMessage = !Strings.isNullOrEmpty(errorDesc) ? errorDesc : e.getMessage();
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), errorMessage,
+                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), Strings.nullToEmpty(errorMessage),
                             NotificationType.ERROR, List.of()));
             logger.warn("error executing request", e);
             return new HttpResponseStatusBody(-1, "");
