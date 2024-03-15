@@ -50,6 +50,10 @@ public class RadIssue {
         this.seedNode = other.seedNode;
     }
 
+    public RadDiscussion findDiscussion(String commentId) {
+        return discussion.stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+    }
+
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
         OPEN("open", "Open"),

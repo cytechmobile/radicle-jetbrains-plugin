@@ -20,6 +20,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
@@ -236,6 +237,40 @@ public class IssueComponent {
         @Override
         public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
             return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
+        }
+
+        @Override
+        public void notifyEmojiChanges(String emojiUnicode, String commentId, boolean isAdded) {
+            var discussion = radIssue.findDiscussion(commentId);
+            if (discussion != null) {
+                var reaction = discussion.findReaction(emojiUnicode);
+                var author = reaction != null ? reaction.findAuthor(radDetails.did) : null;
+                if (isAdded && author == null) {
+                    if (reaction == null) {
+                        // If the reaction does not exist, add a new reaction with the author
+                        discussion.reactions.add(new Reaction(emojiUnicode, List.of(new RadAuthor(radDetails.did, radDetails.alias))));
+                    } else {
+                        // If the reaction exists, add the author to the existing reaction
+                        reaction.authors().add(new RadAuthor(radDetails.did, radDetails.alias));
+                    }
+                } else if (!isAdded && author != null) {
+                    if (reaction.authors().size() > 1) {
+                        // If the reaction has multiple authors, remove the current author
+                        reaction.authors().remove(author);
+                    } else {
+                        // If the reaction has only one author, remove the entire reaction from the discussion
+                        discussion.reactions.remove(reaction);
+                    }
+                }
+                updatePanel(radIssue);
+            }
+        }
+
+        public void updatePanel(RadIssue issue) {
+            commentSection.removeAll();
+            commentSection.add(createCommentSection(issue.discussion));
+            commentSection.revalidate();
+            commentSection.repaint();
         }
     }
 }

@@ -36,6 +36,10 @@ public class RadDiscussion {
         return location != null;
     }
 
+    public Reaction findReaction(String emojiUnicode) {
+        return reactions.stream().filter(r -> r.emoji().equals(emojiUnicode)).findFirst().orElse(null);
+    }
+
     public static class Location {
         public String path;
         public String commit;

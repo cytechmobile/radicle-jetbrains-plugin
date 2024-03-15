@@ -14,7 +14,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
@@ -22,6 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
@@ -31,12 +31,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.event.HyperlinkEvent;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -50,7 +48,6 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.
 
 public class TimelineComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
-    private static final String COMMIT_HASH = "commit://";
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
     private final RadPatch patch;
@@ -65,6 +62,7 @@ public class TimelineComponentFactory {
     private EmojiPanel<RadPatch> emojiPanel;
     private final PatchVirtualFile file;
     private JComponent commentPanel;
+    private JComponent mainPanel;
 
     public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel, PatchVirtualFile file) {
         this.file = file;
@@ -83,7 +81,7 @@ public class TimelineComponentFactory {
     }
 
     public JComponent createRevisionSection() {
-        var mainPanel = getVerticalPanel(0);
+        mainPanel = getVerticalPanel(0);
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -134,7 +132,7 @@ public class TimelineComponentFactory {
     }
 
     private JComponent createCommentSection(List<RadPatch.Revision> revisions) {
-        var mainPanel = getVerticalPanel(0);
+        var verticalPanel = getVerticalPanel(0);
         for (var rev : revisions) {
             for (var com : rev.discussions()) {
                 if (com.isReviewComment()) {
@@ -172,10 +170,10 @@ public class TimelineComponentFactory {
                     return null;
                 }));
                 commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp);
-                mainPanel.add(commentPanel);
+                verticalPanel.add(commentPanel);
             }
         }
-        return mainPanel;
+        return verticalPanel;
     }
 
     public JPanel getEmojiJPanel() {
@@ -184,30 +182,6 @@ public class TimelineComponentFactory {
 
     public EmojiPanel<RadPatch> getEmojiPanel() {
         return emojiPanel;
-    }
-
-    public BaseHtmlEditorPane createCommitsSection(List<GitCommit> commits) {
-        var builder = new HtmlBuilder();
-        for (var commit : commits) {
-            builder.append(HtmlChunk.p()
-                    .children(HtmlChunk.link(COMMIT_HASH + commit.getId(), commit.getId().asString()),
-                            HtmlChunk.nbsp(),
-                            HtmlChunk.raw(commit.getFullMessage())));
-            builder.append(HtmlChunk.link(commit.getAuthor().getName(), commit.getAuthor().getName()));
-            builder.append(HtmlChunk.nbsp());
-            builder.append(DATE_TIME_FORMATTER.format(Instant.ofEpochMilli(commit.getAuthorTime())));
-        }
-        var commitEditor = new BaseHtmlEditorPane();
-        commitEditor.setBody(builder.toString());
-        commitEditor.removeHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-        commitEditor.addHyperlinkListener(new HyperlinkAdapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
-                var href = e.getDescription();
-                patchProposalPanel.selectCommit(href);
-            }
-        });
-        return commitEditor;
     }
 
     public static JComponent createTimeLineItem(JComponent contentPanel,
@@ -251,6 +225,47 @@ public class TimelineComponentFactory {
         public RadPatch removeEmoji(String emojiUnicode, String commentId) {
             var revisionId = findRevisionId(commentId);
             return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
+        }
+
+        @Override
+        public void notifyEmojiChanges(String emojiUnicode, String commentId, boolean isAdded) {
+            var revisionId = findRevisionId(commentId);
+            var revision = patch.findRevision(revisionId);
+            if (revision != null) {
+                var discussion = revision.findDiscussion(commentId);
+                if (discussion != null) {
+                    var reaction = discussion.findReaction(emojiUnicode);
+                    var author = reaction != null ? reaction.findAuthor(radDetails.did) : null;
+                    if (isAdded && author == null) {
+                        if (reaction == null) {
+                            // If the reaction does not exist, add a new reaction with the author
+                            discussion.reactions.add(new Reaction(emojiUnicode, List.of(new RadAuthor(radDetails.did, radDetails.alias))));
+                        } else {
+                            // If the reaction exists, add the author to the existing reaction
+                            reaction.authors().add(new RadAuthor(radDetails.did, radDetails.alias));
+                        }
+                    } else if (!isAdded && author != null) {
+                        if (reaction.authors().size() > 1) {
+                            // If the reaction has multiple authors, remove the current author
+                            reaction.authors().remove(author);
+                        } else {
+                            // If the reaction has only one author, remove the entire reaction from the discussion
+                            discussion.reactions.remove(reaction);
+                        }
+                    }
+                    updatePanel(patch);
+                }
+            }
+        }
+
+        public void updatePanel(RadPatch updatePatch) {
+            var panel = (JPanel) mainPanel.getComponent(2);
+            panel.removeAll();
+            for (var rev : updatePatch.revisions) {
+                panel.add(createCommentSection(List.of(rev)));
+            }
+            panel.revalidate();
+            panel.repaint();
         }
 
         private String findRevisionId(String commentId) {

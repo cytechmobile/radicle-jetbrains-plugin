@@ -131,7 +131,7 @@ public abstract class EmojiPanel<T> {
                         progressLabel.setVisible(false);
                         var isSuccess = res != null;
                         if (isSuccess) {
-                            model.setValue(model.getValue());
+                            notifyEmojiChanges(selectedEmoji.get(0).unicode(), discussionId, true);
                         }
                     });
                     return null;
@@ -167,7 +167,7 @@ public abstract class EmojiPanel<T> {
                             var res = removeEmoji(emojiUnicode, discussionId);
                             var isSuccess = res != null;
                             if (isSuccess) {
-                                model.setValue(model.getValue());
+                                notifyEmojiChanges(emojiUnicode, discussionId, false);
                             }
                             progressLabel.setVisible(false);
                         });
@@ -218,4 +218,5 @@ public abstract class EmojiPanel<T> {
 
     public abstract T removeEmoji(String emojiUnicode, String id);
 
+    public abstract void notifyEmojiChanges(String emojiUnicode, String commentId, boolean isAdded);
 }
