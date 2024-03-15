@@ -81,7 +81,7 @@ public class ObservableThreadModel {
     public List<ThreadModel> getInlineComments(RadPatch patch) {
         var lastRevision = patch.revisions.get(patch.revisions.size() - 1);
         var discussions = lastRevision.discussions().stream().filter(discussion -> discussion.isReviewComment() &&
-                (discussion.location.path.equals(getFileName()) && discussion.location.commit.equals(getCommitHash()))).toList();
+                (discussion.location.path.equals(getFilePath()) && discussion.location.commit.equals(getCommitHash()))).toList();
         var groupedDiscussions = new ArrayList<ThreadModel>();
         for (var discussion : discussions) {
             var line = discussion.location.start;
@@ -120,11 +120,11 @@ public class ObservableThreadModel {
         return change.getAfterRevision().getRevisionNumber().asString();
     }
 
-    public String getFileName() {
+    public String getFilePath() {
         if (isLeft) {
-            return change.getBeforeRevision().getFile().getName();
+            return change.getBeforeRevision().getFile().getPath();
         }
-        return change.getAfterRevision().getFile().getName();
+        return change.getAfterRevision().getFile().getPath();
     }
 
     public List<LineRange> getModifiedLines() {
