@@ -25,11 +25,18 @@ public class RadicleManagerListener implements ProjectActivity {
 
     private void showSuccessNotification(Project project) {
         var radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
-        final String radPath = detectRadPath(project);
-        radicleSettingsHandler.savePath(radPath);
-        radicleSettingsHandler.saveRadHome(project.getService(RadicleProjectService.class).detectRadHome(radPath));
         var settings = radicleSettingsHandler.loadSettings();
-        if (Strings.isNullOrEmpty(settings.getPath())) {
+        var radPath = settings.getPath();
+        var radHome = settings.getRadHome();
+        if (Strings.isNullOrEmpty(radPath)) {
+            radPath = detectRadPath(project);
+            radicleSettingsHandler.savePath(radPath);
+        }
+        if (!Strings.isNullOrEmpty(radPath) && Strings.isNullOrEmpty(radHome)) {
+            radHome = detectRadHome(project, radPath);
+            radicleSettingsHandler.saveRadHome(radHome);
+        }
+        if (Strings.isNullOrEmpty(radPath) || Strings.isNullOrEmpty(radHome)) {
             RadAction.showNotification(project, "radicle", "installedSuccessfully", NotificationType.INFORMATION,
                     List.of(new RadAction.ConfigureRadCliNotificationAction(project, RadicleBundle.lazyMessage("configure"))));
         }
@@ -37,6 +44,10 @@ public class RadicleManagerListener implements ProjectActivity {
 
     public String detectRadPath(Project project) {
         return project.getService(RadicleProjectService.class).detectRadPath();
+    }
+
+    public String detectRadHome(Project project, String radPath) {
+        return project.getService(RadicleProjectService.class).detectRadHome(radPath);
     }
 
 }

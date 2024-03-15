@@ -121,23 +121,47 @@ public class ActionsTest extends AbstractIT {
     }
 
     @Test
-    public void testSuccessNotificationAfterInstalled() throws InterruptedException {
+    public void testManagerListenerSettings() {
+        radicleProjectSettingsHandler.saveRadHome(RAD_HOME1);
+        radicleProjectSettingsHandler.savePath(RAD_PATH);
+
         var rm = new RadicleManagerListener();
         rm.execute(getProject(), NoopContinuation.NOOP);
+        assertThat(radicleProjectSettingsHandler.getRadHome()).isEqualTo(RAD_HOME1);
+        assertThat(radicleProjectSettingsHandler.getPath()).isEqualTo(RAD_PATH);
+    }
 
+    @Test
+    public void testSuccessNotificationAfterInstalledWithValidSettings() throws InterruptedException {
+        var rm = new RadicleManagerListener() {
+            @Override
+            public String detectRadPath(Project project) {
+                return RAD_PATH;
+            }
+
+            @Override
+            public String detectRadHome(Project project, String radPath) {
+                return RAD_HOME;
+            }
+        };
+        rm.execute(getProject(), NoopContinuation.NOOP);
         var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not).isNull();
-        assertThat(radicleProjectSettingsHandler.getRadHome()).isEqualTo(RAD_HOME);
-        assertThat(radicleProjectSettingsHandler.getPath()).isEqualTo(RAD_PATH);
+    }
 
-        rm = new RadicleManagerListener() {
+    @Test
+    public void testSuccessNotificationAfterInstalledWithoutValidSettings() throws InterruptedException {
+        radicleProjectSettingsHandler.saveRadHome("");
+        radicleProjectSettingsHandler.savePath("");
+
+        var rm = new RadicleManagerListener() {
             @Override
             public String detectRadPath(Project project) {
                 return "";
             }
         };
         rm.execute(getProject(), NoopContinuation.NOOP);
-        not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
         assertThat(not.getContent()).contains(RadicleBundle.message("installedSuccessfully"));
     }
 
