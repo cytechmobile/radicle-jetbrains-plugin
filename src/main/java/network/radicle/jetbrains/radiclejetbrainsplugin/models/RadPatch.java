@@ -125,9 +125,17 @@ public class RadPatch {
         return "";
     }
 
+    public Revision findRevision(String revisionId) {
+       return revisions.stream().filter(rev -> rev.id().equals(revisionId)).findFirst().orElse(null);
+    }
+
     public record Revision(
             String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews, RadAuthor author) { }
+            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews, RadAuthor author) {
+            public RadDiscussion findDiscussion(String commentId) {
+                return discussions().stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+            }
+    }
 
     public record Merge(String node, String commit, Instant timestamp) { }
 

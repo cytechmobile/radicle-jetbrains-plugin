@@ -314,6 +314,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
         seedNodeApiUrlMsgLabel.setWrapStyleWord(true);
         seedNodeApiUrlMsgLabel.setLineWrap(true);
+        seedNodeApiUrlMsgLabel.setOpaque(false);
         initListeners();
         // Show a warning label if the rad version is incompatible
         ApplicationManager.getApplication().executeOnPooledThread(() -> {

@@ -13,6 +13,11 @@ public class RadAuthor {
         this.id = id;
     }
 
+    public RadAuthor(String id, String alias) {
+        this.id = id;
+        this.alias = alias;
+    }
+
     public String generateLabelText() {
         if (!Strings.isNullOrEmpty(alias)) {
             return alias;
