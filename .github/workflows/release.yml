@@ -28,17 +28,15 @@ jobs:
         with:
           distribution: corretto
           java-version: 17
-      - name: Setup radicle-cli
+      - name: Install Radicle
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
         run: |
-          sudo apt update
-          sudo apt install curl ca-certificates gnupg -y
-          curl https://europe-west6-apt.pkg.dev/doc/repo-signing-key.gpg | sudo apt-key add -
-          echo deb https://europe-west6-apt.pkg.dev/projects/radicle-services radicle-cli main | sudo tee -a /etc/apt/sources.list.d/radicle-registry.list
-          sudo apt update
-          sudo apt install radicle-cli -y
-      # Set environment variables
-      - name: Export Properties
-        id: properties
+          curl -sSf https://radicle.xyz/install | sh
+          echo "${RAD_HOME}/bin" >> $GITHUB_PATH
+          echo "RAD_HOME=${{ github.workspace }}/.radicle" >> $GITHUB_ENV
+      - name: Extract Changelog
+        id: changelog
         shell: bash
         run: |
           CHANGELOG="$(cat << 'EOM' | sed -e 's/^[[:space:]]*$//g' -e '/./,$!d'
@@ -60,9 +58,9 @@ jobs:
 
       # Update Unreleased section with the current release note
       - name: Patch Changelog
-        if: ${{ steps.properties.outputs.changelog != '' }}
+        if: ${{ steps.changelog.outputs.changelog != '' }}
         env:
-          CHANGELOG: ${{ steps.properties.outputs.changelog }}
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
         run: |
           echo "patching changelog with: $CHANGELOG"
           ./gradlew :patchChangelog --release-note="$CHANGELOG"

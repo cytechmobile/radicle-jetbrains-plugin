@@ -40,6 +40,14 @@ jobs:
         with:
           distribution: corretto
           java-version: 17
+      # install radicle
+      - name: Install Radicle
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
+        run: |
+          curl -sSf https://radicle.xyz/install | sh
+          echo "${RAD_HOME}/bin" >> $GITHUB_PATH
+          echo "RAD_HOME=${{ github.workspace }}/.radicle" >> $GITHUB_ENV
 
       # Set environment variables
       - name: Export Properties

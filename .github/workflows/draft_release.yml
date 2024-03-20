@@ -37,14 +37,13 @@ jobs:
           NAME="$(echo "$PROPERTIES" | grep "^pluginName:" | cut -f2- -d ' ')"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "name=$NAME" >> $GITHUB_OUTPUT
-      - name: Setup radicle-cli
+      - name: Install Radicle
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
         run: |
-          sudo apt update
-          sudo apt install curl ca-certificates gnupg -y
-          curl https://europe-west6-apt.pkg.dev/doc/repo-signing-key.gpg | sudo apt-key add -
-          echo deb https://europe-west6-apt.pkg.dev/projects/radicle-services radicle-cli main | sudo tee -a /etc/apt/sources.list.d/radicle-registry.list
-          sudo apt update
-          sudo apt install radicle-cli -y
+          curl -sSf https://radicle.xyz/install | sh
+          echo "${RAD_HOME}/bin" >> $GITHUB_PATH
+          echo "RAD_HOME=${{ github.workspace }}/.radicle" >> $GITHUB_ENV
 
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
