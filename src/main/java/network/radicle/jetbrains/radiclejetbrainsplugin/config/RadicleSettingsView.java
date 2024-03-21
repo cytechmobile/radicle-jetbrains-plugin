@@ -145,16 +145,22 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         });
     }
 
-    private boolean isValidNodeApi() {
+    private RadicleProjectApi.SeedNodeInfo checkApi() {
         var api = myProject.getService(RadicleProjectApi.class);
-        var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
+        return api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
+    }
+
+    private boolean isValidNodeApi() {
+        return isValidNodeApi(checkApi());
+    }
+
+    private boolean isValidNodeApi(RadicleProjectApi.SeedNodeInfo resp) {
         return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
     }
 
     private void checkSeedNodeApiUrl() {
-        var api = myProject.getService(RadicleProjectApi.class);
-        var resp = api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
-        if (!isValidNodeApi()) {
+        var resp = checkApi();
+        if (!isValidNodeApi(resp)) {
             seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckError") + (resp == null ? "" :  "\n" + resp.errorMessage()));
         } else {
             seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckSuccess", resp.id(), resp.version()));

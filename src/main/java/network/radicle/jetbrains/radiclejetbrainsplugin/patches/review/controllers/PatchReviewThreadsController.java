@@ -1,6 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.controllers;
 
-import com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt;
+import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Disposer;
@@ -48,8 +48,10 @@ public class PatchReviewThreadsController {
 
     private void insertThread(ThreadModel threadModel) {
         patchDiffEditorComponentsFactory = new PatchDiffEditorComponentsFactory(this.patch, threadModel.getLine(), observableThreadModel);
-        var threadComponent = patchDiffEditorComponentsFactory.createThreadComponent(threadModel);
-        var disposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, threadModel.getLine(), threadComponent, 0, d -> null);
+        final var threadComponent = patchDiffEditorComponentsFactory.createThreadComponent(threadModel);
+        final var editorComponentInlaysManager = new EditorComponentInlaysManager(editor);
+        final var disposable = editorComponentInlaysManager.insertAfter(threadModel.getLine(), threadComponent, 0, null);
+        // var disposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, threadModel.getLine(), threadComponent, 0, d -> null);
         inlay.computeIfAbsent(threadModel.getLine(), l -> new ArrayList<>()).add(disposable);
     }
 

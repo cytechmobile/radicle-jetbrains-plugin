@@ -3,7 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.patches.review;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer;
 import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory;
-import com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt;
+import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -127,8 +127,9 @@ public class PatchDiffEditorGutterIconFactory implements DiffEditorGutterIconRen
                     }
                 };
                 var component = this.createComponent(hideComponent);
-                var myDisposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, editorLine, component, 0, (d) -> null);
-                //var myDisposable = editorComponentInlaysManager.insertAfter(editorLine, component, 0, null);
+                var editorComponentInlaysManager = new EditorComponentInlaysManager(editor);
+                // var myDisposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, editorLine, component, 0, (d) -> null);
+                var myDisposable = editorComponentInlaysManager.insertAfter(editorLine, component, 0, null);
                 CollaborationToolsUIUtil.INSTANCE.focusPanel(component);
                 if (myDisposable != null) {
                     inlay.put(editorLine, Map.entry(component, myDisposable));
