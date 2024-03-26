@@ -7,8 +7,8 @@ import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsCompo
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout;
 import com.intellij.collaboration.ui.util.ActionUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Function;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.event.DocumentEvent;
 import java.awt.BorderLayout;
 import java.util.List;
 
@@ -101,9 +100,9 @@ public class EditablePanelHandler {
                 });
                 return null;
             });
-            dragAndDropField.getDocument().addDocumentListener(new DocumentAdapter() {
+            dragAndDropField.addDocumentListener(new DocumentListener() {
                 @Override
-                protected void textChanged(@NotNull DocumentEvent e) {
+                public void documentChanged(com.intellij.openapi.editor.event.@NotNull DocumentEvent event) {
                     var enable = !dragAndDropField.getText().isEmpty();
                     prAction.setEnabled(enable);
                 }

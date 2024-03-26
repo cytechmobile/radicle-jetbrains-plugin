@@ -1,15 +1,26 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.FileService;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.swing.JComponent;
+import java.awt.Rectangle;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.dnd.DnDConstants;
@@ -22,9 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DragAndDropField extends JBTextArea {
+public class DragAndDropField extends EditorTextField {
     private static final Logger logger = LoggerFactory.getLogger(DragAndDropField.class);
-
+    private int border = 0;
     private final boolean enableDragAndDrop;
     private final FileService fileService;
     private final Project project;
@@ -35,13 +46,35 @@ public class DragAndDropField extends JBTextArea {
         this.fileService = project.getService(FileService.class);
         this.embedList = new ArrayList<>();
         this.project = project;
-        this.setLineWrap(true);
-        this.setDragAndDropTarget();
+        this.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true);
+        this.addDocumentListener(new MyListener(this));
     }
 
-    public DragAndDropField(Project project) {
+    public DragAndDropField(Project project, int border) {
         this(project, true);
+        this.border = border;
     }
+
+    @Override
+    protected @NotNull EditorEx createEditor() {
+        var editor =  super.createEditor();
+        editor.getSettings().setUseSoftWraps(true);
+        editor.setBorder(JBUI.Borders.empty(border));
+        editor.setOneLineMode(false);
+        editor.setVerticalScrollbarVisible(true);
+        editor.getComponent().setOpaque(false);
+        editor.getScrollPane().setOpaque(false);
+        return editor;
+    }
+
+     @Override
+     protected void onEditorAdded(@NotNull Editor editor) {
+         this.putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, editor);
+         if (!enableDragAndDrop || ApplicationManager.getApplication().isUnitTestMode()) {
+             return;
+         }
+         editor.getContentComponent().setDropTarget(new Target());
+     }
 
     public void setEmbedList(List<Embed> list) {
         this.embedList = list;
@@ -54,9 +87,20 @@ public class DragAndDropField extends JBTextArea {
                 .collect(Collectors.toList());
     }
 
-    private void setDragAndDropTarget() {
-        if (enableDragAndDrop && !ApplicationManager.getApplication().isUnitTestMode()) {
-            this.setDropTarget(new Target());
+    public static class MyListener implements DocumentListener {
+        private final EditorTextField myField;
+
+        public MyListener(EditorTextField myField) {
+            this.myField = myField;
+        }
+
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+            var parent = myField.getParent();
+            if (parent != null) {
+                ((JComponent) parent).scrollRectToVisible(new Rectangle(0, 0,
+                        parent.getWidth(), parent.getHeight()));
+            }
         }
     }
 
@@ -64,10 +108,9 @@ public class DragAndDropField extends JBTextArea {
         @Override
         public void dragOver(DropTargetDragEvent dtde) {
             Point cursorLocation = dtde.getLocation();
-            int offset = DragAndDropField.this.viewToModel2D(cursorLocation);
-            // Move the cursor to the calculated offset
+            var logicalPosition = DragAndDropField.this.getEditor().xyToLogicalPosition(cursorLocation);
+            int offset = DragAndDropField.this.getEditor().logicalPositionToOffset(logicalPosition);
             DragAndDropField.this.setCaretPosition(offset);
-            // Set focus to the JBTextArea when dragging files over it
             DragAndDropField.this.requestFocusInWindow();
             dtde.acceptDrag(DnDConstants.ACTION_COPY);
         }
@@ -92,9 +135,11 @@ public class DragAndDropField extends JBTextArea {
                     embedList.add(new Embed(gitObjectId, fileName, base64));
                     var markDown = "![" + fileName + "](" + gitObjectId + ")";
                     var dropLocation = evt.getLocation();
-                    int offset = DragAndDropField.this.viewToModel2D(dropLocation);
+                    var logicalPosition = DragAndDropField.this.getEditor().xyToLogicalPosition(dropLocation);
+                    int offset = DragAndDropField.this.getEditor().logicalPositionToOffset(logicalPosition);
                     if (offset >= 0 && offset <= DragAndDropField.this.getText().length()) {
-                        DragAndDropField.this.getDocument().insertString(offset, markDown, null);
+                        WriteCommandAction.runWriteCommandAction(project, () ->
+                                DragAndDropField.this.getEditor().getDocument().insertString(offset, markDown));
                     }
                 }
             } catch (Exception e) {
@@ -103,4 +148,6 @@ public class DragAndDropField extends JBTextArea {
         }
     }
 }
+
+
 

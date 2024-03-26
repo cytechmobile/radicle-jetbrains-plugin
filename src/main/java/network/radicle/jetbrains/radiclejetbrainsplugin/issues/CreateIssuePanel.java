@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
@@ -136,17 +137,21 @@ public class CreateIssuePanel {
         borderPanel.add(projectSelect, BorderLayout.NORTH);
         borderPanel.add(titleField, BorderLayout.CENTER);
 
-        descriptionField = new DragAndDropField(project);
+        descriptionField = new DragAndDropField(project, 0);
         descriptionField.setBackground(UIUtil.getListBackground());
-        descriptionField.setBorder(JBUI.Borders.empty(8, 8, 0, 8));
         descriptionField.setFont(JBFont.label());
-        descriptionField.getEmptyText().setText(RadicleBundle.message("description"));
-        descriptionField.setLineWrap(true);
+        descriptionField.getComponent().setBorder(JBUI.Borders.empty(8));
+        descriptionField.setPlaceholder(RadicleBundle.message("description"));
         CollaborationToolsUIUtil.INSTANCE.registerFocusActions(descriptionField);
 
         var textFieldListener = new TextFieldListener();
         titleField.getDocument().addDocumentListener(textFieldListener);
-        descriptionField.getDocument().addDocumentListener(textFieldListener);
+        descriptionField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void documentChanged(com.intellij.openapi.editor.event.@NotNull DocumentEvent event) {
+                newIssueButton.setEnabled(!titleField.getText().isEmpty() && !descriptionField.getText().isEmpty());
+            }
+        });
 
         var descriptionPane = new JBScrollPane(descriptionField, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
