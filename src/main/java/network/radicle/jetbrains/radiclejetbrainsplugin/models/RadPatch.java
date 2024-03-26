@@ -2,7 +2,9 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import git4idea.GitCommit;
@@ -15,7 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +100,16 @@ public class RadPatch {
         return this.state.status.equals(State.MERGED.status);
     }
 
+    public String findRevisionId(String commentId) {
+        for (var revision : revisions) {
+            var found = revision.discussions.stream().anyMatch(d -> d.id.equals(commentId));
+            if (found) {
+                return revision.id;
+            }
+        }
+        return "";
+    }
+
     @Override
     public String toString() {
         try {
@@ -131,14 +146,73 @@ public class RadPatch {
 
     public record Revision(
             String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Object> reviews, RadAuthor author) {
-            public RadDiscussion findDiscussion(String commentId) {
-                return discussions().stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
-            }
+            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Review> reviews, RadAuthor author) implements TimelineEvent {
+        @Override
+        public Instant getTimestamp() {
+            return timestamp;
+        }
+
+        public List<Review> getReviews() {
+            HashSet<Object> seen = new HashSet<>();
+            var myReviews = new ArrayList<>(reviews);
+            // Remove the duplicates reviews. We can only have 1 review per author per revision
+            myReviews.removeIf(e -> !seen.add(e.author.id));
+            return myReviews;
+        }
+
+        public RadDiscussion findDiscussion(String commentId) {
+            return discussions().stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+        }
     }
 
     public record Merge(String node, String commit, Instant timestamp) { }
 
+    public record Review(String id, RadAuthor author, Verdict verdict, String summary,
+                         List<RadDiscussion> comments, Instant timestamp) implements TimelineEvent {
+        @Override
+        public Instant getTimestamp() {
+            return timestamp;
+        }
+
+        @JsonFormat(shape = JsonFormat.Shape.STRING)
+        public enum Verdict {
+            ACCEPT("accept"),
+            REJECT("reject");
+
+            private final String value;
+
+            Verdict(String value) {
+                this.value = value;
+            }
+
+            @JsonValue
+            public String getValue() {
+                return value;
+            }
+
+            @JsonCreator
+            public static Verdict forValues(String val) {
+                for (Verdict verdict : Verdict.values()) {
+                    if (verdict.value.equals(val.toLowerCase())) {
+                        return verdict;
+                    }
+                }
+                return null;
+            }
+        }
+    }
+
+    @JsonIgnore
+    public List<TimelineEvent> getTimelineEvents() {
+        var list = new ArrayList<TimelineEvent>();
+        for (var revision : revisions) {
+            list.add(revision);
+            list.addAll(revision.getReviews());
+            list.addAll(revision.discussions);
+        }
+        list.sort(Comparator.comparing(TimelineEvent::getTimestamp));
+        return list;
+    }
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
@@ -164,5 +238,9 @@ public class RadPatch {
             }
             return null;
         }
+    }
+
+    public interface TimelineEvent {
+        Instant getTimestamp();
     }
 }

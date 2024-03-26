@@ -41,6 +41,7 @@ public class PatchDiffWindow extends DiffExtension {
            var radicleProjectService = patch.project.getService(RadicleProjectService.class);
            var radDetails = new RadSelf(patch.project).getRadSelfDetails();
             radicleProjectService.setRadDetails(radDetails);
+            patch.project.putUserData(PatchComponentFactory.PATCH_DIFF, patch);
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (viewer instanceof TwosideTextDiffViewer twosideTextDiffViewer) {
                     setupEditor(twosideTextDiffViewer.getEditor(Side.LEFT), change, patch, true);

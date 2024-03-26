@@ -176,6 +176,32 @@ public class RadicleProjectApi {
         return List.of();
     }
 
+    public RadPatch addReview(String verdict, String summary, RadPatch patch) {
+        var session = createAuthenticatedSession();
+        if (session == null) {
+            return null;
+        }
+        try {
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
+            var patchEditData = Map.of("type", "review", "revision",
+                    patch.getLatestRevision().id(), "summary", summary, "verdict", verdict, "labels", List.of());
+            var json = MAPPER.writeValueAsString(patchEditData);
+            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
+            var resp = makeRequest(patchReq, RadicleBundle.message("reviewTitleError"));
+            if (!resp.isSuccess()) {
+                logger.warn("received invalid response with status:{} and body:{} while adding a review: {}",
+                        resp.status, resp.body, patch);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error adding patch review: {}", patch, e);
+        }
+
+        return null;
+    }
+
     public RadPatch fetchPatch(String projectId, GitRepository repo, String patchId) {
         var radProject = fetchRadProject(projectId);
         if (radProject == null) {

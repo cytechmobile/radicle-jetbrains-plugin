@@ -62,7 +62,7 @@ public class TimelineComponent {
         timelinePanel.setOpaque(false);
         timelinePanel.add(header);
         timelinePanel.add(descriptionWrapper);
-        revisionSection = componentsFactory.createRevisionSection();
+        revisionSection = componentsFactory.createTimeline();
         timelinePanel.add(revisionSection);
 
         var horizontalPanel = Utils.getHorizontalPanel(8);

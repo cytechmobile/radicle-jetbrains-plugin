@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RadDiscussion {
+public class RadDiscussion implements RadPatch.TimelineEvent {
     public String id;
     public RadAuthor author;
     public String body;
@@ -38,6 +38,11 @@ public class RadDiscussion {
 
     public Reaction findReaction(String emojiUnicode) {
         return reactions.stream().filter(r -> r.emoji().equals(emojiUnicode)).findFirst().orElse(null);
+    }
+
+    @Override
+    public Instant getTimestamp() {
+        return this.timestamp;
     }
 
     public static class Location {
