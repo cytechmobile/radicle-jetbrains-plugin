@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextArea;
@@ -39,6 +40,7 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.ReviewSubmitAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
@@ -104,6 +106,7 @@ public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String RAD_PROJECT_ID = "rad:123";
     private static final String DISCUSSION_ID = UUID.randomUUID().toString();
+    private static final String REVIEW_SUMMARY = "Accepted";
 
     private String dummyComment = "Hello";
     private RadPatch patch;
@@ -145,7 +148,7 @@ public class TimelineTest extends AbstractIT {
                     assertThat(map.get("title")).isEqualTo(patch.title);
                 } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react") ||
                         map.get("type").equals("revision.comment.edit") || map.get("type").equals("revision.comment") ||
-                        map.get("type").equals("revision.comment.redact")) {
+                        map.get("type").equals("revision.comment.redact") || map.get("type").equals("review")) {
                     response.add(map);
                 }
                 // Return status code 400 in order to trigger the notification
@@ -291,6 +294,34 @@ public class TimelineTest extends AbstractIT {
         assertThat(map.get("comment")).isEqualTo(discussion.id);
         assertThat(map.get("type")).isEqualTo("revision.comment.redact");
         assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        EditorFactory.getInstance().releaseEditor(editor);
+    }
+
+    @Test
+    public void testAddReview() throws InterruptedException {
+        var authorId = "did:key:fakeDid";
+        var comment = "This is a comment";
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var fileName = firstChange.getVirtualFile().getPath();
+        var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
+        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        var patchDiffWindow = initializeDiffWindow();
+        var editor = patchDiffWindow.getEditor();
+        var reviewAction = new ReviewSubmitAction(patch);
+        reviewAction.setUpPopup(new JPanel());
+
+        var componentContainer = reviewAction.getContainer();
+        var editorTextField = UIUtil.findComponentOfType(componentContainer.getComponent(), EditorTextField.class);
+        var approveButton = UIUtil.findComponentOfType(componentContainer.getComponent(), JButton.class);
+
+        editorTextField.setText(REVIEW_SUMMARY);
+        approveButton.doClick();
+        executeUiTasks();
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("summary")).isEqualTo(REVIEW_SUMMARY);
+        assertThat(map.get("verdict")).isEqualTo(RadPatch.Review.Verdict.ACCEPT.getValue());
+        assertThat(map.get("type")).isEqualTo("review");
         EditorFactory.getInstance().releaseEditor(editor);
     }
 
@@ -752,6 +783,15 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
+    public void testReviewExists() {
+        executeUiTasks();
+        var revisionSection = patchEditorProvider.getTimelineComponent().getRevisionSection();
+        var elements = UIUtil.findComponentsOfType(revisionSection, JEditorPane.class);
+        var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
+        assertThat(comments).contains(REVIEW_SUMMARY);
+    }
+
+    @Test
     public void testEmbeds() throws InterruptedException {
         // Clear previous commands
         radStub.commands.clear();
@@ -949,8 +989,10 @@ public class TimelineTest extends AbstractIT {
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
         var discussions = new ArrayList<RadDiscussion>();
         discussions.add(discussion);
+        var review = new RadPatch.Review(UUID.randomUUID().toString(), new RadAuthor("fakeDid"),
+                RadPatch.Review.Verdict.ACCEPT, REVIEW_SUMMARY, List.of(), Instant.now());
         return new RadPatch.Revision(id, description, base, commit.getId().asString(),
-                List.of("branch"), List.of(), Instant.now(), discussions, List.of(), new RadAuthor(UUID.randomUUID().toString()));
+                List.of("branch"), List.of(), Instant.now(), discussions, List.of(review), new RadAuthor(UUID.randomUUID().toString()));
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {

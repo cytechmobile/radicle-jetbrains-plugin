@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.serviceContainer.NonInjectable;
+import com.intellij.util.ui.EDT;
 import com.sshtools.common.publickey.SshKeyUtils;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -66,14 +67,19 @@ public class AuthService {
         var latch = new CountDownLatch(1);
         AtomicBoolean okButton = new AtomicBoolean(false);
         AtomicReference<IdentityDialog> resp = new AtomicReference<>(null);
-        ApplicationManager.getApplication().invokeLater(() -> {
-            var myDialog = dialog == null ? new IdentityDialog() : dialog;
+        Runnable showDialogTask = () -> {
+            IdentityDialog myDialog = dialog == null ? new IdentityDialog() : dialog;
             resp.set(myDialog);
             myDialog.setTitle(title);
             myDialog.hasIdentity(hasIdentity);
             okButton.set(myDialog.showAndGet());
             latch.countDown();
-        }, ModalityState.any());
+        };
+        if (!EDT.isCurrentThreadEdt()) {
+            ApplicationManager.getApplication().invokeLater(() -> showDialogTask.run(), ModalityState.any());
+        } else {
+            showDialogTask.run();
+        }
         try {
             latch.await();
         } catch (InterruptedException e) {

@@ -45,6 +45,11 @@
             <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" relative-to-action="Vcs.Push" anchor="after" />
         </action>
 
+        <action id="Radicle.Diff.Toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.ReviewSubmitAction">
+            <add-to-group group-id="Diff.ViewerToolbar"/>
+            <add-to-group group-id="Diff.KeymapGroup" relative-to-action="BlankDiffViewerEditorPopupMenu" anchor="after"/>
+        </action>
+
         <action id="Radicle.Sync.Fetch.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction"
                 text="Rad Sync Fetch" description="Radicle sync fetch from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_FETCH">
             <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" relative-to-action="Radicle.Sync.New.Ui" anchor="after" />

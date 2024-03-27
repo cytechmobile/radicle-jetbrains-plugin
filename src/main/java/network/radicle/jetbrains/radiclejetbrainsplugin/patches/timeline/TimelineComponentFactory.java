@@ -23,6 +23,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
@@ -32,13 +33,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
+
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -50,6 +52,7 @@ public class TimelineComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(PATTERN_FORMAT).withZone(ZoneId.systemDefault());
+    private static final String JPANEL_PREFIX_NAME = "COMMENT_";
     private final RadPatch patch;
     private final CountDownLatch latch = new CountDownLatch(1);
     private JComponent descSection;
@@ -80,7 +83,7 @@ public class TimelineComponentFactory {
         return descSection;
     }
 
-    public JComponent createRevisionSection() {
+    public JComponent createTimeline() {
         mainPanel = getVerticalPanel(0);
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
@@ -102,18 +105,19 @@ public class TimelineComponentFactory {
                             RadicleBundle.message("identityDetailsError"));
                     return;
                 }
-                for (var rev : patch.revisions) {
-                    var contentPanel = getVerticalPanel(4);
-                    var patchCommits = groupedCommits.get(rev.id());
-                    Collections.reverse(patchCommits);
-                    contentPanel.setOpaque(false);
-                    var horizontalPanel = getHorizontalPanel(8);
-                    horizontalPanel.setOpaque(false);
-                    var revAuthor = !Strings.isNullOrEmpty(rev.author().alias) ? rev.author().alias : rev.author().id;
-                    var item = createTimeLineItem(contentPanel, horizontalPanel, RadicleBundle.message("revisionPublish", rev.id(), revAuthor),
-                            rev.timestamp());
-                    mainPanel.add(item);
-                    mainPanel.add(createCommentSection(List.of(rev)));
+                var timelineEvents = patch.getTimelineEvents();
+                for (var event : timelineEvents) {
+                    JComponent myComponent = null;
+                    if (event instanceof RadPatch.Revision) {
+                        myComponent = createRevisionComponent((RadPatch.Revision) event);
+                    } else if (event instanceof RadPatch.Review) {
+                        myComponent = createReviewComponent((RadPatch.Review) event);
+                    } else if (event instanceof RadDiscussion) {
+                        myComponent = createCommentComponent((RadDiscussion) event);
+                    }
+                    if (myComponent != null) {
+                        mainPanel.add(myComponent);
+                    }
                 }
             });
         });
@@ -131,46 +135,78 @@ public class TimelineComponentFactory {
         return "";
     }
 
-    private JComponent createCommentSection(List<RadPatch.Revision> revisions) {
-        var verticalPanel = getVerticalPanel(0);
-        for (var rev : revisions) {
-            for (var com : rev.discussions()) {
-                var textHtmlEditor = new BaseHtmlEditorPane();
-                textHtmlEditor.setOpaque(false);
-                var message = com.body;
-                if (!Strings.isNullOrEmpty(com.replyTo)) {
-                    var replyToMessage = findMessage(com.replyTo);
-                    message = "<div><div style=\"border-left: 2px solid black;\">" +
-                            " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
-                            "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
-                }
-                var panel = new BorderLayoutPanel();
-                panel.setOpaque(false);
-                var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.projectId, file);
-                panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
-                emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
-                emojiJPanel = emojiPanel.getEmojiPanel();
-                panel.addToBottom(emojiJPanel);
-                var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
-                        RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> {
-                    var edited = api.changePatchComment(rev.id(), com.id, field.getText(), patch, field.getEmbedList());
-                    final boolean success = edited != null;
-                    if (success) {
-                        patchModel.setValue(patch);
-                    }
-                    return success;
-                }).build();
-                var contentPanel = panelHandle.panel;
-                var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-                actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
-                    panelHandle.showAndFocusEditor();
-                    return null;
-                }));
-                commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp);
-                verticalPanel.add(commentPanel);
-            }
+    private JComponent createRevisionComponent(RadPatch.Revision rev) {
+        var contentPanel = getVerticalPanel(4);
+        contentPanel.setOpaque(false);
+        var horizontalPanel = getHorizontalPanel(8);
+        horizontalPanel.setOpaque(false);
+        var revAuthor = !Strings.isNullOrEmpty(rev.author().alias) ? rev.author().alias : rev.author().id;
+        return createTimeLineItem(contentPanel, horizontalPanel, RadicleBundle.message("revisionPublish", rev.id(), revAuthor),
+                rev.timestamp());
+    }
+
+    private JComponent createReviewComponent(RadPatch.Review review) {
+        var reviewPanel = getVerticalPanel(0);
+        var textHtmlEditor = new BaseHtmlEditorPane();
+        textHtmlEditor.setOpaque(false);
+        var message = review.summary();
+        var panel = new BorderLayoutPanel();
+        panel.setOpaque(false);
+        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.projectId, file);
+        var myPanel = getVerticalPanel(1);
+        myPanel.setOpaque(false);
+        myPanel.add(editorPane.htmlEditorPane());
+        var verdictMsg = review.verdict() == RadPatch.Review.Verdict.ACCEPT ? RadicleBundle.message("approved") : RadicleBundle.message("requestChanges");
+        var color = review.verdict() == RadPatch.Review.Verdict.ACCEPT ? StatusMessageType.SUCCESS : StatusMessageType.WARNING;
+
+        myPanel.add(StatusMessageComponentFactory.INSTANCE.create(new JLabel(verdictMsg), color));
+        panel.addToCenter(myPanel);
+        var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
+                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> true).build();
+        var contentPanel = panelHandle.panel;
+        var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
+        var item = createTimeLineItem(contentPanel, actionsPanel, review.author().generateLabelText(), review.timestamp());
+        reviewPanel.add(item);
+        return reviewPanel;
+    }
+
+    private JComponent createCommentComponent(RadDiscussion com) {
+        var myMainPanel = getVerticalPanel(0);
+        var textHtmlEditor = new BaseHtmlEditorPane();
+        textHtmlEditor.setOpaque(false);
+        var message = com.body;
+        if (!Strings.isNullOrEmpty(com.replyTo)) {
+            var replyToMessage = findMessage(com.replyTo);
+            message = "<div><div style=\"border-left: 2px solid black;\">" +
+                    " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
+                    "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
         }
-        return verticalPanel;
+        var panel = new BorderLayoutPanel();
+        panel.setOpaque(false);
+        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.projectId, file);
+        panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
+        emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
+        emojiJPanel = emojiPanel.getEmojiPanel();
+        panel.addToBottom(emojiJPanel);
+        var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
+                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> {
+            var edited = api.changePatchComment(patch.findRevisionId(com.id), com.id, field.getText(), patch, field.getEmbedList());
+            final boolean success = edited != null;
+            if (success) {
+                patchModel.setValue(patch);
+            }
+            return success;
+        }).build();
+        var contentPanel = panelHandle.panel;
+        var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
+        actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+            panelHandle.showAndFocusEditor();
+            return null;
+        }));
+        commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp);
+        myMainPanel.add(commentPanel);
+        myMainPanel.setName(JPANEL_PREFIX_NAME + com.id);
+        return myMainPanel;
     }
 
     public JPanel getEmojiJPanel() {
@@ -250,19 +286,26 @@ public class TimelineComponentFactory {
                             discussion.reactions.remove(reaction);
                         }
                     }
-                    updatePanel(patch);
+                    updatePanel(discussion);
                 }
             }
         }
 
-        public void updatePanel(RadPatch updatePatch) {
-            var panel = (JPanel) mainPanel.getComponent(2);
-            panel.removeAll();
-            for (var rev : updatePatch.revisions) {
-                panel.add(createCommentSection(List.of(rev)));
+        public void updatePanel(RadDiscussion discussion) {
+            var children = mainPanel.getComponents();
+            JComponent commentComponent = null;
+            for (var child : children) {
+                if (child.getName() != null && child.getName().equals(JPANEL_PREFIX_NAME + discussion.id)) {
+                    commentComponent = (JComponent) child;
+                    break;
+                }
             }
-            panel.revalidate();
-            panel.repaint();
+            if (commentComponent != null) {
+                commentComponent.removeAll();
+                commentComponent.add(createCommentComponent(discussion).getComponent(0));
+                commentComponent.revalidate();
+                commentComponent.repaint();
+            }
         }
 
         private String findRevisionId(String commentId) {

@@ -275,7 +275,8 @@ public class PatchListPanelTest extends AbstractIT {
 
     public static List<RadPatch> getTestPatches() {
         var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
-                List.of(), List.of(), Instant.now(), List.of(), List.of(), new RadAuthor(UUID.randomUUID().toString()));
+                List.of(), List.of(), Instant.now(), List.of(), List.of(new RadPatch.Review("1",
+                new RadAuthor(AUTHOR), RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())), new RadAuthor(UUID.randomUUID().toString()));
 
         var radPatch = new RadPatch("c5df12", "test-rad-project", "testPatch", new RadAuthor(AUTHOR), "testTarget",
                 List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
