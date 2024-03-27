@@ -8,14 +8,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.EDT;
+import git4idea.GitUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
@@ -121,10 +124,16 @@ public class ObservableThreadModel {
     }
 
     public String getFilePath() {
+        ContentRevision contentRevision;
         if (isLeft) {
-            return change.getBeforeRevision().getFile().getPath();
+            contentRevision = change.getBeforeRevision();
+        } else {
+            contentRevision = change.getAfterRevision();
         }
-        return change.getAfterRevision().getFile().getPath();
+        var file = contentRevision.getFile();
+        var repo = GitUtil.getRepositoryManager(api.getProject()).getRepositoryForFileQuick(file);
+        var rootPath = repo.getRoot().getPath();
+        return Paths.get(rootPath).relativize(Paths.get(file.getPath())).toString().replace("\\", "/");
     }
 
     public List<LineRange> getModifiedLines() {

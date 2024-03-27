@@ -36,6 +36,7 @@ import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
+import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
@@ -80,6 +81,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -247,7 +249,7 @@ public class TimelineTest extends AbstractIT {
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getPath();
+        var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
@@ -271,7 +273,7 @@ public class TimelineTest extends AbstractIT {
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getPath();
+        var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         var discussion = createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location);
         patch.revisions.get(1).discussions().add(discussion);
@@ -331,7 +333,7 @@ public class TimelineTest extends AbstractIT {
         var comment = "This is a comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getPath();
+        var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow();
@@ -366,7 +368,7 @@ public class TimelineTest extends AbstractIT {
     public void testAddReviewComments() throws InterruptedException {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
-        var fileName = firstChange.getVirtualFile().getPath();
+        var fileName = findPath(firstChange.getVirtualFile());
         var patchDiffWindow = initializeDiffWindow();
         var gutterIconFactory = patchDiffWindow.getPatchDiffEditorGutterIconFactory();
         var commentRenderer = (PatchDiffEditorGutterIconFactory.CommentIconRenderer) gutterIconFactory.createCommentRenderer(0);
@@ -982,6 +984,12 @@ public class TimelineTest extends AbstractIT {
         patchDiffWindow.onViewerCreated(viewer, diffContext, req);
         executeUiTasks();
         return patchDiffWindow;
+    }
+
+    public String findPath(VirtualFile file) {
+        var repo = GitUtil.getRepositoryManager(getProject()).getRepositoryForFileQuick(file);
+        var rootPath = repo.getRoot().getPath();
+        return Paths.get(rootPath).relativize(Paths.get(file.getPath())).toString().replace("\\", "/");
     }
 
     private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion) {
