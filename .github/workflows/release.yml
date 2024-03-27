@@ -65,28 +65,19 @@ jobs:
           echo "patching changelog with: $CHANGELOG"
           ./gradlew :patchChangelog --release-note="$CHANGELOG"
       # Create pull request with changelog update
-      - name: Create Pull Request
-        if: ${{ steps.properties.outputs.changelog != '' }}
+      - name: Push changelog update
+        if: ${{ steps.changelog.outputs.changelog != '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${{ github.event.release.tag_name }}"
-          BRANCH="changelog-update-$VERSION"
-
           git config user.email "action@github.com"
           git config user.name "GitHub Action"
-
-          git checkout -b $BRANCH
+          git checkout -b main
           git commit -am "Changelog update - $VERSION
           Signed-off-by: github-actions <action@github.com>
           "
-          git push --set-upstream origin $BRANCH
-
-          gh pr create \
-            --title "Changelog update - \`$VERSION\`" \
-            --body "Current pull request contains patched \`CHANGELOG.md\` file for version \`$VERSION\`" \
-            --base main \
-            --head $BRANCH
+          git push --set-upstream origin main
       # Publish the plugin to the Marketplace
       - name: Publish Plugin
         env:
