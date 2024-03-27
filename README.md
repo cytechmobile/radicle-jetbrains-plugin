@@ -18,6 +18,9 @@ This plugin requires the `rad` Command Line Interface (CLI) tool to be installed
 Installation instructions for `rad` are available here: [https://docs.radicle.xyz/guides/user](https://docs.radicle.xyz/guides/user)
 
 This plugin is available under [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+**Known issue**: Due to latest changes in private repos, we are aware of issues working with private repos in the plugin. Please reach out to us in [#integrations](https://radicle.zulipchat.com/#narrow/stream/380896-integrations) for assistance, if you are facing this issue.
+
 <!-- Plugin description end -->
 
 ---
