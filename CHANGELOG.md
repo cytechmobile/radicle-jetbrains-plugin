@@ -2,26 +2,31 @@
 
 # radicle-jetbrains-plugin Changelog
 
-## Unreleased
+## [Unreleased]
 
-## 0.8.4 - 2024-03-13
+## [0.9.0] - 2024-03-28
+
+- feat(patch): Add a review along with comments. Also show the reviews in the timeline.
+- feat: Refresh only emoji panel when adding/removing reactions
+- docs: Improve docs in README.md and fix references to radicle guide and repos.
+- fix: Correctly match review comment based on *relative* path to repo root
+- fix(settings): Auto-detect RAD_HOME and RAD_PATH and store only if the existing settings were empty
+- fix: Allow deleting on patch review comment
+- ci: Fix jobs and changelog generation
+- fix: Make the plugin compatible with 232, current latest release for Android Studio
+
+## [0.8.4] - 2024-03-13
 
 - feat: Open file in browser by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/490
-
 - fix patches info and timeline by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/495
-
 - fix: Emojis Deserialization by @Stelios123 in 4f9fae6d72990ea744515525fa1dcd4423127c86
-
 - release: bump version to 0.8.4 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/498
-
 - Changelog update - `v0.8.3` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/488
-
 - build(deps): update dependencies by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/494
-
 - ci: Change jobs trigger to push by @JChrist 
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.3...v0.8.4
 
-## 0.8.3 - 2024-02-21
+## [0.8.3] - 2024-02-21
 
 - fix(Filters Compatibility): Patch / Issues filtering by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/479
 - fix(settings): Fix label widths by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/482
@@ -29,14 +34,14 @@
 - fix(reactions): Resolve updated httpd reaction json model by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/478
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.2...v0.8.3
 
-## 0.8.2 - 2024-02-06
+## [0.8.2] - 2024-02-06
 
 - Changelog update - `v0.8.1` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/474
 - chore(version): bump to next release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/475
 - Limit intellij platform until build 2023.3.3
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.1...v0.8.2
 
-## 0.8.1 - 2024-02-05
+## [0.8.1] - 2024-02-05
 
 - Changelog update - `v0.8.0` by @github-actions in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/453
 - Our first end-to-end tests by @gsaslis in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/423
@@ -45,7 +50,7 @@
 - chore(version): bump version for next release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/469
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.8.0...v0.8.1
 
-## 0.8.0 - 2024-01-12
+## [0.8.0] - 2024-01-12
 
 - Edit patch comments by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/388
 - Create patch proposal by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/397
@@ -82,7 +87,7 @@
 - Patches/304a5512dae85c38dac47b600496302ccdcabad4 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/451
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.3...v0.8.0
 
-## 0.7.3 - 2023-09-28
+## [0.7.3] - 2023-09-28
 
 - Synchronizing your Radicle project with the network is something that the `radicle-node` automagically takes care of you behind the scenes. But not always (as the node is sometimes not running, or offline, etc.) That's why it's important to allow the user to manually `rad sync` their project! 🔛  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/376
 - Let's be honest, markdown is much prettier when rendered! We weren't rendering, so this PR adds markdown support in Radicle Issue and Patch description and comments! 🤩  ( by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/375
@@ -92,7 +97,7 @@
 - Improved the emoji reaction button look and feel, so it should hopefully be easier to add reactions now! 👌 by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/381
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.2...v0.7.3
 
-## 0.7.2 - 2023-09-19
+## [0.7.2] - 2023-09-19
 
 - Check out patches directly from the IDE! A new check out button, allows you to check out the patch branch, so you can work directly with the code in your working copy. by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/360
 - You can now not only add reactions to patches / issues, but you can also - wait for it - **remove** them. No more stress when you accidentally misclick the embarassing wrong icon.  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/361
@@ -103,7 +108,7 @@
 - Bump actions/checkout from 3 to 4 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/348
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.1...v0.7.2
 
-## 0.7.1 - 2023-09-13
+## [0.7.1] - 2023-09-13
 
 - You can now create new Radicle Issues from within your IDE ! 🎉  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/350
 - You can also add reactions 👍🏼 🎉 🚀  to comments (for both Patches and Issues !) ;)  by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/341
@@ -118,13 +123,13 @@
 - Bump JetBrains/qodana-action from 2023.2.1 to 2023.2.6 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/347
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.7.0...v0.7.1
 
-## 0.7.0 - 2023-08-31
+## [0.7.0] - 2023-08-31
 
 - Change the state / label of a patch proposal by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/325
 - Support IDEA 2023.2 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/329
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.2...v0.7.0
 
-## 0.6.2 - 2023-08-23
+## [0.6.2] - 2023-08-23
 
 ### Fixes
 
@@ -147,7 +152,7 @@ Others:
 - Bump org.jetbrains.kotlinx.kover from 0.7.2 to 0.7.3 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/314
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.1...v0.6.2
 
-## 0.6.1 - 2023-07-13
+## [0.6.1] - 2023-07-13
 
 - Adds a refresh button for patches and issues by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/300
 - Refactor issue & patch filters. by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/289
@@ -164,7 +169,7 @@ Others:
 - bump version to 0.6.1 by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/301
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.6.0...v0.6.1
 
-## 0.6.0 - 2023-06-27
+## [0.6.0] - 2023-06-27
 
 ### Features
 
@@ -190,7 +195,7 @@ Others:
 - Bump org.jetbrains.kotlin.jvm from 1.8.10 to 1.8.22 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/274
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.5.0...v0.6.0
 
-## 0.5.0 - 2023-06-06
+## [0.5.0] - 2023-06-06
 
 ### Features
 
@@ -217,7 +222,7 @@ Others:
 - Bump com.fasterxml.jackson.datatype:jackson-datatype-jsr310 from 2.15.0 to 2.15.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/249
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.4.0...v0.5.0
 
-## 0.4.0 - 2023-04-05
+## [0.4.0] - 2023-04-05
 
 ### Features
 
@@ -266,7 +271,7 @@ Others:
 - Bump org.mockito:mockito-core from 5.0.0 to 5.2.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/200
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.3.0...v0.4.0
 
-## 0.3.0-alpha - 2023-01-27
+## [0.3.0-alpha] - 2023-01-27
 
 - New Radicle Tool Window added to IDE by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/153, https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/172
 - Add Patch Proposals to Radicle Tool Window by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/160
@@ -299,18 +304,18 @@ Others:
 - Bump JetBrains/qodana-action from 2022.3.0 to 2022.3.2 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/180
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.2.2...v0.3.0-alpha
 
-## 0.2.2 - 2022-11-04
+## [0.2.2] - 2022-11-04
 
 - Fix changelog update during release by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/122
 
-## 0.2.1 - 2022-11-03
+## [0.2.1] - 2022-11-03
 
 ### Changed
 
 - Release workflow improvements by @JChrist in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/119
 - Show unsupported version warning if the rad cli version is not 0.6.1 by @Stelios123 in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/120
 
-## 0.2.0 - 2022-11-02
+## [0.2.0] - 2022-11-02
 
 ### Added
 
@@ -335,24 +340,24 @@ Others:
 - Bump mockito-core from 4.8.0 to 4.8.1 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/113
 - Bump org.jetbrains.changelog from 1.3.1 to 2.0.0 by @dependabot in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/112
 
-## 0.1.4-alpha
+## [0.1.4-alpha]
 
 - Add radicle icons in the navigation bar
 - Check if the project is rad initialized before show the dialog
 - Update windows instructions
 - Update IDE version used in tests to 2022.2
 
-## 0.1.3-alpha
+## [0.1.3-alpha]
 
 - Show a notification every time the user open a new project, to remind him to configure the plugin path
 - Fix a bug in settings
 - Update icons
 
-## 0.1.2-alpha
+## [0.1.2-alpha]
 
 - Change java version from 17 to 11 and change platform version from 2022.2 to 2020.3
 
-## 0.1.1-alpha
+## [0.1.1-alpha]
 
 ### Added
 
@@ -370,3 +375,28 @@ Others:
 - @gsaslis made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/1
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
+
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.0...HEAD
+[0.9.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.4...v0.9.0
+[0.8.4]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.3...v0.8.4
+[0.8.3]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.2...v0.8.3
+[0.8.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.1...v0.8.2
+[0.8.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.0...v0.8.1
+[0.8.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.7.3...v0.8.0
+[0.7.3]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.7.2...v0.7.3
+[0.7.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.7.1...v0.7.2
+[0.7.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.7.0...v0.7.1
+[0.7.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.6.2...v0.7.0
+[0.6.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.6.1...v0.6.2
+[0.6.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.6.0...v0.6.1
+[0.6.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.5.0...v0.6.0
+[0.5.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.4.0...v0.5.0
+[0.4.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.3.0-alpha...v0.4.0
+[0.3.0-alpha]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.2.2...v0.3.0-alpha
+[0.2.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.2.1...v0.2.2
+[0.2.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.2.0...v0.2.1
+[0.2.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.1.4-alpha...v0.2.0
+[0.1.4-alpha]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.1.3-alpha...v0.1.4-alpha
+[0.1.3-alpha]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.1.2-alpha...v0.1.3-alpha
+[0.1.2-alpha]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.1.1-alpha...v0.1.2-alpha
+[0.1.1-alpha]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/commits/v0.1.1-alpha
