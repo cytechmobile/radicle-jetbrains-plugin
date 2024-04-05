@@ -265,6 +265,10 @@ public abstract class RadAction {
         showNotification(project, title, content, NotificationType.ERROR, null);
     }
 
+    public static void showSuccessNotification(Project project, String title, String content) {
+        showNotification(project, title, content, NotificationType.INFORMATION, null);
+    }
+
     public static void showNotification(
             Project project, String title, String content, NotificationType type,
             List<NotificationAction> actions) {

@@ -288,6 +288,9 @@ public class PatchProposalPanel {
         return stateSelect;
     }
 
+    public PatchTabController getController() {
+        return controller;
+    }
 
     public void selectCommit(String oid) {
         tabs.select(commitTab, true);

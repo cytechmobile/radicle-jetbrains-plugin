@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.actions.IncrementalFindAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -26,8 +27,10 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchComponentFactory;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +40,7 @@ import javax.swing.JPanel;
 import javax.swing.JLabel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
 public class ReviewSubmitAction extends JButtonAction {
     private RadPatch patch;
@@ -105,8 +109,13 @@ public class ReviewSubmitAction extends JButtonAction {
             var success = res != null;
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (!success) {
+                    RadAction.showSuccessNotification(patch.project, RadicleBundle.message("review"),
+                            RadicleBundle.message("reviewError"));
                     enableUI();
                 } else {
+                    RadAction.showSuccessNotification(patch.project, RadicleBundle.message("review"),
+                            RadicleBundle.message("reviewSuccess"));
+                    refreshTab();
                     popup.cancel();
                 }
             });
@@ -116,6 +125,22 @@ public class ReviewSubmitAction extends JButtonAction {
         } else {
             ApplicationManager.getApplication().executeOnPooledThread(submitTask);
         }
+    }
+
+    private void refreshTab() {
+        var editorManager = FileEditorManager.getInstance(patch.project);
+        var editorTab = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
+                ed.getFile() instanceof PatchVirtualFile pvf && pvf.getPatch().id.equals(patch.id)).findFirst();
+        //Tab is not open so don't do anything
+        if (editorTab.isEmpty()) {
+            return;
+        }
+        //If tab is open then refresh it with the new review
+        var api = patch.project.getService(RadicleProjectApi.class);
+        var fetched = api.fetchPatch(patch.projectId, patch.repo, patch.id);
+        var tab = editorTab.get();
+        var file = (PatchVirtualFile) tab.getFile();
+        file.getProposalPanel().getController().createPatchProposalPanel(fetched);
     }
 
     private void disableUI() {

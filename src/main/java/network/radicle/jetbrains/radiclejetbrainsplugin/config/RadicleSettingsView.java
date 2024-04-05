@@ -42,7 +42,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAc
 
 public class RadicleSettingsView  implements SearchableConfigurable {
     private static final Version MIN_VERSION = new Version("0.8.0");
-    private static final Version MAX_VERSION = new Version("0.9.0");
+    private static final Version MAX_VERSION = new Version("1.0.0");
     private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
     public static final String ID = RadicleBundle.message("radicle");
 
@@ -337,7 +337,10 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             return false;
         }
         try {
-            var radVersion = new Version(v.replace("\n", "").trim());
+            //Get only the numeric value of the version
+            var parts = v.replace("\n", "").trim().split("-");
+            var numeric = parts[0];
+            var radVersion = new Version(numeric);
             return radVersion.compareTo(MIN_VERSION) >= 0 && radVersion.compareTo(MAX_VERSION) <= 0;
         } catch (Exception e) {
             return false;
