@@ -474,7 +474,11 @@ public class OverviewTest extends AbstractIT {
         var assigneeValuesLabel = (JLabel) myPanel.getComponents()[0];
         var formattedDid = new ArrayList<String>();
         for (var delegate : issue.assignees) {
-            formattedDid.add(Utils.formatDid(delegate));
+            if (!Strings.isNullOrEmpty(delegate.alias)) {
+                formattedDid.add(delegate.alias);
+            } else {
+                formattedDid.add(Utils.formatDid(delegate.id));
+            }
         }
         assertThat(assigneeValuesLabel.getText()).contains(String.join(",", formattedDid));
 
@@ -835,7 +839,7 @@ public class OverviewTest extends AbstractIT {
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
         var myIssue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
-                RadIssue.State.OPEN, List.of("did:key:test", "did:key:assignee2"), List.of("tag1", "tag2"), discussions);
+                RadIssue.State.OPEN, List.of(new RadAuthor("did:key:test"), new RadAuthor("did:key:assignee2")), List.of("tag1", "tag2"), discussions);
         myIssue.project = getProject();
         myIssue.projectId = UUID.randomUUID().toString();
         myIssue.repo = firstRepo;

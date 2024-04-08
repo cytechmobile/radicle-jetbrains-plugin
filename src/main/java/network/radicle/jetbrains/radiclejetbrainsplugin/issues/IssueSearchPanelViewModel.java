@@ -78,16 +78,16 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
 
     public CompletableFuture<List<String>> getAssignees() {
         return CompletableFuture.supplyAsync(() -> {
-            List<String> assigness = new ArrayList<>();
+            List<String> assignees = new ArrayList<>();
             var filteredList = filterListByProject();
             for (var issue : filteredList) {
                 for (var assignee : issue.assignees) {
-                    if (!assigness.contains(assignee)) {
-                        assigness.add(assignee);
+                    if (!assignees.contains(assignee.id) && !assignees.contains(assignee.alias)) {
+                        assignees.add(assignee.generateLabelText());
                     }
                 }
             }
-            return assigness;
+            return assignees;
         });
     }
 

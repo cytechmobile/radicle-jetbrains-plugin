@@ -265,9 +265,9 @@ public class IssueListPanelTest extends AbstractIT {
     public static List<RadIssue> getTestIssues() {
         var discussion = createDiscussion("123", AUTHOR, "Figure it out, i dont care");
         var discussion1 = createDiscussion("321", AUTHOR1, "This is a feature not a bug");
-        var radIssue = new RadIssue("c5df12", new RadAuthor(AUTHOR), "Title1", RadIssue.State.OPEN, List.of(AUTHOR, AUTHOR1),
+        var radIssue = new RadIssue("c5df12", new RadAuthor(AUTHOR), "Title1", RadIssue.State.OPEN, List.of(new RadAuthor(AUTHOR), new RadAuthor(AUTHOR1)),
                 List.of("tag1", "tag2"), List.of(discussion));
-        var radIssue1 = new RadIssue("123ca", new RadAuthor(AUTHOR1), "Title", RadIssue.State.CLOSED, List.of(AUTHOR1, AUTHOR2),
+        var radIssue1 = new RadIssue("123ca", new RadAuthor(AUTHOR1), "Title", RadIssue.State.CLOSED, List.of(new RadAuthor(AUTHOR1), new RadAuthor(AUTHOR2)),
                 List.of("tag3", "tag4"), List.of(discussion1));
         issues = List.of(radIssue, radIssue1);
         return issues;

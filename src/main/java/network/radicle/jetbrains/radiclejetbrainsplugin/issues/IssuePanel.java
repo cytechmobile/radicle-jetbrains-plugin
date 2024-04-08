@@ -16,6 +16,7 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class IssuePanel {
     protected RadIssue issue;
@@ -105,7 +107,8 @@ public class IssuePanel {
         }
 
         if (!issue.assignees.isEmpty()) {
-            var issueAssignees = getLabelPanel(RadicleBundle.message("issueAssignees", String.join(",", issue.assignees)));
+            var issueAssignees = getLabelPanel(RadicleBundle.message("issueAssignees",
+                    issue.assignees.stream().map(RadAuthor::generateLabelText).collect(Collectors.joining(","))));
             detailsSection.add(issueAssignees, new CC().gapBottom(String.valueOf(UI.scale(4))));
         }
 
@@ -321,8 +324,12 @@ public class IssuePanel {
         @Override
         public String  getSelectedValues() {
             var formattedDid = new ArrayList<String>();
-            for (var delegate : issue.assignees) {
-                formattedDid.add(Utils.formatDid(delegate));
+            for (var as : issue.assignees) {
+                if (!Strings.isNullOrEmpty(as.alias)) {
+                    formattedDid.add(as.alias);
+                } else {
+                    formattedDid.add(Utils.formatDid(as.id));
+                }
             }
             return String.join(",", formattedDid);
         }
@@ -376,12 +383,12 @@ public class IssuePanel {
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
                     assignees.add(selectableWrapper);
                 }
-                for (var delegate : issue.assignees) {
-                    var exist = assignees.stream().anyMatch(el -> el.value.name.equals(delegate));
+                for (var assign : issue.assignees) {
+                    var exist = assignees.stream().anyMatch(el -> el.value.name.equals(assign.alias) || el.value.name.equals(assign.id));
                     if (exist) {
                         continue;
                     }
-                    var assignee = new AssigneesSelect.Assignee(delegate);
+                    var assignee = new AssigneesSelect.Assignee(assign.generateLabelText());
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, true);
                     assignees.add(selectableWrapper);
                 }
