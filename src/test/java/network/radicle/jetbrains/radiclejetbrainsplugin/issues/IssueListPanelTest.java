@@ -166,7 +166,7 @@ public class IssueListPanelTest extends AbstractIT {
         var controller = (IssueTabController) radicleToolWindow.issueTabController;
         var listPanel = controller.getIssueListPanel();
         var filter = new IssueListSearchValue();
-        filter.assignee = (String) issues.get(0).assignees.get(1);
+        filter.assignee =  issues.get(0).assignees.get(1).id;
         listPanel.filterList(filter);
 
         var issueModel = listPanel.getModel();

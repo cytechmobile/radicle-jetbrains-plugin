@@ -140,23 +140,6 @@ public class OverviewTest extends AbstractIT {
                 issue.project = null;
                 // Convert Reaction object to List<List<String>>
                 var map = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
-                var discussions = (ArrayList<Map<String, Object>>) map.get("discussion");
-                for (var discussion : discussions) {
-                    var allReactions = new ArrayList<>();
-                    var reactions = (ArrayList<Map<String, Object>>) discussion.get("reactions");
-                    for (var reaction : reactions) {
-                        var reactionList = new ArrayList<>();
-                        var nid = reaction.get("nid");
-                        var emoji = reaction.get("emoji");
-                        reactionList.add(nid);
-                        reactionList.add(emoji);
-                        allReactions.add(reactionList);
-                    }
-                    discussion.remove("reactions");
-                    discussion.put("reactions", allReactions);
-                    discussion.remove("timestamp");
-                    discussion.put("timestamp", Instant.now().getEpochSecond());
-                }
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
             } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
                 // request to fetch patches
@@ -243,7 +226,8 @@ public class OverviewTest extends AbstractIT {
         assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", Strings.nullToEmpty(issue.id)));
         assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.id)));
         assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueLabels", String.join(",", issue.labels)));
-        assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees", String.join(",", issue.assignees)));
+        assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees",
+                String.join(",", issue.assignees.stream().map(as -> as.id).toList())));
         assertThat(issueStateLabel.getText()).isEqualTo(RadicleBundle.message("issueState", Strings.nullToEmpty(issue.state.label)));
         assertThat(issueCreatedLabel.getText()).isEqualTo(RadicleBundle.message("issueCreated", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
     }
@@ -504,15 +488,15 @@ public class OverviewTest extends AbstractIT {
         assertThat(listmodel.getSize()).isEqualTo(3);
 
         var firstAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
-        assertThat(firstAssignee.value.name()).isEqualTo(projectDelegates.get(0));
+        assertThat(firstAssignee.value.did()).isEqualTo(projectDelegates.get(0));
         assertThat(firstAssignee.selected).isTrue();
 
         var secondAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
-        assertThat(secondAssignee.value.name()).isEqualTo(projectDelegates.get(1));
+        assertThat(secondAssignee.value.did()).isEqualTo(projectDelegates.get(1));
         assertThat(secondAssignee.selected).isTrue();
 
         var thirdAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
-        assertThat(thirdAssignee.value.name()).isEqualTo(projectDelegates.get(2));
+        assertThat(thirdAssignee.value.did()).isEqualTo(projectDelegates.get(2));
         assertThat(thirdAssignee.selected).isFalse();
 
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;

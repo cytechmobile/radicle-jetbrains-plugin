@@ -306,13 +306,16 @@ public class IssuePanel {
 
     public class AssigneesSelect extends LabeledListPanelHandle<AssigneesSelect.Assignee> {
 
-        public record Assignee(String name) { }
+        public record Assignee(String did, String alias) { }
 
         public static class AssigneeRender extends SelectionListCellRenderer<AssigneesSelect.Assignee> {
 
             @Override
             public String getText(AssigneesSelect.Assignee value) {
-                return Utils.formatDid(value.name());
+                if (!Strings.isNullOrEmpty(value.alias)) {
+                    return value.alias;
+                }
+                return Utils.formatDid(value.did());
             }
 
             @Override
@@ -336,7 +339,7 @@ public class IssuePanel {
 
         @Override
         public boolean storeValues(List<AssigneesSelect.Assignee> data) {
-            var addAssignees = data.stream().map(Assignee::name).toList();
+            var addAssignees = data.stream().map(Assignee::did).toList();
             // We don't have changes so don't refresh the window
             if (addAssignees.size() == issue.assignees.size()) {
                 return true;
@@ -362,7 +365,7 @@ public class IssuePanel {
                     return data;
                 }
                 var myList = new ArrayList<>(data);
-                myList.add(new IssuePanel.AssigneesSelect.Assignee(addField.getText()));
+                myList.add(new IssuePanel.AssigneesSelect.Assignee(addField.getText(), null));
                 return myList;
             });
         }
@@ -378,17 +381,24 @@ public class IssuePanel {
                 var projectInfo = api.fetchRadProject(issue.projectId);
                 var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Assignee>>();
                 for (var delegate : projectInfo.delegates) {
-                    var assignee = new AssigneesSelect.Assignee(delegate);
-                    var isSelected = issue.assignees.contains(delegate);
+                    var author = issue.assignees.stream().filter(as -> as.id.contains(delegate)).findFirst().orElse(null);
+                    final Assignee assignee;
+                    if (author != null) {
+                         assignee = new AssigneesSelect.Assignee(author.id, author.generateLabelText());
+                    } else {
+                         assignee = new AssigneesSelect.Assignee(delegate, null);
+                    }
+                    var isSelected = author != null;
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
                     assignees.add(selectableWrapper);
                 }
                 for (var assign : issue.assignees) {
-                    var exist = assignees.stream().anyMatch(el -> el.value.name.equals(assign.alias) || el.value.name.equals(assign.id));
+                    var exist = assignees.stream().anyMatch(el -> el.value.did.equals(assign.id) ||
+                            (el.value.alias != null && el.value.alias.equals(assign.alias)));
                     if (exist) {
                         continue;
                     }
-                    var assignee = new AssigneesSelect.Assignee(assign.generateLabelText());
+                    var assignee = new AssigneesSelect.Assignee(assign.id, assign.generateLabelText());
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, true);
                     assignees.add(selectableWrapper);
                 }

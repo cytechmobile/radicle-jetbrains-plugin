@@ -92,7 +92,8 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                             p.author.id.equals(peerAuthorFilter))
                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.label.equals(stateFilter)))
                     .filter(p -> Strings.isNullOrEmpty(labelFilter) || p.labels.stream().anyMatch(label -> label.equals(labelFilter)))
-                    .filter(p -> Strings.isNullOrEmpty(assigneeFilter) || p.assignees.stream().anyMatch(assignee -> assignee.equals(assigneeFilter)))
+                    .filter(p -> Strings.isNullOrEmpty(assigneeFilter) || p.assignees.stream().anyMatch(assignee ->
+                            assignee.generateLabelText().equals(assigneeFilter)))
                     .collect(Collectors.toList());
             model.addAll(filteredPatches);
         }
