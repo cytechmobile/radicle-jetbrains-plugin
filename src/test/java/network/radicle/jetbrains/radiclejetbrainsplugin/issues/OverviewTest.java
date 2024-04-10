@@ -49,11 +49,11 @@ import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import javax.swing.JPanel;
-import javax.swing.JLabel;
-import javax.swing.JEditorPane;
-import javax.swing.JComponent;
 import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.IOException;
@@ -441,7 +441,6 @@ public class OverviewTest extends AbstractIT {
 
     @Test
     public void addRemoveAssignersTest() throws InterruptedException {
-
         var projectDelegates = getTestProjects().get(0).delegates;
         var issuePanel = issueTabController.getIssuePanel();
         var panel = issueTabController.getIssueJPanel();
