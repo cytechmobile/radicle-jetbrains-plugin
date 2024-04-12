@@ -79,9 +79,14 @@ public class RadPatch {
         }
         try {
             for (var rev : this.revisions) {
-                var patchCommits = GitHistoryUtils.history(this.repo.getProject(),
-                        this.repo.getRoot(), rev.base() + "..." + rev.oid());
-                myRevisions.put(rev.id(), patchCommits);
+                try {
+                    var patchCommits = GitHistoryUtils.history(this.repo.getProject(),
+                            this.repo.getRoot(), rev.base() + "..." + rev.oid());
+                    myRevisions.put(rev.id(), patchCommits);
+                } catch (Exception e) {
+                    logger.warn("error calculating patch commits for revision: {} in patch: {}", rev.id(), this, e);
+                    myRevisions.put(rev.id(), new ArrayList<>());
+                }
             }
             return myRevisions;
         } catch (Exception e) {
