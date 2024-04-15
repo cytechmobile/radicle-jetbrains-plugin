@@ -16,6 +16,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
@@ -59,6 +60,8 @@ public class RadicleProjectApi {
     private final Project project;
     protected Cache<String, Session> sessions;
 
+    protected final Map<String, RadAuthor> aliases;
+
     public RadicleProjectApi(Project project) {
         this(project, HttpClientBuilder.create().setDefaultRequestConfig(RequestConfig.custom()
                 .setSocketTimeout(TIMEOUT) // Socket timeout in milliseconds
@@ -71,6 +74,7 @@ public class RadicleProjectApi {
         this.project = project;
         this.client = client;
         this.sessions = CacheBuilder.newBuilder().expireAfterWrite(Duration.ofHours(1)).build();
+        aliases = new HashMap<>();
     }
 
     public SeedNodeInfo checkApi(SeedNode node) {
@@ -661,6 +665,32 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("error adding comment to patch: {} - {}", patch, comment, e);
         }
+        return null;
+    }
+
+    public RadAuthor resolveAlias(String nid) {
+        if (Strings.isNullOrEmpty(nid)) {
+            return null;
+        }
+        var alias = aliases.get(nid);
+        if (alias != null) {
+            return alias;
+        }
+
+        final var node = getSeedNode();
+        final var url = node.url + "/api/v1/nodes/" + nid;
+        try {
+            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchSeedNodeError"));
+            if (res.isSuccess()) {
+                alias = MAPPER.readValue(res.body, RadAuthor.class);
+                alias.id = nid;
+                aliases.put(nid, alias);
+                return alias;
+            }
+        } catch (Exception e) {
+            logger.warn("http request exception for resolving nid to alias: {}", url, e);
+        }
+
         return null;
     }
 

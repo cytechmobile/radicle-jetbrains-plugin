@@ -11,8 +11,9 @@ public class RadDetails {
     public RadDetails(List<String> details) {
         parseDetails(details);
     }
+
     private void parseDetails(List<String> details) {
-        if (details.size() > 0) {
+        if (!details.isEmpty()) {
             alias = details.get(0);
         }
 

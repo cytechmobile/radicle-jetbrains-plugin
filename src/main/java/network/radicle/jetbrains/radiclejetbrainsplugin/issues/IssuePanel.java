@@ -98,7 +98,7 @@ public class IssuePanel {
         var issueId = getLabelPanel(RadicleBundle.message("issueId", Strings.nullToEmpty(issue.id)));
         detailsSection.add(issueId, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.id)));
+        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.generateLabelText())));
         detailsSection.add(issueAuthor, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
         if (!issue.labels.isEmpty()) {

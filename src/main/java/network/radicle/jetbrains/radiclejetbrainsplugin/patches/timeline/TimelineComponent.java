@@ -70,27 +70,8 @@ public class TimelineComponent {
             var radDetails = getCurrentRadDetails();
             if (radDetails != null) {
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    var self = radDetails.did;
-                    if (radPatch.author.id.equals(self)) {
-                        self = radPatch.author.generateLabelText();
-                    } else {
-                        // look for an alias in discussions
-                        RadAuthor selfAuthor = null;
-                        for (var rev : radPatch.revisions) {
-                            for (var d : rev.discussions()) {
-                                if (d.author.id.equals(self)) {
-                                    selfAuthor = d.author;
-                                    break;
-                                }
-                            }
-                            if (selfAuthor != null) {
-                                break;
-                            }
-                        }
-                        if (selfAuthor != null) {
-                            self = selfAuthor.generateLabelText();
-                        }
-                    }
+                    var selfAuthor = new RadAuthor(radDetails.nodeId, radDetails.alias);
+                    var self = selfAuthor.generateLabelText();
                     var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, self, null);
                     commentPanel = commentSection;
                     timelinePanel.add(commentSection);
