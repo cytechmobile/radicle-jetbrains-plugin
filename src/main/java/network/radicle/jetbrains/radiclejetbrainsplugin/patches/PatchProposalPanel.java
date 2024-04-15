@@ -428,6 +428,7 @@ public class PatchProposalPanel {
             jbPopup = popUpBuilder.createPopup(this.getData(), getRender(), this.isSingleSelection(), addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = popUpBuilder.getListener();
+            latch = popUpBuilder.getLatch();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;

@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
@@ -42,6 +43,7 @@ public abstract class EmojiPanel<T> {
     private JBPopup reactorsPopUp;
     private JBPopup emojisPopUp;
     private JBPopupListener popupListener;
+    private CountDownLatch latch;
 
     protected EmojiPanel(SingleValueModel<T> model, List<Reaction> reactions, String discussionId,
                          RadDetails radDetails) {
@@ -122,6 +124,7 @@ public abstract class EmojiPanel<T> {
                 var popupBuilder = new PopupBuilder(170, 40);
                 emojisPopUp = popupBuilder.createHorizontalPopup(getEmojis(), new EmojiRender(), result);
                 popupListener = popupBuilder.getListener();
+                latch = popupBuilder.getLatch();
                 emojisPopUp.showUnderneathOf(emojiButton);
                 result.thenComposeAsync(selectedEmoji -> {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -204,6 +207,10 @@ public abstract class EmojiPanel<T> {
 
     public JBPopupListener getPopupListener() {
         return popupListener;
+    }
+
+    public CountDownLatch getLatch() {
+        return latch;
     }
 
     public JBPopup getEmojisPopUp() {

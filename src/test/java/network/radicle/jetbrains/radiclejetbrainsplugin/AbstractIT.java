@@ -18,6 +18,7 @@ import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
+import git4idea.commands.GitImpl;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
@@ -45,7 +46,9 @@ import java.nio.file.LinkOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil.addRadRemote;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -169,8 +172,19 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     protected void removeRemoteRadUrl(GitRepository repo) {
+        var gitImpl = new GitImpl();
         for (GitRemote remote : repo.getRemotes()) {
-            repo.getRemotes().remove(remote);
+            gitImpl.removeRemote(repo, remote);
+        }
+        var myLatch = new CountDownLatch(1);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            repo.update();
+            myLatch.countDown();
+        });
+        try {
+            myLatch.await(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.warn("Unable to remove remotes");
         }
     }
 

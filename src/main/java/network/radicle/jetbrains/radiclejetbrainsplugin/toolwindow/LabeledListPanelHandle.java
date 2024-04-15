@@ -20,6 +20,7 @@ import javax.swing.JComponent;
 import java.awt.FlowLayout;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 
 public abstract  class LabeledListPanelHandle<T> {
     private final InlineIconButton editButton;
@@ -29,6 +30,7 @@ public abstract  class LabeledListPanelHandle<T> {
     private JLabel selectedValuesLabel;
     public JBPopup jbPopup;
     public JBPopupListener listener;
+    public CountDownLatch latch;
 
     public LabeledListPanelHandle() {
         progressLabel = new JLabel(new AnimatedIcon.Default());
@@ -89,6 +91,7 @@ public abstract  class LabeledListPanelHandle<T> {
         jbPopup = popUpBuilder.createPopup(this.getData(), getRender(), this.isSingleSelection(), null, result);
         jbPopup.showUnderneathOf(parent);
         listener = popUpBuilder.getListener();
+        latch = popUpBuilder.getLatch();
         return result;
     }
 

@@ -455,8 +455,7 @@ public class TimelineTest extends AbstractIT {
         labelPopupListener.beforeShown(new LightweightWindowEvent(fakePopup));
 
         //Wait to load labels
-        Thread.sleep(1000);
-        executeUiTasks();
+        labelSelect.latch.await(5, TimeUnit.SECONDS);
         assertThat(labelListModel.getSize()).isEqualTo(2);
 
         // Find create new patch button
@@ -595,8 +594,7 @@ public class TimelineTest extends AbstractIT {
 
         popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
         //Wait to load tags
-        executeUiTasks();
-        Thread.sleep(1000);
+        tagSelect.latch.await(5, TimeUnit.SECONDS);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
         var firstTag = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.LabelSelect.Label>) listmodel.getElementAt(0);
@@ -637,8 +635,7 @@ public class TimelineTest extends AbstractIT {
         popUpListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
 
         //Wait for the emojis to load
-        executeUiTasks();
-        Thread.sleep(1000);
+        emojiPanel.getLatch().await(5, TimeUnit.SECONDS);
         var listmodel = jblist.getModel();
         assertThat(listmodel.getSize()).isEqualTo(8);
 
@@ -716,8 +713,7 @@ public class TimelineTest extends AbstractIT {
         // Trigger beforeShown method
         popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
         //Wait to load state
-        executeUiTasks();
-        Thread.sleep(1000);
+        stateSelect.latch.await(5, TimeUnit.SECONDS);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
         var openState = (SelectionListCellRenderer.SelectableWrapper<PatchProposalPanel.StateSelect.State>) listmodel.getElementAt(0);

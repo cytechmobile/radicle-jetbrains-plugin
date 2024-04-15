@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 public class PopupBuilder {
     private static final Logger logger = LoggerFactory.getLogger(Utils.class);
     private JBPopupListener myListener;
+    private CountDownLatch latch;
     private Integer width;
     private Integer height;
 
@@ -63,6 +64,7 @@ public class PopupBuilder {
 
     public <T> JBPopup createHorizontalPopup(CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<T>>> myList,
                                              SelectionListCellRenderer<T> rendered, CompletableFuture<List<T>> result) {
+        latch = new CountDownLatch(1);
         var listModel = new CollectionListModel<SelectionListCellRenderer.SelectableWrapper<T>>();
         var list = new JBList<>(listModel);
         list.setVisibleRowCount(7);
@@ -94,6 +96,7 @@ public class PopupBuilder {
                         } else {
                             event.asPopup().pack(true, true);
                         }
+                        latch.countDown();
                     } catch (Exception e) {
                         logger.warn("Unable to load popup data", e);
                     } finally {
@@ -118,6 +121,7 @@ public class PopupBuilder {
     public <T> JBPopup createPopup(CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<T>>> myList,
                                           SelectionListCellRenderer<T> rendered, boolean singleSelection,
                                           JBTextField inputField, CompletableFuture<List<T>> result) {
+        latch = new CountDownLatch(1);
         var listModel = new CollectionListModel<SelectionListCellRenderer.SelectableWrapper<T>>();
         var list = new JBList<>(listModel);
         list.setVisibleRowCount(7);
@@ -164,12 +168,13 @@ public class PopupBuilder {
                 }
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                     try {
-                        var dataList = myList.get(5, TimeUnit.SECONDS);
+                        var dataList = myList.get(10, TimeUnit.SECONDS);
                         listModel.replaceAll(dataList);
                         if (dataList.isEmpty()) {
                             popUp.setPreferredSize(new Dimension(100, 100));
                         }
                         event.asPopup().pack(true, true);
+                        latch.countDown();
                     } catch (Exception e) {
                         logger.warn("Unable to load popup data", e);
                     } finally {
@@ -197,7 +202,7 @@ public class PopupBuilder {
                 .createPopup();
     }
 
-    public JBPopup createPopup(CompletableFuture<List<String>> list, CountDownLatch latch) {
+    public JBPopup createPopup(CompletableFuture<List<String>> list, CountDownLatch myLatch) {
         return JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>())
                 .setResizable(true)
                 .setMovable(true)
@@ -219,7 +224,7 @@ public class PopupBuilder {
                         ApplicationManager.getApplication().executeOnPooledThread(() -> {
                             try {
                                 //Wait for the data to be ready
-                                var isFinished = latch.await(5, TimeUnit.SECONDS);
+                                var isFinished = myLatch.await(5, TimeUnit.SECONDS);
                                 if (!isFinished) {
                                     return;
                                 }
@@ -243,5 +248,9 @@ public class PopupBuilder {
 
     public JBPopupListener getListener() {
         return myListener;
+    }
+
+    public CountDownLatch getLatch() {
+        return latch;
     }
 }

@@ -267,7 +267,7 @@ public class OverviewTest extends AbstractIT {
 
         popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
         //Wait to load tags
-        Thread.sleep(1000);
+        tagSelect.latch.await(5, TimeUnit.SECONDS);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
         var firstTag = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.LabelSelect.Label>) listmodel.getElementAt(0);
@@ -294,8 +294,8 @@ public class OverviewTest extends AbstractIT {
     public void createNewIssueTest() throws InterruptedException {
         var newIssuePanel = new CreateIssuePanel(issueTabController, myProject);
         var tabs = newIssuePanel.create();
-        newIssuePanel.latch.await();
         executeUiTasks();
+        newIssuePanel.latch.await();
 
         var panel = (JPanel) tabs.getComponents()[tabs.getComponents().length - 1];
         var children = panel.getComponents();
@@ -333,7 +333,8 @@ public class OverviewTest extends AbstractIT {
         popUpListener.beforeShown(new LightweightWindowEvent(fakePopup));
 
         //Wait to load delegates
-        Thread.sleep(1000);
+        var res1 = assigneeSelect.latch.await(10, TimeUnit.SECONDS);
+        assertThat(res1).isEqualTo(true);
         assertThat(listmodel.getSize()).isEqualTo(getTestProjects().get(0).delegates.size());
 
         //Select the first did
@@ -358,7 +359,7 @@ public class OverviewTest extends AbstractIT {
         labelPopupListener.beforeShown(new LightweightWindowEvent(fakePopup));
 
         //Wait to load labels
-        Thread.sleep(1000);
+        labelSelect.latch.await(10, TimeUnit.SECONDS);
         assertThat(labelListModel.getSize()).isEqualTo(2);
 
         //Remove the first label
@@ -413,7 +414,7 @@ public class OverviewTest extends AbstractIT {
         // Trigger beforeShown method
         popupListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
         //Wait to load state
-        Thread.sleep(1000);
+        stateSelect.latch.await(5, TimeUnit.SECONDS);
         assertThat(listmodel.getSize()).isEqualTo(2);
 
         var openState = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.StateSelect.State>) listmodel.getElementAt(0);
@@ -484,7 +485,7 @@ public class OverviewTest extends AbstractIT {
 
         popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
         //Wait to load delegates
-        Thread.sleep(500);
+        assigneesSelect.latch.await(5, TimeUnit.SECONDS);
         assertThat(listmodel.getSize()).isEqualTo(3);
 
         var firstAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
@@ -504,6 +505,7 @@ public class OverviewTest extends AbstractIT {
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
 
         popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
+        // Fix AlreadyDisposedException
         Thread.sleep(1000);
         executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
@@ -533,7 +535,7 @@ public class OverviewTest extends AbstractIT {
         popUpListener.beforeShown(new LightweightWindowEvent(JBPopupFactory.getInstance().createPopupChooserBuilder(new ArrayList<String>()).createPopup()));
 
         //Wait for the emojis to load
-        Thread.sleep(1000);
+        emojiPanel.getLatch().await(5, TimeUnit.SECONDS);
         var listmodel = jblist.getModel();
         assertThat(listmodel.getSize()).isEqualTo(8);
         //Select the first emoji

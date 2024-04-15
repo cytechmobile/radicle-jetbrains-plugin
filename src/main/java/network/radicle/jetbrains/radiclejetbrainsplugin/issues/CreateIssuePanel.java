@@ -113,7 +113,6 @@ public class CreateIssuePanel {
             var gitRepoManager = GitRepositoryManager.getInstance(project);
             var repos = gitRepoManager.getRepositories();
             var myRepos = RadAction.getInitializedReposWithNodeConfigured(repos, false);
-            latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 for (var repo : myRepos) {
                     projectSelect.addItem(repo);
@@ -121,6 +120,7 @@ public class CreateIssuePanel {
                 if (myRepos.size() > 1) {
                     projectSelect.setVisible(true);
                 }
+                latch.countDown();
             }, ModalityState.any());
         });
 
@@ -295,6 +295,7 @@ public class CreateIssuePanel {
             jbPopup = popUpBuilder.createPopup(this.getData(), new IssuePanel.AssigneesSelect.AssigneeRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = popUpBuilder.getListener();
+            latch = popUpBuilder.getLatch();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;
@@ -372,6 +373,7 @@ public class CreateIssuePanel {
             jbPopup = popUpBuilder.createPopup(this.getData(), new IssuePanel.LabelSelect.LabelRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = popUpBuilder.getListener();
+            latch = popUpBuilder.getLatch();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;

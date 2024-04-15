@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.repo.GitRemote;
+import git4idea.commands.GitImpl;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor.cd;
@@ -48,7 +48,18 @@ public class GitTestUtil {
     }
 
     public static void addRadRemote(Project project, GitRepository repo) {
-        repo.getRemotes().add(new GitRemote("rad", List.of("rad://abcdef"), List.of("rad://abcdef"), List.of("rad://abcdef"), List.of("rad://abcdef")));
+        try {
+            var gitImpl = new GitImpl();
+            gitImpl.addRemote(repo, "rad", "rad://abcdef");
+            var myLatch = new CountDownLatch(1);
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+               repo.update();
+               myLatch.countDown();
+            });
+            myLatch.await(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.warn("Unable to add remote", e);
+        }
     }
 
     @NotNull

@@ -200,6 +200,7 @@ public class IssuePanel {
             jbPopup = popUpBuilder.createPopup(this.getData(), new LabelRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = popUpBuilder.getListener();
+            latch = popUpBuilder.getLatch();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;
@@ -360,6 +361,7 @@ public class IssuePanel {
             jbPopup = popUpBuilder.createPopup(this.getData(), new IssuePanel.AssigneesSelect.AssigneeRender(), false, addField, res);
             jbPopup.showUnderneathOf(parent);
             listener = popUpBuilder.getListener();
+            latch = popUpBuilder.getLatch();
             return res.thenApply(data -> {
                 if (Strings.isNullOrEmpty(addField.getText())) {
                     return data;
