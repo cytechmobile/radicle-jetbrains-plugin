@@ -6,14 +6,17 @@ import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil;
-import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.NamedColorUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
@@ -122,7 +125,10 @@ public class TimelineComponent {
     }
 
     private JComponent getHeader() {
-        final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radPatch.title, radPatch.id, "", "");
+        // final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radPatch.title, radPatch.id, "", "");
+        final var patchWebLink = HtmlChunk.link(api.getPatchWebUrl(radPatch), radPatch.id).attr("title", radPatch.title)
+                .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())));
+        final var title = new HtmlBuilder().appendRaw(radPatch.title).nbsp().append(patchWebLink).toString();
 
         var headerTitle = new BaseHtmlEditorPane();
         headerTitle.setFont(JBFont.h2().asBold());

@@ -39,6 +39,8 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -820,6 +822,48 @@ public class RadicleProjectApi {
 
     public Project getProject() {
         return project;
+    }
+
+    public String getWebUrl() {
+        final var defaultWebNode = "seed.radicle.garden";
+        final var radHome = new RadicleProjectSettingsHandler(project).loadSettings().getRadHome();
+        if (Strings.isNullOrEmpty(radHome) || !Files.exists(Paths.get(radHome))) {
+            return defaultWebNode;
+        }
+        try {
+            var configJson = Files.readString(Paths.get(radHome, "config.json"));
+            var conf = MAPPER.readTree(configJson);
+            if (conf.has("preferredSeeds")) {
+                var pref = conf.get("preferredSeeds");
+                if (pref.isArray() && !pref.isEmpty()) {
+                    var prefSeed = pref.get(0).asText();
+                    if (!Strings.isNullOrEmpty(prefSeed)) {
+                        prefSeed = prefSeed.split("@")[1].split(":")[0];
+                        return prefSeed;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("error reading config.json", e);
+        }
+
+        return defaultWebNode;
+    }
+
+    public String getPatchWebUrl(RadPatch radPatch) {
+        return createPatchWebUrl(radPatch, getWebUrl());
+    }
+
+    public String getIssueWebUrl(RadIssue radIssue) {
+        return createIssueWebUrl(radIssue, getWebUrl());
+    }
+
+    protected String createPatchWebUrl(RadPatch patch, String node) {
+        return "https://app.radicle.xyz/nodes/" + node + "/" + patch.projectId + "/patches/" + patch.id;
+    }
+
+    protected String createIssueWebUrl(RadIssue issue, String node) {
+        return "https://app.radicle.xyz/nodes/" + node + "/" + issue.projectId + "/issues/" + issue.id;
     }
 
     public record SeedNodeInfo(String id, String version, String errorMessage) { }

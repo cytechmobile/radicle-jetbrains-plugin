@@ -1,20 +1,22 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview;
 
-
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtilKt;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
-import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
@@ -170,7 +172,10 @@ public class IssueComponent {
     }
 
     private JComponent getHeader() {
-        final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radIssue.title, radIssue.id, "", "");
+        // final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radIssue.title, radIssue.id, "", "");
+        final var issueWebLink = HtmlChunk.link(api.getIssueWebUrl(radIssue), radIssue.id).attr("title", radIssue.title)
+                .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())));
+        final var title = new HtmlBuilder().appendRaw(radIssue.title).nbsp().append(issueWebLink).toString();
         var headerTitle = new BaseHtmlEditorPane();
         headerTitle.setFont(JBFont.h2().asBold());
         headerTitle.setBody(title);
