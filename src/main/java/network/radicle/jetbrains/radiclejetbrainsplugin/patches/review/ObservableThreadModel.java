@@ -97,7 +97,7 @@ public class ObservableThreadModel {
     }
 
     private void updateEditorCommentsUi(RadPatch patch) {
-        var fetched = this.api.fetchPatch(patch.projectId, patch.repo, patch.id);
+        var fetched = this.api.fetchPatch(patch.radProject.id, patch.repo, patch.id);
         boolean success = fetched != null;
         if (success) {
             var inlineComments = getInlineComments(fetched);

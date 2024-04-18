@@ -1,0 +1,15 @@
+@httpd=http://localhost:8080/api/v1
+@rid=rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK
+@pid=19e8adb841e4971438cbb5c2c9aa5afc7f4c4086
+
+### GET projects
+GET {{httpd}}/projects?show=all
+
+### GET project
+GET {{httpd}}/projects/{{rid}}
+
+### GET patches (merged)
+GET {{httpd}}/projects/{{rid}}/patches?state=merged
+
+### GET patch
+GET {{httpd}}/projects/{{rid}}/patches/{{pid}}

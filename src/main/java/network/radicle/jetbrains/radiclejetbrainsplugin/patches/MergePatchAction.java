@@ -83,10 +83,10 @@ public class MergePatchAction extends AbstractAction {
         initialBranchTrackedPatch = false;
         initialBranch = null;
         try {
-            localDefaultBranch = patch.repo.getBranches().findLocalBranch(patch.defaultBranch);
+            localDefaultBranch = patch.repo.getBranches().findLocalBranch(patch.radProject.defaultBranch);
             if (localDefaultBranch == null) {
                 showErrorNotification(patch.project, RadicleBundle.message("mergePatchErrorTitle"),
-                        RadicleBundle.message("mergePatchErrorNoLocalDefault", patch.defaultBranch));
+                        RadicleBundle.message("mergePatchErrorNoLocalDefault", patch.radProject.defaultBranch));
                 return;
             }
             // cleanup
@@ -112,7 +112,7 @@ public class MergePatchAction extends AbstractAction {
                 boolean ok = checkoutDefaultBranch();
                 if (!ok) {
                     showErrorNotification(patch.project, RadicleBundle.message("mergePatchErrorTitle"),
-                            RadicleBundle.message("mergePatchErrorCheckoutDefaultBranch", patch.defaultBranch));
+                            RadicleBundle.message("mergePatchErrorCheckoutDefaultBranch", patch.radProject.defaultBranch));
                     return;
                 }
             }
@@ -125,7 +125,7 @@ public class MergePatchAction extends AbstractAction {
             boolean ok = performMerge(opts);
             if (!ok) {
                 showErrorNotification(patch.project, RadicleBundle.message("mergePatchErrorTitle"),
-                        RadicleBundle.message("mergePatchErrorMerge", patch.defaultBranch));
+                        RadicleBundle.message("mergePatchErrorMerge", patch.radProject.defaultBranch));
                 return;
             }
 
@@ -133,7 +133,7 @@ public class MergePatchAction extends AbstractAction {
                 ok = pushChanges();
                 if (!ok) {
                     showErrorNotification(patch.project, RadicleBundle.message("mergePatchErrorTitle"),
-                            RadicleBundle.message("mergePatchErrorPush", patch.defaultBranch));
+                            RadicleBundle.message("mergePatchErrorPush", patch.radProject.defaultBranch));
                 }
             }
 
@@ -144,7 +144,7 @@ public class MergePatchAction extends AbstractAction {
         } catch (Exception e) {
             logger.warn("error merging patch", e);
             showErrorNotification(patch.project, RadicleBundle.message("mergePatchErrorTitle"),
-                    RadicleBundle.message("mergePatchErrorMerge", patch.defaultBranch));
+                    RadicleBundle.message("mergePatchErrorMerge", patch.radProject.defaultBranch));
         } finally {
             if (shouldCheckoutBranch && initialBranch != null && !initialBranchTrackedPatch) {
                 checkoutInitialBranch();

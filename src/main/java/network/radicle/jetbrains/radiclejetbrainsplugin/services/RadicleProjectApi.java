@@ -61,6 +61,7 @@ public class RadicleProjectApi {
     private final CloseableHttpClient client;
     private final Project project;
     protected Cache<String, Session> sessions;
+    protected RadDetails identity;
 
     protected final Map<String, RadAuthor> aliases;
 
@@ -149,10 +150,12 @@ public class RadicleProjectApi {
     }
 
     public List<RadPatch> fetchPatches(String projectId, GitRepository repo) {
-        var radProject = fetchRadProject(projectId);
+        final var radProject = fetchRadProject(projectId);
         if (radProject == null) {
             return List.of();
         }
+        final var identity = getCurrentIdentity();
+        var self = identity == null ? null : identity.toRadAuthor();
         var node = getSeedNode();
         var states = Arrays.stream(RadPatch.State.values()).map(e -> e.status).toList();
         var allPatches = new ArrayList<RadPatch>();
@@ -168,8 +171,8 @@ public class RadicleProjectApi {
                     for (var patch : patches) {
                         patch.seedNode = node;
                         patch.project = repo.getProject();
-                        patch.projectId = projectId;
-                        patch.defaultBranch = radProject.defaultBranch;
+                        patch.radProject = radProject;
+                        patch.self = self;
                         patch.repo = repo;
                     }
                     allPatches.addAll(patches);
@@ -188,10 +191,10 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchEditData = Map.of("type", "review", "revision",
-                    patch.getLatestRevision().id(), "summary", summary, "verdict", verdict, "labels", List.of());
+            var patchEditData = Map.of("type", "review", "revision", patch.getLatestRevision().id(), "summary", summary, "verdict", verdict,
+                    "labels", List.of());
             var json = MAPPER.writeValueAsString(patchEditData);
             patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(patchReq, RadicleBundle.message("reviewTitleError"));
@@ -209,11 +212,13 @@ public class RadicleProjectApi {
     }
 
     public RadPatch fetchPatch(String projectId, GitRepository repo, String patchId) {
-        var radProject = fetchRadProject(projectId);
+        final var radProject = fetchRadProject(projectId);
         if (radProject == null) {
             return null;
         }
-        var node = getSeedNode();
+        final var identity = getCurrentIdentity();
+        final var self = identity == null ? null : identity.toRadAuthor();
+        final var node = getSeedNode();
         final var url = node.url + "/api/v1/projects/" + projectId + "/patches/" + patchId;
         try {
             var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchError"));
@@ -221,8 +226,8 @@ public class RadicleProjectApi {
                 var patch = MAPPER.readValue(res.body, RadPatch.class);
                 patch.seedNode = node;
                 patch.project = repo.getProject();
-                patch.projectId = projectId;
-                patch.defaultBranch = radProject.defaultBranch;
+                patch.radProject = radProject;
+                patch.self = self;
                 patch.repo = repo;
                 return patch;
             }
@@ -295,7 +300,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
             var patchIssueData = Map.of("type", "lifecycle", "state", Map.of("status", state, "reason", "other"));
             var json = MAPPER.writeValueAsString(patchIssueData);
@@ -318,7 +323,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
             var patchIssueData = Map.of("type", "label", "labels", addLabelList);
             var json = MAPPER.writeValueAsString(patchIssueData);
@@ -436,7 +441,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
             HashMap<String, Object> patchData = new HashMap<>(Map.of("type", "revision.comment.redact", "revision", revId, "comment", commentId));
             var json = MAPPER.writeValueAsString(patchData);
@@ -459,7 +464,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
             var patchData = Map.of("type", "revision.comment.react", "revision", revId, "comment", commendId, "reaction", reaction, "active", active);
             var json = MAPPER.writeValueAsString(patchData);
@@ -592,7 +597,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
             var patchEditData = Map.of("type", "revision.comment.edit", "revision", revisionId, "comment", commentId, "body", body, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchEditData);
@@ -617,7 +622,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
             var patchEditData = Map.of("type", "edit", "target", "delegates", "title",
                     Strings.nullToEmpty(patch.title));
@@ -643,7 +648,7 @@ public class RadicleProjectApi {
             return null;
         }
         try {
-            var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.projectId + "/patches/" + patch.id);
+            var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
             Map<String, Object> data;
             boolean isReviewComment = false;
@@ -785,10 +790,18 @@ public class RadicleProjectApi {
         }
     }
 
+    public void resetCurrentIdentity() {
+        this.identity = null;
+    }
+
     public RadDetails getCurrentIdentity() {
+        if (identity != null) {
+            return identity;
+        }
         var radSelf = new RadSelf(project);
         radSelf.askForIdentity(false);
-        return radSelf.getRadSelfDetails();
+        identity = radSelf.getRadSelfDetails();
+        return identity;
     }
 
     protected Session getCurrentSession() {
@@ -859,7 +872,7 @@ public class RadicleProjectApi {
     }
 
     protected String createPatchWebUrl(RadPatch patch, String node) {
-        return "https://app.radicle.xyz/nodes/" + node + "/" + patch.projectId + "/patches/" + patch.id;
+        return "https://app.radicle.xyz/nodes/" + node + "/" + patch.radProject.id + "/patches/" + patch.id;
     }
 
     protected String createIssueWebUrl(RadIssue issue, String node) {

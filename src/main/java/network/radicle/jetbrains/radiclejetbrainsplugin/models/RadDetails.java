@@ -29,4 +29,8 @@ public class RadDetails {
             keyHash = details.get(3);
         }
     }
+
+    public RadAuthor toRadAuthor() {
+        return new RadAuthor(nodeId, alias);
+    }
 }

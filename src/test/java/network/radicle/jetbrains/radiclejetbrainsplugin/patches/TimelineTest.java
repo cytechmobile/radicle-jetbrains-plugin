@@ -47,6 +47,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.PatchDiffEditorGutterIconFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
@@ -925,15 +926,15 @@ public class TimelineTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
-        var myPatch = new RadPatch("c5df12", RAD_PROJECT_ID, "testPatch", new RadAuthor(AUTHOR),
-                "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
+        var myPatch = new RadPatch("c5df12", new RadProject(UUID.randomUUID().toString(), "test", "test", "main", List.of()), new RadAuthor(AUTHOR),
+                "testPatch", new RadAuthor(AUTHOR), "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
         myPatch.project = getProject();
         myPatch.repo = firstRepo;
-        myPatch.projectId = UUID.randomUUID().toString();
         return myPatch;
     }
+
     private String getExpectedTag(Embed dummyEmbed) {
-        var expectedUrl = radicleProjectSettingsHandler.loadSettings().getSeedNode().url + "/raw/" + patch.projectId + "/blobs/" + dummyEmbed.getOid();
+        var expectedUrl = radicleProjectSettingsHandler.loadSettings().getSeedNode().url + "/raw/" + patch.radProject.id + "/blobs/" + dummyEmbed.getOid();
         if (dummyEmbed.getName().contains(".txt")) {
             return "<a href=\"" + expectedUrl + "?mime=text/plain\">" + dummyEmbed.getName() + "</a>";
         } else {

@@ -66,7 +66,7 @@ public class PatchReviewThreadComponentFactory {
     }
 
     private JComponent createComponent(RadDiscussion disc) {
-        var editorPane = new MarkDownEditorPaneFactory(disc.body, patch.project, patch.projectId, patch.repo.getRoot());
+        var editorPane = new MarkDownEditorPaneFactory(disc.body, patch.project, patch.radProject.id, patch.repo.getRoot());
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, editorPane.htmlEditorPane(),
                 RadicleBundle.message("review.edit.comment"),
                 new SingleValueModel<>(disc.body), (field) -> {

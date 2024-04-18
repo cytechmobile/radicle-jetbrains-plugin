@@ -278,10 +278,12 @@ public class PatchListPanelTest extends AbstractIT {
                 List.of(), List.of(), Instant.now(), List.of(), List.of(new RadPatch.Review("1",
                 new RadAuthor(AUTHOR), RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())), new RadAuthor(UUID.randomUUID().toString()));
 
-        var radPatch = new RadPatch("c5df12", "test-rad-project", "testPatch", new RadAuthor(AUTHOR), "testTarget",
+        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of()), new RadAuthor(AUTHOR),
+                "testPatch", new RadAuthor(AUTHOR), "testTarget",
                 List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
 
-        var radPatch2 = new RadPatch("c4d12", "test-rad-project-second", "secondProposal", new RadAuthor(AUTHOR1),
+        var radPatch2 = new RadPatch("c4d12", new RadProject("test-rad-project-second", "test-rad-project-second", "", "main", List.of()),
+                new RadAuthor(AUTHOR), "secondProposal", new RadAuthor(AUTHOR1),
                 "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, List.of(revision));
         patches = List.of(radPatch, radPatch2);
         return patches;

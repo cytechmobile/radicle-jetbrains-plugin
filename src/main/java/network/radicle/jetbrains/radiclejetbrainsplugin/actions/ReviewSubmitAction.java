@@ -36,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
@@ -137,7 +137,7 @@ public class ReviewSubmitAction extends JButtonAction {
         }
         //If tab is open then refresh it with the new review
         var api = patch.project.getService(RadicleProjectApi.class);
-        var fetched = api.fetchPatch(patch.projectId, patch.repo, patch.id);
+        var fetched = api.fetchPatch(patch.radProject.id, patch.repo, patch.id);
         var tab = editorTab.get();
         var file = (PatchVirtualFile) tab.getFile();
         file.getProposalPanel().getController().createPatchProposalPanel(fetched);

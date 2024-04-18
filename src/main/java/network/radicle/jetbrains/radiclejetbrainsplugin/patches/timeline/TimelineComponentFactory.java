@@ -33,14 +33,12 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -78,7 +76,7 @@ public class TimelineComponentFactory {
     public JComponent createDescSection() {
         var description = !Strings.isNullOrEmpty(patch.getLatestRevision().description()) ? patch.getLatestRevision().description() :
                 RadicleBundle.message("noDescription");
-        var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.projectId, file);
+        var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.radProject.id, file);
         descSection = Utils.descriptionPanel(editorPane, patch.project);
         return descSection;
     }
@@ -152,7 +150,7 @@ public class TimelineComponentFactory {
         var message = review.summary();
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
-        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.projectId, file);
+        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
         var myPanel = getVerticalPanel(1);
         myPanel.setOpaque(false);
         myPanel.add(editorPane.htmlEditorPane());
@@ -183,7 +181,7 @@ public class TimelineComponentFactory {
         }
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
-        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.projectId, file);
+        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
         panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
         emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
         emojiJPanel = emojiPanel.getEmojiPanel();

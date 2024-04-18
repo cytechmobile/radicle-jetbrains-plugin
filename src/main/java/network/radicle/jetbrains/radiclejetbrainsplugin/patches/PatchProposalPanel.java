@@ -159,10 +159,15 @@ public class PatchProposalPanel {
         Utils.addListPanel(actionPanel, stateSelect);
         Utils.addListPanel(actionPanel, labelSelect);
         if (RadPatch.State.OPEN.status.equals(patch.state.status)) {
-            // TODO: check if current user is delegate?
             mergeBtn = new JButton();
-            final var mergePatchAction = new MergePatchAction(mergeBtn, patchModel);
-            mergeBtn.setAction(mergePatchAction);
+            // current user is a delegate in the project
+            if (patch.radProject.delegates.contains(patch.self.id)) {
+                final var mergePatchAction = new MergePatchAction(mergeBtn, patchModel);
+                mergeBtn.setAction(mergePatchAction);
+            } else {
+                mergeBtn.setEnabled(false);
+                mergeBtn.setToolTipText(RadicleBundle.message("mergeDisabledNotDelegate"));
+            }
             mergeBtn.setText(RadicleBundle.message("merge"));
             actionPanel.add(mergeBtn);
         } else {
@@ -255,7 +260,7 @@ public class PatchProposalPanel {
     private JComponent branchComponent() {
         var branchPanel = new NonOpaquePanel();
         branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
-        var to = createLabel(patch.defaultBranch);
+        var to = createLabel(patch.radProject.defaultBranch);
         var revision = patch.revisions.get(patch.revisions.size() - 1);
         var ref = !revision.refs().isEmpty() ? revision.refs().get(revision.refs().size() - 1) : "ref/head/patches/" + patch.id;
         var from = createLabel(ref);

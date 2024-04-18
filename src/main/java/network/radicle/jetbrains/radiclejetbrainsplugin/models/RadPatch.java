@@ -23,14 +23,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class RadPatch {
     private static final Logger logger = LoggerFactory.getLogger(RadPatch.class);
+
     public SeedNode seedNode;
     public GitRepository repo;
     public Project project;
-    public String defaultBranch;
-    public String projectId;
+    public RadProject radProject;
+    public RadAuthor self;
+
     public String id;
     public String title;
     public RadAuthor author;
@@ -38,16 +41,18 @@ public class RadPatch {
     public List<String> labels;
     public State state;
     public List<Revision> revisions;
+    public List<Merge> merges;
 
     public RadPatch() {
         // for json
     }
 
     public RadPatch(
-            String id, String projectId, String title, RadAuthor author, String target,
+            String id, RadProject radProject, RadAuthor self, String title, RadAuthor author, String target,
             List<String> labels, State state, List<Revision> revisions) {
         this.id = id;
-        this.projectId = projectId;
+        this.radProject = radProject;
+        this.self = self;
         this.title = title;
         this.author = author;
         this.target = target;
@@ -60,8 +65,8 @@ public class RadPatch {
         this.seedNode = other.seedNode;
         this.repo = other.repo;
         this.project = other.project;
-        this.defaultBranch = other.defaultBranch;
-        this.projectId = other.projectId;
+        this.radProject = other.radProject;
+        this.self = other.self;
         this.id = other.id;
         this.title = other.title;
         this.author = other.author;
@@ -69,6 +74,7 @@ public class RadPatch {
         this.labels = other.labels;
         this.state = other.state;
         this.revisions = other.revisions;
+        this.merges = other.merges;
     }
 
     public Map<String, List<GitCommit>> calculateCommits() {
@@ -101,8 +107,9 @@ public class RadPatch {
         return RadAction.isSuccess(output);
     }
 
+    @JsonIgnore
     public boolean isMerged() {
-        return this.state.status.equals(State.MERGED.status);
+        return this.state == State.MERGED;
     }
 
     public String findRevisionId(String commentId) {
@@ -128,6 +135,7 @@ public class RadPatch {
         }
     }
 
+    @JsonIgnore
     public Revision getLatestRevision() {
         if (this.revisions == null || this.revisions.isEmpty()) {
             return null;
@@ -135,6 +143,7 @@ public class RadPatch {
         return this.revisions.get(this.revisions.size() - 1);
     }
 
+    @JsonIgnore
     public String getLatestNonEmptyRevisionDescription() {
         for (int i = this.revisions.size() - 1; i >= 0; i--) {
             var rev = this.revisions.get(i);
@@ -145,20 +154,32 @@ public class RadPatch {
         return "";
     }
 
+    @JsonIgnore
+    public List<TimelineEvent> getTimelineEvents() {
+        var list = new ArrayList<TimelineEvent>();
+        for (var revision : revisions) {
+            list.add(revision);
+            list.addAll(revision.getReviews());
+            list.addAll(revision.discussions);
+        }
+        list.sort(Comparator.comparing(TimelineEvent::getTimestamp));
+        return list;
+    }
+
     public Revision findRevision(String revisionId) {
        return revisions.stream().filter(rev -> rev.id().equals(revisionId)).findFirst().orElse(null);
     }
 
     public record Revision(
-            String id, String description, String base, String oid, List<String> refs,
-            List<Merge> merges, Instant timestamp, List<RadDiscussion> discussions, List<Review> reviews, RadAuthor author) implements TimelineEvent {
+            String id, RadAuthor author, String description, List<Edit> edits, List<Reaction> reactions, String base, String oid, List<String> refs,
+            Instant timestamp, List<RadDiscussion> discussions, List<Review> reviews) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
             return timestamp;
         }
 
         public List<Review> getReviews() {
-            HashSet<Object> seen = new HashSet<>();
+            Set<String> seen = new HashSet<>();
             var myReviews = new ArrayList<>(reviews);
             // Remove the duplicates reviews. We can only have 1 review per author per revision
             myReviews.removeIf(e -> !seen.add(e.author.id));
@@ -170,7 +191,9 @@ public class RadPatch {
         }
     }
 
-    public record Merge(String node, String commit, Instant timestamp) { }
+    public record Edit(RadAuthor author, String body, Instant timestamp, List<Embed> embeds) {}
+
+    public record Merge(RadAuthor author, String commit, Instant timestamp, String revision) { }
 
     public record Review(String id, RadAuthor author, Verdict verdict, String summary,
                          List<RadDiscussion> comments, Instant timestamp) implements TimelineEvent {
@@ -207,17 +230,6 @@ public class RadPatch {
         }
     }
 
-    @JsonIgnore
-    public List<TimelineEvent> getTimelineEvents() {
-        var list = new ArrayList<TimelineEvent>();
-        for (var revision : revisions) {
-            list.add(revision);
-            list.addAll(revision.getReviews());
-            list.addAll(revision.discussions);
-        }
-        list.sort(Comparator.comparing(TimelineEvent::getTimestamp));
-        return list;
-    }
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {

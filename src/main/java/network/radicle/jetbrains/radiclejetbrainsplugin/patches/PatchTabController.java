@@ -33,7 +33,7 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
         patchModel = new SingleValueModel<>(patch);
         createInternalPatchProposalPanel(patchModel, mainPanel);
         patchModel.addListener(p -> {
-            var fetched = api.fetchPatch(patch.projectId, patch.repo, patch.id);
+            var fetched = api.fetchPatch(patch.radProject.id, patch.repo, patch.id);
             if (fetched != null) {
                 ApplicationManager.getApplication().invokeLater(() -> createPatchProposalPanel(fetched));
             }
