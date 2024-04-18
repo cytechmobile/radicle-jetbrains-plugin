@@ -77,24 +77,39 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
          }
          if (plsv.getFilterCount() == 0) {
              model.addAll(loadedData);
-         } else {
-             var projectFilter = plsv.project;
-             var searchFilter = plsv.searchQuery;
-             var peerAuthorFilter = plsv.author;
-             var stateFilter = plsv.state;
-             var labelFilter = plsv.label;
-             var loadedRadPatches = loadedData;
-             List<RadPatch> filteredPatches = loadedRadPatches.stream()
-                     .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
-                             p.title.contains(searchFilter) || (Strings.nullToEmpty(p.getLatestRevision().description()).contains(searchFilter)))
-                     .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
-                     .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
-                             p.author.id.equals(peerAuthorFilter))
-                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.label.equals(stateFilter)))
-                     .filter(p -> Strings.isNullOrEmpty(labelFilter) || p.labels.stream().anyMatch(label -> label.equals(labelFilter)))
-                     .collect(Collectors.toList());
-             model.addAll(filteredPatches);
+             return;
          }
+         var projectFilter = plsv.project;
+         var searchFilter = plsv.searchQuery;
+         var peerAuthorFilter = plsv.author;
+         var stateFilter = plsv.state;
+         var labelFilter = plsv.label;
+         var loadedRadPatches = loadedData;
+         var patchesStream = loadedRadPatches.stream();
+         if (!Strings.isNullOrEmpty(plsv.searchQuery)) {
+             final var search = plsv.searchQuery.toLowerCase().trim();
+             patchesStream = patchesStream.filter(p ->
+                     p.id.toLowerCase().contains(search) ||
+                     Strings.nullToEmpty(p.author.id).toLowerCase().contains(search) ||
+                     Strings.nullToEmpty(p.author.alias).toLowerCase().contains(search) ||
+                     Strings.nullToEmpty(p.title).toLowerCase().contains(searchFilter) ||
+                     Strings.nullToEmpty(p.getLatestNonEmptyRevisionDescription()).toLowerCase().contains(search));
+         }
+         if (!Strings.isNullOrEmpty(plsv.project)) {
+             patchesStream = patchesStream.filter(p -> p.repo.getRoot().getName().equals(projectFilter));
+         }
+         if (!Strings.isNullOrEmpty(peerAuthorFilter)) {
+             patchesStream = patchesStream.filter(p -> Strings.nullToEmpty(p.author.alias).contains(peerAuthorFilter) ||
+                     p.author.id.contains(peerAuthorFilter));
+         }
+         if (!Strings.isNullOrEmpty(stateFilter)) {
+             patchesStream = patchesStream.filter(p -> p.state != null && p.state.label.equals(stateFilter));
+         }
+         if (!Strings.isNullOrEmpty(labelFilter)) {
+             patchesStream = patchesStream.filter(p -> p.labels.stream().anyMatch(l -> Strings.nullToEmpty(l).toLowerCase().contains(labelFilter)));
+         }
+         List<RadPatch> filteredPatches = patchesStream.collect(Collectors.toList());
+         model.addAll(filteredPatches);
      }
 
     @Override
