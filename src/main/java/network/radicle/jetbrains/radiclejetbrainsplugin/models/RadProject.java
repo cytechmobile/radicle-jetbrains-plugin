@@ -8,6 +8,7 @@ public class RadProject {
     public String description;
     public String defaultBranch;
     public List<String> delegates;
+    public String head;
 
     public RadProject() {
         // for json

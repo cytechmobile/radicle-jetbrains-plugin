@@ -35,6 +35,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.CreateIssuePanel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
@@ -43,28 +44,27 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.PlainDocument;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.uiDesigner.core.GridConstraints.FILL_BOTH;
@@ -82,7 +82,7 @@ public class CreatePatchPanel {
 
     private CreateIssuePanel.LabelSelect labelSelect;
     private ProgressStripe progressStripe;
-    private Map<String, Object> projectInfo;
+    private RadProject projectInfo;
     private JBTextArea titleField;
     private JBTextArea descriptionField;
     private JPanel selectRepoPanel;
@@ -144,9 +144,9 @@ public class CreatePatchPanel {
             }
             ApplicationManager.getApplication().invokeLater(() -> {
                 //Update the file & commit panel
-                patchComponentFactory.updateFileComponent(mySelectedRepo, mySelectedBranch, (String) projectInfo.get("head"));
-                patchComponentFactory.updateCommitComponent(mySelectedRepo, mySelectedBranch, (String) projectInfo.get("head"));
-                toLabel.setText(mySelectedRepo.getRoot().getName() + ":" + projectInfo.get("defaultBranch"));
+                patchComponentFactory.updateFileComponent(mySelectedRepo, mySelectedBranch, projectInfo.head);
+                patchComponentFactory.updateCommitComponent(mySelectedRepo, mySelectedBranch, projectInfo.head);
+                toLabel.setText(mySelectedRepo.getRoot().getName() + ":" + projectInfo.defaultBranch);
                 //Show panel after everything has been initialized
                 selectRepoPanel.setVisible(true);
                 progressStripe.stopLoading();
@@ -297,8 +297,8 @@ public class CreatePatchPanel {
             logger.warn("No selected values found");
             return;
         }
-        var projectId = (String) projectInfo.get("id");
-        var remote = findRadRemote(mySelectedRepo, projectId.split(":")[1]);
+        final var projectId = projectInfo.id;
+        var remote = findRadRemote(mySelectedRepo, projectId);
         if (remote == null) {
             logger.warn("Unable to find rad remote. Project ID : {}", projectId);
             RadAction.showErrorNotification(project, RadicleBundle.message("findRemoteError"),
@@ -332,8 +332,8 @@ public class CreatePatchPanel {
                 newPatchButton.setEnabled(true);
                 return;
             }
-            var patchId = api.createPatch(titleField.getText(), descriptionField.getText(), labelSelect.storeLabels, (String) projectInfo.get("head"),
-                    branchRevision, mySelectedRepo, (String) projectInfo.get("id"));
+            var patchId = api.createPatch(titleField.getText(), descriptionField.getText(), labelSelect.storeLabels, projectInfo.head,
+                    branchRevision, mySelectedRepo, projectInfo.id);
             if (patchId != null) {
                 //Fetch the patch that created from the remote
                 radicleProjectService.fetchPeerChanges(mySelectedRepo);
@@ -351,18 +351,6 @@ public class CreatePatchPanel {
                 loadingPanel.setVisible(false);
             }, ModalityState.any());
         });
-    }
-
-    protected GitRemote findRadRemote(GitRepository repo, String myUrl) {
-        var remotes = repo.getRemotes();
-        for (var remote : remotes) {
-            for (var url : remote.getUrls()) {
-                if (url.contains(myUrl)) {
-                    return remote;
-                }
-            }
-        }
-        return null;
     }
 
     private JComponent getButtonsPanel(Action newIssueAction, Action cancelAction) {
@@ -412,6 +400,33 @@ public class CreatePatchPanel {
         }
     }
 
+    protected RadProject getProjectInfo(GitRepository repo) {
+        var radInspect = new RadInspect(repo);
+        var output = radInspect.perform();
+        if (!RadAction.isSuccess(output)) {
+            return null;
+        }
+        var projectId = output.getStdout().trim();
+        return api.fetchRadProject(projectId);
+    }
+
+    protected static GitRemote findRadRemote(GitRepository repo, String radProjectId) {
+        if (Strings.isNullOrEmpty(radProjectId)) {
+            return null;
+        }
+        // rad project id is of the form: rad:<rid>
+        final var radUrl = "rad://" + radProjectId.split(":")[1];
+        // we need to convert it to the expected rad fetch url: rad://<rid>
+        // remotes may contain several namespaces, so we need to match the canonical one, i.e. rad://<rid> and not rad://<rid>/<some_delegate>
+        for (var remote : repo.getRemotes()) {
+            var fetchUrl = remote.getFirstUrl();
+            if (!Strings.isNullOrEmpty(fetchUrl) && fetchUrl.equals(radUrl)) {
+                return remote;
+            }
+        }
+        return null;
+    }
+
     private class ComboBoxSelectionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -425,16 +440,6 @@ public class CreatePatchPanel {
             // Enable the patch button only if the user has fill title & description
             newPatchButton.setEnabled(!titleField.getText().isEmpty() && !descriptionField.getText().isEmpty());
         }
-    }
-
-    private Map<String, Object> getProjectInfo(GitRepository repo) {
-        var radInspect = new RadInspect(repo);
-        var output = radInspect.perform();
-        if (!RadAction.isSuccess(output)) {
-            return null;
-        }
-        var projectId = output.getStdout().trim();
-        return api.getProjectInfo(projectId, repo);
     }
 
     protected JComponent createReturnToListSideComponent() {

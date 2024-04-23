@@ -529,21 +529,6 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public Map<String, Object> getProjectInfo(String projectId, GitRepository repo) {
-        try {
-            var req = new HttpGet(getHttpNodeUrl() + "/api/v1/projects/" + projectId);
-            var resp = makeRequest(req, RadicleBundle.message("fetchProjectError"));
-            if (!resp.isSuccess()) {
-                logger.warn("Unable to get project information, projectId:{} repo:{} resp:{}", projectId, repo, resp);
-                return null;
-            }
-            return MAPPER.readValue(resp.body, new TypeReference<>() { });
-        } catch (Exception e) {
-            logger.warn("Unable to get project information projectId:{} repo:{}", projectId, repo, e);
-        }
-        return null;
-    }
-
     public RadIssue addIssueComment(RadIssue issue, String comment, List<Embed> embedList) {
         var session = createAuthenticatedSession();
         if (session == null) {
