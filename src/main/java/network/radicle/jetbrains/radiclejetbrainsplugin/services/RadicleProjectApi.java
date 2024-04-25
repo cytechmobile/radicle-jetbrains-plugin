@@ -154,8 +154,8 @@ public class RadicleProjectApi {
         if (radProject == null) {
             return List.of();
         }
-        final var identity = getCurrentIdentity();
-        var self = identity == null ? null : identity.toRadAuthor();
+        final var myIdentity = getCurrentIdentity();
+        var self = myIdentity == null ? null : myIdentity.toRadAuthor();
         var node = getSeedNode();
         var states = Arrays.stream(RadPatch.State.values()).map(e -> e.status).toList();
         var allPatches = new ArrayList<RadPatch>();
@@ -216,8 +216,8 @@ public class RadicleProjectApi {
         if (radProject == null) {
             return null;
         }
-        final var identity = getCurrentIdentity();
-        final var self = identity == null ? null : identity.toRadAuthor();
+        final var myIdentity = getCurrentIdentity();
+        final var self = myIdentity == null ? null : myIdentity.toRadAuthor();
         final var node = getSeedNode();
         final var url = node.url + "/api/v1/projects/" + projectId + "/patches/" + patchId;
         try {

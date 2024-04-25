@@ -92,21 +92,22 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                      p.id.toLowerCase().contains(search) ||
                      Strings.nullToEmpty(p.author.id).toLowerCase().contains(search) ||
                      Strings.nullToEmpty(p.author.alias).toLowerCase().contains(search) ||
-                     Strings.nullToEmpty(p.title).toLowerCase().contains(searchFilter) ||
+                     Strings.nullToEmpty(p.title).toLowerCase().contains(searchFilter.toLowerCase().trim()) ||
                      Strings.nullToEmpty(p.getLatestNonEmptyRevisionDescription()).toLowerCase().contains(search));
          }
          if (!Strings.isNullOrEmpty(plsv.project)) {
              patchesStream = patchesStream.filter(p -> p.repo.getRoot().getName().equals(projectFilter));
          }
          if (!Strings.isNullOrEmpty(peerAuthorFilter)) {
-             patchesStream = patchesStream.filter(p -> Strings.nullToEmpty(p.author.alias).contains(peerAuthorFilter) ||
-                     p.author.id.contains(peerAuthorFilter));
+             patchesStream = patchesStream.filter(p -> Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
+                     p.author.id.equals(peerAuthorFilter));
          }
          if (!Strings.isNullOrEmpty(stateFilter)) {
              patchesStream = patchesStream.filter(p -> p.state != null && p.state.label.equals(stateFilter));
          }
          if (!Strings.isNullOrEmpty(labelFilter)) {
-             patchesStream = patchesStream.filter(p -> p.labels.stream().anyMatch(l -> Strings.nullToEmpty(l).toLowerCase().contains(labelFilter)));
+             patchesStream = patchesStream.filter(p -> p.labels.stream().anyMatch(l ->
+                     Strings.nullToEmpty(l).toLowerCase().contains(labelFilter.toLowerCase().trim())));
          }
          List<RadPatch> filteredPatches = patchesStream.collect(Collectors.toList());
          model.addAll(filteredPatches);

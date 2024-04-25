@@ -65,7 +65,7 @@ public class PatchProposalPanelTest extends AbstractIT {
         patch = new RadPatch(patches.get(0));
         patch.repo = firstRepo;
         patch.project = getProject();
-        patch.defaultBranch = projects.get(0).defaultBranch;
+        patch.radProject.defaultBranch = projects.get(0).defaultBranch;
         when(httpClient.execute(any())).thenAnswer((i) -> {
             var req = (HttpGet) i.getArgument(0);
             final StringEntity se;
@@ -81,7 +81,7 @@ public class PatchProposalPanelTest extends AbstractIT {
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(pps));
             } else if (req.getURI().getPath().endsWith(ISSUES_URL)) {
                 se = new StringEntity("[]");
-            } else if (req.getURI().getPath().endsWith(PROJECTS_URL + "/" + patch.projectId + PATCHES_URL + "/" + patch.id)) {
+            } else if (req.getURI().getPath().endsWith(PROJECTS_URL + "/" + patch.radProject.id + PATCHES_URL + "/" + patch.id)) {
                 // request to re-fetch the patch
                 var fetchedPatch = new RadPatch(patch);
                 fetchedPatch.project = null;
@@ -137,7 +137,7 @@ public class PatchProposalPanelTest extends AbstractIT {
         // find the labels for branches, something like <default_branch> <- <patch_branch>
         var branchLabels = UIUtil.findComponentsOfType((JPanel) allPanels[0], JLabel.class);
         assertThat(branchLabels).hasSizeGreaterThanOrEqualTo(3);
-        assertThat(branchLabels.get(0).getText()).isEqualTo(patch.defaultBranch);
+        assertThat(branchLabels.get(0).getText()).isEqualTo(patch.radProject.defaultBranch);
         assertThat(branchLabels.get(2).getText()).contains(patch.id);
 
         // find patch title and id labels

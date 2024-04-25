@@ -191,7 +191,7 @@ public class RadPatch {
         }
     }
 
-    public record Edit(RadAuthor author, String body, Instant timestamp, List<Embed> embeds) {}
+    public record Edit(RadAuthor author, String body, Instant timestamp, List<Embed> embeds) { }
 
     public record Merge(RadAuthor author, String commit, Instant timestamp, String revision) { }
 

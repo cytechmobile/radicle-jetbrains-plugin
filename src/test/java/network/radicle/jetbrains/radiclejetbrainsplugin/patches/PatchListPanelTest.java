@@ -19,8 +19,8 @@ import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -274,11 +274,11 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     public static List<RadPatch> getTestPatches() {
-        var revision = new RadPatch.Revision("testRevision", "testDescription", "", "",
-                List.of(), List.of(), Instant.now(), List.of(), List.of(new RadPatch.Review("1",
-                new RadAuthor(AUTHOR), RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())), new RadAuthor(UUID.randomUUID().toString()));
+        var revision = new RadPatch.Revision("testRevision", new RadAuthor(AUTHOR), "testDescription", List.of(), List.of(), "", "",
+                List.of(), Instant.now(), new ArrayList<>(), List.of(new RadPatch.Review("1",
+                new RadAuthor(AUTHOR), RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())));
 
-        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of()), new RadAuthor(AUTHOR),
+        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of(AUTHOR)), new RadAuthor(AUTHOR),
                 "testPatch", new RadAuthor(AUTHOR), "testTarget",
                 List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
 

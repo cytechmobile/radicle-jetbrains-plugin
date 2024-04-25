@@ -996,8 +996,9 @@ public class TimelineTest extends AbstractIT {
         discussions.add(discussion);
         var review = new RadPatch.Review(UUID.randomUUID().toString(), new RadAuthor("fakeDid"),
                 RadPatch.Review.Verdict.ACCEPT, REVIEW_SUMMARY, List.of(), Instant.now());
-        return new RadPatch.Revision(id, description, base, commit.getId().asString(),
-                List.of("branch"), List.of(), Instant.now(), discussions, List.of(review), new RadAuthor(UUID.randomUUID().toString()));
+
+        return new RadPatch.Revision(id, new RadAuthor(UUID.randomUUID().toString()), description, List.of(), List.of(), base, commit.getId().asString(),
+                List.of("branch"), Instant.now(), discussions, List.of(review));
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {

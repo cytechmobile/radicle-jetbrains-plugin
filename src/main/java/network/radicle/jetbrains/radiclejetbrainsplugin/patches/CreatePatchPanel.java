@@ -410,7 +410,7 @@ public class CreatePatchPanel {
         return api.fetchRadProject(projectId);
     }
 
-    protected static GitRemote findRadRemote(GitRepository repo, String radProjectId) {
+    public GitRemote findRadRemote(GitRepository repo, String radProjectId) {
         if (Strings.isNullOrEmpty(radProjectId)) {
             return null;
         }
