@@ -80,6 +80,7 @@ public class PublishDialog extends DialogWrapper {
                     if (radToolWindow == null || radToolWindow.isAvailable()) {
                         return;
                     }
+                    repo.update();
                     ApplicationManager.getApplication().invokeLater(() -> {
                         ClientProperty.put(radToolWindow.getComponent(), RAD_REPOS_KEY, List.of(repo));
                         radToolWindow.setAvailable(true);
