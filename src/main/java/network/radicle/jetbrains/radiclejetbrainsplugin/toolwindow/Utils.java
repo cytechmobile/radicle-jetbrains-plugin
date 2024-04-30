@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
+import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,13 @@ public class Utils {
 
     public static JComponent getHorizontalPanel(int gap) {
         return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
+    }
+
+    public static String formatReplyMessage(String message, String replyMessage) {
+        replyMessage = Strings.isNullOrEmpty(replyMessage) ? "&lt; DELETED COMMENT &gt;" : replyMessage;
+        return "<div><div style=\"border-left: 2px solid black;\">" +
+                " <div style=\"margin-left:10px\">" + replyMessage + "</div>\n" +
+                "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
     }
 
     public static JPanel descriptionPanel(MarkDownEditorPaneFactory editorPane, Project project) {

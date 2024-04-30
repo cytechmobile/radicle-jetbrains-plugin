@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -34,6 +35,10 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
 
     public boolean isReviewComment() {
         return location != null;
+    }
+
+    public boolean isReply() {
+        return !Strings.isNullOrEmpty(replyTo);
     }
 
     public Reaction findReaction(String emojiUnicode) {

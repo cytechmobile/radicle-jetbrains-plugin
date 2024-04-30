@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
@@ -21,6 +22,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
@@ -32,6 +34,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ReplyPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
@@ -55,6 +58,7 @@ public class IssueComponent {
     private JPanel emojiJPanel;
     private EmojiPanel<RadIssue> emojiPanel;
     private final IssueVirtualFile  file;
+    private JComponent replyPanel;
 
     public IssueComponent(IssueVirtualFile file) {
         this.file = file;
@@ -110,19 +114,22 @@ public class IssueComponent {
             var message = com.body;
             if (!Strings.isNullOrEmpty(com.replyTo) && !com.replyTo.equals(issueId)) {
                 var replyToMessage = findMessage(com.replyTo, discussionList);
-                message = "<div><div style=\"border-left: 2px solid black;\">" +
-                        " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
-                        "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
+                message = Utils.formatReplyMessage(message, replyToMessage);
             }
             var panel = new BorderLayoutPanel();
             panel.setOpaque(false);
             var editorPane = new MarkDownEditorPaneFactory(message, radIssue.project, radIssue.projectId, file);
             panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
             emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
+            var verticalPanel = getVerticalPanel(5);
+            verticalPanel.setOpaque(false);
             emojiJPanel = emojiPanel.getEmojiPanel();
-            panel.addToBottom(emojiJPanel);
+            verticalPanel.add(emojiJPanel);
+            replyPanel = new MyReplyPanel(radIssue.project, com, issueModel).getThreadActionsComponent();
+            verticalPanel.add(replyPanel);
+            panel.addToBottom(verticalPanel);
             var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.project, panel,
-                    RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> {
+                    RadicleBundle.message("save"), new SingleValueModel<>(com.body), (field) -> {
                 var edited = api.editIssueComment(radIssue, field.getText(), com.id, field.getEmbedList());
                 final boolean success = edited != null;
                 if (success) {
@@ -227,6 +234,24 @@ public class IssueComponent {
 
     public JComponent getCommentSection() {
         return commentSection;
+    }
+
+    public JComponent getReplyPanel() {
+        return replyPanel;
+    }
+
+    public class MyReplyPanel extends ReplyPanel<RadIssue> {
+
+        public MyReplyPanel(Project project, RadDiscussion radDiscussion,
+                            SingleValueModel<RadIssue> model) {
+            super(project, radDiscussion, model);
+        }
+
+        @Override
+        public boolean addReply(String comment, List<Embed> embedList, String replyToId) {
+            var res = api.addIssueComment(radIssue, comment, replyToId, embedList);
+            return res != null;
+        }
     }
 
     public class IssueEmojiPanel extends EmojiPanel<RadIssue> {

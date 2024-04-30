@@ -40,6 +40,7 @@ public class EditablePanelHandler {
     private final boolean allowDragAndDrop;
     private DragAndDropField dragAndDropField;
     private SingleValueModel<Boolean> isLoading = new SingleValueModel<>(false);
+    private OnCloseListener onCloseListener;
 
     public EditablePanelHandler(PanelBuilder builder) {
         this.closeEditorAfterSubmit = builder.closeEditorAfterSubmit;
@@ -142,6 +143,17 @@ public class EditablePanelHandler {
         panel.revalidate();
         panel.repaint();
         editor = null;
+        if (onCloseListener != null) {
+            onCloseListener.onClose();
+        }
+    }
+
+    public interface OnCloseListener {
+        void onClose();
+    }
+
+    public void addOnCloseListener(OnCloseListener myListener) {
+        onCloseListener = myListener;
     }
 
     public static class PanelBuilder {

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
@@ -80,6 +81,7 @@ import static org.mockito.Mockito.when;
 public class OverviewTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private static String dummyComment = "Hello";
+    private static String replyComment = "This is my reply";
     private RadicleToolWindow radicleToolWindow;
     private RadIssue issue;
     private IssueEditorProvider issueEditorProvider;
@@ -688,6 +690,29 @@ public class OverviewTest extends AbstractIT {
         assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
         assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
         assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
+    }
+
+    @Test
+    public void testReplyComment() throws InterruptedException {
+        executeUiTasks();
+        var replyPanel = issueEditorProvider.getIssueComponent().getReplyPanel();
+        var replyButton = UIUtil.findComponentsOfType(replyPanel, LinkLabel.class);
+        assertThat(replyButton.size()).isEqualTo(1);
+        replyButton.get(0).doClick();
+        var ef = UIUtil.findComponentOfType(replyPanel, DragAndDropField.class);
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
+        assertThat(ef.getText()).isEmpty();
+        executeUiTasks();
+        ef.setText(replyComment);
+        var prBtns = UIUtil.findComponentsOfType(replyPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(1);
+        prBtn.doClick();
+        executeUiTasks();
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("comment");
+        assertThat(map.get("body")).isEqualTo(replyComment);
     }
 
     @Test

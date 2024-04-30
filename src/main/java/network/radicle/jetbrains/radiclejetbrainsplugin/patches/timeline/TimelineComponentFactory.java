@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory;
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.AnimatedIcon;
@@ -20,6 +21,7 @@ import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
@@ -31,6 +33,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ReplyPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
@@ -64,6 +67,7 @@ public class TimelineComponentFactory {
     private final PatchVirtualFile file;
     private JComponent commentPanel;
     private JComponent mainPanel;
+    private JComponent replyPanel;
 
     public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel, PatchVirtualFile file) {
         this.file = file;
@@ -175,19 +179,22 @@ public class TimelineComponentFactory {
         var message = com.body;
         if (!Strings.isNullOrEmpty(com.replyTo)) {
             var replyToMessage = findMessage(com.replyTo);
-            message = "<div><div style=\"border-left: 2px solid black;\">" +
-                    " <div style=\"margin-left:10px\">" + replyToMessage + "</div>\n" +
-                    "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
+            message = Utils.formatReplyMessage(message, replyToMessage);
         }
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
         var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
         panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
         emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
+        var verticalPanel = getVerticalPanel(5);
+        verticalPanel.setOpaque(false);
         emojiJPanel = emojiPanel.getEmojiPanel();
-        panel.addToBottom(emojiJPanel);
+        verticalPanel.add(emojiJPanel);
+        replyPanel = new MyReplyPanel(patch.project, com, patchModel).getThreadActionsComponent();
+        verticalPanel.add(replyPanel);
+        panel.addToBottom(verticalPanel);
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
-                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> {
+                RadicleBundle.message("save"), new SingleValueModel<>(com.body), (field) -> {
             var edited = api.changePatchComment(patch.findRevisionId(com.id), com.id, field.getText(), patch, field.getEmbedList());
             final boolean success = edited != null;
             if (success) {
@@ -238,6 +245,23 @@ public class TimelineComponentFactory {
 
     public JComponent getDescSection() {
         return descSection;
+    }
+
+    public JComponent getReplyPanel() {
+        return replyPanel;
+    }
+
+    private class MyReplyPanel extends ReplyPanel<RadPatch> {
+
+        public MyReplyPanel(Project project, RadDiscussion radDiscussion, SingleValueModel<RadPatch> model) {
+            super(project, radDiscussion, model);
+        }
+
+        @Override
+        public boolean addReply(String comment, List<Embed> list, String replyToId) {
+            var res =  api.addPatchComment(patch, comment, replyToId, null, list);
+            return res != null;
+        }
     }
 
     private class PatchEmojiPanel extends EmojiPanel<RadPatch> {

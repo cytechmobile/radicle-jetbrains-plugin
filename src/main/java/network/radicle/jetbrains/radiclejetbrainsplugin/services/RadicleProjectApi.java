@@ -529,7 +529,7 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadIssue addIssueComment(RadIssue issue, String comment, List<Embed> embedList) {
+    public RadIssue addIssueComment(RadIssue issue, String comment, String replyTo, List<Embed> embedList) {
         var session = createAuthenticatedSession();
         if (session == null) {
             return null;
@@ -537,7 +537,7 @@ public class RadicleProjectApi {
         try {
             var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
             issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "comment", "body", comment, "replyTo", issue.id, "embeds", embedList);
+            var patchIssueData = Map.of("type", "comment", "body", comment, "replyTo", replyTo, "embeds", embedList);
             var json = MAPPER.writeValueAsString(patchIssueData);
             issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
             var resp = makeRequest(issueReq, RadicleBundle.message("commentError"), RadicleBundle.message("commentDescError"));
@@ -551,6 +551,10 @@ public class RadicleProjectApi {
         }
 
         return null;
+    }
+
+    public RadIssue addIssueComment(RadIssue issue, String comment, List<Embed> embedList) {
+        return addIssueComment(issue, comment, issue.id, embedList);
     }
 
     public RadIssue changeIssueTitle(RadIssue issue) {
@@ -628,6 +632,10 @@ public class RadicleProjectApi {
     }
 
     public RadPatch addPatchComment(RadPatch patch, String comment, RadDiscussion.Location location, List<Embed> embedList) {
+        return addPatchComment(patch, comment, null, location, embedList);
+    }
+
+    public RadPatch addPatchComment(RadPatch patch, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList) {
         var session = createAuthenticatedSession();
         if (session == null) {
             return null;
@@ -635,15 +643,18 @@ public class RadicleProjectApi {
         try {
             var commentReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
             commentReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            Map<String, Object> data;
+            HashMap<String, Object> data;
             boolean isReviewComment = false;
             if (location == null) {
-                 data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
-                        "body", comment, "embeds", embedList);
+                 data = new HashMap<>(Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                         "body", comment, "embeds", embedList));
             } else {
-                 data = Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
-                        "body", comment, "embeds", embedList, "location", location.getMapObject());
+                 data = new HashMap<>(Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                        "body", comment, "embeds", embedList, "location", location.getMapObject()));
                 isReviewComment = true;
+            }
+            if (!Strings.isNullOrEmpty(replyTo)) {
+                data.put("replyTo", replyTo);
             }
             var json = MAPPER.writeValueAsString(data);
             commentReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));

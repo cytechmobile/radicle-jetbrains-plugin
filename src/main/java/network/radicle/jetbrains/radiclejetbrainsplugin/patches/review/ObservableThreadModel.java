@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.EDT;
 import git4idea.GitUtil;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Optional;
 
 public class ObservableThreadModel {
     private static final Logger logger = LoggerFactory.getLogger(ObservableThreadModel.class);
@@ -82,19 +84,46 @@ public class ObservableThreadModel {
     }
 
     public List<ThreadModel> getInlineComments(RadPatch patch) {
-        var lastRevision = patch.revisions.get(patch.revisions.size() - 1);
-        var discussions = lastRevision.discussions().stream().filter(discussion -> discussion.isReviewComment() &&
-                (discussion.location.path.equals(getFilePath()) && discussion.location.commit.equals(getCommitHash()))).toList();
+        var lastRevision = patch.getLatestRevision();
+        var reviewComments = lastRevision.getReviewComments(getFilePath(), getCommitHash());
         var groupedDiscussions = new ArrayList<ThreadModel>();
-        for (var discussion : discussions) {
-            var line = discussion.location.start;
-            if (isCommentInModifiedLine(line)) {
-                var threadModel = new ThreadModel(line, discussion);
-                groupedDiscussions.add(threadModel);
+        for (var disc : reviewComments) {
+            var line = disc.location.start;
+            if (!isCommentInModifiedLine(line)) {
+                continue;
+            }
+            if (!disc.isReply()) {
+                addNewThread(groupedDiscussions, disc);
+            } else {
+                addToExistingThread(groupedDiscussions, disc);
             }
         }
         return groupedDiscussions;
     }
+
+    private void addNewThread(List<ThreadModel> groupedDiscussions, RadDiscussion discussion) {
+        var newThreadModel = new ThreadModel(discussion.location.start, discussion);
+        groupedDiscussions.add(newThreadModel);
+    }
+
+    private void addToExistingThread(List<ThreadModel> groupedDiscussions, RadDiscussion discussion) {
+        var existingThreadModel = findThreadModel(groupedDiscussions, discussion);
+        if (existingThreadModel.isPresent()) {
+            var threadModel = existingThreadModel.get();
+            threadModel.addRadDiscussion(discussion);
+        } else {
+            addNewThread(groupedDiscussions, discussion);
+        }
+    }
+
+    private Optional<ThreadModel> findThreadModel(List<ThreadModel> groupedDiscussions, RadDiscussion discussion) {
+        return groupedDiscussions.stream()
+                .filter(threadModel -> threadModel.getRadDiscussion()
+                        .stream()
+                        .anyMatch(radDiscussion -> radDiscussion.id.equals(discussion.replyTo)))
+                .findFirst();
+    }
+
 
     private void updateEditorCommentsUi(RadPatch patch) {
         var fetched = this.api.fetchPatch(patch.radProject.id, patch.repo, patch.id);

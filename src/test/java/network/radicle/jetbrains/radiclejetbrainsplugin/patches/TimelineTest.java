@@ -31,6 +31,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.UIUtil;
@@ -56,6 +57,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropFi
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PatchDiffWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -112,6 +114,7 @@ public class TimelineTest extends AbstractIT {
     private static final String REVIEW_SUMMARY = "Accepted";
 
     private String dummyComment = "Hello";
+    private String replyComment = "This is my reply";
     private RadPatch patch;
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
@@ -261,7 +264,7 @@ public class TimelineTest extends AbstractIT {
         var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
         var authorLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[0], JLabel.class);
         var commentLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[1], JEditorPane.class);
-        assertThat(authorLabel.getText()).contains(authorId);
+        assertThat(authorLabel.getText()).contains(Utils.formatDid(authorId));
         assertThat(commentLabel.getText()).contains(comment);
         EditorFactory.getInstance().releaseEditor(editor);
     }
@@ -362,6 +365,41 @@ public class TimelineTest extends AbstractIT {
         assertThat(map.get("type")).isEqualTo("revision.comment.edit");
         assertThat(map.get("body")).isEqualTo(editedComment);
         assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        EditorFactory.getInstance().releaseEditor(editor);
+    }
+
+    @Test
+    public void testReviewCommentsReply() throws InterruptedException {
+        var authorId = "did:key:fakeDid";
+        var comment = "This is a comment";
+        var firstCommit = commitHistory.get(0);
+        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var fileName = findPath(firstChange.getVirtualFile());
+        var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
+        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        var patchDiffWindow = initializeDiffWindow();
+        var editor = patchDiffWindow.getEditor();
+        var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
+
+        var replyButton = UIUtil.findComponentsOfType(contentComponent, LinkLabel.class);
+        assertThat(replyButton.size()).isEqualTo(1);
+        replyButton.get(0).doClick();
+
+        var ef = UIUtil.findComponentOfType(contentComponent, DragAndDropField.class);
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
+        assertThat(ef.getText()).isEmpty();
+        executeUiTasks();
+        ef.setText(replyComment);
+        var prBtns = UIUtil.findComponentsOfType(contentComponent, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(1);
+        prBtn.doClick();
+        executeUiTasks();
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("revision.comment");
+        assertThat(map.get("body")).isEqualTo(replyComment);
+        assertThat(map.get("replyTo")).isEqualTo(DISCUSSION_ID);
         EditorFactory.getInstance().releaseEditor(editor);
     }
 
@@ -821,6 +859,33 @@ public class TimelineTest extends AbstractIT {
         assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
         assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
         assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
+    }
+
+    @Test
+    public void testReplyComment() throws InterruptedException {
+        // Clear previous commands
+        radStub.commands.clear();
+        executeUiTasks();
+        var replyPanel = patchEditorProvider.getTimelineComponent().getComponentsFactory().getReplyPanel();
+
+        var replyButton = UIUtil.findComponentsOfType(replyPanel, LinkLabel.class);
+        assertThat(replyButton.size()).isEqualTo(1);
+        replyButton.get(0).doClick();
+
+        var ef = UIUtil.findComponentOfType(replyPanel, DragAndDropField.class);
+        assertThat(ef).isNotNull();
+        markAsShowing(ef.getParent(), ef);
+        assertThat(ef.getText()).isEmpty();
+        executeUiTasks();
+        ef.setText(replyComment);
+        var prBtns = UIUtil.findComponentsOfType(replyPanel, JButton.class);
+        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
+        var prBtn = prBtns.get(1);
+        prBtn.doClick();
+        executeUiTasks();
+        var map = response.poll(5, TimeUnit.SECONDS);
+        assertThat(map.get("type")).isEqualTo("revision.comment");
+        assertThat(map.get("body")).isEqualTo(replyComment);
     }
 
     @Test

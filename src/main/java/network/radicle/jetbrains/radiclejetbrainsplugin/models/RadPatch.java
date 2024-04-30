@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 public class RadPatch {
@@ -184,6 +185,12 @@ public class RadPatch {
             // Remove the duplicates reviews. We can only have 1 review per author per revision
             myReviews.removeIf(e -> !seen.add(e.author.id));
             return myReviews;
+        }
+
+        public List<RadDiscussion> getReviewComments(String filePath, String commitHash) {
+            return discussions.stream().filter(disc -> disc.isReviewComment() &&
+                            disc.location.path.equals(filePath) && disc.location.commit.equals(commitHash))
+                    .collect(Collectors.toList());
         }
 
         public RadDiscussion findDiscussion(String commentId) {
