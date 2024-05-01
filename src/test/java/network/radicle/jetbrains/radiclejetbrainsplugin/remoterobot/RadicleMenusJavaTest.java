@@ -96,6 +96,11 @@ public class RadicleMenusJavaTest {
             waitFor(ofMinutes(5), () -> projectView.hasText("radicle"));
         });
 
+        step("initialize project", () -> {
+            sharedSteps.radInitializeProject(tmpDir);
+            sharedSteps.refreshFromDisk();
+        });
+
 
         step("Ensure Radicle sub-menu category is visible", () -> {
 
@@ -116,14 +121,18 @@ public class RadicleMenusJavaTest {
                     actionMenu(remoteRobot, "Git", "").click();
                     actionMenu(remoteRobot, "Radicle", "Git").click();
                     actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
+                    actionMenuItem(remoteRobot, "Sync").isShowing();
+                    actionMenuItem(remoteRobot, "Clone").isShowing();
+                    actionMenuItem(remoteRobot, "Track").isShowing();
                     break;
                 } catch (Exception ignored) {
                 }
             }
+            actionMenuItem(remoteRobot, "Sync Fetch").isShowing();
             actionMenuItem(remoteRobot, "Sync").isShowing();
             actionMenuItem(remoteRobot, "Clone").isShowing();
             actionMenuItem(remoteRobot, "Track").isShowing();
-            actionMenuItem(remoteRobot, "Share Project on Radicle").isShowing();
+            Assertions.assertNull(actionMenuItem(remoteRobot, "Share Project on Radicle"));
         });
 
         step("Ensure Radicle toolbar actions show", () -> {
@@ -131,6 +140,7 @@ public class RadicleMenusJavaTest {
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_fetch.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");
+            isXPathComponentVisible(idea, "//div[@myicon='rad_pull.svg']");
         });
     }
 

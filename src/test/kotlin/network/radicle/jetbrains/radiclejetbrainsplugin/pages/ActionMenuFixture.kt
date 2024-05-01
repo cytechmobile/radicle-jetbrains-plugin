@@ -7,6 +7,7 @@ import com.intellij.remoterobot.data.RemoteComponent
 import com.intellij.remoterobot.fixtures.ComponentFixture
 import com.intellij.remoterobot.fixtures.FixtureName
 import com.intellij.remoterobot.search.locators.byXpath
+import com.intellij.remoterobot.utils.WaitForConditionTimeoutException
 import com.intellij.remoterobot.utils.waitFor
 import java.time.Duration
 
@@ -24,12 +25,16 @@ fun RemoteRobot.actionMenu(menuText: String, parentMenuText: String): ActionMenu
     return findAll<ActionMenuFixture>(xpath).first()
 }
 
-fun RemoteRobot.actionMenuItem(text: String): ActionMenuItemFixture {
+fun RemoteRobot.actionMenuItem(text: String): ActionMenuItemFixture? {
     val xpath = byXpath("text '$text'", "//div[@class='ActionMenuItem' and @text='$text']")
-    waitFor (duration = Duration.ofSeconds(5)) {
-        findAll<ActionMenuItemFixture>(xpath).isNotEmpty()
+    try {
+        waitFor (duration = Duration.ofSeconds(5)) {
+            findAll<ActionMenuItemFixture>(xpath).isNotEmpty()
+        }
+        return findAll<ActionMenuItemFixture>(xpath).first()
+    } catch (e:WaitForConditionTimeoutException) {
+        return null
     }
-    return findAll<ActionMenuItemFixture>(xpath).first()
 }
 
 @FixtureName("ActionMenu")

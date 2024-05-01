@@ -17,7 +17,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
 import network.radicle.jetbrains.radiclejetbrainsplugin.pages.WelcomeFrameFixture;
 
 import javax.imageio.ImageIO;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -33,6 +35,8 @@ import static java.awt.event.KeyEvent.VK_CONTROL;
 import static java.awt.event.KeyEvent.VK_META;
 import static java.awt.event.KeyEvent.VK_S;
 import static java.time.Duration.ofSeconds;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.DialogFixture.byTitle;
 
 public class ReusableSteps {
@@ -67,6 +71,35 @@ public class ReusableSteps {
         } catch (WaitForConditionTimeoutException ignored) { }
     }
 
+    public void refreshFromDisk() {
+        actionMenu(remoteRobot, "File", "").click();
+        actionMenuItem(remoteRobot, "Reload All from Disk").click();
+    }
+
+    public void radInitializeProject(Path localDir) {
+            String path = "";
+            if (SystemInfo.isWindows) {
+                path = localDir.toAbsolutePath().toString().replace("\\", "\\\\") + "\\.git\\config";
+            } else {
+                path = localDir.toAbsolutePath() + "/.git/config";
+            }
+            try {
+                File f = new File(path);
+                if (!f.exists()) {
+                    throw new RuntimeException();
+                }
+                FileWriter fw = new FileWriter(path, true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write("[remote \"rad\"]\n" +
+                        "\turl = rad://test\n" +
+                        "\tpushurl = rad://test/test\n" +
+                        "\tfetch = +refs/heads/*:refs/remotes/rad/*");
+                bw.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+    }
+
     public void importProjectFromVCS(Path localDir) {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
@@ -85,9 +118,11 @@ public class ReusableSteps {
             //create tmp dir to clone project to:
             keyboard.selectAll();
             keyboard.backspace();
-            keyboard.enterText(localDir.toAbsolutePath().toString().replaceAll("\\\\", "\\\\"), 0);
-
-
+            if (SystemInfo.isWindows) {
+                keyboard.enterText(localDir.toAbsolutePath().toString().replace("\\", "\\\\"), 0);
+            } else {
+                keyboard.enterText(localDir.toAbsolutePath().toString(), 0);
+            }
             remoteRobot.find(JButtonFixture.class, byXpath("//div[@text='Clone']")).click();
         });
     }

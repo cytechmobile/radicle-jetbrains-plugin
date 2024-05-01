@@ -61,7 +61,7 @@
         </action>
 
         <action id="Radicle.Track.New.Ui" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
-                text="Rad Track" description="Radicle track from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+                text="Rad Pull" description="Radicle track from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
             <add-to-group group-id="Git.Experimental.Branch.Popup.Actions" anchor="after" relative-to-action="Radicle.Clone.New.Ui"/>
         </action>
 
@@ -121,7 +121,7 @@
         </action>
 
         <action id="Radicle.Track.trackBartoolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
-                text="Rad Track" description="Radicle clone from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+                text="Rad Pull" description="Radicle clone from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
             <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="Radicle.Clone.cloneBartoolbar"/>
         </action>
 
@@ -141,7 +141,7 @@
         </action>
 
         <action id="Radicle.Track.toolbar" class="network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleTrackAction"
-                text="Rad Track" description="Radicle track from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
+                text="Rad Pull" description="Radicle track from toolbar" icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_PULL">
             <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="Radicle.Clone.toolbar"/>
         </action>
     </actions>
