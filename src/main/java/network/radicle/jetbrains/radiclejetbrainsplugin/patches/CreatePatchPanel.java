@@ -155,7 +155,7 @@ public class CreatePatchPanel {
     }
 
     private void showPopUp(LinkLabel<?> fromLabel, JLabel toLabel) {
-        var gridLayout = new JPanel(new GridLayoutManager(3, 2));
+        var gridLayout = new JPanel(new GridLayoutManager(4, 2));
         gridLayout.setPreferredSize(new Dimension(500, 100));
         var constraints = new GridConstraints();
         constraints.setAnchor(GridConstraints.ANCHOR_WEST);
@@ -176,7 +176,7 @@ public class CreatePatchPanel {
         constraints.setFill(FILL_BOTH);
         gridLayout.add(selectedBranch, constraints);
 
-        var saveButton = new JButton(RadicleBundle.message("save"));
+        var saveButton = new JButton(RadicleBundle.message("select"));
         constraints.setRow(2);
         constraints.setColumn(1);
         gridLayout.add(saveButton, constraints);
@@ -300,7 +300,7 @@ public class CreatePatchPanel {
         final var projectId = projectInfo.id;
         var remote = findRadRemote(mySelectedRepo, projectId);
         if (remote == null) {
-            logger.warn("Unable to find rad remote. Project ID : {}", projectId);
+            logger.warn("Unable to find rad remote. Project ID: {}", projectId);
             RadAction.showErrorNotification(project, RadicleBundle.message("findRemoteError"),
                     RadicleBundle.message("findRemoteErrorDesc"));
             return;
