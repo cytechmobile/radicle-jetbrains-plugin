@@ -244,7 +244,8 @@ public abstract class RadAction {
         }
         final var gitRepoManager = GitRepositoryManager.getInstance(e.getProject());
         var repos = gitRepoManager.getRepositories();
-        e.getPresentation().setEnabledAndVisible(repos.size() > 0);
+        var initializedRepos = getInitializedReposWithNodeConfigured(repos, false);
+        e.getPresentation().setEnabledAndVisible(!initializedRepos.isEmpty());
     }
 
     public static boolean isCliPathConfigured(Project project) {

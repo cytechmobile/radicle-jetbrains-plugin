@@ -7,6 +7,12 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.TrackDialog;
 import org.jetbrains.annotations.NotNull;
 
 public class RadicleTrackAction extends AnAction  {
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        RadAction.showRadIcon(e);
+    }
+
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
         if (!RadAction.isCliPathConfigured(e.getProject())) {
