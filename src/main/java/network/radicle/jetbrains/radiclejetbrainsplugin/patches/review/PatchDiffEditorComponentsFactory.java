@@ -4,6 +4,7 @@ import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
@@ -29,8 +30,8 @@ public class PatchDiffEditorComponentsFactory {
         this.observableThreadModel = observableThreadModel;
     }
 
-    public JComponent createThreadComponent(ThreadModel threads) {
-        patchReviewThreadComponentFactory = new PatchReviewThreadComponentFactory(patch, observableThreadModel);
+    public JComponent createThreadComponent(ThreadModel threads, Editor editor) {
+        patchReviewThreadComponentFactory = new PatchReviewThreadComponentFactory(patch, observableThreadModel, editor);
         var thread = patchReviewThreadComponentFactory.createThread(threads);
         return CodeReviewCommentUIUtil.INSTANCE.createEditorInlayPanel(thread);
     }
@@ -44,9 +45,7 @@ public class PatchDiffEditorComponentsFactory {
             boolean success = res != null;
             if (success) {
                 observableThreadModel.update(patch);
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    hideComponent.hide(editorLine);
-                });
+                ApplicationManager.getApplication().invokeLater(() -> hideComponent.hide(editorLine));
             }
             return success;
         }).enableDragAndDrop(false).hideCancelAction(true).build();

@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.ToggleableContainer;
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.CollectionListModel;
@@ -19,21 +20,29 @@ import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getVerticalPanel;
 
 public class PatchReviewThreadComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
@@ -44,12 +53,18 @@ public class PatchReviewThreadComponentFactory {
     private final RadPatch patch;
     private final ObservableThreadModel threadsModel;
     private final RadicleProjectService radicleProjectService;
+    private final Editor editor;
+    private static final String JPANEL_PREFIX_NAME = "COMMENT_";
+    private RadDetails radDetails;
+    private static final int PADDING_LEFT = CodeReviewChatItemUIUtil.ComponentType.COMPACT.getContentLeftShift() + 12;
+    private static final int PADDING_TOP_BOTTOM = 5;
 
-    public PatchReviewThreadComponentFactory(RadPatch patch, ObservableThreadModel threadsModel) {
+    public PatchReviewThreadComponentFactory(RadPatch patch, ObservableThreadModel threadsModel, Editor editor) {
         this.radicleProjectService = patch.project.getService(RadicleProjectService.class);
         this.api = patch.project.getService(RadicleProjectApi.class);
         this.threadsModel = threadsModel;
         this.patch = patch;
+        this.editor = editor;
     }
 
     public JComponent createThread(ThreadModel threadModel) {
@@ -100,7 +115,7 @@ public class PatchReviewThreadComponentFactory {
             }
         };
         var horizontalPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-        horizontalPanel.setBorder(JBUI.Borders.emptyLeft(CodeReviewChatItemUIUtil.ComponentType.COMPACT.getContentLeftShift() + 12));
+        horizontalPanel.setBorder(JBUI.Borders.emptyLeft(PADDING_LEFT));
         horizontalPanel.add(reply);
         return horizontalPanel;
     }
@@ -142,12 +157,13 @@ public class PatchReviewThreadComponentFactory {
             return Unit.INSTANCE;
         });
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-        var radDetails = this.radicleProjectService.getRadDetails();
+        radDetails = this.radicleProjectService.getRadDetails();
         var self = radDetails != null && radDetails.did.equals(disc.author.id);
         if (self) {
             actionsPanel.add(editButton);
             actionsPanel.add(deleteButton);
         }
+        var emojiPanel = new MyEmojiPanel(new SingleValueModel<>(patch), disc.reactions, disc.id, radDetails);
         var builder = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.COMPACT, integer ->
                 new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), panelHandle.panel);
         var author = !Strings.isNullOrEmpty(disc.author.alias) ? disc.author.alias : Utils.formatDid(disc.author.id);
@@ -157,7 +173,69 @@ public class PatchReviewThreadComponentFactory {
                 .append(HtmlChunk.nbsp())
                 .append(disc.timestamp != null ? DATE_TIME_FORMATTER.format(disc.timestamp) : "");
         builder.withHeader(new JLabel(MarkDownEditorPaneFactory.wrapHtml(titleText.toString())), actionsPanel);
-        return builder.build();
+        var verticalPanel = getVerticalPanel(5);
+        verticalPanel.add(builder.build());
+        var emojiJPanel = emojiPanel.getEmojiPanel();
+        emojiJPanel.setBorder(BorderFactory.createEmptyBorder(PADDING_TOP_BOTTOM, PADDING_LEFT, PADDING_TOP_BOTTOM, 0));
+        verticalPanel.add(emojiJPanel);
+        verticalPanel.setOpaque(false);
+        verticalPanel.setName(JPANEL_PREFIX_NAME + disc.id);
+        return verticalPanel;
+    }
+
+    private class MyEmojiPanel extends EmojiPanel<RadPatch> {
+
+        protected MyEmojiPanel(SingleValueModel<RadPatch> model,
+                               List<Reaction> reactions, String discussionId, RadDetails radDetails) {
+            super(model, reactions, discussionId, radDetails);
+        }
+
+        @Override
+        public RadPatch addEmoji(Emoji emoji, String commentId) {
+            var revisionId = patch.findRevisionId(commentId);
+            return api.patchCommentReact(patch, commentId, revisionId, emoji.unicode(), true);
+        }
+
+        @Override
+        public RadPatch removeEmoji(String emojiUnicode, String commentId) {
+            var revisionId = patch.findRevisionId(commentId);
+            return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
+        }
+
+        @Override
+        public void notifyEmojiChanges(String emojiUnicode, String commentId, boolean isAdded) {
+            var updatedDiscussion = Utils.updateRadDiscussionModel(patch, emojiUnicode, commentId, radDetails, isAdded);
+            if (updatedDiscussion != null) {
+                updatePanel(updatedDiscussion);
+            }
+        }
+
+        public void updatePanel(RadDiscussion discussion) {
+            JPanel commentPanel = null;
+            for (var component : editor.getContentComponent().getComponents()) {
+                var timeLineCommentPanels = ((ArrayList) UIUtil.findComponentsOfType((JPanel) component, TimelineThreadCommentsPanel.class));
+                if (timeLineCommentPanels.isEmpty()) {
+                    continue;
+                }
+                var timelinePanels = (JPanel) timeLineCommentPanels.get(0);
+                if (timelinePanels.getComponents().length == 0) {
+                    continue;
+                }
+                var nestedComponents = ((JPanel) timelinePanels.getComponent(0)).getComponents();
+                for (var child : nestedComponents) {
+                    if (child.getName() != null && child.getName().equals(JPANEL_PREFIX_NAME + discussion.id)) {
+                        commentPanel = (JPanel) child;
+                        break;
+                    }
+                }
+            }
+            if (commentPanel != null) {
+                commentPanel.removeAll();
+                commentPanel.add(createComponent(discussion));
+                commentPanel.revalidate();
+                commentPanel.repaint();
+            }
+        }
     }
 
     public interface ReplyAction {

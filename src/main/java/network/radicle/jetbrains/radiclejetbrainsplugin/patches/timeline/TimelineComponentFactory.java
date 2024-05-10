@@ -23,7 +23,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -259,7 +258,7 @@ public class TimelineComponentFactory {
 
         @Override
         public boolean addReply(String comment, List<Embed> list, String replyToId) {
-            var res =  api.addPatchComment(patch, comment, replyToId, null, list);
+            var res = api.addPatchComment(patch, comment, replyToId, null, list);
             return res != null;
         }
     }
@@ -272,44 +271,21 @@ public class TimelineComponentFactory {
 
         @Override
         public RadPatch addEmoji(Emoji emoji, String commentId) {
-            var revisionId = findRevisionId(commentId);
+            var revisionId = patch.findRevisionId(commentId);
             return api.patchCommentReact(patch, commentId, revisionId, emoji.unicode(), true);
         }
 
         @Override
         public RadPatch removeEmoji(String emojiUnicode, String commentId) {
-            var revisionId = findRevisionId(commentId);
+            var revisionId = patch.findRevisionId(commentId);
             return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
         }
 
         @Override
         public void notifyEmojiChanges(String emojiUnicode, String commentId, boolean isAdded) {
-            var revisionId = findRevisionId(commentId);
-            var revision = patch.findRevision(revisionId);
-            if (revision != null) {
-                var discussion = revision.findDiscussion(commentId);
-                if (discussion != null) {
-                    var reaction = discussion.findReaction(emojiUnicode);
-                    var author = reaction != null ? reaction.findAuthor(radDetails.did) : null;
-                    if (isAdded && author == null) {
-                        if (reaction == null) {
-                            // If the reaction does not exist, add a new reaction with the author
-                            discussion.reactions.add(new Reaction(emojiUnicode, List.of(new RadAuthor(radDetails.did, radDetails.alias))));
-                        } else {
-                            // If the reaction exists, add the author to the existing reaction
-                            reaction.authors().add(new RadAuthor(radDetails.did, radDetails.alias));
-                        }
-                    } else if (!isAdded && author != null) {
-                        if (reaction.authors().size() > 1) {
-                            // If the reaction has multiple authors, remove the current author
-                            reaction.authors().remove(author);
-                        } else {
-                            // If the reaction has only one author, remove the entire reaction from the discussion
-                            discussion.reactions.remove(reaction);
-                        }
-                    }
-                    updatePanel(discussion);
-                }
+            var updatedDiscussion = Utils.updateRadDiscussionModel(patch, emojiUnicode, commentId, radDetails, isAdded);
+            if (updatedDiscussion != null) {
+                updatePanel(updatedDiscussion);
             }
         }
 
@@ -328,19 +304,7 @@ public class TimelineComponentFactory {
                 commentComponent.revalidate();
                 commentComponent.repaint();
             }
-        }
 
-        private String findRevisionId(String commentId) {
-            String revisionId = "";
-            for (var rev : patch.revisions) {
-                for (var com : rev.discussions()) {
-                    if (com.id.equals(commentId)) {
-                        revisionId = rev.id();
-                        break;
-                    }
-                }
-            }
-            return revisionId;
         }
     }
 }
