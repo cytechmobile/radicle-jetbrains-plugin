@@ -287,7 +287,7 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(1000);
         executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
-        var selectedLabels = (ArrayList<String>) res.get("labels");
+        var selectedLabels = (List<String>) res.get("labels");
         assertThat(selectedLabels.size()).isEqualTo(1);
         assertThat(selectedLabels).contains(issue.labels.get(1));
     }
@@ -382,7 +382,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(res.get("title")).isEqualTo(ISSUE_NAME);
         assertThat(res.get("description")).isEqualTo(issueDescription);
         assertThat(res.get("labels")).usingRecursiveAssertion().isEqualTo(List.of(label2));
-        assertThat(res.get("assignees")).usingRecursiveAssertion().isEqualTo(List.of(getTestProjects().get(0).delegates.get(0)));
+        assertThat(res.get("assignees")).usingRecursiveAssertion().isEqualTo(List.of(getTestProjects().get(0).delegates.get(0).id));
     }
 
     @Test
@@ -490,15 +490,15 @@ public class OverviewTest extends AbstractIT {
         assertThat(listmodel.getSize()).isEqualTo(3);
 
         var firstAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
-        assertThat(firstAssignee.value.did()).isEqualTo(projectDelegates.get(0));
+        assertThat(firstAssignee.value.did()).isEqualTo(projectDelegates.get(0).id);
         assertThat(firstAssignee.selected).isTrue();
 
         var secondAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(1);
-        assertThat(secondAssignee.value.did()).isEqualTo(projectDelegates.get(1));
+        assertThat(secondAssignee.value.did()).isEqualTo(projectDelegates.get(1).id);
         assertThat(secondAssignee.selected).isTrue();
 
         var thirdAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(2);
-        assertThat(thirdAssignee.value.did()).isEqualTo(projectDelegates.get(2));
+        assertThat(thirdAssignee.value.did()).isEqualTo(projectDelegates.get(2).id);
         assertThat(thirdAssignee.selected).isFalse();
 
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
@@ -510,9 +510,9 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(1000);
         executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
-        var assignees = (ArrayList<String>) res.get("assignees");
+        var assignees = (List<String>) res.get("assignees");
         assertThat(assignees.size()).isEqualTo(1);
-        assertThat(assignees).contains(getTestProjects().get(0).delegates.get(2));
+        assertThat(assignees.get(0)).isEqualTo(getTestProjects().get(0).delegates.get(2).id);
     }
 
     @Test

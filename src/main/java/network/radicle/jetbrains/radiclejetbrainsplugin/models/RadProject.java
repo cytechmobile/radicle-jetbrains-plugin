@@ -7,14 +7,14 @@ public class RadProject {
     public String name;
     public String description;
     public String defaultBranch;
-    public List<String> delegates;
+    public List<RadAuthor> delegates;
     public String head;
 
     public RadProject() {
         // for json
     }
 
-    public RadProject(String id, String name, String description, String defaultBranch, List<String> delegates) {
+    public RadProject(String id, String name, String description, String defaultBranch, List<RadAuthor> delegates) {
         this.id = id;
         this.name = name;
         this.description = description;

@@ -161,7 +161,7 @@ public class PatchProposalPanel {
         if (RadPatch.State.OPEN.status.equals(patch.state.status)) {
             mergeBtn = new JButton();
             // current user is a delegate in the project
-            if (patch.radProject.delegates.contains(patch.self.id)) {
+            if (patch.radProject.delegates != null && patch.radProject.delegates.stream().anyMatch(d -> d.id.equals(patch.self.id))) {
                 final var mergePatchAction = new MergePatchAction(mergeBtn, patchModel);
                 mergeBtn.setAction(mergePatchAction);
             } else {

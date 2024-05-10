@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnit4.class)
 public class PatchListPanelTest extends AbstractIT {
     public static final String AUTHOR = "did:key:testAuthor";
+    public static final RadAuthor RADAUTHOR = new RadAuthor("did:key:testAuthor", "testAuthor");
     public static final String AUTHOR1 = "did:key:testAuthor1";
     private static List<RadPatch> patches;
     private RadicleToolWindow radicleToolWindow;
@@ -268,22 +269,22 @@ public class PatchListPanelTest extends AbstractIT {
 
     public static List<RadProject> getTestProjects() {
         return List.of(new RadProject("test-rad-project", "test project", "test project description",
-                        "main", List.of("did:key:test", "did:key:assignee2", "did:key:assignee3")),
+                        "main", List.of(new RadAuthor("did:key:test", "test"), new RadAuthor("did:key:assignee2", "assignee2"), new RadAuthor("did:key" +
+                ":assignee3", "assignee3"))),
                 new RadProject("test-rad-project-second", "test project 2", "test project 2 description",
-                        "main", List.of("did:key:test")));
+                        "main", List.of(new RadAuthor("did:key:test", "test"))));
     }
 
     public static List<RadPatch> getTestPatches() {
-        var revision = new RadPatch.Revision("testRevision", new RadAuthor(AUTHOR), "testDescription", List.of(), List.of(), "", "",
+        var revision = new RadPatch.Revision("testRevision", RADAUTHOR, "testDescription", List.of(), List.of(), "", "",
                 List.of(), Instant.now(), new ArrayList<>(), List.of(new RadPatch.Review("1",
-                new RadAuthor(AUTHOR), RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())));
+                RADAUTHOR, RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())));
 
-        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of(AUTHOR)), new RadAuthor(AUTHOR),
-                "testPatch", new RadAuthor(AUTHOR), "testTarget",
-                List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
+        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of(RADAUTHOR)),
+                RADAUTHOR, "testPatch", RADAUTHOR, "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
 
         var radPatch2 = new RadPatch("c4d12", new RadProject("test-rad-project-second", "test-rad-project-second", "", "main", List.of()),
-                new RadAuthor(AUTHOR), "secondProposal", new RadAuthor(AUTHOR1),
+                RADAUTHOR, "secondProposal", new RadAuthor(AUTHOR1),
                 "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, List.of(revision));
         patches = List.of(radPatch, radPatch2);
         return patches;

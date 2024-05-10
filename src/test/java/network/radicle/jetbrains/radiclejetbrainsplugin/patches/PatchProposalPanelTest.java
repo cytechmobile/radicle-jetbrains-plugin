@@ -173,6 +173,7 @@ public class PatchProposalPanelTest extends AbstractIT {
         var mergeBtn = UIUtil.findComponentOfType(ef.getSecondComponent(), JButton.class);
         assertThat(mergeBtn).isNotNull();
         var mergePatchAction = (MergePatchAction) mergeBtn.getAction();
+        assertThat(mergePatchAction).isNotNull();
         ApplicationManager.getApplication().executeOnPooledThread(() -> mergeBtn.doClick());
 
         while (mergePatchAction.performed == null) {

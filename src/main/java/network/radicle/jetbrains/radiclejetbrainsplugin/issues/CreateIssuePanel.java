@@ -29,6 +29,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PublishDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
@@ -167,7 +168,7 @@ public class CreateIssuePanel {
                 // Send api request in order to create a new issue
                 var issueTitle = titleField.getText();
                 var issueDescription = descriptionField.getText();
-                var assignees = assigneeSelect.delegates;
+                var assignees = assigneeSelect.delegates.stream().map(d -> d.id).collect(Collectors.toList());
                 var labels = labelSelect.storeLabels;
                 var repo = (GitRepository) projectSelect.getSelectedItem();
                 newIssueButton.setEnabled(false);
@@ -258,13 +259,17 @@ public class CreateIssuePanel {
     }
 
     public class AssigneesSelect extends LabeledListPanelHandle<IssuePanel.AssigneesSelect.Assignee> {
-        private List<String> delegates = List.of();
+        private List<RadAuthor> delegates = List.of();
 
         @Override
         public String getSelectedValues() {
             var formattedDid = new ArrayList<String>();
             for (var delegate : delegates) {
-                formattedDid.add(Utils.formatDid(delegate));
+                var deleg = delegate.alias;
+                if (Strings.isNullOrEmpty(deleg)) {
+                    deleg = Utils.formatDid(delegate.id);
+                }
+                formattedDid.add(deleg);
             }
             return String.join(",", formattedDid);
         }
@@ -272,7 +277,7 @@ public class CreateIssuePanel {
 
         @Override
         public boolean storeValues(List<IssuePanel.AssigneesSelect.Assignee> data) {
-            delegates = data.stream().map(IssuePanel.AssigneesSelect.Assignee::did).collect(Collectors.toList());
+            delegates = data.stream().map(a -> new RadAuthor(a.did(), a.alias())).collect(Collectors.toList());
             refresh();
             return true;
         }
@@ -319,17 +324,17 @@ public class CreateIssuePanel {
                 var radProjectId = output.getStdout().trim();
                 var projectInfo = api.fetchRadProject(radProjectId);
                 for (var delegate : projectInfo.delegates) {
-                    var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate, null);
-                    var isSelected = delegates.contains(delegate);
+                    var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate.id, delegate.alias);
+                    var isSelected = delegates.stream().anyMatch(d -> d.id.equals(delegate.id));
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
                     assignees.add(selectableWrapper);
                 }
                 for (var delegate : delegates) {
-                    var exist = assignees.stream().anyMatch(el -> el.value.did().equals(delegate));
-                    if (exist) {
+                    final boolean exists = assignees.stream().anyMatch(el -> el.value.did().equals(delegate.id));
+                    if (exists) {
                         continue;
                     }
-                    var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate, null);
+                    var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate.id, delegate.alias);
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, true);
                     assignees.add(selectableWrapper);
                 }

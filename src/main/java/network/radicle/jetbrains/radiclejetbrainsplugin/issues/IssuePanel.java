@@ -383,21 +383,15 @@ public class IssuePanel {
                 var projectInfo = api.fetchRadProject(issue.projectId);
                 var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Assignee>>();
                 for (var delegate : projectInfo.delegates) {
-                    var author = issue.assignees.stream().filter(as -> as.id.contains(delegate)).findFirst().orElse(null);
-                    final Assignee assignee;
-                    if (author != null) {
-                         assignee = new AssigneesSelect.Assignee(author.id, author.generateLabelText());
-                    } else {
-                         assignee = new AssigneesSelect.Assignee(delegate, null);
-                    }
-                    var isSelected = author != null;
+                    final Assignee assignee = new AssigneesSelect.Assignee(delegate.id, delegate.generateLabelText());
+                    final boolean isSelected = issue.assignees.stream().anyMatch(as -> as.id.contains(delegate.id));
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
                     assignees.add(selectableWrapper);
                 }
                 for (var assign : issue.assignees) {
-                    var exist = assignees.stream().anyMatch(el -> el.value.did.equals(assign.id) ||
+                    final boolean exists = assignees.stream().anyMatch(el -> el.value.did.equals(assign.id) ||
                             (el.value.alias != null && el.value.alias.equals(assign.alias)));
-                    if (exist) {
+                    if (exists) {
                         continue;
                     }
                     var assignee = new AssigneesSelect.Assignee(assign.id, assign.generateLabelText());
