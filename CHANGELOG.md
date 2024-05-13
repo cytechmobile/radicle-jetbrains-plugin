@@ -4,42 +4,32 @@
 
 ## [Unreleased]
 
+## [0.9.2] - 2024-05-13
+
+- fix(api): Fix project delegates schema change. This makes the plugin compatible with rad version `1.0.0-rc.8`
+
+- Specify BGT thread for rad track, avoiding generating error reports.
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.9.1...v0.9.2
+
 ## [0.9.1] - 2024-05-02
 
 - feat: Support replies in inline comments by stelios. Now you can add a reply to an inline comment on a patch (i.e. a comment straight on the diff of your code).
-
 - feat: Disable rad Buttons by stelios. Disable radicle buttons from Git menu in non-radicle-initialized repos. The radicle menu remains, in order to provide functionality for `rad-init`ializing a repo.
-
 - fix(patch): fix repo/branch selector size by jchrist. When creating a patch and you opened the repo/branch selector dialog, it was a bit cut-off.
-
 - fix: flaky tests by stelios. Stop failing randomly! (neither fail consistently, that is...)
-
 - docs: fix reported minimum supported CLI version by jchrist. We're expecting v1 now! 0.8.0 is history!
-
 - fix(patch): Fix discovery logic for rad remote when creating patch by jchrist. When attempting to find the radicle remote in the git config, the logic could sometimes match the wrong remote (e.g. a radicle namespaced remote).  
-
 - fix(patches): search by patch id by jchrist. In the patch list view, you could filter patches by anything, except their ID. So, if you knew already exactly what patch you wanted to view, you had to keep scrolling to find it.
-
 - fix(patches): disable merge for non-delegates by jchrist. Non-delegates were able to "merge" a patch, but there would hardly be a reason for them to do so. Disable the button, so that they know that this will not work as they might have imagined. Of course, a non-delegate can always perform this action on their own if they really wish to (i.e. merge the patch branch to their own default branch).
-
 - fix(timeline): Use alias for self by jchrist. The comment text field used the did of the currently selected identity, instead of the alias.
-
 - fix(patches): Fix diff for unknown commit by jchrist. When calculating commits for a patch, a (superseded) revision might contain commits that haven't been fetched. Ignore this error, as we're mostly interested for the latest revision.
-
 - fix(timeline): Fix patch/issue web links by jchrist. Fix the links in the timeline to a patch/issue to point straight to the preferred seed node in the default browser.
-
 - fix(issues): Fix assignees selection & filtering by stelios.
-
 - fix(issues): Fix issue assignees by jchrist. 
-
 - fix: Notification & Refresh tab stelios
-
 - build: update deps and bump version jchrist
-
 - build(deps): bump JetBrains/qodana-action from 2023.3.1 to 2024.1.2
-
 - build(deps): bump org.jetbrains.intellij from 1.17.2 to 1.17.3
-
 - chore: add missing changelog for 0.9.0 jchrist
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.9.0...v0.9.1
 
@@ -415,7 +405,8 @@ Others:
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
 
-[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.1...HEAD
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.2...HEAD
+[0.9.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.1...v0.9.2
 [0.9.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.0...v0.9.1
 [0.9.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.4...v0.9.0
 [0.8.4]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.8.3...v0.8.4
