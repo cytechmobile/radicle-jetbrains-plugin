@@ -264,6 +264,7 @@ public class RadicleProjectApi {
             return null;
         } catch (Exception e) {
             logger.warn("http request exception {}", url, e);
+            showNotification(project, RadicleBundle.message("fetchProjectError"), "", NotificationType.ERROR, null);
             return null;
         }
     }
@@ -765,19 +766,15 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             var errorMessage = !Strings.isNullOrEmpty(errorDesc) ? errorDesc : e.getMessage();
             ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), Strings.nullToEmpty(errorMessage),
-                            NotificationType.ERROR, List.of()));
+                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), Strings.nullToEmpty(errorMessage), NotificationType.ERROR, null));
             logger.warn("error executing request", e);
             return new HttpResponseStatusBody(-1, "");
         } finally {
             if (resp != null) {
                 try {
                     resp.close();
-                    if (responseStatusBody != null && !responseStatusBody.isSuccess() &&
-                            !Strings.isNullOrEmpty(errorMsg)) {
-                        ApplicationManager.getApplication().invokeLater(() ->
-                                showNotification(project, errorMsg, errorDesc,
-                                        NotificationType.ERROR, List.of()));
+                    if (responseStatusBody != null && !responseStatusBody.isSuccess() && !Strings.isNullOrEmpty(errorMsg)) {
+                        ApplicationManager.getApplication().invokeLater(() -> showNotification(project, errorMsg, errorDesc, NotificationType.ERROR, null));
                     }
                 } catch (Exception e) {
                     logger.warn("error closing response", e);
