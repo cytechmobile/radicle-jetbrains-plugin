@@ -52,8 +52,9 @@ public class ObservableThreadModel {
         }
     }
 
-    private void update(List<ThreadModel> threadModelList) {
+    private void update(List<ThreadModel> threadModelList, RadPatch patch) {
         changeEventDispatcher.getMulticaster().clearThreads();
+        changeEventDispatcher.getMulticaster().updateModel(patch);
         for (var thread : threadModelList) {
             changeEventDispatcher.getMulticaster().threadAdded(thread);
         }
@@ -131,7 +132,7 @@ public class ObservableThreadModel {
         if (success) {
             var inlineComments = getInlineComments(fetched);
             ApplicationManager.getApplication().invokeLater(() -> {
-                update(inlineComments);
+                update(inlineComments, fetched);
             });
         }
     }
@@ -172,5 +173,6 @@ public class ObservableThreadModel {
     public interface ChangeListener extends EventListener {
         void threadAdded(ThreadModel threadModel);
         void clearThreads();
+        void updateModel(RadPatch patch);
     }
 }

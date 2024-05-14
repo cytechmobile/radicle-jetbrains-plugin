@@ -17,7 +17,7 @@ public class PatchReviewThreadsController {
     private final EditorImpl editor;
     private final ObservableThreadModel observableThreadModel;
     private final HashMap<Integer, List<Disposable>> inlay = new HashMap<>();
-    private final RadPatch patch;
+    private RadPatch patch;
     private PatchDiffEditorComponentsFactory patchDiffEditorComponentsFactory;
 
     public PatchReviewThreadsController(EditorImpl editor, ObservableThreadModel observableThreadModel, RadPatch patch) {
@@ -43,12 +43,17 @@ public class PatchReviewThreadsController {
                     }
                 }
             }
+
+            @Override
+            public void updateModel(RadPatch fetched) {
+                patch = fetched;
+            }
         });
     }
 
     private void insertThread(ThreadModel threadModel) {
         patchDiffEditorComponentsFactory = new PatchDiffEditorComponentsFactory(this.patch, threadModel.getLine(), observableThreadModel);
-        final var threadComponent = patchDiffEditorComponentsFactory.createThreadComponent(threadModel);
+        final var threadComponent = patchDiffEditorComponentsFactory.createThreadComponent(threadModel, editor);
         final var editorComponentInlaysManager = new EditorComponentInlaysManager(editor);
         final var disposable = editorComponentInlaysManager.insertAfter(threadModel.getLine(), threadComponent, 0, null);
         // var disposable = EditorComponentInlaysUtilKt.insertComponentAfter(editor, threadModel.getLine(), threadComponent, 0, d -> null);

@@ -10,6 +10,11 @@ import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.layout.CC;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 
 import javax.swing.JComponent;
@@ -18,11 +23,47 @@ import javax.swing.ImageIcon;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
+import java.util.List;
 
 public class Utils {
     private static final String SPLIT_CHAR = ":";
     public static JComponent getVerticalPanel(int gap) {
         return new JPanel(ListLayout.vertical(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
+    }
+
+    public static RadDiscussion updateRadDiscussionModel(RadPatch patch, String emojiUnicode, String commentId, RadDetails radDetails, boolean isAdded) {
+        var revisionId = patch.findRevisionId(commentId);
+        var revision = patch.findRevision(revisionId);
+        if (revision != null) {
+            var discussion = revision.findDiscussion(commentId);
+            if (discussion != null) {
+                return updateRadDiscussionModel(discussion, emojiUnicode, radDetails, isAdded);
+            }
+        }
+        return null;
+    }
+
+    public static RadDiscussion updateRadDiscussionModel(RadDiscussion discussion, String emojiUnicode, RadDetails radDetails, boolean isAdded) {
+        var reaction = discussion.findReaction(emojiUnicode);
+        var author = reaction != null ? reaction.findAuthor(radDetails.did) : null;
+        if (isAdded && author == null) {
+            if (reaction == null) {
+                // If the reaction does not exist, add a new reaction with the author
+                discussion.reactions.add(new Reaction(emojiUnicode, List.of(new RadAuthor(radDetails.did, radDetails.alias))));
+            } else {
+                // If the reaction exists, add the author to the existing reaction
+                reaction.authors().add(new RadAuthor(radDetails.did, radDetails.alias));
+            }
+        } else if (!isAdded && author != null) {
+            if (reaction.authors().size() > 1) {
+                // If the reaction has multiple authors, remove the current author
+                reaction.authors().remove(author);
+            } else {
+                // If the reaction has only one author, remove the entire reaction from the discussion
+                discussion.reactions.remove(reaction);
+            }
+        }
+        return discussion;
     }
 
     public static void addListPanel(JPanel panel, LabeledListPanelHandle<?> handle) {
