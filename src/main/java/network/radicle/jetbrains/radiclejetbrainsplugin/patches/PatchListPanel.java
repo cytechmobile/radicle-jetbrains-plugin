@@ -157,7 +157,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 infoPanel.setForeground(JBColor.GRAY);
                 infoPanel.setOpaque(false);
 
-                var patchId = new JLabel(Utils.formatPatchId(patch.id));
+                var patchId = new JLabel(Utils.formatId(patch.id));
                 patchId.setForeground(JBColor.GRAY);
                 infoPanel.add(patchId);
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.SingleHeightTabs;
 import com.intellij.util.ui.JBUI;
@@ -95,8 +96,13 @@ public class IssuePanel {
         var issueTitle = getLabelPanel(RadicleBundle.message("title", Strings.nullToEmpty(issue.title)));
         detailsSection.add(issueTitle, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        var issueId = getLabelPanel(RadicleBundle.message("issueId", Strings.nullToEmpty(issue.id)));
-        detailsSection.add(issueId, new CC().gapBottom(String.valueOf(UI.scale(4))));
+        var issueId = getLabelPanel(RadicleBundle.message("issueId", Strings.nullToEmpty(Utils.formatId(issue.id))));
+
+        final var issueIdAndCopyButton = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        issueIdAndCopyButton.add(issueId, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+        issueIdAndCopyButton.add(new Utils.CopyButton(issue.id), new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+
+        detailsSection.add(issueIdAndCopyButton, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
         var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.generateLabelText())));
         detailsSection.add(issueAuthor, new CC().gapBottom(String.valueOf(UI.scale(4))));

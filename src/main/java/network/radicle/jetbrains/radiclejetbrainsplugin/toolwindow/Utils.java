@@ -3,6 +3,10 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
+import com.intellij.ide.ClipboardSynchronizer;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -19,10 +23,15 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.Editabl
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JButton;
+import javax.swing.Action;
+import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class Utils {
@@ -93,8 +102,11 @@ public class Utils {
         return (JPanel) b.build();
     }
 
-    public static String formatPatchId(String patchId) {
-        return patchId.substring(0, 6);
+    public static String formatId(String id) {
+        if (id.length() < 6) {
+            return id;
+        }
+        return id.substring(0, 6);
     }
 
     public static String formatDid(String did) {
@@ -134,6 +146,30 @@ public class Utils {
             if (!text.contains("\n")) {
                 super.replace(fb, offset, length, text, attrs);
             }
+        }
+    }
+
+    public static class CopyButton extends JButton {
+        public CopyButton(String contents) {
+            setAction(getCopyAction(contents));
+        }
+
+        private Action getCopyAction(String contents) {
+            ActionManager actionManager = ActionManager.getInstance();
+            if (actionManager == null) {
+                return null;
+            }
+            AnAction action = actionManager.getAction(IdeActions.ACTION_COPY);
+            if (action == null) {
+                return null;
+            }
+            return new AbstractAction("", action.getTemplatePresentation().getIcon()) {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    StringSelection content = new StringSelection(contents);
+                    ClipboardSynchronizer.getInstance().setContent(content, content);
+                }
+            };
         }
     }
 }

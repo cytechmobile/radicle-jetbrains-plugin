@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
+import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -55,6 +56,8 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.IOException;
@@ -225,7 +228,7 @@ public class OverviewTest extends AbstractIT {
         var issueCreatedLabel = UIUtil.findComponentOfType((JPanel) allPanels[6], JLabel.class);
 
         assertThat(titleLabel.getText()).isEqualTo(RadicleBundle.message("title", Strings.nullToEmpty(issue.title)));
-        assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", Strings.nullToEmpty(issue.id)));
+        assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", Strings.nullToEmpty(Utils.formatId(issue.id))));
         assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.id)));
         assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueLabels", String.join(",", issue.labels)));
         assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees",
@@ -383,6 +386,17 @@ public class OverviewTest extends AbstractIT {
         assertThat(res.get("description")).isEqualTo(issueDescription);
         assertThat(res.get("labels")).usingRecursiveAssertion().isEqualTo(List.of(label2));
         assertThat(res.get("assignees")).usingRecursiveAssertion().isEqualTo(List.of(getTestProjects().get(0).delegates.get(0).id));
+    }
+
+    @Test
+    public void testCopyButton() throws IOException, UnsupportedFlavorException {
+        var panel = issueTabController.getIssueJPanel();
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var copyButton = UIUtil.findComponentOfType(ef.getFirstComponent(), Utils.CopyButton.class);
+        copyButton.doClick();
+        var contents = ClipboardSynchronizer.getInstance().getContents();
+        var issueId = (String) contents.getTransferData(DataFlavor.stringFlavor);
+        assertThat(issueId).isEqualTo(issue.id);
     }
 
     @Test
@@ -797,7 +811,7 @@ public class OverviewTest extends AbstractIT {
         prBtn.doClick();
         executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("id")).isEqualTo(issue.id);
+        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
         assertThat(res.get("type")).isEqualTo("comment.edit");
         assertThat(res.get("body")).isEqualTo(editedComment);
     }
@@ -848,7 +862,7 @@ public class OverviewTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", commentDescription, embeds);
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
-        var myIssue = new RadIssue("321", new RadAuthor(AUTHOR), "My Issue",
+        var myIssue = new RadIssue(UUID.randomUUID().toString(), new RadAuthor(AUTHOR), "My Issue",
                 RadIssue.State.OPEN, List.of(new RadAuthor("did:key:test"), new RadAuthor("did:key:assignee2")), List.of("tag1", "tag2"), discussions);
         myIssue.project = getProject();
         myIssue.projectId = UUID.randomUUID().toString();

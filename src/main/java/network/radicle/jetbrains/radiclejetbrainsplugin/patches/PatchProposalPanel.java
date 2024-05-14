@@ -57,7 +57,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.formatPatchId;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.formatId;
 
 public class PatchProposalPanel {
     private static final Logger logger = Logger.getInstance(PatchProposalPanel.class);
@@ -95,7 +95,7 @@ public class PatchProposalPanel {
                         return;
                     }
                     var currentBranchName = patch.repo.getCurrentBranch().getName();
-                    checkoutBtn.setEnabled(!currentBranchName.contains(formatPatchId(patch.id)));
+                    checkoutBtn.setEnabled(!currentBranchName.contains(formatId(patch.id)));
                 });
     }
 
@@ -198,7 +198,7 @@ public class PatchProposalPanel {
             public void actionPerformed(ActionEvent e) {
                 checkoutBtn.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var formattedPatchId = formatPatchId(patch.id);
+                    var formattedPatchId = formatId(patch.id);
                     var countDown = new CountDownLatch(1);
                     UpdateBackgroundTask ubt = new UpdateBackgroundTask(patch.project, RadicleBundle.message("checkingOut", "patch/" + formattedPatchId),
                             countDown);
@@ -222,7 +222,7 @@ public class PatchProposalPanel {
         checkoutBtn = new JButton(checkoutAction);
         checkoutBtn.setText(RadicleBundle.message("checkout"));
         var currentBranch = patch.repo.getCurrentBranch();
-        if (currentBranch != null && currentBranch.getName().contains(formatPatchId(patch.id))) {
+        if (currentBranch != null && currentBranch.getName().contains(formatId(patch.id))) {
             checkoutBtn.setEnabled(false);
         }
         nonOpaquePanel.add(checkoutBtn, new CC().gapBottom(String.valueOf(UI.scale(8))));
@@ -249,11 +249,15 @@ public class PatchProposalPanel {
         final var idPane = new BaseHtmlEditorPane();
         idPane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 0.8)));
         idPane.setForeground(JBColor.GRAY);
-        idPane.setBody(patch.id);
+        idPane.setBody(Utils.formatId(patch.id));
+
+        final var patchIdAndCopyButton = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid()));
+        patchIdAndCopyButton.add(idPane, new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
+        patchIdAndCopyButton.add(new Utils.CopyButton(patch.id), new CC().gapRight(String.valueOf(JBUIScale.scale(4))));
 
         final var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").fill().flowY()));
         nonOpaquePanel.add(iconAndTitlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
-        nonOpaquePanel.add(idPane, new CC());
+        nonOpaquePanel.add(patchIdAndCopyButton, new CC().gapBottom(String.valueOf(UI.scale(8))));
         return nonOpaquePanel;
     }
 

@@ -10,6 +10,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.Side;
+import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -82,6 +83,8 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -576,6 +579,25 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
+    public void testCopyButton() throws IOException, UnsupportedFlavorException {
+        var patchProposalPanel = new PatchProposalPanel(patchTabController, new SingleValueModel<>(patch)) {
+            @Override
+            public void refreshVcs() {
+
+            }
+        };
+        var panel = patchProposalPanel.createViewPatchProposalPanel();
+        var ef = UIUtil.findComponentOfType(panel, OnePixelSplitter.class);
+        var myPanel = ef.getFirstComponent();
+        var mainPanel = (JPanel) myPanel.getComponents()[0];
+        var copyButton = UIUtil.findComponentOfType(mainPanel, Utils.CopyButton.class);
+        copyButton.doClick();
+        var contents = ClipboardSynchronizer.getInstance().getContents();
+        var patchId = (String) contents.getTransferData(DataFlavor.stringFlavor);
+        assertThat(patchId).isEqualTo(patch.id);
+    }
+
+    @Test
     public void testCheckoutButton() throws InterruptedException {
         var patchProposalPanel = new PatchProposalPanel(patchTabController, new SingleValueModel<>(patch)) {
             @Override
@@ -991,7 +1013,8 @@ public class TimelineTest extends AbstractIT {
         var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
-        var myPatch = new RadPatch("c5df12", new RadProject(UUID.randomUUID().toString(), "test", "test", "main", List.of()), new RadAuthor(AUTHOR),
+        var myPatch = new RadPatch(UUID.randomUUID().toString(), new RadProject(UUID.randomUUID().toString(),
+                "test", "test", "main", List.of()), new RadAuthor(AUTHOR),
                 "testPatch", new RadAuthor(AUTHOR), "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
         myPatch.project = getProject();
         myPatch.repo = firstRepo;

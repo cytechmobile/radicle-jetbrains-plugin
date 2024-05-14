@@ -101,7 +101,7 @@ public class PatchComponentFactory {
             @Nullable
             @Override
             protected String getCurrentName() {
-                return myPatch != null ? RadicleBundle.message("patch.diff.label", Utils.formatPatchId(myPatch.id)) :
+                return myPatch != null ? RadicleBundle.message("patch.diff.label", Utils.formatId(myPatch.id)) :
                         RadicleBundle.message("changes");
             }
         };
