@@ -4,17 +4,19 @@ import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
-import com.intellij.collaboration.ui.codereview.ReturnToListComponent;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.TabInfo;
@@ -23,12 +25,12 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import icons.CollaborationToolsIcons;
 import icons.DvcsImplIcons;
-import kotlin.Unit;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -128,12 +130,15 @@ public class PatchProposalPanel {
     }
 
     protected JComponent createReturnToListSideComponent() {
-        return ReturnToListComponent.INSTANCE.createReturnToListSideComponent(RadicleBundle.message("backToList"),
-                () -> {
-                    this.messageBusConnection.disconnect();
-                    controller.createPanel();
-                    return Unit.INSTANCE;
-                });
+        // taken from: ReturnToListComponent.INSTANCE.createReturnToListSideComponent
+        var panel = new BorderLayoutPanel();
+        final var label = new LinkLabel<>(UIUtil.leftArrow() + " " + RadicleBundle.message("backToList"), null, (source, data) -> {
+            this.messageBusConnection.disconnect();
+            controller.createPanel();
+        });
+        label.setBorder(JBUI.Borders.emptyRight(8));
+        panel.addToRight(label).andTransparent().withBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+        return panel;
     }
 
     protected JComponent createInfoComponent() {
@@ -184,14 +189,18 @@ public class PatchProposalPanel {
         var titlePane = new BaseHtmlEditorPane();
         //titlePane.setFont(titlePane.getFont().deriveFont((float) (titlePane.getFont().getSize() * 1.2)));
         //HtmlEditorPaneUtilKt.setHtmlBody(titlePane, patch.getLatestNonEmptyRevisionDescription());
-        titlePane.setBody(patch.getLatestNonEmptyRevisionDescription());
+        var latestDescription = patch.getLatestNonEmptyRevisionDescription();
+        if (latestDescription.length() > 100) {
+            latestDescription = latestDescription.substring(0, 100) + "...";
+        }
+        titlePane.setBody(latestDescription);
         var nonOpaquePanel = new NonOpaquePanel(new MigLayout(new LC().insets("0").gridGap("0", "0").noGrid().flowY()));
         nonOpaquePanel.add(titlePane, new CC().gapBottom(String.valueOf(UI.scale(8))));
-        final var viewTimelineLink = new ActionLink(RadicleBundle.message("view.timeline"), e -> {
+        final var openInEditorLink = new ActionLink(RadicleBundle.message("open.in.editor"), e -> {
             controller.openPatchTimelineOnEditor(patchModel, this, false);
         });
-        viewTimelineLink.setBorder(JBUI.Borders.emptyTop(4));
-        nonOpaquePanel.add(viewTimelineLink, new CC().gapBottom(String.valueOf(UI.scale(8))));
+        openInEditorLink.setBorder(JBUI.Borders.emptyTop(4));
+        nonOpaquePanel.add(openInEditorLink, new CC().gapBottom(String.valueOf(UI.scale(8))));
 
         var checkoutAction = new AbstractAction() {
             @Override

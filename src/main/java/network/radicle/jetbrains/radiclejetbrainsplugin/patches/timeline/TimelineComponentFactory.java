@@ -77,8 +77,10 @@ public class TimelineComponentFactory {
     }
 
     public JComponent createDescSection() {
-        var description = !Strings.isNullOrEmpty(patch.getLatestRevision().description()) ? patch.getLatestRevision().description() :
-                RadicleBundle.message("noDescription");
+        var description = patch.getLatestNonEmptyRevisionDescription();
+        if (Strings.isNullOrEmpty(description)) {
+            description = RadicleBundle.message("noDescription");
+        }
         var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.radProject.id, file);
         descSection = Utils.descriptionPanel(editorPane, patch.project);
         return descSection;
