@@ -37,7 +37,7 @@ dependencies {
         )
         bundledPlugins(providers.gradleProperty("platformPlugins").map { it.split(',') }.getOrElse(emptyList()))
          instrumentationTools()
-        // pluginVerifier()
+         pluginVerifier()
         // zipSigner()
     }
 
@@ -68,20 +68,6 @@ intellijPlatform {
         name = providers.gradleProperty("pluginName")
         version = providers.gradleProperty("pluginVersion")
 
-        // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
-        description = providers.fileContents(layout.projectDirectory.file("./README.md")).asText.map {
-            it.lines().run {
-                val start = "<!-- Plugin description -->"
-                val end = "<!-- Plugin description end -->"
-
-                if (!containsAll(listOf(start, end))) {
-                    throw GradleException("Plugin description section not found in README.md:\n$start ... $end")
-                }
-                subList(indexOf(start) + 1, indexOf(end))
-            }.joinToString("\n")
-        }.map {
-            markdownToHTML(it)
-        }
 
         // Get the latest available change notes from the changelog file
         changeNotes.set(provider {
@@ -117,21 +103,21 @@ intellijPlatform {
         }.map { listOf(it) }
     }
 
-    // verifyPlugin {
-    //     ides {
-    // //         ides(providers.gradleProperty("pluginVerifierIdeVersions").map { it.split(',') }.getOrElse(emptyList()))
-    // //         recommended()
-    // //         // channels = listOf(ProductRelease.Channel.RELEASE)
-    //
-    // // try
-    // //         select {
-    // //             types = listOf(IntelliJPlatformType.IntellijIdeaCommunity)
-    // //             channels = listOf(ProductRelease.Channel.RELEASE)
-    // //             sinceBuild = "223"
-    // //             untilBuild = "241.*"
-    // //         }
-    //    }
-    // }
+    verifyPlugin {
+        ides {
+           // ides(providers.localGradleProperty("pluginVerifierIdeVersions").map { it.split(',') }.getOrElse(emptyList()))
+            recommended()
+            // channels = listOf(ProductRelease.Channel.RELEASE)
+
+            select {
+                types = listOf(IntelliJPlatformType.IntellijIdeaCommunity)
+                channels = listOf(ProductRelease.Channel.RELEASE, ProductRelease.Channel.RC)
+                sinceBuild = "242.*"
+                untilBuild = "242.*"
+            }
+        }
+    }
+
 }
 
 // Read more: https://github.com/JetBrains/gradle-changelog-plugin
