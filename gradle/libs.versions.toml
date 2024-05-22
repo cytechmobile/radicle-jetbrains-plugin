@@ -17,12 +17,14 @@ checkstyleTools = "10.12.2"
 # plugins
 kotlin = "1.9.23"
 changelog = "2.2.0"
-gradleIntelliJPlugin = "1.17.3"
+intellijPlatform = "2.0.0-beta2"
+intellijPlatformMigration = "2.0.0-beta2"
 
 [libraries]
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
-gradleIntelliJPlugin = { id = "org.jetbrains.intellij", version.ref = "gradleIntelliJPlugin" }
+intellijPlatformPlugin = { id = "org.jetbrains.intellij.platform", version.ref = "intellijPlatform" }
+intellijPlatformMigration = { id = "org.jetbrains.intellij.platform.migration", version.ref = "intellijPlatformMigration" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
