@@ -164,7 +164,10 @@ public class RadicleProjectService {
             public void run(@NotNull ProgressIndicator indicator) {
                 final GitFetchSupport gfs = GitFetchSupport.fetchSupport(repo.getProject());
                 var gfr = gfs.fetchAllRemotes(List.of(repo));
-                gfr.showNotificationIfFailed();
+                var success = gfr.showNotificationIfFailed();
+                if (success) {
+                    repo.update();
+                }
             }
 
             @Override

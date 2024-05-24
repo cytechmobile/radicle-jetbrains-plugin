@@ -142,10 +142,13 @@ public class CreatePatchPanel {
             if (projectInfo == null) {
                 return;
             }
+            var branchRevNumber = this.radicleProjectService.getBranchRevision(mySelectedRepo.getProject(), mySelectedRepo, mySelectedBranch.getName());
+            if (Strings.isNullOrEmpty(branchRevNumber)) {
+                return;
+            }
             ApplicationManager.getApplication().invokeLater(() -> {
                 //Update the file & commit panel
-                patchComponentFactory.updateFileComponent(mySelectedRepo, mySelectedBranch, projectInfo.head);
-                patchComponentFactory.updateCommitComponent(mySelectedRepo, mySelectedBranch, projectInfo.head);
+                patchComponentFactory.updateFileAndCommitComponents(mySelectedRepo, branchRevNumber, projectInfo.head, 1);
                 toLabel.setText(mySelectedRepo.getRoot().getName() + ":" + projectInfo.defaultBranch);
                 //Show panel after everything has been initialized
                 selectRepoPanel.setVisible(true);

@@ -4,9 +4,9 @@ import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor;
@@ -23,13 +23,11 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.GitCommit;
-import git4idea.GitLocalBranch;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import kotlin.Unit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
@@ -39,9 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.JComponent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class PatchComponentFactory {
     public static final Key<RadPatch> PATCH_DIFF = Key.create("Patch.Diff");
@@ -67,46 +63,6 @@ public class PatchComponentFactory {
         this.project = project;
         this.disposable = disposer;
         this.myPatch = patch;
-    }
-
-    private void calculatePatchChanges(GitRepository repo, GitLocalBranch localBranch, String head) {
-        List<Change> changes = new ArrayList<>();
-        var branchRevNumber = this.radicleProjectService.getBranchRevision(repo.getProject(), repo, localBranch.getName());
-        final var diff = GitChangeUtils.getDiff(repo, head, branchRevNumber, true);
-        if (diff != null && !diff.isEmpty()) {
-            changes.addAll(diff);
-        }
-        changes = changes.stream().distinct().collect(Collectors.toList());
-        patchChanges.setValue(changes);
-    }
-
-    private void calculatePatchChanges(RadPatch patch) {
-        if (patch.revisions.isEmpty()) {
-            return;
-        }
-        var latestRevision = patch.revisions.get(patch.revisions.size() - 1);
-        final var diff =  (ArrayList<Change>) GitChangeUtils.getDiff(patch.repo, latestRevision.base(), latestRevision.oid(), true);
-        if (diff == null) {
-            return;
-        }
-        patchChanges.setValue(diff);
-    }
-
-    private SimpleAsyncChangesBrowser getChangesBrowser() {
-        var simpleChangesTree = new SimpleAsyncChangesBrowser(project, false, true);
-        var diffRequestProcessor = new SimpleTreeDiffRequestProcessor(project, "ChangesToolWindowPreview", simpleChangesTree.getViewer(), disposable);
-        var diffContext = diffRequestProcessor.getContext();
-        diffContext.putUserData(PATCH_DIFF, myPatch);
-        var simpleTreeEditorDiffPreview = new SimpleTreeEditorDiffPreview(diffRequestProcessor, simpleChangesTree.getViewer()) {
-            @Nullable
-            @Override
-            protected String getCurrentName() {
-                return myPatch != null ? RadicleBundle.message("patch.diff.label", Utils.formatId(myPatch.id)) :
-                        RadicleBundle.message("changes");
-            }
-        };
-        simpleChangesTree.setShowDiffActionPreview(simpleTreeEditorDiffPreview);
-        return simpleChangesTree;
     }
 
     public JComponent createFilesComponent() {
@@ -141,6 +97,51 @@ public class PatchComponentFactory {
         return splitter;
     }
 
+    public void updateFileAndCommitComponents(GitRepository repo, String revNumber, String mainBranchHead, int retriesAttempt) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+                var changes = calculatePatchCommits(repo, mainBranchHead, revNumber);
+                calculatePatchChanges(repo, mainBranchHead, revNumber);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    updateFileComponent();
+                    updateCommitComponent(changes);
+                });
+            } catch (VcsException e) {
+                if (retriesAttempt > 0) {
+                    radicleProjectService.fetchPeerChanges(repo);
+                    updateFileAndCommitComponents(repo, mainBranchHead, revNumber, retriesAttempt - 1);
+                }
+            }
+        });
+    }
+
+    public void updateFileAndCommitComponents(RadPatch patch) {
+        updateFileAndCommitComponents(patch.repo, patch.getLatestRevision().oid(), patch.getLatestRevision().base(), 1);
+    }
+
+    public JBList<GitCommit> findCommitList() {
+        var jbScrollPane = ((JBScrollPane) commitBrowser.getComponents()[1]);
+        var jbViewPort =  UIUtil.findComponentOfType(jbScrollPane, JBViewport.class);
+        return (JBList<GitCommit>) jbViewPort.getComponents()[0];
+    }
+
+    private SimpleAsyncChangesBrowser getChangesBrowser() {
+        var simpleChangesTree = new SimpleAsyncChangesBrowser(project, false, true);
+        var diffRequestProcessor = new SimpleTreeDiffRequestProcessor(project, "ChangesToolWindowPreview", simpleChangesTree.getViewer(), disposable);
+        var diffContext = diffRequestProcessor.getContext();
+        diffContext.putUserData(PATCH_DIFF, myPatch);
+        var simpleTreeEditorDiffPreview = new SimpleTreeEditorDiffPreview(diffRequestProcessor, simpleChangesTree.getViewer()) {
+            @Nullable
+            @Override
+            protected String getCurrentName() {
+                return myPatch != null ? RadicleBundle.message("patch.diff.label", Utils.formatId(myPatch.id)) :
+                        RadicleBundle.message("changes");
+            }
+        };
+        simpleChangesTree.setShowDiffActionPreview(simpleTreeEditorDiffPreview);
+        return simpleChangesTree;
+    }
+
     private SimpleAsyncChangesBrowser findChangesBrowser(JComponent component) {
         var changesBrowser = UIUtil.findComponentOfType(component, SimpleAsyncChangesBrowser.class);
         if (changesBrowser == null) {
@@ -150,79 +151,32 @@ public class PatchComponentFactory {
         return changesBrowser;
     }
 
-    private List<GitCommit> calculatePatchCommits(GitRepository repo, String baseRev, String revOid) {
-        try {
-            return GitHistoryUtils.history(repo.getProject(), repo.getRoot(), baseRev + "..." + revOid);
-        } catch (Exception e) {
-            logger.warn("error calculating patch commits base rev {} ... rev oid {}", baseRev, revOid, e);
-            RadAction.showErrorNotification(repo.getProject(),
-                    RadicleBundle.message("radCliError"),
-                    RadicleBundle.message("errorCalculatingPatchProposalCommits"));
+    private List<Change> calculatePatchChanges(GitRepository repo, String oldRev, String newRev) throws VcsException {
+        final var diff =  (ArrayList<Change>) GitChangeUtils.getDiff(repo, oldRev, newRev, true);
+        if (diff == null) {
+            throw new VcsException("Couldn't collect changes between " + oldRev + " and " + newRev);
         }
-        return List.of();
+        List<Change> changes = new ArrayList<>(diff);
+        patchChanges.setValue(changes);
+        return diff;
     }
 
-    private List<GitCommit> calculatePatchCommits(RadPatch patch) {
-        if (patch.revisions.isEmpty()) {
-            return List.of();
-        }
-        var latestRevision = patch.revisions.get(patch.revisions.size() - 1);
-        var cmts = calculatePatchCommits(patch.repo, latestRevision.base(), latestRevision.oid());
-        Collections.reverse(cmts);
-        logger.info("calculated history for patch: {} - {}", patch, cmts);
-        return cmts;
-    }
-
-    public void updateFilComponent(RadPatch patch) {
+    private void updateFileComponent() {
         var changesBrowser = findChangesBrowser(filesComponent);
         if (changesBrowser == null) {
             return;
         }
-        loadingChangesPanel.loadChangesInBackground(() -> {
-            calculatePatchChanges(patch);
-            updateTabText(fileTab, RadicleBundle.message("files"), String.valueOf(patchChanges.getValue().size()));
-            return true;
-        }, success -> changesBrowser.setChangesToDisplay(patchChanges.getValue()));
+        updateTabText(fileTab, RadicleBundle.message("files"), String.valueOf(patchChanges.getValue().size()));
+        changesBrowser.setChangesToDisplay(patchChanges.getValue());
     }
 
-    public void updateFileComponent(GitRepository repo, GitLocalBranch localBranch, String mainBranchHead) {
-        var changesBrowser = findChangesBrowser(filesComponent);
-        if (changesBrowser == null) {
-            return;
-        }
-        loadingChangesPanel.loadChangesInBackground(() -> {
-            calculatePatchChanges(repo, localBranch, mainBranchHead);
-            updateTabText(fileTab, RadicleBundle.message("files"), String.valueOf(patchChanges.getValue().size()));
-            return true;
-        }, success -> changesBrowser.setChangesToDisplay(patchChanges.getValue()));
+    private List<GitCommit> calculatePatchCommits(GitRepository repo, String baseRev, String revOid) throws VcsException {
+        return GitHistoryUtils.history(repo.getProject(), repo.getRoot(), baseRev + "..." + revOid);
     }
 
-    public void updateCommitComponent(GitRepository repo, GitLocalBranch localBranch, String mainBranchHead) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var branchRevNumber =  this.radicleProjectService.getBranchRevision(repo.getProject(), repo, localBranch.getName());
-            var changes = calculatePatchCommits(repo, mainBranchHead, branchRevNumber);
-            ApplicationManager.getApplication().invokeLater(() -> {
-                updateTabText(commitTab, RadicleBundle.message("commits"), String.valueOf(changes.size()));
-                patchCommits.setValue(changes);
-            }, ModalityState.any());
-        });
-    }
-
-
-    public void updateCommitComponent(RadPatch patch) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var changes = calculatePatchCommits(patch);
-            ApplicationManager.getApplication().invokeLater(() -> {
-                updateTabText(commitTab, RadicleBundle.message("commits"), String.valueOf(changes.size()));
-                patchCommits.setValue(changes);
-            }, ModalityState.any());
-        });
-    }
-
-    public JBList<GitCommit> findCommitList() {
-        var jbScrollPane = ((JBScrollPane) commitBrowser.getComponents()[1]);
-        var jbViewPort =  UIUtil.findComponentOfType(jbScrollPane, JBViewport.class);
-        return (JBList<GitCommit>) jbViewPort.getComponents()[0];
+    private void updateCommitComponent(List<GitCommit> changes) {
+        updateTabText(commitTab, RadicleBundle.message("commits"), String.valueOf(changes.size()));
+        patchCommits.setValue(changes);
     }
 
     public void setCommitTab(TabInfo tab) {

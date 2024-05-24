@@ -111,14 +111,14 @@ public class PatchProposalPanel {
         filesInfo.setText(RadicleBundle.message("files"));
         filesInfo.setSideComponent(createReturnToListSideComponent());
         patchComponentFactory.setFileTab(filesInfo);
-        patchComponentFactory.updateFilComponent(patch);
 
         var commitComponent = patchComponentFactory.createCommitComponent();
         commitTab = new TabInfo(commitComponent);
         commitTab.setText(RadicleBundle.message("commits"));
         commitTab.setSideComponent(createReturnToListSideComponent());
         patchComponentFactory.setCommitTab(commitTab);
-        patchComponentFactory.updateCommitComponent(patch);
+
+        patchComponentFactory.updateFileAndCommitComponents(patch);
 
         tabs = new SingleHeightTabs(null, uiDisposable);
         tabs.addTab(tabInfo);

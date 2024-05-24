@@ -17,7 +17,6 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import git4idea.GitCommit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
@@ -42,7 +41,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
@@ -56,7 +54,6 @@ public class TimelineComponentFactory {
     private final RadPatch patch;
     private final CountDownLatch latch = new CountDownLatch(1);
     private JComponent descSection;
-    private Map<String, List<GitCommit>> groupedCommits;
     private final PatchProposalPanel patchProposalPanel;
     private final SingleValueModel<RadPatch> patchModel;
     private final RadicleProjectApi api;
@@ -89,17 +86,10 @@ public class TimelineComponentFactory {
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            groupedCommits = patch.calculateCommits();
             radDetails = api.getCurrentIdentity();
             latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 loadingIcon.setVisible(false);
-                if (groupedCommits == null) {
-                    RadAction.showErrorNotification(patch.repo.getProject(),
-                            RadicleBundle.message("radCliError"),
-                            RadicleBundle.message("errorCalculatingPatchProposalCommits"));
-                    return;
-                }
                 if (radDetails == null) {
                     RadAction.showErrorNotification(patch.repo.getProject(),
                             RadicleBundle.message("radCliError"),

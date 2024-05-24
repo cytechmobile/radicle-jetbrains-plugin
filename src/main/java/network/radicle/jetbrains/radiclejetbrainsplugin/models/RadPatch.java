@@ -7,8 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
-import git4idea.GitCommit;
-import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -19,10 +17,8 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Set;
 
@@ -78,31 +74,7 @@ public class RadPatch {
         this.merges = other.merges;
     }
 
-    public Map<String, List<GitCommit>> calculateCommits() {
-        var myRevisions = new HashMap<String, List<GitCommit>>();
-        var success = fetchCommits();
-        if (!success) {
-            return null;
-        }
-        try {
-            for (var rev : this.revisions) {
-                try {
-                    var patchCommits = GitHistoryUtils.history(this.repo.getProject(),
-                            this.repo.getRoot(), rev.base() + "..." + rev.oid());
-                    myRevisions.put(rev.id(), patchCommits);
-                } catch (Exception e) {
-                    logger.warn("error calculating patch commits for revision: {} in patch: {}", rev.id(), this, e);
-                    myRevisions.put(rev.id(), new ArrayList<>());
-                }
-            }
-            return myRevisions;
-        } catch (Exception e) {
-            logger.warn("error calculating patch commits for patch: {}", this, e);
-            return null;
-        }
-    }
-
-    private boolean fetchCommits() {
+    public boolean fetchCommits() {
         var service = this.repo.getProject().getService(RadicleProjectService.class);
         var output = service.fetchPeerChanges(this.repo);
         return RadAction.isSuccess(output);
