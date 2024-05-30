@@ -7,8 +7,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectS
 import java.util.ArrayList;
 import java.util.List;
 
-public class RadRemote extends RadAction {
-    public RadRemote(GitRepository repo) {
+public class RadRemote12 extends RadAction {
+    public RadRemote12(GitRepository repo) {
         super(repo);
     }
 
