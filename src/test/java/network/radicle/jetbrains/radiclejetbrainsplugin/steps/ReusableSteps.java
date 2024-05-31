@@ -72,8 +72,16 @@ public class ReusableSteps {
     }
 
     public void refreshFromDisk() {
-        actionMenu(remoteRobot, "File", "").click();
-        actionMenuItem(remoteRobot, "Reload All from Disk").click();
+        for (int i = 0; i < 10; i++) {
+            actionMenu(remoteRobot, "File", "").click();
+            var menuItem = actionMenuItem(remoteRobot, "Reload All from Disk");
+            if (menuItem != null) {
+                menuItem.click();
+                break;
+            } else {
+                waitForMs(500);
+            }
+        }
     }
 
     public void radInitializeProject(Path localDir) {
