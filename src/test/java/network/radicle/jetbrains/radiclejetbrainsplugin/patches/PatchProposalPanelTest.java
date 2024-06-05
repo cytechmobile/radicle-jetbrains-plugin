@@ -149,7 +149,7 @@ public class PatchProposalPanelTest extends AbstractIT {
         // find view timeline link and checkout buttons
         var timelineCheckoutBtns = UIUtil.findComponentsOfType((JPanel) allPanels[2], JButton.class);
         assertThat(timelineCheckoutBtns).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(timelineCheckoutBtns.get(0).getText()).isEqualTo(RadicleBundle.message("view.timeline"));
+        assertThat(timelineCheckoutBtns.get(0).getText()).isEqualTo(RadicleBundle.message("open.in.editor"));
         assertThat(timelineCheckoutBtns.get(1).getText()).isEqualTo(RadicleBundle.message("checkout"));
 
         var mergeBtn = UIUtil.findComponentOfType(ef.getSecondComponent(), JButton.class);
