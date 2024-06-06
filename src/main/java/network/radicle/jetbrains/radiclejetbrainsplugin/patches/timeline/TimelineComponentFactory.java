@@ -184,6 +184,16 @@ public class TimelineComponentFactory {
         replyPanel = new MyReplyPanel(patch.project, com, patchModel).getThreadActionsComponent();
         verticalPanel.add(replyPanel);
         panel.addToBottom(verticalPanel);
+        if (com.isReviewComment()) {
+            var infoPanel = getHorizontalPanel(0);
+            infoPanel.setOpaque(false);
+            var msg = RadicleBundle.message("comment.on", com.location.path, com.location.start);
+            if (!patch.isDiscussionBelongedToLatestRevision(com)) {
+                msg = msg + " (OUTDATED)";
+            }
+            infoPanel.add(new JLabel(msg));
+            panel.addToTop(infoPanel);
+        }
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
                 RadicleBundle.message("save"), new SingleValueModel<>(com.body), (field) -> {
             var edited = api.changePatchComment(patch.findRevisionId(com.id), com.id, field.getText(), patch, field.getEmbedList());

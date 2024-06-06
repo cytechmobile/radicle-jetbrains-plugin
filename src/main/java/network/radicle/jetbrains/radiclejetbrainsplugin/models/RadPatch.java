@@ -95,6 +95,11 @@ public class RadPatch {
         return "";
     }
 
+    public boolean isDiscussionBelongedToLatestRevision(RadDiscussion disc) {
+        var revisionId = findRevisionId(disc.id);
+        return revisionId.equals(getLatestRevision().id);
+    }
+
     @Override
     public String toString() {
         try {
@@ -159,9 +164,9 @@ public class RadPatch {
             return myReviews;
         }
 
-        public List<RadDiscussion> getReviewComments(String filePath, String commitHash) {
+        public List<RadDiscussion> getReviewComments(String filePath) {
             return discussions.stream().filter(disc -> disc.isReviewComment() &&
-                            disc.location.path.equals(filePath) && disc.location.commit.equals(commitHash))
+                            disc.location.path.equals(filePath))
                     .collect(Collectors.toList());
         }
 
