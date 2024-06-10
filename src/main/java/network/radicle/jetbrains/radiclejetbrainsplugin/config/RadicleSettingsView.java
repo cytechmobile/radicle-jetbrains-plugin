@@ -150,6 +150,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private RadicleProjectApi.SeedNodeInfo checkApi() {
+        // return new RadicleProjectApi.SeedNodeInfo(null, null, null, "my error");
         var api = myProject.getService(RadicleProjectApi.class);
         return api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
     }
@@ -162,12 +163,23 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
     }
 
+    private boolean isCompatibleNodeApi(RadicleProjectApi.SeedNodeInfo resp) {
+        if (resp == null || Strings.isNullOrEmpty(resp.apiVersion())) {
+            return false;
+        }
+        return resp.apiVersion().startsWith("0.1.");
+    }
+
     private void checkSeedNodeApiUrl() {
         var resp = checkApi();
         if (!isValidNodeApi(resp)) {
             seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckError") + (resp == null ? "" :  "\n" + resp.errorMessage()));
         } else {
-            seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckSuccess", resp.id(), resp.version()));
+            String compat = "";
+            if (!isCompatibleNodeApi(resp)) {
+                compat = "\n" + RadicleBundle.message("seedNodeCheckIncompatibleApiVersion", "0.1.x");
+            }
+            seedNodeApiUrlMsgLabel.setText(RadicleBundle.message("seedNodeCheckSuccess", resp.id(), resp.version(), resp.apiVersion()) + compat);
         }
     }
 

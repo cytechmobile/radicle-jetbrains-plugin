@@ -87,13 +87,14 @@ public class RadicleProjectApi {
             if (res.isSuccess()) {
                 var json = new ObjectMapper().readTree(res.body);
                 String version = json.get("version").asText("");
+                String apiVersion = json.get("apiVersion").asText("");
                 String id = json.get("nid").asText("");
-                return new SeedNodeInfo(id, version, null);
+                return new SeedNodeInfo(id, version, apiVersion, null);
             }
-            return new SeedNodeInfo(null, null, "HTTP Status code: " + res.status + " " + res.body);
+            return new SeedNodeInfo(null, null, null, "HTTP Status code: " + res.status + " " + res.body);
         } catch (Exception e) {
             logger.warn("http request exception {}", url, e);
-            return new SeedNodeInfo(null, null, "Exception: " + e.getMessage());
+            return new SeedNodeInfo(null, null, null, "Exception: " + e.getMessage());
         }
     }
 
@@ -872,7 +873,7 @@ public class RadicleProjectApi {
         return "https://app.radicle.xyz/nodes/" + node + "/" + issue.projectId + "/issues/" + issue.id;
     }
 
-    public record SeedNodeInfo(String id, String version, String errorMessage) { }
+    public record SeedNodeInfo(String id, String version, String apiVersion, String errorMessage) { }
 
     public record Session(String sessionId, String publicKey, String signature) {
         public Session withSig(String sig) {
