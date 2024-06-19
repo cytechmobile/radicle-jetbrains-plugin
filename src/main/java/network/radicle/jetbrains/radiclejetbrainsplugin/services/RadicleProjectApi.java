@@ -638,6 +638,10 @@ public class RadicleProjectApi {
     }
 
     public RadPatch addPatchComment(RadPatch patch, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList) {
+        return addPatchComment(patch, comment, replyTo, location, embedList,  patch.revisions.get(patch.revisions.size() - 1).id());
+    }
+
+    public RadPatch addPatchComment(RadPatch patch, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList, String revId) {
         var session = createAuthenticatedSession();
         if (session == null) {
             return null;
@@ -648,10 +652,10 @@ public class RadicleProjectApi {
             HashMap<String, Object> data;
             boolean isReviewComment = false;
             if (location == null) {
-                 data = new HashMap<>(Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                 data = new HashMap<>(Map.of("type", "revision.comment", "revision", revId,
                          "body", comment, "embeds", embedList));
             } else {
-                 data = new HashMap<>(Map.of("type", "revision.comment", "revision", patch.revisions.get(patch.revisions.size() - 1).id(),
+                 data = new HashMap<>(Map.of("type", "revision.comment", "revision", revId,
                         "body", comment, "embeds", embedList, "location", location.getMapObject()));
                 isReviewComment = true;
             }

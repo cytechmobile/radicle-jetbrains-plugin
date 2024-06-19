@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.EDT;
 import git4idea.GitUtil;
+import git4idea.index.GitIndexUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
@@ -19,6 +20,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectA
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -61,36 +63,56 @@ public class ObservableThreadModel {
     }
 
     private List<LineRange> calculateModifiedLines() {
+        if (change.getBeforeRevision() == null && change.getAfterRevision() == null) {
+            return List.of();
+        }
         try {
-            if (change.getBeforeRevision() == null && change.getAfterRevision() == null) {
-                return List.of();
-            }
             var beforeContent = change.getBeforeRevision() != null ? change.getBeforeRevision().getContent() : "";
             var afterContent = change.getAfterRevision() != null ? change.getAfterRevision().getContent() : "";
-            var fragments = ComparisonManager.getInstance().compareLines(Strings.nullToEmpty(beforeContent), Strings.nullToEmpty(afterContent),
-                    ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
-            var lineRanges = new ArrayList<LineRange>();
-            for (var fragment : fragments) {
-                if (isLeft) {
-                    lineRanges.add(new LineRange(fragment.getStartLine1(), fragment.getEndLine1()));
-                } else {
-                    lineRanges.add(new LineRange(fragment.getStartLine2(), fragment.getEndLine2()));
-                }
-            }
-            return lineRanges;
+            return calculateModifiedLines(beforeContent, afterContent);
         } catch (Exception e) {
             logger.warn("Unable to find modified lines");
             return List.of();
         }
     }
 
+    private List<LineRange> calculateModifiedLines(String beforeContent, String afterContent) {
+        var fragments = ComparisonManager.getInstance().compareLines(Strings.nullToEmpty(beforeContent), Strings.nullToEmpty(afterContent),
+                ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+        var lineRanges = new ArrayList<LineRange>();
+        for (var fragment : fragments) {
+            if (isLeft) {
+                lineRanges.add(new LineRange(fragment.getStartLine1(), fragment.getEndLine1()));
+            } else {
+                lineRanges.add(new LineRange(fragment.getStartLine2(), fragment.getEndLine2()));
+            }
+        }
+        return lineRanges;
+    }
+
     public List<ThreadModel> getInlineComments(RadPatch patch) {
-        var lastRevision = patch.getLatestRevision();
-        var reviewComments = lastRevision.getReviewComments(getFilePath(), getCommitHash());
+        var baseCommit = patch.getLatestRevision().base();
+        var allRevisionComments = new ArrayList<RadDiscussion>(List.of());
+        for (var revision : patch.revisions) {
+            var reviewComments = revision.getReviewComments(getFilePath());
+            allRevisionComments.addAll(reviewComments);
+        }
+        var filteredRevisionComments = new ArrayList<RadDiscussion>(List.of());
+        for (var rev : allRevisionComments) {
+            /* If the commit hash is equal with base commit that means that we have two side editors
+               and we are trying to find the comments that belongs to the left editor */
+            if (baseCommit.equals(getCommitHash()) && rev.location.commit.equals(getCommitHash())) {
+                filteredRevisionComments.add(rev);
+            /* If the commit hash is not equal with the base commit that means that we have two side editors
+               and we are trying to find the comments that belongs to the right editor. This case apply also  */
+            } else if (!baseCommit.equals(getCommitHash()) && !rev.location.commit.equals(baseCommit)) {
+                filteredRevisionComments.add(rev);
+            }
+        }
         var groupedDiscussions = new ArrayList<ThreadModel>();
-        for (var disc : reviewComments) {
+        for (var disc : filteredRevisionComments) {
             var line = disc.location.start;
-            if (!isCommentInModifiedLine(line)) {
+            if (!isCommentInModifiedLine(line) || !showComment(disc, patch)) {
                 continue;
             }
             if (!disc.isReply()) {
@@ -100,6 +122,53 @@ public class ObservableThreadModel {
             }
         }
         return groupedDiscussions;
+    }
+
+    private boolean showComment(RadDiscussion discussion, RadPatch patch) {
+        boolean show = true;
+        /*  If comment is on the left side of the editor then return because the content
+            of the file doesn't change from revision to revision */
+        if (discussion.location.commit.equals(patch.getLatestRevision().base())) {
+            return true;
+        }
+        /* Show the comments that belonged to the latest revision */
+        if (patch.isDiscussionBelongedToLatestRevision(discussion)) {
+            return true;
+        }
+        String currentContent = "";
+        try {
+            if (change.getAfterRevision() != null) {
+                currentContent = change.getAfterRevision().getContent();
+            } else if (change.getBeforeRevision() != null) {
+                currentContent = change.getBeforeRevision().getContent();
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to get the content of the file", e);
+            return false;
+        }
+        String commentContent = getFileContentByCommit(patch, discussion.location.commit, discussion.location.path);
+        if (commentContent == null) {
+            return false;
+        }
+        var lines = calculateModifiedLines(commentContent, currentContent);
+        for (var modifiedLine : lines) {
+            if (discussion.location.start >= modifiedLine.start && discussion.location.start <= modifiedLine.end) {
+                show = false;
+                break;
+            }
+        }
+        return show;
+    }
+
+    private String getFileContentByCommit(RadPatch patch, String hash, String fileName) {
+        try {
+            var blobHash = hash + ":" + fileName;
+            var bytes = GitIndexUtil.read(patch.repo, blobHash);
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            logger.warn("Unable to find the content of the file {} and commit {}", fileName, hash);
+            return null;
+        }
     }
 
     private void addNewThread(List<ThreadModel> groupedDiscussions, RadDiscussion discussion) {

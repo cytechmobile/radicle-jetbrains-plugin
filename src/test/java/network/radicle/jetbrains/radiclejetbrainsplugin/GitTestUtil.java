@@ -3,12 +3,15 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitImpl;
+import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +63,16 @@ public class GitTestUtil {
         } catch (Exception e) {
             logger.warn("Unable to add remote", e);
         }
+    }
+
+    public static GitCommit findCommit(GitRepository repo, String revNumber) throws VcsException {
+        var commits = GitHistoryUtils.history(repo.getProject(), repo.getRoot());
+        for (var commit : commits) {
+            if (commit.getId().asString().equals(revNumber)) {
+                return commit;
+            }
+        }
+        return null;
     }
 
     @NotNull

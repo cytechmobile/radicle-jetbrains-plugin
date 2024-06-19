@@ -81,8 +81,8 @@ public class PatchReviewThreadComponentFactory {
     }
 
     public boolean deleteComment(RadDiscussion disc) {
-        var latestRev = patch.revisions.get(patch.revisions.size() - 1);
-        var res = api.deleteRevisionComment(patch, latestRev.id(), disc.id);
+        var revisionId = patch.findRevisionId(disc.id);
+        var res = api.deleteRevisionComment(patch, revisionId, disc.id);
         return res != null;
     }
 
@@ -94,7 +94,8 @@ public class PatchReviewThreadComponentFactory {
             var latestRev = threadModel.getRadDiscussion().get(threadModel.getRadDiscussion().size() - 1);
             var location = new RadDiscussion.Location(threadsModel.getFilePath(), "ranges",
                     threadsModel.getCommitHash(), line, line);
-            var res = this.api.addPatchComment(patch, field.getText(), latestRev.id, location, field.getEmbedList());
+            var revision = patch.findRevisionId(latestRev.id);
+            var res = this.api.addPatchComment(patch, field.getText(), latestRev.id, location, field.getEmbedList(), revision);
             boolean success = res != null;
             if (success) {
                 threadsModel.update(patch);
@@ -132,11 +133,12 @@ public class PatchReviewThreadComponentFactory {
 
     private JComponent createComponent(RadDiscussion disc) {
         var editorPane = new MarkDownEditorPaneFactory(disc.body, patch.project, patch.radProject.id, patch.repo.getRoot());
+        var revisionId = patch.findRevisionId(disc.id);
+        var isOutDated = !patch.isDiscussionBelongedToLatestRevision(disc);
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, editorPane.htmlEditorPane(),
                 RadicleBundle.message("review.edit.comment"),
                 new SingleValueModel<>(disc.body), (field) -> {
-            var latestRev = patch.revisions.get(patch.revisions.size() - 1);
-            var res = this.api.changePatchComment(latestRev.id(), disc.id, field.getText(), patch, List.of());
+            var res = this.api.changePatchComment(revisionId, disc.id, field.getText(), patch, List.of());
             boolean success = res != null;
             if (success) {
                 threadsModel.update(patch);
@@ -172,6 +174,9 @@ public class PatchReviewThreadComponentFactory {
         var titleText = new HtmlBuilder().append(authorLink)
                 .append(HtmlChunk.nbsp())
                 .append(disc.timestamp != null ? DATE_TIME_FORMATTER.format(disc.timestamp) : "");
+        if (isOutDated) {
+            titleText.append(" (OUTDATED)");
+        }
         builder.withHeader(new JLabel(MarkDownEditorPaneFactory.wrapHtml(titleText.toString())), actionsPanel);
         var verticalPanel = getVerticalPanel(5);
         verticalPanel.add(builder.build());

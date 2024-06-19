@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
@@ -42,6 +43,8 @@ import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
+import network.radicle.jetbrains.radiclejetbrainsplugin.GitExecutor;
+import network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.ReviewSubmitAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -86,6 +89,7 @@ import javax.swing.JPanel;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -114,6 +118,7 @@ public class TimelineTest extends AbstractIT {
     private static final String AUTHOR = "did:key:testAuthor";
     private static final String RAD_PROJECT_ID = "rad:123";
     private static final String DISCUSSION_ID = UUID.randomUUID().toString();
+    private static final String OUTDATED_DISUCSSION_ID = UUID.randomUUID().toString();
     private static final String REVIEW_SUMMARY = "Accepted";
 
     private String dummyComment = "Hello";
@@ -183,6 +188,10 @@ public class TimelineTest extends AbstractIT {
                             discussion.remove("location");
                             discussion.put("location", patch.revisions.get(1).discussions().get(1).location.getMapObject());
                         }
+                        if (discussion.get("id").equals(OUTDATED_DISUCSSION_ID)) {
+                            discussion.remove("location");
+                            discussion.put("location", patch.revisions.get(0).discussions().get(1).location.getMapObject());
+                        }
                     }
                 }
                 se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
@@ -251,24 +260,54 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
-    public void testReviewCommentsExists() {
+    public void testReviewCommentsExists() throws VcsException {
         var authorId = "did:key:fakeDid";
         var comment = "This is a comment";
+        var outDatedComment = "This is a outdated comment";
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
-        var patchDiffWindow = initializeDiffWindow();
+        patch.revisions.get(0).discussions().add(createDiscussionWithLocation(OUTDATED_DISUCSSION_ID, authorId, outDatedComment, List.of(), location));
+        var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
-        var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
-        var timelineThreadPanel = UIUtil.findComponentOfType(contentComponent, TimelineThreadCommentsPanel.class);
-        var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
-        var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
-        var authorLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[0], JLabel.class);
-        var commentLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[1], JEditorPane.class);
-        assertThat(authorLabel.getText()).contains(Utils.formatDid(authorId));
-        assertThat(commentLabel.getText()).contains(comment);
+        boolean findOutDatedComment = false;
+        boolean findNonOutDatedComment = false;
+        for (var comp : editor.getContentComponent().getComponents()) {
+            var timelineThreadPanel = UIUtil.findComponentOfType((JComponent) comp, TimelineThreadCommentsPanel.class);
+            var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
+            var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
+            var authorLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[0], JLabel.class);
+            var commentLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[1], JEditorPane.class);
+            assertThat(authorLabel.getText()).contains(Utils.formatDid(authorId));
+            if (authorLabel.getText().contains("OUTDATED")) {
+                findOutDatedComment = true;
+                assertThat(commentLabel.getText()).contains(outDatedComment);
+            } else {
+                findNonOutDatedComment = true;
+                assertThat(commentLabel.getText()).contains(comment);
+            }
+        }
+        assertThat(findOutDatedComment).isTrue();
+        assertThat(findNonOutDatedComment).isTrue();
+        EditorFactory.getInstance().releaseEditor(editor);
+        var fileToChange = new File(firstRepo.getRoot().getPath() + "/" + fileName);
+        GitTestUtil.writeToFile(fileToChange, "Welcome");
+        var commitNumber =  GitExecutor.addCommit("my third message");
+        var commit = GitTestUtil.findCommit(firstRepo, commitNumber);
+        assertThat(commit).isNotNull();
+        patchDiffWindow = initializeDiffWindow(commit);
+        editor = patchDiffWindow.getEditor();
+
+        for (var comp : editor.getContentComponent().getComponents()) {
+            var timelineThreadPanel = UIUtil.findComponentOfType((JComponent) comp, TimelineThreadCommentsPanel.class);
+            var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
+            var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
+            var commentLabel = UIUtil.findComponentOfType((JPanel) scrollablePanel.getComponents()[1], JEditorPane.class);
+            assertThat(commentLabel.getText()).doesNotContain(outDatedComment);
+            assertThat(commentLabel.getText()).contains(comment);
+        }
         EditorFactory.getInstance().releaseEditor(editor);
     }
 
@@ -284,7 +323,7 @@ public class TimelineTest extends AbstractIT {
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         var discussion = createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location);
         patch.revisions.get(1).discussions().add(discussion);
-        var patchDiffWindow = initializeDiffWindow();
+        var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
@@ -315,7 +354,7 @@ public class TimelineTest extends AbstractIT {
         var fileName = firstChange.getVirtualFile().getPath();
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
-        var patchDiffWindow = initializeDiffWindow();
+        var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var reviewAction = new ReviewSubmitAction(patch);
         reviewAction.setUpPopup(new JPanel());
@@ -343,7 +382,7 @@ public class TimelineTest extends AbstractIT {
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
-        var patchDiffWindow = initializeDiffWindow();
+        var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
@@ -380,7 +419,7 @@ public class TimelineTest extends AbstractIT {
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
-        var patchDiffWindow = initializeDiffWindow();
+        var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
@@ -411,7 +450,7 @@ public class TimelineTest extends AbstractIT {
         var firstCommit = commitHistory.get(0);
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = findPath(firstChange.getVirtualFile());
-        var patchDiffWindow = initializeDiffWindow();
+        var patchDiffWindow = initializeDiffWindow(firstCommit);
         var gutterIconFactory = patchDiffWindow.getPatchDiffEditorGutterIconFactory();
         var commentRenderer = (PatchDiffEditorGutterIconFactory.CommentIconRenderer) gutterIconFactory.createCommentRenderer(0);
 
@@ -1030,7 +1069,7 @@ public class TimelineTest extends AbstractIT {
         }
     }
 
-    private PatchDiffWindow initializeDiffWindow() {
+    private PatchDiffWindow initializeDiffWindow(GitCommit commit) {
         var patchDiffWindow = new PatchDiffWindow();
         var diffContext = new DiffContext() {
             @Override
@@ -1057,8 +1096,7 @@ public class TimelineTest extends AbstractIT {
         var beforeDiffContent = DiffContentFactory.getInstance().create("My Change");
         var afterDiffContent = DiffContentFactory.getInstance().create("My Change 1");
         var req = new SimpleDiffRequest("Diff", beforeDiffContent, afterDiffContent, "", "");
-        var firstCommit = commitHistory.get(0);
-        var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
+        var firstChange = commit.getChanges().stream().findFirst().orElseThrow();
         req.putUserData(ChangeDiffRequestProducer.CHANGE_KEY, firstChange);
         var viewer = mock(TwosideTextDiffViewer.class);
         Document editorDocument = EditorFactory.getInstance().createDocument("");

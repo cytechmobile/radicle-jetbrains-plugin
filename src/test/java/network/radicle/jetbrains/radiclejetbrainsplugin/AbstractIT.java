@@ -225,7 +225,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     public void executeUiTasks() {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 300; i++) {
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
             CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
