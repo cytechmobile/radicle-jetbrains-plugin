@@ -202,6 +202,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     private void assertSelfCommands(String radHome) throws InterruptedException {
+        var radPath = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var radVersion =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var radSelfAlias =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var radSelfNid =  radStub.commands.poll(10, TimeUnit.SECONDS);
         var radSelfDid =  radStub.commands.poll(10, TimeUnit.SECONDS);
@@ -212,16 +214,24 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertThat(radSelfDid).isNotNull();
         assertThat(radSelfKey).isNotNull();
         if (SystemInfo.isWindows) {
+            assertThat(radVersion.getCommandLineString()).contains("export RAD_HOME=" + radHome);
+            assertThat(radPath.getCommandLineString()).contains("export RAD_HOME=" + radHome);
             assertThat(radSelfAlias.getCommandLineString()).contains("export RAD_HOME=" + radHome);
             assertThat(radSelfNid.getCommandLineString()).contains("export RAD_HOME=" + radHome);
             assertThat(radSelfDid.getCommandLineString()).contains("export RAD_HOME=" + radHome);
             assertThat(radSelfKey.getCommandLineString()).contains("export RAD_HOME=" + radHome);
         } else {
+            assertThat(radPath.getEnvironment().get("RAD_HOME")).contains(radHome);
+            assertThat(radVersion.getEnvironment().get("RAD_HOME")).contains(radHome);
             assertThat(radSelfAlias.getEnvironment().get("RAD_HOME")).contains(radHome);
             assertThat(radSelfNid.getEnvironment().get("RAD_HOME")).contains(radHome);
             assertThat(radSelfDid.getEnvironment().get("RAD_HOME")).contains(radHome);
             assertThat(radSelfKey.getEnvironment().get("RAD_HOME")).contains(radHome);
         }
+        assertThat(radPath.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radPath.getCommandLineString()).contains("rad path");
+        assertThat(radVersion.getCommandLineString()).contains(AbstractIT.RAD_PATH);
+        assertThat(radVersion.getCommandLineString()).contains("rad --version");
         assertThat(radSelfAlias.getCommandLineString()).contains(AbstractIT.RAD_PATH);
         assertThat(radSelfAlias.getCommandLineString()).contains("rad self --alias");
         assertThat(radSelfNid.getCommandLineString()).contains(AbstractIT.RAD_PATH);
