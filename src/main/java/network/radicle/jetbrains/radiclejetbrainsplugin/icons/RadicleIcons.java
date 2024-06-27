@@ -26,6 +26,12 @@ public class  RadicleIcons {
 
     public static final Icon EMOJI = getIcon("emoji", false, "svg");
 
+    public static final Icon RADICLE_STATUS_BAR_SERVICES_NOT_RUNNING = getIcon("rad_status_bar_services_not_running", false, "svg");
+
+    public static final Icon RADICLE_STATUS_BAR_SERVICES_RUNNING = getIcon("rad_status_bar_services_running", false, "svg");
+
+    public static final Icon RADICLE_STATUS_BAR_MISSING_SETTINGS = getIcon("rad_status_bar_missing_settings", false, "svg");
+
     private static boolean isNewUiEnabled() {
         return Registry.get("ide.experimental.ui").asBoolean();
     }

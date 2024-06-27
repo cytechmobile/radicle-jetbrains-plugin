@@ -38,6 +38,11 @@ public class RadicleProjectSettingsHandler {
         return retrieveStoredCredentials(key);
     }
 
+    public boolean isSettingsEmpty() {
+        return Strings.isNullOrEmpty(getPath()) || Strings.isNullOrEmpty(getRadHome()) ||
+                Strings.isNullOrEmpty(getSeedNode().url);
+    }
+
     private SeedNode getSeedNode() {
         var seed = getApplicationProperties().getValue(RAD_SEED_KEY);
         if (Strings.isNullOrEmpty(seed)) {

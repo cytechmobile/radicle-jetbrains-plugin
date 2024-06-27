@@ -28,6 +28,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadNodeStatus;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -50,9 +51,11 @@ public class RadicleProjectService {
     private static final int TIMEOUT = 60_000;
     private final RadicleProjectSettingsHandler projectSettingsHandler;
     private RadDetails radDetails;
+    private Project project;
 
     public RadicleProjectService(Project project) {
         this(new RadicleProjectSettingsHandler(project));
+        this.project = project;
     }
 
     @NonInjectable
@@ -78,6 +81,19 @@ public class RadicleProjectService {
             return pathInfo.get(0);
         }
         return "";
+    }
+
+    public boolean isNodeRunning() {
+        boolean isRunning = false;
+        var radNode = new RadNodeStatus(project, projectSettingsHandler.getPath());
+        var res = radNode.run();
+        if (RadAction.isSuccess(res)) {
+            var output = res.getStdout();
+            if (!output.contains("stopped")) {
+                isRunning = true;
+            }
+        }
+        return isRunning;
     }
 
     public String detectRadHome(String radPath) {
@@ -118,10 +134,10 @@ public class RadicleProjectService {
         return output;
     }
 
-    public String getBranchRevision(Project project, GitRepository repo, String branchName) {
+    public String getBranchRevision(Project myProject, GitRepository repo, String branchName) {
         var gitRevisionNumber = "";
         try {
-            gitRevisionNumber = GitChangeUtils.resolveReference(project, repo.getRoot(), branchName).getRev();
+            gitRevisionNumber = GitChangeUtils.resolveReference(myProject, repo.getRoot(), branchName).getRev();
         } catch (Exception e) {
             logger.warn("Unable to get revision number. repo : {} , branch name : {}", repo, branchName);
         }
@@ -259,6 +275,10 @@ public class RadicleProjectService {
             args.add(peer.alias());
         }
         return executeCommand(".", args, null);
+    }
+
+    public ProcessOutput checkNodeStatus(String radPath) {
+        return executeCommand(radPath, ".", List.of("node", "status"), null);
     }
 
     public ProcessOutput init(GitRepository root, String name, String description, String branch, String visibility) {

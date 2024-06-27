@@ -23,6 +23,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueTabController;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchTabController;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleStatusBarService;
 import org.jetbrains.annotations.NotNull;
 import javax.swing.JPanel;
 import java.util.List;
@@ -55,6 +56,8 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
                 ApplicationManager.getApplication().invokeLater(() -> window.setAvailable(true));
             }
         });
+        /* Periodically checks the statuses of Httpd and Node services and updates status bar */
+        window.getProject().getService(RadicleStatusBarService.class);
     }
 
     @Override

@@ -21,6 +21,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,7 +176,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     private RadicleProjectApi.SeedNodeInfo checkApi() {
         // return new RadicleProjectApi.SeedNodeInfo(null, null, null, "my error");
         var api = myProject.getService(RadicleProjectApi.class);
-        return api.checkApi(new SeedNode(seedNodeApiUrl.getText()));
+        return api.checkApi(new SeedNode(seedNodeApiUrl.getText()), true);
     }
 
     private boolean isValidNodeApi() {
@@ -183,7 +184,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private boolean isValidNodeApi(RadicleProjectApi.SeedNodeInfo resp) {
-        return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
+        return Utils.isValidNodeApi(resp);
     }
 
     private boolean isCompatibleNodeApi(RadicleProjectApi.SeedNodeInfo resp) {

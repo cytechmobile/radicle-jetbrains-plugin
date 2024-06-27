@@ -80,10 +80,10 @@ public class RadicleProjectApi {
         aliases = new HashMap<>();
     }
 
-    public SeedNodeInfo checkApi(SeedNode node) {
+    public SeedNodeInfo checkApi(SeedNode node, boolean showNotif) {
         var url = node.url + "/api/v1";
         try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchSeedNodeError"));
+            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchSeedNodeError"), "", showNotif);
             if (res.isSuccess()) {
                 var json = new ObjectMapper().readTree(res.body);
                 String version = json.get("version").asText("");
@@ -759,7 +759,7 @@ public class RadicleProjectApi {
         return this.makeRequest(req, errorMsg, "");
     }
 
-    protected HttpResponseStatusBody makeRequest(HttpRequestBase req, String errorMsg, String errorDesc) {
+    protected HttpResponseStatusBody makeRequest(HttpRequestBase req, String errorMsg, String errorDesc, boolean showErrorNotif) {
         CloseableHttpResponse resp = null;
         HttpResponseStatusBody responseStatusBody = null;
         try {
@@ -770,15 +770,18 @@ public class RadicleProjectApi {
             return responseStatusBody;
         } catch (Exception e) {
             var errorMessage = !Strings.isNullOrEmpty(errorDesc) ? errorDesc : e.getMessage();
-            ApplicationManager.getApplication().invokeLater(() ->
-                    showNotification(project, RadicleBundle.message("httpRequestErrorTitle"), Strings.nullToEmpty(errorMessage), NotificationType.ERROR, null));
+            if (showErrorNotif) {
+                ApplicationManager.getApplication().invokeLater(() ->
+                        showNotification(project, RadicleBundle.message("httpRequestErrorTitle"),
+                                Strings.nullToEmpty(errorMessage), NotificationType.ERROR, null));
+            }
             logger.warn("error executing request", e);
             return new HttpResponseStatusBody(-1, "");
         } finally {
             if (resp != null) {
                 try {
                     resp.close();
-                    if (responseStatusBody != null && !responseStatusBody.isSuccess() && !Strings.isNullOrEmpty(errorMsg)) {
+                    if (responseStatusBody != null && !responseStatusBody.isSuccess() && !Strings.isNullOrEmpty(errorMsg) && showErrorNotif) {
                         ApplicationManager.getApplication().invokeLater(() -> showNotification(project, errorMsg, errorDesc, NotificationType.ERROR, null));
                     }
                 } catch (Exception e) {
@@ -786,6 +789,10 @@ public class RadicleProjectApi {
                 }
             }
         }
+    }
+
+    protected HttpResponseStatusBody makeRequest(HttpRequestBase req, String errorMsg, String errorDesc) {
+       return this.makeRequest(req, errorMsg, errorDesc, true);
     }
 
     public void resetCurrentIdentity() {

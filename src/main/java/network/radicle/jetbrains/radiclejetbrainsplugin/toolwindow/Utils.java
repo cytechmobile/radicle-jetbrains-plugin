@@ -20,6 +20,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -81,7 +82,7 @@ public class Utils {
     }
 
     public static JComponent getHorizontalPanel(int gap) {
-        return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.START, ListLayout.GrowPolicy.GROW));
+        return new JPanel(ListLayout.horizontal(gap, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.GROW));
     }
 
     public static String formatReplyMessage(String message, String replyMessage) {
@@ -147,6 +148,10 @@ public class Utils {
                 super.replace(fb, offset, length, text, attrs);
             }
         }
+    }
+
+    public static boolean isValidNodeApi(RadicleProjectApi.SeedNodeInfo resp) {
+        return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
     }
 
     public static class CopyButton extends JButton {

@@ -17,6 +17,7 @@
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.FileService"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleStatusBarService"/>
         <projectConfigurable
                 parentId="project.propVCSSupport.Mappings"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"
@@ -31,6 +32,7 @@
         <fileEditorProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider"/>
         <checkoutProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.RadCheckoutProvider" />
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
+        <statusBarWidgetFactory id="RadStatusBar" implementation="network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadStatusBar" order="after Position"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
 
         <toolWindow icon="network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons.RADICLE_TOOL_WINDOW"
