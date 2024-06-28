@@ -15,7 +15,7 @@ remoteRobot = "0.11.21"
 checkstyleTools = "10.12.2"
 
 # plugins
-kotlin = "1.9.23"
+kotlin = "2.0.0"
 changelog = "2.2.0"
 gradleIntelliJPlugin = "1.17.3"
 
