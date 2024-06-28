@@ -16,7 +16,7 @@ jobs:
 
       # Run Qodana inspections
       - name: Qodana - Code Inspection
-        uses: JetBrains/qodana-action@v2024.1.2
+        uses: JetBrains/qodana-action@v2024.1.5
 
       # Upload Qodana report as GitHub code scanning SARIF file
       - name: Qodana - Upload Github code scanning report
