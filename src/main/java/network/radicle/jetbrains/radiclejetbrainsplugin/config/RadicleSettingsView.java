@@ -33,7 +33,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
@@ -316,7 +315,6 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     private void initComponents() {
-        this.msgLabel.setPreferredSize(new Dimension(200, this.msgLabel.getHeight()));
         radPathField.setText(this.projectSettings.getPath());
         radPathField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
                 new FileChooserDescriptor(true, false, false, false, false, false));
@@ -359,7 +357,6 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         }
 
         seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
-        seedNodeApiUrlMsgLabel.setWrapStyleWord(true);
         seedNodeApiUrlMsgLabel.setLineWrap(true);
         seedNodeApiUrlMsgLabel.setOpaque(false);
         initListeners();
