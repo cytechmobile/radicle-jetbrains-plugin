@@ -137,6 +137,16 @@ public class CloneRadDialog extends VcsCloneDialogExtensionComponent implements 
     }
 
     @Override
+    public String getRadHome() {
+        return null;
+    }
+
+    @Override
+    public String getPath() {
+        return null;
+    }
+
+    @Override
     public void doClone(@NotNull CheckoutProvider.Listener listener) {
         if (!RadAction.isCliPathConfigured(project)) {
             return;

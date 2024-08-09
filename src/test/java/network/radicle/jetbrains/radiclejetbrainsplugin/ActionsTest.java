@@ -37,7 +37,7 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void cloneTest() throws InterruptedException {
         var radUrl = "rad:git:123";
-        var clone = new RadClone(radUrl, "C:\\", getProject());
+        var clone = new RadClone(radUrl, "C:\\",  "", "", getProject());
         clone.perform();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
