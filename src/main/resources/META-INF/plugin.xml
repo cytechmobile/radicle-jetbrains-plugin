@@ -31,7 +31,6 @@
         <fileEditorProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider"/>
         <fileEditorProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider"/>
         <checkoutProvider implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.RadCheckoutProvider" />
-        <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="network.radicle.jetbrains.radiclejetbrainsplugin.dialog.clone.CloneRadDialogExtension"/>
         <statusBarWidgetFactory id="RadStatusBar" implementation="network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadStatusBar" order="after Position"/>
         <notificationGroup id="Radicle.NotificationGroup" displayType="BALLOON" key="radicle"/>
 
