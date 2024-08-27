@@ -199,8 +199,12 @@ public class RadicleProjectService {
         return new ProcessOutput(0);
     }
 
-    public ProcessOutput clone(String urn, String directory) {
-        return executeCommand(directory, List.of("clone", urn, "--no-confirm"), null);
+    public ProcessOutput clone(String urn, String directory, String radPath, String radHome) {
+        if (!Strings.isNullOrEmpty(radPath) && !Strings.isNullOrEmpty(radHome)) {
+            return executeCommand(radPath, radHome, directory, List.of("clone", urn, "--no-confirm"), null);
+        } else {
+            return executeCommand(directory, List.of("clone", urn, "--no-confirm"), null);
+        }
     }
 
     public boolean isIdentityUnlocked(String key) {

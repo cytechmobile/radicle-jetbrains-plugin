@@ -5,6 +5,7 @@ import com.intellij.dvcs.ui.DvcsCloneDialogComponent;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.util.ui.UIUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,14 +31,19 @@ public class RepositoryTest extends AbstractIT {
 
     @Test
     public void testClone() throws InterruptedException {
-        var mainPanel = radCheckoutComponent.getView().getComponents();
-        var urlField = ((TextFieldWithHistory) mainPanel[1]);
+        var urlField = UIUtil.findComponentOfType(radCheckoutComponent.getView(), TextFieldWithHistory.class);
         urlField.setText("rad:git123");
+        radStub.commands.clear();
         radCheckoutComponent.doClone(new CompositeCheckoutListener(super.myProject));
+        executeUiTasks();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
-        assertThat(cmd.getCommandLineString()).contains("clone rad:git123");
+        assertThat(cmd.getCommandLineString()).contains("rad --version");
+        var cmd1 = radStub.commands.poll(10, TimeUnit.SECONDS);
+        assertThat(cmd1).isNotNull();
+        assertCmd(cmd1);
+        assertThat(cmd1.getCommandLineString()).contains("clone rad:git123");
     }
 
     public class MyListener implements VcsCloneDialogComponentStateListener {
