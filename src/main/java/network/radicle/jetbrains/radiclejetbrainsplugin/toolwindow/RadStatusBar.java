@@ -39,6 +39,12 @@ public class RadStatusBar implements StatusBarWidgetFactory {
     }
 
     @Override
+    public boolean isAvailable(@NotNull Project project) {
+        var statusBarService = project.getService(RadicleStatusBarService.class);
+        return statusBarService.isRadInitialized();
+    }
+
+    @Override
     public @NotNull @NonNls String getId() {
         return ID;
     }

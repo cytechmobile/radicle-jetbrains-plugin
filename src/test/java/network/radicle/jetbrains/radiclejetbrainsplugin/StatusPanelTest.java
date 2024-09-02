@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepository;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -20,6 +21,7 @@ import org.junit.runners.JUnit4;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JButton;
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class StatusPanelTest extends AbstractIT {
@@ -33,6 +35,8 @@ public class StatusPanelTest extends AbstractIT {
     @Test
     public void testStatusPanelWithMissingSettings() {
         radicleProjectSettingsHandler.savePath("");
+        var statusBarServiceStub = new StatusBarServiceStub(getProject(), true, false);
+        stubStatusBarService(statusBarServiceStub);
         var radStatusBar = new RadStatusBar();
         var widget = (RadStatusBar.RadWidget) radStatusBar.createWidget(getProject(), new CoroutineScope() {
             @NotNull
@@ -65,9 +69,11 @@ public class StatusPanelTest extends AbstractIT {
                 return null;
             }
         });
+        statusBarServiceStub.waitForStatusBarToUpdate();
         var panel = widget.createPanel();
         var nodeLabel = UIUtil.findComponentOfType((JPanel) ((JPanel) panel.getComponents()[1]).getComponents()[0], JLabel.class);
         var httpdLabel = UIUtil.findComponentOfType((JPanel) ((JPanel) panel.getComponents()[1]).getComponents()[1], JLabel.class);
+        assertTrue(radStatusBar.isAvailable(getProject()));
         assertEquals(nodeLabel.getText(), RadicleBundle.message("radicle.node"));
         assertEquals(httpdLabel.getText(), RadicleBundle.message("radicle.httpd"));
         assertEquals(nodeLabel.getIcon().toString(), AllIcons.RunConfigurations.TestPassed.toString());
@@ -76,7 +82,7 @@ public class StatusPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testStatusPanelWithServicesNotRunning() {
+    public void testStatusPanelWithServicesNotRunning() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("/mypath");
         var statusBarServiceStub = new StatusBarServiceStub(getProject(), true, false);
         stubStatusBarService(statusBarServiceStub);
@@ -88,14 +94,37 @@ public class StatusPanelTest extends AbstractIT {
                 return null;
             }
         });
+        statusBarServiceStub.waitForStatusBarToUpdate();
         var panel = widget.createPanel();
         var nodeLabel = UIUtil.findComponentOfType((JPanel) ((JPanel) panel.getComponents()[1]).getComponents()[0], JLabel.class);
         var httpdLabel = UIUtil.findComponentOfType((JPanel) ((JPanel) panel.getComponents()[1]).getComponents()[1], JLabel.class);
+        assertTrue(radStatusBar.isAvailable(getProject()));
         assertEquals(nodeLabel.getText(), RadicleBundle.message("radicle.node"));
         assertEquals(httpdLabel.getText(), RadicleBundle.message("radicle.httpd"));
         assertEquals(nodeLabel.getIcon().toString(), AllIcons.RunConfigurations.TestPassed.toString());
         assertEquals(httpdLabel.getIcon().toString(), AllIcons.RunConfigurations.TestError.toString());
         assertEquals(widget.getIcon().toString(), RadicleIcons.RADICLE_STATUS_BAR_SERVICES_NOT_RUNNING.toString());
+    }
+
+    @Test
+    public void testStatusPanelWithoutRadInitialized() {
+        var statusBarServiceStub = new StatusBarServiceStub(getProject(), true, false) {
+            @Override
+            public List<GitRepository> getInitializedRepos() {
+                return List.of();
+            }
+        };
+        stubStatusBarService(statusBarServiceStub);
+        var radStatusBar = new RadStatusBar();
+        var widget = (RadStatusBar.RadWidget) radStatusBar.createWidget(getProject(), new CoroutineScope() {
+            @NotNull
+            @Override
+            public CoroutineContext getCoroutineContext() {
+                return null;
+            }
+        });
+        widget.createPanel();
+        assertFalse(radStatusBar.isAvailable(getProject()));
     }
 
     public class StatusBarServiceStub extends RadicleStatusBarService {
@@ -121,6 +150,12 @@ public class StatusPanelTest extends AbstractIT {
         @Override
         public boolean checkHttpd(SeedNode seedNode) {
             return isHttpdRunning;
+        }
+
+        public void waitForStatusBarToUpdate() throws InterruptedException {
+            while (isFirstCheck()) {
+                Thread.sleep(10);
+            }
         }
     }
 

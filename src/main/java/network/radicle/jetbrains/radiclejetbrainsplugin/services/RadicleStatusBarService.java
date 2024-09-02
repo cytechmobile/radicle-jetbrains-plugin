@@ -3,21 +3,28 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadStatusBar;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
+import org.apache.commons.lang3.BooleanUtils;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.getInitializedReposWithNodeConfigured;
 
 public class RadicleStatusBarService {
     private static final int PERIOD = 10;
 
     private final Project project;
-    private boolean isNodeRunning = false;
-    private boolean isHttpdRunning = false;
-    private boolean initialCheck = false;
+    private Boolean isNodeRunning = null;
+    private Boolean isHttpdRunning = null;
+    private boolean isRadInitialized = false;
 
     public RadicleStatusBarService(Project myProject) {
         this.project = myProject;
@@ -31,20 +38,37 @@ public class RadicleStatusBarService {
     }
 
     protected void checkServices() {
+        var initializedRepos = getInitializedRepos();
+        boolean previousRadInitialized = isRadInitialized;
+        isRadInitialized = !initializedRepos.isEmpty();
+        if (isRadInitialized != previousRadInitialized) {
+            updateStatusBar();
+        }
+        if (!isRadInitialized) {
+            return;
+        }
         var settingsHandler = new RadicleProjectSettingsHandler(project);
         if (settingsHandler.isSettingsEmpty()) {
-            WindowManager.getInstance().getStatusBar(project).updateWidget(RadStatusBar.ID);
-            initialCheck = false;
+          /* Update the status bar and reset the node and httpd statuses to ensure
+             that the status bar will be updated in the next run by checking the isFirstCheck() method */
+            updateStatusBar();
+            isNodeRunning = null;
+            isHttpdRunning = null;
             return;
         }
         var nodeStatus = checkNodeStatus();
         var httpdStatus = checkHttpd(settingsHandler.loadSettings().getSeedNode());
-        if (!initialCheck || (nodeStatus != isNodeRunning || httpdStatus != isHttpdRunning)) {
-            initialCheck = true;
+        /* Update the status bar if this is the first time the checkServices method runs or if
+        the node/httpd statuses have changed, and RAD is initialized: */
+        if (isFirstCheck() || nodeStatus != isNodeRunning || httpdStatus != isHttpdRunning) {
             isNodeRunning = nodeStatus;
             isHttpdRunning = httpdStatus;
-            WindowManager.getInstance().getStatusBar(project).updateWidget(RadStatusBar.ID);
+            updateStatusBar();
         }
+    }
+
+    public boolean isFirstCheck() {
+        return isHttpdRunning == null && isNodeRunning == null;
     }
 
     public boolean checkNodeStatus() {
@@ -58,10 +82,27 @@ public class RadicleStatusBarService {
     }
 
     public boolean isNodeRunning() {
-        return isNodeRunning;
+        return BooleanUtils.isTrue(isNodeRunning);
     }
 
     public boolean isHttpdRunning() {
-        return isHttpdRunning;
+        return BooleanUtils.isTrue(isHttpdRunning);
+    }
+
+    public boolean isRadInitialized() {
+        return isRadInitialized;
+    }
+
+    public List<GitRepository> getInitializedRepos() {
+        var gitRepoManager = GitRepositoryManager.getInstance(project);
+        var repos = gitRepoManager.getRepositories();
+        return getInitializedReposWithNodeConfigured(repos, false);
+    }
+
+    private void updateStatusBar() {
+        //Update status bar availability (show / hide)
+        project.getService(StatusBarWidgetsManager.class).updateWidget(RadStatusBar.class);
+        //Update status bar icon and component
+        WindowManager.getInstance().getStatusBar(project).updateWidget(RadStatusBar.ID);
     }
 }
