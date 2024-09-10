@@ -43,20 +43,12 @@ This plugin is available under [Apache License, Version 2.0](https://www.apache.
 
 ### Prerequisites
 
-* The `rad` Command Line Interface (CLI) tool installed. Please check [here](https://docs.radicle.xyz/guides/user) for installation details. 
-
-  In your terminal, enter the command `rad --version`. The output should be similar to:
-```bash
-$ rad --version
-rad 1.0.0
-```
-* A configured Radicle identity, with `rad auth`. Check [here](https://docs.radicle.xyz/guides/user#come-into-being-from-the-elliptic-aether) for examples.
-
-* A Radicle-initialised Git repo
-
-* In order to be able to sync changes, your radicle-node must be running. Please check [here](https://docs.radicle.xyz/guides/user#operate-nodes-smoothly) for instructions on operating your radicle node.
-
-* In order to be able to browse projects, issues and patches, your radicle-httpd must be running. In order to start it, you can enter the following command in your terminal: `radicle-httpd`. 
+* The `rad` Command Line Interface (CLI) tool installed. Please check [here](https://docs.radicle.xyz/guides/user) for installation details.
+* A Radicle **identity** (create with `rad auth`. Check [here](https://docs.radicle.xyz/guides/user#come-into-being-from-the-elliptic-aether) for examples.)
+* 2 running background processes: 
+  * `radicle-node`: In order to sync your changes with the network. Please check [here](https://docs.radicle.xyz/guides/user#operate-nodes-smoothly) for instructions on operating your radicle node.
+  * `radicle-httpd`: In order to browse project issues and patches and also be able to make changes to them, such as write comments, leave in-line code reviews, merge patches, etc.  
+    * _IMPORTANT_: Please note that we are currently in the process of removing this dependency and moving everything to just the `rad` CLI, as part of our v0.11 release. In the meantime, this plugin won't work with the latest official version of `radicle-httpd`. You can use a forked version we have released [here](https://minio.radicle.gr/browser/radicle-releases/cmFkaWNsZS1odHRwLXNlcnZlci8=). Once you download the corresponding binary for your platform, you can run it with, e.g.: `radicle-httpd --listen 0.0.0.0:8080`. 
 
 * On Windows: 
   * Windows Subsystem for Linux (WSL) 2 (The following steps are required in the default WSL2 distribution)
