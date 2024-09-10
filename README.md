@@ -48,7 +48,7 @@ This plugin is available under [Apache License, Version 2.0](https://www.apache.
 * 2 running background processes: 
   * `radicle-node`: In order to sync your changes with the network. Please check [here](https://docs.radicle.xyz/guides/user#operate-nodes-smoothly) for instructions on operating your radicle node.
   * `radicle-httpd`: In order to browse project issues and patches and also be able to make changes to them, such as write comments, leave in-line code reviews, merge patches, etc.  
-    * _IMPORTANT_: Please note that we are currently in the process of removing this dependency and moving everything to just the `rad` CLI, as part of our v0.11 release. In the meantime, this plugin won't work with the latest official version of `radicle-httpd`. You can use a forked version we have released [here](https://minio.radicle.gr/browser/radicle-releases/cmFkaWNsZS1odHRwLXNlcnZlci8=). Once you download the corresponding binary for your platform, you can run it with, e.g.: `radicle-httpd --listen 0.0.0.0:8080`. 
+    * _IMPORTANT_: Please note that we are currently in the process of removing this dependency and moving everything to just the `rad` CLI, as part of our [v0.11 release](https://github.com/cytechmobile/radicle-jetbrains-plugin/milestone/16). In the meantime, this plugin won't work with the latest official version of `radicle-httpd`. You can use a forked version we have released [here](https://minio.radicle.gr/browser/radicle-releases/cmFkaWNsZS1odHRwLXNlcnZlci8=). Once you download the corresponding binary for your platform, you can run it with, e.g.: `radicle-httpd --listen 0.0.0.0:8080`. 
 
 * On Windows: 
   * Windows Subsystem for Linux (WSL) 2 (The following steps are required in the default WSL2 distribution)
