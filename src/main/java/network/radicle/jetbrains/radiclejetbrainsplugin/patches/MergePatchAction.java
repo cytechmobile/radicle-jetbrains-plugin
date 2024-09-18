@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectBatchFileChangeList
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -31,7 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -90,8 +94,9 @@ public class MergePatchAction extends AbstractAction {
                 return;
             }
             // cleanup
+            var untrackedFiles = new ArrayList<>(patch.repo.getUntrackedFilesHolder().getUntrackedFilePaths());
             shouldCleanup = !patch.repo.getStagingAreaHolder().getAllRecords().isEmpty() ||
-                    !patch.repo.getUntrackedFilesHolder().getUntrackedFilePaths().isEmpty();
+                    !untrackedFiles.isEmpty();
             if (shouldCleanup) {
                 boolean stashed = stashChanges();
                 if (!stashed) {
