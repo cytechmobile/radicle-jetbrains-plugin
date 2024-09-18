@@ -18,6 +18,7 @@
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.FileService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleStatusBarService"/>
+        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService"/>
         <projectConfigurable
                 parentId="project.propVCSSupport.Mappings"
                 instance="network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView"

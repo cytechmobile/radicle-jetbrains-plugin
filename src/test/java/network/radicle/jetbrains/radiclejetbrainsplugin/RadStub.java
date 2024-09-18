@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
@@ -10,9 +11,15 @@ import git4idea.push.GitPushRepoResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsViewTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -22,6 +29,8 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_HO
 import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_PATH;
 
 public class RadStub extends RadicleProjectService {
+    private static final Logger logger = LoggerFactory.getLogger(RadStub.class);
+
     private int counter = 0;
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
     public String firstCommitHash;
@@ -78,6 +87,34 @@ public class RadStub extends RadicleProjectService {
             stdout = "rad " + AbstractIT.RAD_VERSION;
         } else if (cmdLine.getCommandLineString().contains("path")) {
             stdout = RAD_HOME;
+        } else if (cmdLine.getCommandLineString().contains("cob list")) {
+            StringBuilder issuesId = new StringBuilder();
+            for (var issue : IssueListPanelTest.getTestIssues()) {
+                issuesId.append(issue.id).append("\n");
+            }
+            stdout = issuesId.toString();
+        } else if (cmdLine.getCommandLineString().contains("cob show")) {
+            var parts = cmdLine.getCommandLineString().split("--object");
+            var issueId = parts[parts.length - 1].replace("\"", "").trim();
+            var issues = IssueListPanelTest.getTestIssues();
+            var issue = issues.stream().filter(is -> issueId.equals(is.id)).findFirst().orElse(null);
+            var serializeIssue = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
+            var discussions = (ArrayList<Map<String, Object>>) serializeIssue.get("thread");
+            serializeIssue.remove("thread");
+            var discussionMap = new HashMap<String, Object>();
+            for (var disc : discussions) {
+                discussionMap.put(disc.get("id").toString(), disc);
+            }
+            var commentMap = new HashMap<String, Object>();
+            commentMap.put("comments", discussionMap);
+            serializeIssue.put("thread", commentMap);
+            if (issue != null) {
+                try {
+                    stdout = RadicleProjectApi.MAPPER.writeValueAsString(serializeIssue);
+                } catch (Exception e) {
+                    logger.warn("Unable to write value as a string");
+                }
+            }
         } else if (cmdLine.getCommandLineString().contains("which")) {
             stdout = RAD_PATH;
         } else if (cmdLine.getCommandLineString().contains("clone rad:ooo")) {

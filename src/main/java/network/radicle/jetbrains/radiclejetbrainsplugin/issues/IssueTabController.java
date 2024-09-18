@@ -8,6 +8,7 @@ import com.intellij.ui.content.Content;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
@@ -50,7 +51,8 @@ public class IssueTabController extends TabController<RadIssue, IssueListSearchV
         this.myIssueModel = issueModel;
         createInternalIssuePanel(issueModel, mainPanel);
         issueModel.addListener(issue -> {
-            var fetched = api.fetchIssue(myIssue.projectId, myIssue.repo, myIssue.id);
+            var cliService = project.getService(RadicleCliService.class);
+            var fetched = cliService.getIssue(myIssue.repo, myIssue.projectId, myIssue.id);
             // Reload whole panel
             issueListPanel.updateListPanel();
             if (fetched != null) {

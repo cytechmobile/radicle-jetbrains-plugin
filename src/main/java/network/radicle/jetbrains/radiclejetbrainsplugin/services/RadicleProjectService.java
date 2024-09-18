@@ -28,6 +28,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadNodeStatus;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
@@ -197,6 +198,14 @@ public class RadicleProjectService {
             logger.warn("Error while fetching remotes");
         }
         return new ProcessOutput(0);
+    }
+
+    public ProcessOutput cobShow(GitRepository repo, String projectId, String objectId, RadCobList.Type type) {
+        return executeCommand(repo.getRoot().getPath(), List.of("cob", "show", "--repo", projectId, "--type", type.value, "--object", objectId), repo);
+    }
+
+    public ProcessOutput cobList(GitRepository repo, String projectId, RadCobList.Type type) {
+        return executeCommand(repo.getRoot().getPath(), List.of("cob", "list", "--repo", projectId, "--type", type.value), repo);
     }
 
     public ProcessOutput clone(String urn, String directory, String radPath, String radHome) {

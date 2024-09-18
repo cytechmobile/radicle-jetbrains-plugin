@@ -12,6 +12,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 
 import javax.accessibility.AccessibleContext;
@@ -42,7 +43,8 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     @Override
     public List<RadIssue> fetchData(String projectId, GitRepository repo) {
-        return api.fetchIssues(projectId, repo);
+        var cliService = repo.getProject().getService(RadicleCliService.class);
+        return cliService.getIssues(repo, projectId);
     }
 
     @Override
@@ -144,17 +146,19 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
                 title = new JLabel(issue.title);
                 issuePanel.add(title, BorderLayout.NORTH);
-                var firstDiscussion = issue.discussion.get(0);
-                var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(firstDiscussion.timestamp.atZone(ZoneId.systemDefault()));
-                var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " +
-                        RadicleBundle.message("by") + " " + issue.author.generateLabelText());
-                info.setForeground(JBColor.GRAY);
-                if (!issue.labels.isEmpty()) {
-                    var labels = new JLabel(RadicleBundle.message("labels") + ": " + String.join(", ", issue.labels));
-                    labels.setForeground(JBColor.GRAY);
-                    issuePanel.add(labels, BorderLayout.SOUTH);
+                if (!issue.discussion.isEmpty()) {
+                    var firstDiscussion = issue.discussion.get(0);
+                    var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(firstDiscussion.timestamp.atZone(ZoneId.systemDefault()));
+                    var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " +
+                            RadicleBundle.message("by") + " " + issue.author.generateLabelText());
+                    info.setForeground(JBColor.GRAY);
+                    if (!issue.labels.isEmpty()) {
+                        var labels = new JLabel(RadicleBundle.message("labels") + ": " + String.join(", ", issue.labels));
+                        labels.setForeground(JBColor.GRAY);
+                        issuePanel.add(labels, BorderLayout.SOUTH);
+                    }
+                    issuePanel.add(info, BorderLayout.SOUTH);
                 }
-                issuePanel.add(info, BorderLayout.SOUTH);
                 add(issuePanel, new CC().minWidth("0").gapAfter("push"));
             }
 
