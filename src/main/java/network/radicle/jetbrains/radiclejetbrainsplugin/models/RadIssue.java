@@ -56,15 +56,17 @@ public class RadIssue {
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)
     public enum State {
-        OPEN("open", "Open"),
-        CLOSED("closed", "Closed");
+        OPEN("open", "Open", "--open"),
+        CLOSED("closed", "Closed", "--closed");
 
         public final String status;
         public final String label;
+        public final String cli;
 
-        State(String status, String label) {
+        State(String status, String label, String cli) {
             this.status = status;
             this.label = label;
+            this.cli = cli;
         }
 
         @JsonCreator

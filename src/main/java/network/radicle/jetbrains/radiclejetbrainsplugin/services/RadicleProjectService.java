@@ -31,6 +31,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadNodeStatus;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
+import network.radicle.jetbrains.radiclejetbrainsplugin.commands.RadicleScriptCommandFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import org.jetbrains.annotations.NotNull;
@@ -41,16 +42,19 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
     private final RadicleProjectSettingsHandler projectSettingsHandler;
     private RadDetails radDetails;
+    private String wslDistro;
     private Project project;
 
     public RadicleProjectService(Project project) {
@@ -76,7 +80,7 @@ public class RadicleProjectService {
             return "";
         }
         var pathInfo = output.getStdoutLines();
-        // which command return empty and where command return INFO if the os cant find the program path
+        // which command return empty and where command return INFO if the os  cant find the program path
         if (!pathInfo.isEmpty() && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
             return pathInfo.get(0);
         }
@@ -226,15 +230,24 @@ public class RadicleProjectService {
         }
     }
 
-    private String getWindowPathManually(String path) {
+    public String getWslDistro() {
+        if (!Strings.isNullOrEmpty(wslDistro)) {
+            return wslDistro;
+        }
         var output = executeCommand("echo", "", ".", List.of("$WSL_DISTRO_NAME"), null);
         if (RadAction.isSuccess(output)) {
-            var distroName = output.getStdout().trim();
-            if (!distroName.isEmpty()) {
-                return "\\\\wsl$\\" + distroName + path;
-            }
+            wslDistro = output.getStdout().trim();
+            return wslDistro;
         }
-        return null;
+        return "";
+    }
+
+    private String getWindowPathManually(String path) {
+        var distroName = getWslDistro();
+        if (Strings.isNullOrEmpty(distroName)) {
+            return null;
+        }
+        return "\\\\wsl$\\" + distroName + path;
     }
 
     private String getWindowPathUsingWslPath(String path) {
@@ -316,6 +329,45 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("sync"), root);
     }
 
+    public ProcessOutput addRemoveIssueAssignee(GitRepository root, String issueId, List<String> addedAssignees, List<String> deletedAssignees) {
+        var addAssigneesStr = addedAssignees.stream().map(s -> "--add " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
+        var deletedAssigneesStr = deletedAssignees.stream().map(s -> "--delete " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
+        List<String> params = new ArrayList<>(Arrays.asList("issue", "assign", issueId));
+        if (!Strings.isNullOrEmpty(addAssigneesStr)) {
+            params.add(addAssigneesStr);
+        }
+        if (!Strings.isNullOrEmpty(deletedAssigneesStr)) {
+            params.add(deletedAssigneesStr);
+        }
+        return executeCommandFromFile(root, params);
+    }
+
+    public ProcessOutput addRemovePatchLabels(GitRepository root, String patchId, List<String> addedLabels, List<String> deletedLabels) {
+        return addRemoveLabels(root, patchId, addedLabels, deletedLabels, true);
+    }
+
+    public ProcessOutput addRemoveIssueLabels(GitRepository root, String issueId, List<String> addedLabels, List<String> deletedLabels) {
+        return addRemoveLabels(root, issueId, addedLabels, deletedLabels, false);
+    }
+
+    private ProcessOutput addRemoveLabels(GitRepository root, String id, List<String> addedLabels, List<String> deletedLabels, boolean isPatch) {
+        var addLabelsStr = addedLabels.stream().map(s -> "--add " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
+        var deletedLabelsStr = deletedLabels.stream().map(s -> "--delete " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
+        var type = isPatch ? "patch" : "issue";
+        List<String> params = new ArrayList<>(Arrays.asList(type, "label", id));
+        if (!Strings.isNullOrEmpty(addLabelsStr)) {
+            params.add(addLabelsStr);
+        }
+        if (!Strings.isNullOrEmpty(deletedLabelsStr)) {
+            params.add(deletedLabelsStr);
+        }
+        return executeCommandFromFile(root, params);
+    }
+
+    public ProcessOutput changeIssueState(GitRepository root, String issueId, String state) {
+        return executeCommand(root.getRoot().getPath(), List.of("issue", "state", issueId, state), root);
+    }
+
     public ProcessOutput patchComment(GitRepository root, String patchId, String message) {
         if (SystemInfo.isWindows) {
             message = "'" + message + "'";
@@ -348,31 +400,21 @@ public class RadicleProjectService {
         return executeCommand(exePath, radHome, workDir, args, repo, null);
     }
 
-    public ProcessOutput executeCommand(
-            String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin) {
+    public ProcessOutput executeCommandFromFile(GitRepository repo, List<String> params) {
+        final var projectSettings = projectSettingsHandler.loadSettings();
+        final var radPath = projectSettings.getPath();
+        final var radHome = projectSettings.getRadHome();
+        var workDir = repo.getRoot().getPath();
+        var scriptCommand = RadicleScriptCommandFactory.create(workDir, radPath, radHome, params, this);
+        var output = runCommand(scriptCommand.getCommandLine(), repo, workDir, null);
+        scriptCommand.deleteTempFile();
+        return output;
+    }
+
+    public ProcessOutput runCommand(GeneralCommandLine cmdLine, GitRepository repo, String workDir, String stdin) {
         ProcessOutput result;
-        final var cmdLine = new GeneralCommandLine();
-        var params = "";
-        if (!Strings.isNullOrEmpty(radHome)) {
-            params = "export RAD_HOME=" + radHome + "; " + exePath + " " + String.join(" ", args);
-        } else {
-            params = exePath + " " + String.join(" ", args);
-        }
-        if (SystemInfo.isWindows) {
-            cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(params);
-        } else {
-            cmdLine.withExePath(exePath).withParameters(args);
-            if (!Strings.isNullOrEmpty(radHome)) {
-                cmdLine.withEnvironment("RAD_HOME", radHome);
-            }
-        }
-        cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
-                // we need parent environment to be present to our rad execution
-                .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
-        var path = new File(exePath).getParent();
-        if (!Strings.isNullOrEmpty(path)) {
-            // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
-            cmdLine.withEnvironment("PATH", path + File.pathSeparator + cmdLine.getParentEnvironment().get("PATH"));
+        if (cmdLine == null) {
+            return new ProcessOutput(-1);
         }
         try {
             var console = repo == null ? null : GitVcsConsoleWriter.getInstance(repo.getProject());
@@ -399,6 +441,34 @@ public class RadicleProjectService {
             logger.error("unable to execute rad command", ex);
             return new ProcessOutput(-1);
         }
+    }
+
+    public ProcessOutput executeCommand(
+            String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin) {
+        final var cmdLine = new GeneralCommandLine();
+        var params = "";
+        if (!Strings.isNullOrEmpty(radHome)) {
+            params = "export RAD_HOME=" + radHome + "; " + exePath + " " + String.join(" ", args);
+        } else {
+            params = exePath + " " + String.join(" ", args);
+        }
+        if (SystemInfo.isWindows) {
+            cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(params);
+        } else {
+            cmdLine.withExePath(exePath).withParameters(args);
+            if (!Strings.isNullOrEmpty(radHome)) {
+                cmdLine.withEnvironment("RAD_HOME", radHome);
+            }
+        }
+        cmdLine.withCharset(StandardCharsets.UTF_8).withWorkDirectory(workDir)
+                // we need parent environment to be present to our rad execution
+                .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM);
+        var path = new File(exePath).getParent();
+        if (!Strings.isNullOrEmpty(path)) {
+            // make sure that the base directory containing our configured rad cli too. exists in the execution PATH
+            cmdLine.withEnvironment("PATH", path + File.pathSeparator + cmdLine.getParentEnvironment().get("PATH"));
+        }
+        return runCommand(cmdLine, repo, workDir, stdin);
     }
 
     public ProcessOutput execAndGetOutputWithStdin(GeneralCommandLine cmdLine, String stdin) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -283,16 +284,15 @@ public class OverviewTest extends AbstractIT {
         assertThat(secondTag.value.value()).isEqualTo(issue.labels.get(1));
         assertThat(secondTag.selected).isTrue();
 
+        radStub.commands.clear();
         //Remove first value
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
         // Fix AlreadyDisposedException
         Thread.sleep(1000);
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        var selectedLabels = (List<String>) res.get("labels");
-        assertThat(selectedLabels.size()).isEqualTo(1);
-        assertThat(selectedLabels).contains(issue.labels.get(1));
+        var command = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
+        assertThat(command).contains("--delete " + ExecUtil.escapeUnixShellArgument(firstTag.value.value()));
     }
 
     @Test
@@ -444,15 +444,14 @@ public class OverviewTest extends AbstractIT {
         // Change state to closed
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
-
+        radStub.commands.clear();
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
         // Fix AlreadyDisposedException
         Thread.sleep(1000);
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        var state = (HashMap<String, String>) res.get("state");
-        assertThat(state.get("status")).isEqualTo(RadIssue.State.CLOSED.status);
+        var command = radStub.commands.poll(5, TimeUnit.SECONDS);
+        assertThat(command.getCommandLineString()).contains(RadIssue.State.CLOSED.cli);
     }
 
     @Test
@@ -519,14 +518,16 @@ public class OverviewTest extends AbstractIT {
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
 
+        radStub.commands.clear();
         popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
         // Fix AlreadyDisposedException
         Thread.sleep(1000);
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        var assignees = (List<String>) res.get("assignees");
-        assertThat(assignees.size()).isEqualTo(1);
-        assertThat(assignees.get(0)).isEqualTo(getTestProjects().get(0).delegates.get(2).id);
+
+        var commandStr = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
+        assertThat(commandStr).contains("--delete " + ExecUtil.escapeUnixShellArgument(firstAssignee.value.did()));
+        assertThat(commandStr).contains("--delete " + ExecUtil.escapeUnixShellArgument(secondAssignee.value.did()));
+        assertThat(commandStr).contains("--add " + ExecUtil.escapeUnixShellArgument(thirdAssignee.value.did()));
     }
 
     @Test

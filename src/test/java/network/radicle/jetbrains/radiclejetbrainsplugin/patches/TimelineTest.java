@@ -10,6 +10,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.Side;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -705,14 +706,13 @@ public class TimelineTest extends AbstractIT {
         assertThat(secondTag.value.label()).isEqualTo(patch.labels.get(1));
         assertThat(secondTag.selected).isTrue();
 
+        radStub.commands.clear();
         //Remove first tag
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        var addList = (ArrayList<String>) res.get("labels");
-        assertThat(addList.size()).isEqualTo(1);
-        assertThat(addList).contains(patch.labels.get(1));
+        var command = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
+        assertThat(command).contains("--delete " + ExecUtil.escapeUnixShellArgument(firstTag.value.label()));
     }
 
     @Test

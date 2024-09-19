@@ -38,6 +38,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.UpdateBackgroundTask;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCheckout;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchLabel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
@@ -430,8 +431,15 @@ public class PatchProposalPanel {
             if (labelList.size() == patch.labels.size()) {
                 return true;
             }
-            var resp = api.addRemovePatchLabel(patch, labelList);
-            var isSuccess = resp != null;
+            var addedLabels = new ArrayList<>(labelList);
+            addedLabels.removeAll(patch.labels);
+
+            var deletedLabels = new ArrayList<>(patch.labels);
+            deletedLabels.removeAll(labelList);
+
+            var radPatchLabel = new RadPatchLabel(patch.repo, patch.id, addedLabels, deletedLabels);
+            var output = radPatchLabel.perform();
+            var isSuccess = RadAction.isSuccess(output);
             if (isSuccess) {
                 patchModel.setValue(patch);
             }

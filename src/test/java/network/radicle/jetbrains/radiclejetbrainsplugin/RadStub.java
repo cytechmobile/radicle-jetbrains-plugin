@@ -13,6 +13,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsVi
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -24,6 +25,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_PA
 public class RadStub extends RadicleProjectService {
     private int counter = 0;
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
+    public final BlockingQueue<String> commandsStr = new LinkedBlockingQueue<>();
     public String firstCommitHash;
     public static final String SECOND_COMMIT_HASH = "970b7ceb6678bc42e4fb0b9e3628914e1e1b8dae";
     public static final String FIRST_PEER_ID = "hyy7y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ibyw";
@@ -57,6 +59,15 @@ public class RadStub extends RadicleProjectService {
     public RadStub(String commitHash, Project project) {
         super(project);
         this.firstCommitHash = commitHash;
+    }
+
+    @Override
+    public ProcessOutput executeCommandFromFile(GitRepository repo, List<String> params) {
+        commandsStr.add(String.join(" ", params));
+        var pr = new ProcessOutput(0);
+        var stdout = "stdout";
+        pr.appendStdout(stdout);
+        return pr;
     }
 
     @Override
