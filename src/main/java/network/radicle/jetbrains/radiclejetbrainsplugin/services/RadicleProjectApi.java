@@ -319,29 +319,6 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch addRemovePatchLabel(RadPatch patch, List<String> addLabelList) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "label", "labels", addLabelList);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("labelChangeError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error adding {} labels to patch:{} resp:{}", addLabelList, patch, resp);
-                return null;
-            }
-            return patch;
-        } catch (Exception e) {
-            logger.warn("error adding label to patch: {}", patch, e);
-        }
-        return null;
-    }
-
     public String createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
         var session = createAuthenticatedSession();
         if (session == null) {
@@ -387,52 +364,6 @@ public class RadicleProjectApi {
             }
         } catch (Exception e) {
             logger.warn("http request exception {}", url, e);
-        }
-        return null;
-    }
-
-    public RadIssue changeIssueState(RadIssue issue, String state) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "lifecycle", "state", Map.of("status", state, "reason", "other"));
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("stateChangeError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error changing state {} to issue:{} resp:{}", state, issue, resp);
-                return null;
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error changing state to issue: {}", issue, e);
-        }
-        return null;
-    }
-
-    public RadIssue addRemoveIssueAssignees(RadIssue issue, List<String> addAssigneesList) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "assign", "assignees", addAssigneesList);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("assignersChangeError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error adding {} assignees to issue:{} resp:{}", addAssigneesList, issue, resp);
-                return null;
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error adding / remove assignees to issue: {}", issue, e);
         }
         return null;
     }
@@ -505,29 +436,6 @@ public class RadicleProjectApi {
             logger.warn("error reacting to discussion: {}", discussionId, e);
         }
 
-        return null;
-    }
-
-    public RadIssue addRemoveIssueLabel(RadIssue issue, List<String> addTagList) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "label", "labels", addTagList);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("labelChangeError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error adding {} tags to issue:{} resp:{}", addTagList, issue, resp);
-                return null;
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error adding label to issue: {}", issue, e);
-        }
         return null;
     }
 
@@ -674,32 +582,6 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("error adding comment to patch: {} - {}", patch, comment, e);
         }
-        return null;
-    }
-
-    public RadAuthor resolveAlias(String nid) {
-        if (Strings.isNullOrEmpty(nid)) {
-            return null;
-        }
-        var alias = aliases.get(nid);
-        if (alias != null) {
-            return alias;
-        }
-
-        final var node = getSeedNode();
-        final var url = node.url + "/api/v1/nodes/" + nid;
-        try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchSeedNodeError"));
-            if (res.isSuccess()) {
-                alias = MAPPER.readValue(res.body, RadAuthor.class);
-                alias.id = nid;
-                aliases.put(nid, alias);
-                return alias;
-            }
-        } catch (Exception e) {
-            logger.warn("http request exception for resolving nid to alias: {}", url, e);
-        }
-
         return null;
     }
 

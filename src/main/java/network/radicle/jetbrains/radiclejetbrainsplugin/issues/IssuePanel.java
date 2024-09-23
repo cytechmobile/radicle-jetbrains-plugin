@@ -17,6 +17,10 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueAssignee;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueLabel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueState;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
@@ -190,8 +194,15 @@ public class IssuePanel {
             if (tagList.size() == issue.labels.size()) {
                 return true;
             }
-            var resp = api.addRemoveIssueLabel(issue, tagList);
-            var isSuccess = resp != null;
+            var addedLabels = new ArrayList<>(tagList);
+            addedLabels.removeAll(issue.labels);
+
+            var deletedLabels = new ArrayList<>(issue.labels);
+            deletedLabels.removeAll(tagList);
+
+            var radIssueLabel = new RadIssueLabel(issue.repo, issue.id, addedLabels, deletedLabels);
+            var output = radIssueLabel.perform();
+            var isSuccess = RadAction.isSuccess(output);
             if (isSuccess) {
                 issueModel.setValue(issue);
             }
@@ -247,7 +258,7 @@ public class IssuePanel {
 
     public class StateSelect extends LabeledListPanelHandle<StateSelect.State> {
 
-        public record State(String status, String label) { }
+        public record State(String status, String label, String cli) { }
 
         public static class StateRender extends SelectionListCellRenderer<StateSelect.State> {
 
@@ -269,12 +280,13 @@ public class IssuePanel {
 
         @Override
         public boolean storeValues(List<StateSelect.State> data) {
-            var selectedState = data.get(0).status;
-            if (selectedState.equals(issue.state.status)) {
+            var selectedState = data.get(0);
+            if (selectedState.status.equals(issue.state.status)) {
                 return true;
             }
-            var resp = api.changeIssueState(issue, selectedState);
-            var isSuccess = resp != null;
+            var radIssueState = new RadIssueState(issue.repo, issue.id, selectedState.cli);
+            var output = radIssueState.perform();
+            var isSuccess = RadAction.isSuccess(output);
             if (isSuccess) {
                 issueModel.setValue(issue);
             }
@@ -289,7 +301,7 @@ public class IssuePanel {
         @Override
         public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<State>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var allStates = Arrays.stream(RadIssue.State.values()).map(e -> new State(e.status, e.label)).toList();
+                var allStates = Arrays.stream(RadIssue.State.values()).map(e -> new State(e.status, e.label, e.cli)).toList();
                 var stateList = new ArrayList<SelectionListCellRenderer.SelectableWrapper<State>>();
                 for (State state : allStates) {
                     var isSelected = issue.state.status.equals(state.status);
@@ -351,8 +363,18 @@ public class IssuePanel {
             if (addAssignees.size() == issue.assignees.size()) {
                 return true;
             }
-            var resp = api.addRemoveIssueAssignees(issue, addAssignees);
-            var isSuccess = resp != null;
+
+            var issueAssignees = issue.assignees.stream().map(a -> a.id).toList();
+
+            var addedAssignees = new ArrayList<>(addAssignees);
+            addedAssignees.removeAll(issueAssignees);
+
+            var deletedAssignees = new ArrayList<>(issueAssignees);
+            deletedAssignees.removeAll(addAssignees);
+
+            var radIssueAssignee = new RadIssueAssignee(issue.repo, issue.id, addedAssignees, deletedAssignees);
+            var output = radIssueAssignee.perform();
+            var isSuccess = RadAction.isSuccess(output);
             if (isSuccess) {
                 issueModel.setValue(issue);
             }
