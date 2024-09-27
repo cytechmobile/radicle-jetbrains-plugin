@@ -12,14 +12,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchComponentFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.ObservableThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.PatchDiffEditorGutterIconFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.controllers.PatchEditorCommentableRangesController;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.controllers.PatchReviewThreadsController;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NotNull;
 
 public class PatchDiffWindow extends DiffExtension {
@@ -38,9 +36,6 @@ public class PatchDiffWindow extends DiffExtension {
             return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-           var radicleProjectService = patch.project.getService(RadicleProjectService.class);
-           var radDetails = new RadSelf(patch.project).getRadSelfDetails();
-            radicleProjectService.setRadDetails(radDetails);
             patch.project.putUserData(PatchComponentFactory.PATCH_DIFF, patch);
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (viewer instanceof TwosideTextDiffViewer twosideTextDiffViewer) {

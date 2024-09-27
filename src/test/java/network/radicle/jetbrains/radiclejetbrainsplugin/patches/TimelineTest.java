@@ -13,9 +13,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -28,7 +29,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
@@ -63,7 +63,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PatchDiffWind
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
@@ -72,7 +71,6 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -101,17 +99,16 @@ import static org.mockito.Mockito.when;
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
     private static final Logger logger = Logger.getInstance(TimelineTest.class);
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(TimelineTest.class);
-    private FileEditor myEditor;
     private static final String AUTHOR = "did:key:testAuthor";
     public static final String RAD_PROJECT_ID = "rad:123";
     private static final String DISCUSSION_ID = UUID.randomUUID().toString();
     private static final String OUTDATED_DISUCSSION_ID = UUID.randomUUID().toString();
     private static final String REVIEW_SUMMARY = "Accepted";
 
+    private FileEditor myEditor;
+    public static RadPatch patch;
     private String dummyComment = "Hello";
     private String replyComment = "This is my reply";
-    public static RadPatch patch;
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
@@ -174,7 +171,7 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
-    public void testReviewCommentsExists() throws VcsException {
+    public void testReviewCommentsExists() throws Exception {
         var authorId = "did:key:fakeDid";
         var comment = "This is a comment";
         var outDatedComment = "This is a outdated comment";
@@ -191,6 +188,14 @@ public class TimelineTest extends AbstractIT {
         editors.add(editor);
         boolean findOutDatedComment = false;
         boolean findNonOutDatedComment = false;
+        for (int i = 0; i < 20; i++) {
+            if (editor.getContentComponent().getComponents().length > 0) {
+                break;
+            }
+            logger.warn("Waiting for editor components");
+            executeUiTasks();
+            Thread.sleep(500);
+        }
         for (var comp : editor.getContentComponent().getComponents()) {
             var timelineThreadPanel = UIUtil.findComponentOfType((JComponent) comp, TimelineThreadCommentsPanel.class);
             var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
@@ -212,7 +217,7 @@ public class TimelineTest extends AbstractIT {
         var fileToChange = new File(firstRepo.getRoot().getPath() + "/" + fileName);
         GitTestUtil.writeToFile(fileToChange, "Welcome");
         var commitNumber =  GitExecutor.addCommit("my third message");
-        var commit = GitTestUtil.findCommit(firstRepo, commitNumber);
+        var commit = getInBackground(() -> GitTestUtil.findCommit(firstRepo, commitNumber));
         assertThat(commit).isNotNull();
         patchDiffWindow = initializeDiffWindow(commit);
         editor = patchDiffWindow.getEditor();
@@ -379,12 +384,9 @@ public class TimelineTest extends AbstractIT {
         var gutterIconFactory = patchDiffWindow.getPatchDiffEditorGutterIconFactory();
         var commentRenderer = (PatchDiffEditorGutterIconFactory.CommentIconRenderer) gutterIconFactory.createCommentRenderer(0);
 
-        commentRenderer.createComment().actionPerformed(new AnActionEvent(null, new DataContext() {
-            @Override
-            public @Nullable Object getData(@NotNull String dataId) {
-                return null;
-            }
-        }, "", new Presentation(""), ActionManager.getInstance(), 0));
+        final var ae = new AnActionEvent(SimpleDataContext.getProjectContext(myProject), new Presentation(""), "", ActionUiKind.NONE, null, 0,
+                ActionManager.getInstance());
+        commentRenderer.createComment().actionPerformed(ae);
         var editor = patchDiffWindow.getEditor();
         editors.add(editor);
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
@@ -978,7 +980,7 @@ public class TimelineTest extends AbstractIT {
         req.putUserData(ChangeDiffRequestProducer.CHANGE_KEY, firstChange);
         var viewer = mock(TwosideTextDiffViewer.class);
         Document editorDocument = EditorFactory.getInstance().createDocument("");
-        var editorFactory = new EditorFactoryImpl();
+        var editorFactory = new EditorFactoryImpl(null);
         var editor = (EditorEx) editorFactory.createEditor(editorDocument);
         when(viewer.getEditor(Side.RIGHT)).thenReturn(editor);
         when(viewer.getEditor(Side.LEFT)).thenReturn(editor);

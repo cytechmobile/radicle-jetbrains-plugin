@@ -69,6 +69,7 @@ public class RadicleProjectService {
     public RadicleProjectService(RadicleProjectSettingsHandler radicleProjectSettingsHandler) {
         this.projectSettingsHandler = radicleProjectSettingsHandler;
     }
+
     public void setRadDetails(RadDetails details) {
         this.radDetails = details;
     }

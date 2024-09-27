@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 
@@ -8,7 +10,7 @@ plugins {
     // Java support
     id("java")
     checkstyle
-    alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
+    alias(libs.plugins.gradleIntelliJPlugin) // IntelliJ Platform Gradle Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
 }
 
@@ -21,18 +23,33 @@ repositories {
     maven {
         url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     }
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 var remoteRobotVersion: String = libs.versions.remoteRobot.get();
 dependencies {
-    testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
-    testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
+    intellijPlatform {
+        //intellijIdeaCommunity('LATEST-EAP-SNAPSHOT')
+        intellijIdeaCommunity(properties("platformVersion").get())
+        // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
+        bundledPlugins(providers.gradleProperty("platformPlugins").map { it.split(',').map { it2 -> it2.trim()} })
+        testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
+    }
+    //https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#missing-opentest4j-dependency-in-test-framework
+    //testImplementation("junit:junit:4.13.2")
+    //testImplementation("org.opentest4j:opentest4j:1.3.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:${libs.versions.junitJupiter.get()}")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${libs.versions.junitJupiter.get()}")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junitJupiter.get()}")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:${libs.versions.junitPlatformLauncher.get()}")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:${libs.versions.junitJupiter.get()}")
+    testImplementation("org.junit.vintage:junit-vintage-engine:${libs.versions.junitJupiter.get()}")
+    testImplementation("org.junit.platform:junit-platform-launcher:${libs.versions.junitPlatformLauncher.get()}")
 
     testImplementation("org.assertj:assertj-core:${libs.versions.assertj.get()}")
+
+    testImplementation("com.intellij.remoterobot:remote-robot:$remoteRobotVersion")
+    testImplementation("com.intellij.remoterobot:remote-fixtures:$remoteRobotVersion")
 
     // Logging Network Calls
     testImplementation("com.squareup.okhttp3:logging-interceptor:${libs.versions.loggingInterceptor.get()}")
@@ -53,14 +70,24 @@ checkstyle {
     maxWarnings = 0;
 }
 
-// Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-intellij {
-    pluginName = properties("pluginName")
-    version = properties("platformVersion")
-    type = properties("platformType")
+// Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+intellijPlatform {
+    pluginConfiguration {
+        name = properties("pluginName")
+    }
 
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins = properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = properties("pluginSinceBuild")
+            untilBuild = provider { null } // properties("pluginUntilBuild")
+        }
+    }
+
+    pluginVerification {
+        ides {
+            recommended()
+        }
+    }
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -86,7 +113,7 @@ tasks {
     patchPluginXml {
         version = properties("pluginVersion")
         sinceBuild = properties("pluginSinceBuild")
-        untilBuild = properties("pluginUntilBuild")
+        untilBuild = provider { null } // properties("pluginUntilBuild")
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
         pluginDescription = providers.fileContents(layout.projectDirectory.file("README.md")).asText.map {
@@ -114,31 +141,8 @@ tasks {
         }
     }
 
-    downloadRobotServerPlugin {
-        version = remoteRobotVersion
-    }
-
     runIde {
         systemProperty("idea.is.internal", "true");
-    }
-
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-    runIdeForUiTests {
-        //    In case your Idea is launched on remote machine you can enable public port and enable encryption of JS calls
-        //    systemProperty "robot-server.host.public", "true"
-        //    systemProperty "robot.encryption.enabled", "true"
-        //    systemProperty "robot.encryption.password", "my super secret"
-
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
-        systemProperty("ide.mac.file.chooser.native", "false")
-        systemProperty("apple.laf.useScreenMenuBar", "false")
-        systemProperty("jbScreenMenuBar.enabled", "false")
-        systemProperty("idea.trust.all.projects", "true")
-        systemProperty("ide.show.tips.on.startup.default.value", "false")
     }
 
     test {
@@ -148,6 +152,14 @@ tasks {
         // enable encryption on test side when use remote machine
         // systemProperty "robot.encryption.password", "my super secret"
         exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
+        testLogging {
+            // set options for log level LIFECYCLE
+            events = arrayOf(TestLogEvent.FAILED, /*TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.STANDARD_OUT*/).toSet()
+            exceptionFormat = TestExceptionFormat.FULL
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+        }
     }
 
     signPlugin {
@@ -173,6 +185,29 @@ val uiTestTask = tasks.register<Test>("uiTest") {
     environment(mapOf("RADICLE_REPO" to System.getenv("RADICLE_REPO")))
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/ui/**")
 }
+
+val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
+    task {
+        jvmArgumentProviders += CommandLineArgumentProvider {
+            listOf(
+                "-Drobot-server.port=8082",
+                "-Dide.mac.message.dialogs.as.sheets=false",
+                "-Djb.privacy.policy.text=<!--999.999-->",
+                "-Djb.consents.confirmation.enabled=false",
+                "-Dide.mac.file.chooser.native=false",
+                "-Dapple.laf.useScreenMenuBar=false",
+                "-DjbScreenMenuBar.enabled=false",
+                "-Didea.trust.all.projects=true",
+                "-Dide.show.tips.on.startup.default.value=false",
+            )
+        }
+    }
+
+    plugins {
+        robotServerPlugin()
+    }
+}
+
 
 val e2eTestTask = tasks.register<Test>("endToEndTests") {
     useJUnitPlatform()

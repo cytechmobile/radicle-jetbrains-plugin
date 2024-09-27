@@ -20,7 +20,7 @@ public class PublishDialogTest extends AbstractIT {
     private static final String DESCRIPTION = "testDesc";
 
     @Test
-    public void testDialogWithMultipleRepositories() {
+    public void testDialogWithMultipleRepositories() throws Exception {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         initializeProject(firstRepo);
         removeRemoteRadUrl(secondRepo);
@@ -33,7 +33,7 @@ public class PublishDialogTest extends AbstractIT {
     }
 
     @Test
-    public void testDialogWithoutRadInitializedPr() throws InterruptedException {
+    public void testDialogWithoutRadInitializedPr() throws Exception {
         secondRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath1);
         removeRemoteRadUrl(secondRepo);
         var publishDialog = new PublishDialog(List.of(secondRepo), super.getProject());

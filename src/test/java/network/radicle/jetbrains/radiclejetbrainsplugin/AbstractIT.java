@@ -9,14 +9,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.testFramework.CoroutineKt;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
 import git4idea.commands.GitImpl;
@@ -42,15 +43,13 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.HierarchyEvent;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil.addRadRemote;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest.RAD_PROJECT_ID;
@@ -59,17 +58,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractIT extends HeavyPlatformTestCase {
     private static final Logger logger = Logger.getInstance(AbstractIT.class);
     public final BlockingQueue<Notification> notificationsQueue = new LinkedBlockingQueue<>();
-    public static final String RAD_VERSION = "0.8.0";
+    public static final String RAD_VERSION = "1.1.0";
     public static final String RAD_PATH = "/usr/bin/rad";
     public static final String RAD_HOME = "/home/test/radicle";
     public static final String RAD_HOME1 = "/test2/secondInstallation";
     public static final String WSL = "wsl";
     protected static final String REMOTE_NAME = "testRemote";
     protected static final String REMOTE_NAME_1 = "testRemote1";
-    public static final String PROJECTS_URL = "/projects";
-    public static final String PATCHES_URL = "/patches";
-    public static final String ISSUES_URL = "/issues";
-    public static final String SESSIONS_URL = "/sessions";
     protected RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     protected String remoteRepoPath;
     protected String remoteRepoPath1;
@@ -83,10 +78,14 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     public List<GitCommit> commitHistory;
 
     @Before
-    public void before() throws IOException, VcsException {
+    public void before() throws Exception {
         /* initialize a git repository */
-        remoteRepoPath = Files.createTempDirectory(REMOTE_NAME).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
-        firstRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath);
+        runInBackground(myProject, () -> {
+            remoteRepoPath = Files.createTempDirectory(REMOTE_NAME).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
+            firstRepo = GitTestUtil.createGitRepository(super.getProject(), remoteRepoPath);
+        });
+
+        assertThat(firstRepo).isNotNull();
 
         // Create a commit
         var fileToChange = new File(firstRepo.getRoot().getPath() + "/initial_file.txt");
@@ -98,11 +97,11 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         GitTestUtil.writeToFile(fileToChange, "Hello2");
         GitExecutor.addCommit("my second message");
 
-        commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot());
+        runInBackground(myProject, () -> commitHistory = GitHistoryUtils.history(firstRepo.getProject(), firstRepo.getRoot()));
 
-        var myCommit = commitHistory.get(0);
-        var changes = (ArrayList) myCommit.getChanges();
-        var change = (Change) changes.get(0);
+        var myCommit = commitHistory.getFirst();
+        var changes = (List<Change>) myCommit.getChanges();
+        var change = changes.getFirst();
 
         remoteRepoPath1 = Files.createTempDirectory(REMOTE_NAME_1).toRealPath(LinkOption.NOFOLLOW_LINKS).toString();
 
@@ -152,7 +151,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             applicationMbc.disconnect();
         }
         try {
-            firstRepo.dispose();
+            if (firstRepo != null) {
+                firstRepo.dispose();
+            }
             if (secondRepo != null) {
                 secondRepo.dispose();
             }
@@ -174,31 +175,24 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     protected void removeRemoteRadUrl(GitRepository repo) {
-        var gitImpl = new GitImpl();
-        for (GitRemote remote : repo.getRemotes()) {
-            gitImpl.removeRemote(repo, remote);
-        }
-        var myLatch = new CountDownLatch(1);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        runInBackground(() -> {
+            var gitImpl = new GitImpl();
+            for (GitRemote remote : repo.getRemotes()) {
+                gitImpl.removeRemote(repo, remote);
+            }
             repo.update();
-            myLatch.countDown();
         });
-        try {
-            myLatch.await(5, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            logger.warn("Unable to remove remotes");
-        }
     }
 
     protected void initializeProject(GitRepository repo) {
-        addRadRemote(super.getProject(), repo);
+        addRadRemote(repo);
     }
 
     protected void addSeedNodeInConfig(GitRepository repo) {
         try {
-            GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "https://maple.radicle.garden");
+            runInBackground(repo.getProject(), () -> GitConfigUtil.setValue(super.getProject(), repo.getRoot(), "rad.seed", "https://maple.radicle.garden"));
         } catch (Exception e) {
-            logger.warn("unable to write HTTP daemon in config file");
+            logger.warn("unable to write HTTP daemon in config file", e);
         }
     }
 
@@ -232,20 +226,39 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
                     return new RadProject(RAD_PROJECT_ID, "TestProject", "TestProjectDescr", "main",
                             Strings.nullToEmpty(head), PatchListPanelTest.getTestProjects().get(0).delegates);
                 }
-                return super.getRadRepo(repo);
+                return getInBackground(() -> super.getRadRepo(repo));
             }
         };
         ServiceContainerUtil.replaceService(myProject, RadicleCliService.class, cliService, this.getTestRootDisposable());
         return cliService;
     }
 
+    public <T> T getInBackground(BackgroundCallable<T> callable) {
+        return getInBackground(myProject, callable);
+    }
+
+    public void runInBackground(BackgroundRunnable runnable) {
+        runInBackground(myProject, runnable);
+    }
+
     public void executeUiTasks() {
-        for (int i = 0; i < 300; i++) {
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-            CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-            Thread.yield();
-        }
+        executeUiTasks(myProject);
+    }
+
+    public static void executeUiTasks(Project prj) {
+        EdtTestUtil.runInEdtAndWait(() -> {
+            for (int i = 0; i < 10; i++) {
+                try {
+                    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+                    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(prj);
+                    EDT.dispatchAllInvocationEvents();
+                    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+                    Thread.yield();
+                } catch (Exception e) {
+                    logger.warn("error executing ui tasks", e);
+                }
+            }
+        });
     }
 
     public static void markAsShowing(Container parent, Component inner) {
@@ -267,6 +280,45 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         //matching UiUtil IS_SHOWING key
         jc.putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
         assertThat(UIUtil.isShowing(jc, false)).isTrue();
+    }
+
+    public static <T> T getInBackground(Project project, BackgroundCallable<T> runnable) {
+        try {
+            var finished = new AtomicBoolean(false);
+            var result = new AtomicReference<T>(null);
+            Thread.ofVirtual().start(() -> {
+                try {
+                    var res = runnable.run();
+                    result.set(res);
+                    finished.set(true);
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            while (!finished.get()) {
+                Thread.onSpinWait();
+                AbstractIT.executeUiTasks(project);
+            }
+            return result.get();
+        } catch (Exception e) {
+            logger.warn("unable to run in background", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void runInBackground(Project project, BackgroundRunnable runnable) {
+        getInBackground(project, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    public interface BackgroundCallable<T> {
+        T run() throws Exception;
+    }
+
+    public interface BackgroundRunnable {
+        void run() throws Exception;
     }
 
     public static class NoopContinuation<T> implements Continuation<T> {

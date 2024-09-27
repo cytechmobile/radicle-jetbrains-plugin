@@ -41,13 +41,20 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: corretto
-          java-version: 17
+          java-version: 21
       - name: Setup FFmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
         with:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: env
+        if: runner.os != 'Windows'
+        run: |
+          echo "JDK_JAVA_OPTIONS=--add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED --add-opens java.xml/javax.xml.transform=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED" >> $GITHUB_ENV
+      - name: env on Windows
+        if: runner.os == 'Windows'
+        run: echo "JDK_JAVA_OPTIONS=--add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED --add-opens java.xml/javax.xml.transform=ALL-UNNAMED --add-exports java.desktop/sun.awt.image=ALL-UNNAMED" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Clean
         run: ./gradlew :clean
       - name: Run Idea

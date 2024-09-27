@@ -115,6 +115,6 @@ public class RadicleEndToEndTest {
         commonSteps.openProject(radicleRepo);
 
         //commonSteps.waitForSmartMode(5);
-        remoteRobot.find(ComponentFixture.class, Locators.byXpath("//div[@class='EditorWindowTopComponent']"), ReusableSteps.COMPONENT_SEARCH_TIMEOUT_DURATION);
+        remoteRobot.find(ComponentFixture.class, Locators.byXpath("//div[@class='EditorCompositePanel']"), ReusableSteps.COMPONENT_SEARCH_TIMEOUT_DURATION);
     }
 }

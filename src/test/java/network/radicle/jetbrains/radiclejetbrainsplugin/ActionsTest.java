@@ -48,7 +48,7 @@ public class ActionsTest extends AbstractIT {
     public void radInspectAction() throws InterruptedException {
         // add back cli service that allows getRadRepo to go through
         radCli = replaceCliService("", false);
-        var radRepo = radCli.getRadRepo(firstRepo);
+        runInBackground(() -> radCli.getRadRepo(firstRepo));
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("inspect");

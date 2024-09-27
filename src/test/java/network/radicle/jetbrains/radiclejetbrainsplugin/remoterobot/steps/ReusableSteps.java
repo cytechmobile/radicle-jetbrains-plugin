@@ -15,7 +15,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.pages.Welcom
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.event.KeyEvent;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -43,11 +42,13 @@ public class ReusableSteps {
     }
 
     public static void takeScreenshot(RemoteRobot remoteRobot, String image) {
+        /* TODO: disabled taking screenshots
         try {
             ImageIO.write(remoteRobot.getScreenshot(), "png", new File("build/reports", image));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+         */
     }
 
     public static void unlockIdentityWithPassphrase(RemoteRobot remoteRobot) {
@@ -63,7 +64,7 @@ public class ReusableSteps {
     public void refreshFromDisk() {
         for (int i = 0; i < 10; i++) {
             try {
-                actionMenu(remoteRobot, "File", "").click();
+                actionMenu(remoteRobot, "File", "").moveMouse();
                 var menuItem = actionMenuItem(remoteRobot, "Reload All from Disk");
                 if (menuItem != null) {
                     menuItem.click();
@@ -104,7 +105,9 @@ public class ReusableSteps {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
             welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
-            welcomeFrame.importProjectLink().click();
+            log.error("clicking clone repo");
+            welcomeFrame.cloneRepoLink().click();
+            log.error("clicked clone repo");
 
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, COMPONENT_SEARCH_TIMEOUT_DURATION).click();
@@ -124,25 +127,10 @@ public class ReusableSteps {
         });
     }
 
-    public void importRadicleProject(Path localDir) {
-        step("Import Project from Radicle", () -> {
-            // get from VCS
-            final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
-            welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
-            welcomeFrame.openProjectLink().click();
-
-            final var projectPathFieldLocator = byXpath("//div[@class='BorderlessTextField']");
-            remoteRobot.find(ComponentFixture.class, projectPathFieldLocator, COMPONENT_SEARCH_TIMEOUT_DURATION).click();
-            keyboard.selectAll();
-            keyboard.backspace();
-            keyboard.enterText("/" + localDir.toAbsolutePath(), 0);
-            keyboard.enter();
-        });
-    }
-
     public void openRadicleToolWindow() {
         step("Open Radicle Tool Window", () -> {
-            final var radicleToolWindow = byXpath("//div[@accessiblename='Left Stripe']/div[@text='Radicle']");
+            // final var radicleToolWindow = byXpath("//div[@accessiblename='Left Stripe']/div[@text='Radicle']");
+            final var radicleToolWindow = byXpath("//div[@tooltiptext='Radicle']");
             remoteRobot.find(ComponentFixture.class, radicleToolWindow, COMPONENT_SEARCH_TIMEOUT_DURATION).click();
         });
     }
