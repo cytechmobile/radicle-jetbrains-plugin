@@ -324,6 +324,8 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput checkout(GitRepository root, String patchId) {
+        Map map;
+        map.computeIfAbsent()
         return executeCommand(root.getRoot().getPath(), List.of("patch", "checkout", patchId), root);
     }
 
