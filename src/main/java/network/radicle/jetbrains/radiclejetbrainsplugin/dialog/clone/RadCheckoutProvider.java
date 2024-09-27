@@ -70,8 +70,8 @@ public class RadCheckoutProvider implements CheckoutProvider {
             this.radPathField = new JTextField();
             this.urlField = new TextFieldWithHistory();
             this.directoryField = new TextFieldWithBrowseButton();
-            this.directoryField.addBrowseFolderListener(RadicleBundle.message("selectDirectory"), "", null,
-                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
+            this.directoryField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                    .withTitle(RadicleBundle.message("selectDirectory")).withDescription(""));
             this.dialogComponentStateListener = dialogStateListener;
         }
 

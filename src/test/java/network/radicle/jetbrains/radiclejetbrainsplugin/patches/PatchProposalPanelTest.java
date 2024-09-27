@@ -12,6 +12,7 @@ import com.intellij.util.ui.UIUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerListener;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -22,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -33,6 +35,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil.addRa
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
@@ -113,11 +116,19 @@ public class PatchProposalPanelTest extends AbstractIT {
 
     @Test
     public void testMergePatch() throws Exception {
-        addRadRemote(patch.project, patch.repo);
+        addRadRemote(patch.repo);
         var git = mock(Git.class);
         when(git.tip(any(), any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
-        when(git.runCommand((GitLineHandler) any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
-        when(git.merge(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
+        when(git.runCommand((GitLineHandler) any())).thenAnswer(i -> {
+            GitLineHandler glh = i.getArgument(0);
+            var pcl = glh.printableCommandLine();
+            List<String> out = List.of();
+            if (pcl.contains("--show-current")) {
+                out = List.of("main");
+            }
+            return new GitCommandResult(false, 0, List.of(), out);
+        });
+        when(git.merge(any(), any(), any(), any(GitLineHandlerListener[].class))).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
         when(git.push(any(), any(), any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
         when(git.runCommandWithoutCollectingOutput(any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
         when(git.config(any(), any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of()));
@@ -143,6 +154,9 @@ public class PatchProposalPanelTest extends AbstractIT {
             } catch (Exception ignored) { }
         }
         assertThat(mergePatchAction.performed.isDone()).isTrue();
+        var md = Mockito.mockingDetails(git);
+        logger.warn("Git mocking details: " + md.getInvocations());
+        verify(git).merge(any(), any(), any(), any(GitLineHandlerListener[].class));
         assertThat(mergePatchAction.merged).isTrue();
     }
 }
