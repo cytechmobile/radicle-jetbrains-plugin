@@ -8,7 +8,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleOpenInBro
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetchAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -24,7 +23,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -47,8 +46,7 @@ public class ActionsTest extends AbstractIT {
 
     @Test
     public void radInspectAction() throws InterruptedException {
-        var inspectAction = new RadInspect(firstRepo);
-        inspectAction.perform();
+        var radRepo = radCli.getRadRepo(firstRepo);
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertCmd(cmd);
         assertThat(cmd.getCommandLineString()).contains("inspect");
@@ -145,7 +143,7 @@ public class ActionsTest extends AbstractIT {
             }
         };
         rm.execute(getProject(), NoopContinuation.NOOP);
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
+        var not = notificationsQueue.poll(100, TimeUnit.MILLISECONDS);
         assertThat(not).isNull();
     }
 
@@ -193,7 +191,10 @@ public class ActionsTest extends AbstractIT {
     @Test
     public void radOpenInBrowser() throws InterruptedException {
         BrowserLauncher browserUtilMock = mock(BrowserLauncher.class);
-        doNothing().when(browserUtilMock).browse(URI.create(anyString()));
+        doNothing().when(browserUtilMock).browse((URI) any());
+        // var gitMock = mock(GitImpl.class);
+        // ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), Git.class, gitMock, getTestRootDisposable());
+        // when(gitMock.lsRemoteRefs(any(), any(), any(), any())).thenReturn(new GitCommandResult(false, 0, List.of(), List.of("abcd")));
         var radOpen = new RadicleOpenInBrowserAction();
         var fileToOpen = "/initial.txt";
         radOpen.openInBrowser(getProject(), firstRepo, fileToOpen, browserUtilMock);

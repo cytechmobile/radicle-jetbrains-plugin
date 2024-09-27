@@ -33,9 +33,9 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.CreateIssuePanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
@@ -404,13 +404,8 @@ public class CreatePatchPanel {
     }
 
     protected RadProject getProjectInfo(GitRepository repo) {
-        var radInspect = new RadInspect(repo);
-        var output = radInspect.perform();
-        if (!RadAction.isSuccess(output)) {
-            return null;
-        }
-        var projectId = output.getStdout().trim();
-        return api.fetchRadProject(projectId);
+        var rad = project.getService(RadicleCliService.class);
+        return rad.getRadRepo(repo);
     }
 
     public GitRemote findRadRemote(GitRepository repo, String radProjectId) {

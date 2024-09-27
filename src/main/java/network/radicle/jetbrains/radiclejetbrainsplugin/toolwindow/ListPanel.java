@@ -24,8 +24,8 @@ import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
@@ -177,12 +177,11 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
         if (radInitializedRepos.isEmpty()) {
             return List.of();
         }
+        var radCli = project.getService(RadicleCliService.class);
         for (GitRepository repo : radInitializedRepos) {
-            var radInspect = new RadInspect(repo);
-            var output = radInspect.perform();
-            if (RadAction.isSuccess(output)) {
-                var radProjectId = output.getStdout().trim();
-                var data = fetchData(radProjectId, repo);
+            var radRepo = radCli.getRadRepo(repo);
+            if (radRepo != null) {
+                var data = fetchData(radRepo.id, repo);
                 if (!data.isEmpty()) {
                     outputs.addAll(data);
                 }

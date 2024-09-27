@@ -159,7 +159,22 @@ public class RadStub extends RadicleProjectService {
                 pr.setExitCode(-1);
             }
         } else if (cmdLine.getCommandLineString().contains("inspect")) {
-            stdout = "rad:123";
+            if (cmdLine.getCommandLineString().contains("--identity")) {
+                stdout = "{\"payload\": {" +
+                         "\"xyz.radicle.project\": {" +
+                         "\"defaultBranch\": \"main\"," +
+                         "\"description\": \"test project\"," +
+                         "\"name\": \"test\"" +
+                         "}" +
+                         "}," +
+                         " \"delegates\": [\"" + did + "\"]," +
+                         "\"threshold\": 1" +
+                         "}";
+            } else if (cmdLine.getCommandLineString().contains("--delegates")) {
+                stdout = did + " (" + alias + ")";
+            } else {
+                stdout = "rad:123";
+            }
         } else if (cmdLine.getCommandLineString().contains("track")) {
             trackResponse = trackResponse.replace("MY_COMMIT_HASH", this.firstCommitHash);
             stdout = trackResponse;
@@ -198,8 +213,7 @@ public class RadStub extends RadicleProjectService {
 
     public static RadStub replaceRadicleProjectService(UsefulTestCase utc, String commitHash, Project project) {
         var stub = new RadStub(commitHash, project);
-        ServiceContainerUtil.replaceService(project,
-                RadicleProjectService.class, stub, utc.getTestRootDisposable());
+        ServiceContainerUtil.replaceService(project, RadicleProjectService.class, stub, utc.getTestRootDisposable());
         return stub;
     }
 }

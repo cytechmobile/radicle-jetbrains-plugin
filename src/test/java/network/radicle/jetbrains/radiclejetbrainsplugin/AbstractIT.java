@@ -28,6 +28,7 @@ import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -77,6 +78,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     private MessageBusConnection mbc;
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
+    public RadicleCliService radCli;
     public List<GitCommit> commitHistory;
 
     @Before
@@ -111,6 +113,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         /* initialize rad stub service */
         radStub = RadStub.replaceRadicleProjectService(this, change.getBeforeRevision().getRevisionNumber().asString(), getProject());
+        radCli = getProject().getService(RadicleCliService.class);
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 

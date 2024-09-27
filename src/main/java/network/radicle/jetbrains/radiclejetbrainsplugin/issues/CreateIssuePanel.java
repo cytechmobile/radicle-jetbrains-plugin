@@ -27,9 +27,9 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PublishDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
@@ -171,18 +171,14 @@ public class CreateIssuePanel {
                 var assignees = assigneeSelect.delegates.stream().map(d -> d.id).collect(Collectors.toList());
                 var labels = labelSelect.storeLabels;
                 var repo = (GitRepository) projectSelect.getSelectedItem();
+                if (repo == null) {
+                    return;
+                }
                 newIssueButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var radInspect = new RadInspect(repo);
-                    var output = radInspect.perform();
-                    if (!RadAction.isSuccess(output)) {
-                        RadAction.showErrorNotification(project,
-                                RadicleBundle.message("radCliError"),
-                                RadicleBundle.message("errorFindingProjectId"));
-                        return;
-                    }
-                    var radProjectId = output.getStdout().trim();
-                    var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProjectId, descriptionField.getEmbedList());
+                    var rad = project.getService(RadicleCliService.class);
+                    var radProject = rad.getRadRepo(repo);
+                    var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProject.id, descriptionField.getEmbedList());
                     ApplicationManager.getApplication().invokeLater(() -> {
                         if (isSuccess) {
                             issueTabController.createPanel();
@@ -316,13 +312,12 @@ public class CreateIssuePanel {
             return CompletableFuture.supplyAsync(() -> {
                 var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>>();
                 var selectedProject = (GitRepository) projectSelect.getSelectedItem();
-                var radInspect = new RadInspect(selectedProject);
-                var output = radInspect.perform();
-                if (!RadAction.isSuccess(output)) {
+                if (selectedProject == null) {
                     return assignees;
                 }
-                var radProjectId = output.getStdout().trim();
-                var projectInfo = api.fetchRadProject(radProjectId);
+                var rad = project.getService(RadicleCliService.class);
+                var radProject = rad.getRadRepo(selectedProject);
+                var projectInfo = api.fetchRadProject(radProject.id);
                 for (var delegate : projectInfo.delegates) {
                     var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate.id, delegate.alias);
                     var isSelected = delegates.stream().anyMatch(d -> d.id.equals(delegate.id));

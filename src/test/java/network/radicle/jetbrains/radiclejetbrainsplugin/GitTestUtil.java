@@ -32,7 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GitTestUtil {
     private static final Logger logger = LoggerFactory.getLogger(GitTestUtil.class);
 
-    @NotNull
     public static GitRepository createGitRepository(
             @NotNull Project project, @NotNull String remotePath) {
         try {

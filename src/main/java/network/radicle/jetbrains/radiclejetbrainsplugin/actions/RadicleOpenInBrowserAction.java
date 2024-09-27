@@ -12,9 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInspect;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URI;
@@ -82,13 +81,12 @@ public class RadicleOpenInBrowserAction extends AnAction {
             return;
         }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radInspect = new RadInspect(repo);
-            var output = radInspect.perform();
-            if (!RadAction.isSuccess(output)) {
+            var rad = project.getService(RadicleCliService.class);
+            var radProject = rad.getRadRepo(repo);
+            if (Strings.isNullOrEmpty(radProject.id)) {
                 return;
             }
-            var radProjectId = output.getStdout().trim();
-            var url = UI_URL + nodeUrl + "/" + radProjectId + "/tree" + fileToOpen;
+            var url = UI_URL + nodeUrl + "/" + radProject.id + "/tree" + fileToOpen;
             browserLauncher.browse(URI.create(url));
         });
     }
