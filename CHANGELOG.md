@@ -4,23 +4,37 @@
 
 ## [Unreleased]
 
+## [0.11.0] - 2024-09-27
+
+- Settings: Make the settings window responsive
+
+- Status Bar: Show or hide the status bar based on whether the project is RAD initialized
+
+- Radicle Clone Window: Remove the "Browse Projects" view
+
+- Get issue list: Use cli in order to fetch issues instead of HTTPD
+
+- Add / remove issue assignees: Use cli to perform these actions instead of HTTPD
+
+- Add / remove issue labels: Use cli to perform these actions instead of HTTPD
+
+- Add / remove patch labels: Use cli to perform these actions instead of HTTPD
+
+- Change issue state: Use cli to perform this action instead of HTTPD
+
+- Welcome screen clone: Add RAD Path and RAD Home text fields to the welcome screen so the user can clone a Radicle project
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.10.0...v0.11.0
+
 ## [0.10.0] - 2024-06-28
 
 - StatusBar: Show node and httpd status
-
 - settings: Check HTTPD API version and report incompatibilities
-
 - patches & issues: Add copy to clipboard for patch/issue ID
-
 - settings: Show warning for non-default RAD_HOME. On Linux/mac, users should make sure that the correct RAD_HOME path is picked up by the spawned git process. On Windows/WSL, chances are that non-default RAD_HOME won't be picked up by git.
-
 - inline comments: Show  comments from previous revisions. If the line was changed between revisions, then also add an 'OUTDATED' label.
-
 - Commit & files panel: Fetch commits prior to attempting to show diff/files changed. Resolves the issue that showed 0 file/diff changes on first load.
-
 - patch tab: Fix patch description. In info (sidebar), truncate if too long (>100 with ellipsis). In timeline, use latest non-empty,
 not only the one in the last revision.  Change "View Timeline" to "Open in Editor".
-
 - patch: Fix patch merge button identifying delegates
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.9.2...v0.10.0
 
@@ -424,7 +438,8 @@ Others:
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
 
-[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.10.0...HEAD
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.0...HEAD
+[0.11.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.10.0...v0.11.0
 [0.10.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.2...v0.10.0
 [0.9.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.1...v0.9.2
 [0.9.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.0...v0.9.1
