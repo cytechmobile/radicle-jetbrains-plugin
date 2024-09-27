@@ -63,7 +63,7 @@ public class ReusableSteps {
     public void refreshFromDisk() {
         for (int i = 0; i < 10; i++) {
             try {
-                actionMenu(remoteRobot, "File", "").click();
+                actionMenu(remoteRobot, "File", "").moveMouse();
                 var menuItem = actionMenuItem(remoteRobot, "Reload All from Disk");
                 if (menuItem != null) {
                     menuItem.click();
@@ -104,7 +104,9 @@ public class ReusableSteps {
         step("Import Project from VCS", () -> {
             final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
             welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
-            welcomeFrame.importProjectLink().click();
+            log.error("clicking clone repo");
+            welcomeFrame.cloneRepoLink().click();
+            log.error("clicked clone repo");
 
             final var urlInputFieldLocator = byXpath("//div[@class='TextFieldWithHistory']");
             remoteRobot.find(ComponentFixture.class, urlInputFieldLocator, COMPONENT_SEARCH_TIMEOUT_DURATION).click();
@@ -121,22 +123,6 @@ public class ReusableSteps {
                 keyboard.enterText(localDir.toAbsolutePath().toString(), 0);
             }
             remoteRobot.find(JButtonFixture.class, byXpath("//div[@text='Clone']")).click();
-        });
-    }
-
-    public void importRadicleProject(Path localDir) {
-        step("Import Project from Radicle", () -> {
-            // get from VCS
-            final WelcomeFrameFixture welcomeFrame = remoteRobot.find(WelcomeFrameFixture.class, Duration.ofSeconds(50));
-            welcomeFrame.find(JLabelFixture.class, byXpath("//div[@text='IntelliJ IDEA']")).click();
-            welcomeFrame.openProjectLink().click();
-
-            final var projectPathFieldLocator = byXpath("//div[@class='BorderlessTextField']");
-            remoteRobot.find(ComponentFixture.class, projectPathFieldLocator, COMPONENT_SEARCH_TIMEOUT_DURATION).click();
-            keyboard.selectAll();
-            keyboard.backspace();
-            keyboard.enterText("/" + localDir.toAbsolutePath(), 0);
-            keyboard.enter();
         });
     }
 

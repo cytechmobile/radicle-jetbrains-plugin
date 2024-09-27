@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: corretto
-          java-version: 17
+          java-version: 21
       - name: Install Radicle
         env:
           RAD_HOME: ${{ github.workspace }}/.radicle

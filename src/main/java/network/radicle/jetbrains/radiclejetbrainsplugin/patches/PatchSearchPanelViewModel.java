@@ -21,9 +21,8 @@ import java.util.stream.Collectors;
 public class PatchSearchPanelViewModel extends SearchViewModelBase<PatchListSearchValue, PatchSearchPanelViewModel.PatchListQuickFilter, RadPatch> {
 
 
-    public PatchSearchPanelViewModel(@NotNull CoroutineScope scope,
-                                     @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, Project project) {
-        super(scope, historyModel, new PatchListSearchValue(), new PatchListQuickFilter(), project);
+    public PatchSearchPanelViewModel(@NotNull CoroutineScope scope, @NotNull ReviewListSearchHistoryModel<PatchListSearchValue> historyModel, Project project) {
+        super(scope, historyModel, new PatchListSearchValue(), new PatchListSearchValue(), project);
     }
 
     public MutableStateFlow<String> authorFilterState() {

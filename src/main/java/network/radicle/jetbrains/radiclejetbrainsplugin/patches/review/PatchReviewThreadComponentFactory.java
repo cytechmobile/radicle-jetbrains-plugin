@@ -62,6 +62,7 @@ public class PatchReviewThreadComponentFactory {
     public PatchReviewThreadComponentFactory(RadPatch patch, ObservableThreadModel threadsModel, Editor editor) {
         this.rad = patch.project.getService(RadicleProjectService.class);
         this.cli = patch.project.getService(RadicleCliService.class);
+        this.radDetails = cli.getCurrentIdentity();
         this.threadsModel = threadsModel;
         this.patch = patch;
         this.editor = editor;
@@ -160,7 +161,7 @@ public class PatchReviewThreadComponentFactory {
             return Unit.INSTANCE;
         });
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-        radDetails = this.rad.getRadDetails();
+        radDetails = cli.getCurrentIdentity();
         var self = radDetails != null && radDetails.did.equals(disc.author.id);
         // TODO: removing functionality to edit/delete comment, not supported on CLI
         /*if (self) {

@@ -23,7 +23,7 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     public IssueSearchPanelViewModel(@NotNull CoroutineScope scope,
                                      @NotNull ReviewListSearchHistoryModel<IssueListSearchValue> historyModel,
                                      Project project) {
-        super(scope, historyModel, new IssueListSearchValue(), new IssueListQuickFilter(), project);
+        super(scope, historyModel, new IssueListSearchValue(), new IssueListSearchValue(), project);
     }
 
     public MutableStateFlow<String> authorFilterState() {

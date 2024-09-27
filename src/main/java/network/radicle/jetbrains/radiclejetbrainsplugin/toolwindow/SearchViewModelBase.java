@@ -25,7 +25,7 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
     private List<String> projectNames = List.of();
 
     public SearchViewModelBase(@NotNull CoroutineScope scope, @NotNull ReviewListSearchHistoryModel<T> historyModel,
-                               @NotNull T emptySearch, @NotNull E defaultQuickFilter, Project project) {
+                               @NotNull T emptySearch, @NotNull T defaultQuickFilter, Project project) {
         super(scope, historyModel, emptySearch, defaultQuickFilter);
         this.project = project;
     }

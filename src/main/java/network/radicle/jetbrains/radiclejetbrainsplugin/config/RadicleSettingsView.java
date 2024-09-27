@@ -39,8 +39,8 @@ import java.util.concurrent.TimeUnit;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction.showNotification;
 
 public class RadicleSettingsView  implements SearchableConfigurable {
-    private static final Version MIN_VERSION = new Version("0.8.0");
-    private static final Version MAX_VERSION = new Version("1.0.0");
+    private static final Version MIN_VERSION = new Version("1.0.0");
+    private static final Version MAX_VERSION = new Version("1.1.0");
     private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
     public static final String ID = RadicleBundle.message("radicle");
 
@@ -265,12 +265,12 @@ public class RadicleSettingsView  implements SearchableConfigurable {
 
     private void initComponents() {
         radPathField.setText(this.projectSettings.getPath());
-        radPathField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
-                new FileChooserDescriptor(true, false, false, false, false, false));
+        radPathField.addBrowseFolderListener(null, new FileChooserDescriptor(true, false, false, false, false, false)
+                .withTitle(RadicleBundle.message("selectExecutable")).withDescription(""));
 
         radHomeField.setText(this.projectSettings.getRadHome());
-        radHomeField.addBrowseFolderListener(RadicleBundle.message("selectExecutable"), "", null,
-                new FileChooserDescriptor(false, true, false, false, false, false));
+        radHomeField.addBrowseFolderListener(null, new FileChooserDescriptor(false, true, false, false, false, false)
+                        .withTitle(RadicleBundle.message("selectExecutable")).withDescription(""));
 
         enforceVersionLabel.setVisible(false);
         enforceVersionLabel.setText(RadicleBundle.message("unSupportedCliVer"));

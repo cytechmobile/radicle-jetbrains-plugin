@@ -12,9 +12,11 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitReference;
 import git4idea.GitVcs;
 import git4idea.actions.GitStash;
 import git4idea.branch.GitBranchUiHandlerImpl;
+import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchWorker;
 import git4idea.branch.GitBrancher;
 import git4idea.commands.Git;
@@ -91,7 +93,7 @@ public class MergePatchAction extends AbstractAction {
             }
             // cleanup
             shouldCleanup = !patch.repo.getStagingAreaHolder().getAllRecords().isEmpty() ||
-                    !patch.repo.getUntrackedFilesHolder().getUntrackedFilePaths().isEmpty();
+                    !patch.repo.getUntrackedFilesHolder().retrieveUntrackedFilePaths().isEmpty();
             if (shouldCleanup) {
                 boolean stashed = stashChanges();
                 if (!stashed) {
@@ -288,7 +290,17 @@ public class MergePatchAction extends AbstractAction {
                 final var gbw = new GitBranchWorker(patch.project, Git.getInstance(), gbui);
                 final var deleteOnMerge = initialBranchTrackedPatch ? GitBrancher.DeleteOnMergeOption.PROPOSE : GitBrancher.DeleteOnMergeOption.NOTHING;
                 try {
-                    gbw.merge(patchRemoteBranchName, deleteOnMerge, List.of(patch.repo));
+                    final var repos = List.of(patch.repo);
+                    GitReference branch = GitBranchUtil.getCommonLocalBranches(repos).stream().filter(b -> b.getName().equals(patchRemoteBranchName))
+                            .findFirst().orElse(null);
+                    if (branch == null) {
+                        branch = GitBranchUtil.getCommonRemoteBranches(repos).stream().filter(b -> b.getName().equals(patchRemoteBranchName))
+                                .findFirst().orElse(null);
+                        if (branch == null) {
+                            branch = new GitLocalBranch(patchRemoteBranchName);
+                        }
+                    }
+                    gbw.merge(branch, deleteOnMerge, List.of(patch.repo));
                 } catch (Exception e) {
                     logger.warn("caught exception during merge", e);
                     error.set(true);
