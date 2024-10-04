@@ -28,6 +28,7 @@ import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
@@ -46,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -225,6 +227,17 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         var api = new RadicleProjectApi(myProject, client);
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
+    }
+
+    public RadicleCliService replaceCliService(String head) {
+        var cli = new RadicleCliService(myProject) {
+            @Override
+            public RadProject getRadRepo(GitRepository repo) {
+                return new RadProject(UUID.randomUUID().toString(), "TestProject", "", "main", head, List.of());
+            }
+        };
+        ServiceContainerUtil.replaceService(myProject, RadicleCliService.class, cli, this.getTestRootDisposable());
+        return cli;
     }
 
     public void executeUiTasks() {

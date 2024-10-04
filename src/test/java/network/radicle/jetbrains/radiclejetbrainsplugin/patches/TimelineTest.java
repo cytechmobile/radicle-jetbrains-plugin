@@ -144,6 +144,7 @@ public class TimelineTest extends AbstractIT {
         var api = replaceApiService();
         patch = createPatch();
         currentRevision = firstRepo.getCurrentRevision();
+        replaceCliService(currentRevision);
         final var httpClient = api.getClient();
         final int[] statusCode = {200};
         when(httpClient.execute(any())).thenAnswer((i) -> {

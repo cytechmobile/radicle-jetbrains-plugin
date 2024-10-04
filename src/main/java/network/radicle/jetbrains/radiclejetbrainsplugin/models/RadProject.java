@@ -15,10 +15,15 @@ public class RadProject {
     }
 
     public RadProject(String id, String name, String description, String defaultBranch, List<RadAuthor> delegates) {
+        this(id, name, description, defaultBranch, null, delegates);
+    }
+
+    public RadProject(String id, String name, String description, String defaultBranch, String head, List<RadAuthor> delegates) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.defaultBranch = defaultBranch;
         this.delegates = delegates;
+        this.head = head;
     }
 }
