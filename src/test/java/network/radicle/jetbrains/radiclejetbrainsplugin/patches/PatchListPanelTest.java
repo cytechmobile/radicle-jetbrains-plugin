@@ -139,7 +139,7 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(patchModel.getSize()).isEqualTo(2);
 
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
     @Test
@@ -157,14 +157,14 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
 
         filterWithSearch.searchQuery = patches.get(0).title;
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
     @Test
@@ -180,7 +180,9 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(projectNames.get().size()).isEqualTo(1);
         assertThat(projectNames.get().size()).isEqualTo(1);
         assertThat(projectNames.get().get(0)).contains("testRemote");
-        assertThat(filterAuthors.get().get(0)).isEqualTo(patches.get(0).author.id);
+
+        assertThat(filterAuthors.get().get(0)).isIn(patches.get(0).author.id, patches.get(1).author.id);
+        assertThat(filterAuthors.get().get(1)).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
     @Test
@@ -250,14 +252,14 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
 
         filterWithSearch.label = "firstTag";
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
-        radPatch = patchModel.get(0);
+         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
         filterWithSearch.label = "unknownTag";

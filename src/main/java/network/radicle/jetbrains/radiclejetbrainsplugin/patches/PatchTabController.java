@@ -9,6 +9,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.TabController;
 
@@ -33,7 +34,8 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
         patchModel = new SingleValueModel<>(patch);
         createInternalPatchProposalPanel(patchModel, mainPanel);
         patchModel.addListener(p -> {
-            var fetched = api.fetchPatch(patch.radProject.id, patch.repo, patch.id);
+            var cliService = project.getService(RadicleCliService.class);
+            var fetched = cliService.getPatch(patch.repo, patch.radProject.id, patch.id);
             if (fetched != null) {
                 ApplicationManager.getApplication().invokeLater(() -> createPatchProposalPanel(fetched));
             }

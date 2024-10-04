@@ -318,6 +318,14 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("inspect"), root);
     }
 
+    public ProcessOutput inspectDelegates(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("inspect", "--delegates"), root);
+    }
+
+    public ProcessOutput inspectIdentity(GitRepository root) {
+        return executeCommand(root.getRoot().getPath(), List.of("inspect", "--identity"), root);
+    }
+
     public ProcessOutput sync(GitRepository root, boolean fetch) {
         if (fetch) {
             return executeCommand(root.getRoot().getPath(), List.of("sync", "-f"), root);

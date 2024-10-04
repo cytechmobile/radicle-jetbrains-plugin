@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -78,6 +79,7 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
             this.commit = commit;
         }
 
+        @JsonIgnore
         public Map<String, Object> getMapObject() {
             return Map.of("path",  path, "commit", commit, "new",
                     Map.of("type", "lines", "range", Map.of("start", start, "end", end)));

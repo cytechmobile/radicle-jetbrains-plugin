@@ -31,6 +31,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchComponentFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jetbrains.annotations.NotNull;
 
@@ -136,8 +137,8 @@ public class ReviewSubmitAction extends JButtonAction {
             return;
         }
         //If tab is open then refresh it with the new review
-        var api = patch.project.getService(RadicleProjectApi.class);
-        var fetched = api.fetchPatch(patch.radProject.id, patch.repo, patch.id);
+        var cliService = patch.project.getService(RadicleCliService.class);
+        var fetched = cliService.getPatch(patch.repo, patch.radProject.id, patch.id);
         var tab = editorTab.get();
         var file = (PatchVirtualFile) tab.getFile();
         file.getProposalPanel().getController().createPatchProposalPanel(fetched);

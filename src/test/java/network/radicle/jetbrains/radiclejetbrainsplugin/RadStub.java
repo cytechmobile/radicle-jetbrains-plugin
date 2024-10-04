@@ -10,8 +10,12 @@ import git4idea.GitLocalBranch;
 import git4idea.push.GitPushRepoResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsViewTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
@@ -87,6 +91,30 @@ public class RadStub extends RadicleProjectService {
             stdout = "rad " + AbstractIT.RAD_VERSION;
         } else if (cmdLine.getCommandLineString().contains("path")) {
             stdout = RAD_HOME;
+        } else if (cmdLine.getCommandLineString().contains("cob list") && cmdLine.getCommandLineString().contains(RadCobList.Type.PATCH.value)) {
+            StringBuilder patchesId = new StringBuilder();
+            for (var patch : PatchListPanelTest.getTestPatches()) {
+                patchesId.append(patch.id).append("\n");
+            }
+            stdout = patchesId.toString();
+        } else if (cmdLine.getCommandLineString().contains("cob show") && cmdLine.getCommandLineString().contains(RadCobList.Type.PATCH.value)) {
+            var parts = cmdLine.getCommandLineString().split("--object");
+            var patchId = parts[parts.length - 1].replace("\"", "").trim();
+            var patches = new ArrayList<>(PatchListPanelTest.getTestPatches());
+            if (TimelineTest.patch != null) {
+                var myPatch = new RadPatch(TimelineTest.patch);
+                myPatch.repo = null;
+                myPatch.project = null;
+                myPatch.seedNode = null;
+                patches.add(myPatch);
+            }
+            var patch = patches.stream().filter(p -> p.id.equals(patchId)).findFirst().orElse(null);
+            var cliPatch = RadPatch.getPatchCli(patch);
+            try {
+                stdout = RadicleProjectApi.MAPPER.writeValueAsString(cliPatch);
+            } catch (Exception e) {
+                logger.warn("unable to write values as string", e);
+            }
         } else if (cmdLine.getCommandLineString().contains("cob list")) {
             StringBuilder issuesId = new StringBuilder();
             for (var issue : IssueListPanelTest.getTestIssues()) {

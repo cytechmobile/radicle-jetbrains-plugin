@@ -16,7 +16,7 @@ import git4idea.index.GitIndexUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +30,13 @@ import java.util.Optional;
 public class ObservableThreadModel {
     private static final Logger logger = LoggerFactory.getLogger(ObservableThreadModel.class);
     private final EventDispatcher<ChangeListener> changeEventDispatcher = EventDispatcher.create(ChangeListener.class);
-    private final RadicleProjectApi api;
+    private final RadicleCliService cliService;
     private final List<LineRange> modifiedLines;
     private final Change change;
     private final boolean isLeft;
 
     public ObservableThreadModel(Change change, Project project, boolean isLeft) {
-        this.api = project.getService(RadicleProjectApi.class);
+        this.cliService = project.getService(RadicleCliService.class);
         this.change = change;
         this.isLeft = isLeft;
         this.modifiedLines = calculateModifiedLines();
@@ -196,7 +196,7 @@ public class ObservableThreadModel {
 
 
     private void updateEditorCommentsUi(RadPatch patch) {
-        var fetched = this.api.fetchPatch(patch.radProject.id, patch.repo, patch.id);
+        var fetched = this.cliService.getPatch(patch.repo, patch.radProject.id, patch.id);
         boolean success = fetched != null;
         if (success) {
             var inlineComments = getInlineComments(fetched);
@@ -230,7 +230,7 @@ public class ObservableThreadModel {
             contentRevision = change.getAfterRevision();
         }
         var file = contentRevision.getFile();
-        var repo = GitUtil.getRepositoryManager(api.getProject()).getRepositoryForFileQuick(file);
+        var repo = GitUtil.getRepositoryManager(cliService.getProject()).getRepositoryForFileQuick(file);
         var rootPath = repo.getRoot().getPath();
         return Paths.get(rootPath).relativize(Paths.get(file.getPath())).toString().replace("\\", "/");
     }

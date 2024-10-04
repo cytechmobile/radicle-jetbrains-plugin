@@ -28,6 +28,8 @@ import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -114,6 +116,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 
+        replaceCliService();
         replaceAuthService();
 
         /* add HTTP daemon in config */
@@ -219,9 +222,24 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     public RadicleProjectApi replaceApiService() {
         var client = mock(CloseableHttpClient.class);
-        var api = new RadicleProjectApi(myProject, client);
+        var api = new RadicleProjectApi(myProject, client) {
+            @Override
+            public String getWebUrl() {
+                return "url";
+            }
+        };
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
+    }
+
+    public void replaceCliService() {
+        var cliService = new RadicleCliService(myProject) {
+            @Override
+            public RadProject getRadRepo(GitRepository repo) {
+                return new RadProject("test", "test", "", "", List.of());
+            }
+        };
+        ServiceContainerUtil.replaceService(myProject, RadicleCliService.class, cliService, this.getTestRootDisposable());
     }
 
     public void executeUiTasks() {

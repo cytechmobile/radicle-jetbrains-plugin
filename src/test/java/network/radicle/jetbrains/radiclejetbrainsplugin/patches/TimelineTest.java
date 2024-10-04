@@ -93,6 +93,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -123,7 +124,7 @@ public class TimelineTest extends AbstractIT {
 
     private String dummyComment = "Hello";
     private String replyComment = "This is my reply";
-    private RadPatch patch;
+    public static RadPatch patch;
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
@@ -1050,8 +1051,8 @@ public class TimelineTest extends AbstractIT {
         var secondCommit = commitHistory.get(1);
         var firstDiscussion = createDiscussion("123", "123", firstComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
-        var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
-        var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
+        var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion, Instant.now());
+        var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion, Instant.now().plus(1, ChronoUnit.DAYS));
         var myPatch = new RadPatch(UUID.randomUUID().toString(), new RadProject(UUID.randomUUID().toString(),
                 "test", "test", "main", List.of()), new RadAuthor(AUTHOR),
                 "testPatch", new RadAuthor(AUTHOR), "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
@@ -1115,7 +1116,7 @@ public class TimelineTest extends AbstractIT {
         return Paths.get(rootPath).relativize(Paths.get(file.getPath())).toString().replace("\\", "/");
     }
 
-    private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion) {
+    private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion, Instant timestamp) {
         var firstChange = commit.getChanges().stream().findFirst().orElseThrow();
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
         var discussions = new ArrayList<RadDiscussion>();
@@ -1124,7 +1125,7 @@ public class TimelineTest extends AbstractIT {
                 RadPatch.Review.Verdict.ACCEPT, REVIEW_SUMMARY, List.of(), Instant.now());
 
         return new RadPatch.Revision(id, new RadAuthor(UUID.randomUUID().toString()), description, List.of(), List.of(), base, commit.getId().asString(),
-                List.of("branch"), Instant.now(), discussions, List.of(review));
+                List.of("branch"), timestamp, discussions, List.of(review));
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {

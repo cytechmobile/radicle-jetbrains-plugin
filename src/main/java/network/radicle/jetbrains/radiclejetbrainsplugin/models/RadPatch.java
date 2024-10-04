@@ -5,10 +5,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
@@ -17,8 +20,10 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Set;
 
@@ -145,11 +150,16 @@ public class RadPatch {
     }
 
     public Revision findRevision(String revisionId) {
-       return revisions.stream().filter(rev -> rev.id().equals(revisionId)).findFirst().orElse(null);
+        return revisions.stream().filter(rev -> rev.id().equals(revisionId)).findFirst().orElse(null);
     }
 
     public record Revision(
-            String id, RadAuthor author, String description, List<Edit> edits, List<Reaction> reactions, String base, String oid, List<String> refs,
+            String id, RadAuthor author,
+            @JsonIgnore
+            String description,
+            @JsonProperty("description")
+            List<Edit> edits,
+            List<Reaction> reactions, String base, String oid, List<String> refs,
             Instant timestamp, List<RadDiscussion> discussions, List<Review> reviews) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
@@ -175,9 +185,11 @@ public class RadPatch {
         }
     }
 
-    public record Edit(RadAuthor author, String body, Instant timestamp, List<Embed> embeds) { }
+    public record Edit(RadAuthor author, String body, Instant timestamp, List<Embed> embeds) {
+    }
 
-    public record Merge(RadAuthor author, String commit, Instant timestamp, String revision) { }
+    public record Merge(RadAuthor author, String commit, Instant timestamp, String revision) {
+    }
 
     public record Review(String id, RadAuthor author, Verdict verdict, String summary,
                          List<RadDiscussion> comments, Instant timestamp) implements TimelineEvent {
@@ -244,4 +256,175 @@ public class RadPatch {
     public interface TimelineEvent {
         Instant getTimestamp();
     }
+
+    public static RadPatchCli getPatchCli(RadPatch other) {
+        var radPatchCli = new RadPatchCli();
+        radPatchCli.id = other.id;
+        radPatchCli.title = other.title;
+        radPatchCli.author = other.author;
+        radPatchCli.labels = other.labels;
+        radPatchCli.state = other.state;
+        var map = new HashMap<String, RadPatchCli.Revision>();
+        for (var revision : other.revisions) {
+            var reviewMap = new HashMap<String, List<RadPatchCli.Review>>();
+            for (var review : revision.reviews) {
+                var exists = reviewMap.get(review.author.id);
+                if (exists == null) {
+                    var discussionMap = new HashMap<String, RadPatchCli.MyDisc>();
+                    for (var disc : review.comments) {
+                        var newDisc = new RadPatchCli.MyDisc(disc.author, disc.reactions, disc.embeds,
+                                disc.replyTo, disc.body, disc.location, List.of(new RadPatchCli.Edits(disc.author.id, disc.timestamp, disc.body, disc.embeds)));
+                        discussionMap.put(disc.id, newDisc);
+                    }
+                    reviewMap.put(review.author.id, List.of(new RadPatchCli.Review(review.id, review.author,
+                            review.verdict, review.summary, new RadPatchCli.MyDiscussion(discussionMap, List.of()), review.timestamp)));
+                } else {
+                    var myList = reviewMap.get(review.author.id);
+                    var discussionMap = new HashMap<String, RadPatchCli.MyDisc>();
+                    for (var disc : review.comments) {
+                        var newDisc = new RadPatchCli.MyDisc(disc.author, disc.reactions, disc.embeds,
+                                disc.replyTo, disc.body, disc.location, List.of(new RadPatchCli.Edits(disc.author.id, disc.timestamp, disc.body, disc.embeds)));
+                        discussionMap.put(disc.id, newDisc);
+                    }
+                    myList.add(new RadPatchCli.Review(review.id, review.author,
+                            review.verdict, review.summary, new RadPatchCli.MyDiscussion(discussionMap, List.of()), review.timestamp));
+                }
+            }
+            var discussionMap = new HashMap<String, RadPatchCli.MyDisc>();
+            for (var disc : revision.discussions) {
+                var newDisc = new RadPatchCli.MyDisc(disc.author, disc.reactions, disc.embeds,
+                        disc.replyTo, disc.body, disc.location, List.of(new RadPatchCli.Edits(disc.author.id, disc.timestamp, disc.body, disc.embeds)));
+                discussionMap.put(disc.id, newDisc);
+            }
+            var patchCliRevision = new RadPatchCli.Revision(revision.id,
+                    revision.author, revision.edits, revision.reactions, revision.base, revision.oid,
+                    revision.refs, reviewMap, revision.timestamp, new RadPatchCli.MyDiscussion(discussionMap, List.of()));
+            map.put(revision.id, patchCliRevision);
+            radPatchCli.revisions = map;
+        }
+        return radPatchCli;
+    }
+
+    public static class RadPatchCli {
+        public String id;
+        public String title;
+        public RadAuthor author;
+        public List<String> labels;
+        public State state;
+        public String target;
+        public Map<String, Revision> revisions;
+
+        public record Revision(
+                String id, RadAuthor author,
+                @JsonProperty("description")
+                List<Edit> edits,
+                List<Reaction> reactions, String base, String oid, List<String> refs,
+                Map<String, List<Review>> reviews,
+                Instant timestamp, MyDiscussion discussion) {
+        }
+
+        public record MyDiscussion(Map<String, MyDisc> comments, List<String> timeline) {
+        }
+
+        public record Edits(String author, Instant timestamp, String body, List<Embed> embeds) {
+        }
+
+        public record MyDisc(RadAuthor author,
+                             @JsonDeserialize(using = RadDiscussion.ReactionDeserializer.class)
+                             List<Reaction> reactions,
+                             List<Embed> embeds,
+                             String replyTo,
+                             String body, RadDiscussion.Location location, List<Edits> edits) {
+        }
+
+        public record Review(String id, RadAuthor author, RadPatch.Review.Verdict verdict, String summary,
+                             MyDiscussion comments, Instant timestamp) implements TimelineEvent {
+            @Override
+            public Instant getTimestamp() {
+                return timestamp;
+            }
+
+            @JsonFormat(shape = JsonFormat.Shape.STRING)
+            public enum Verdict {
+                ACCEPT("accept"),
+                REJECT("reject");
+
+                private final String value;
+
+                Verdict(String value) {
+                    this.value = value;
+                }
+
+                @JsonValue
+                public String getValue() {
+                    return value;
+                }
+
+                @JsonCreator
+                public static RadPatch.Review.Verdict forValues(String val) {
+                    for (RadPatch.Review.Verdict verdict : RadPatch.Review.Verdict.values()) {
+                        if (verdict.value.equals(val.toLowerCase())) {
+                            return verdict;
+                        }
+                    }
+                    return null;
+                }
+            }
+        }
+    }
+
+    public static RadPatch deserialize(String json) {
+        try {
+            var patchCli = RadicleCliService.MAPPER.readValue(json, new TypeReference<RadPatchCli>() {
+            });
+            var revisions = new ArrayList<Revision>();
+            for (var key : patchCli.revisions.keySet()) {
+                var rev = patchCli.revisions.get(key);
+                var discussions = new ArrayList<RadDiscussion>();
+                var reviews = new ArrayList<Review>();
+
+                for (var discId : rev.discussion.comments.keySet()) {
+                    var disc = rev.discussion.comments.get(discId);
+                    if (disc == null) {
+                        continue;
+                    }
+                    var discussion = new RadDiscussion(discId, disc.author,
+                            disc.body, !disc.edits.isEmpty() ? disc.edits.get(0).timestamp : Instant.now(), disc.replyTo, disc.reactions,
+                            !disc.edits.isEmpty() ? disc.edits.get(0).embeds : List.of(), disc.location);
+                    discussions.add(discussion);
+                }
+
+                for (var key1 : rev.reviews.keySet()) {
+                    var myReviews = rev.reviews.get(key1);
+                    var myDiscussions = new ArrayList<RadDiscussion>();
+                    for (var myReview : myReviews) {
+                        for (var discId : myReview.comments.comments.keySet()) {
+                            var disc = myReview.comments.comments.get(discId);
+                            if (disc == null) {
+                                continue;
+                            }
+                            var discussion = new RadDiscussion(discId, disc.author,
+                                    disc.body, !disc.edits.isEmpty() ? disc.edits.get(0).timestamp : Instant.now(), disc.replyTo,
+                                    disc.reactions, !disc.edits.isEmpty() ? disc.edits.get(0).embeds : List.of(), disc.location);
+                            myDiscussions.add(discussion);
+                        }
+                        var myR = new Review(myReview.id, myReview.author, myReview.verdict, myReview.summary, myDiscussions, myReview.timestamp);
+                        reviews.add(myR);
+                    }
+                }
+                discussions.sort(Comparator.comparing(RadDiscussion::getTimestamp));
+                var myRevision = new Revision(rev.id, rev.author,
+                        !rev.edits.isEmpty() ? rev.edits.get(0).body : "", rev.edits,
+                        rev.reactions, rev.base, rev.oid, List.of(), rev.timestamp, discussions, reviews);
+                revisions.add(myRevision);
+            }
+            revisions.sort(Comparator.comparing(Revision::getTimestamp));
+            return new RadPatch("", null, null, patchCli.title, patchCli.author,
+                    patchCli.target, patchCli.labels, patchCli.state, revisions);
+        } catch (Exception e) {
+            logger.warn("Unable to deserialize patch");
+        }
+        return null;
+    }
+
 }
