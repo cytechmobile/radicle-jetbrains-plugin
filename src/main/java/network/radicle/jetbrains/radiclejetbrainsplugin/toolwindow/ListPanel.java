@@ -79,7 +79,7 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
         searchVm.getSearchState().collect((patchListSearchValue, continuation) -> {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                try {
-                   var isDataLoaded = searchVm.getCountDown().await(5, TimeUnit.SECONDS);
+                   var isDataLoaded = searchVm.getCountDown().await(30, TimeUnit.SECONDS);
                    ApplicationManager.getApplication().invokeLater(() -> {
                        if (isDataLoaded) {
                            filterList(patchListSearchValue);

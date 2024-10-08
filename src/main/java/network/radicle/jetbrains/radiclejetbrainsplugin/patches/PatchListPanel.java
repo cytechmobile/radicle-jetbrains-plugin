@@ -12,6 +12,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.ListPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
@@ -43,7 +44,8 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
 
     @Override
     public List<RadPatch> fetchData(String projectId, GitRepository repo) {
-        return api.fetchPatches(projectId, repo);
+       var cliService = repo.getProject().getService(RadicleCliService.class);
+       return cliService.getPatches(repo, projectId);
     }
 
     @Override
@@ -161,7 +163,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 patchId.setForeground(JBColor.GRAY);
                 infoPanel.add(patchId);
 
-                final var revision = patch.revisions.get(patch.revisions.size() - 1);
+                final var revision = patch.getLatestRevision();
                 final var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(revision.timestamp().atZone(ZoneId.systemDefault()));
                 var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " + RadicleBundle.message("by"));
                 info.setForeground(JBColor.GRAY);

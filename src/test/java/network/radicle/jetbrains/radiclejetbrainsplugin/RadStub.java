@@ -10,8 +10,12 @@ import git4idea.GitLocalBranch;
 import git4idea.push.GitPushRepoResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsViewTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
@@ -98,32 +102,57 @@ public class RadStub extends RadicleProjectService {
             stdout = "rad " + AbstractIT.RAD_VERSION;
         } else if (cmdLine.getCommandLineString().contains("path")) {
             stdout = RAD_HOME;
-        } else if (cmdLine.getCommandLineString().contains("cob list")) {
+        } else if (cmdLine.getCommandLineString().contains("cob list") && cmdLine.getCommandLineString().contains(RadCobList.Type.PATCH.value)) {
+            StringBuilder patchesId = new StringBuilder();
+            for (var patch : PatchListPanelTest.getTestPatches()) {
+                patchesId.append(patch.id).append("\n");
+            }
+            stdout = patchesId.toString();
+        } else if (cmdLine.getCommandLineString().contains("cob show") && cmdLine.getCommandLineString().contains(RadCobList.Type.PATCH.value)) {
+            var parts = cmdLine.getCommandLineString().split("--object");
+            var patchId = parts[parts.length - 1].replace("\"", "").trim();
+            var patches = new ArrayList<>(PatchListPanelTest.getTestPatches());
+            if (TimelineTest.patch != null) {
+                var myPatch = new RadPatch(TimelineTest.patch);
+                myPatch.repo = null;
+                myPatch.project = null;
+                myPatch.seedNode = null;
+                patches.add(myPatch);
+            }
+            var patch = patches.stream().filter(p -> p.id.equals(patchId)).findFirst().orElse(null);
+            try {
+                stdout = RadicleProjectApi.MAPPER.writeValueAsString(patch);
+            } catch (Exception e) {
+                logger.warn("unable to write values as string", e);
+            }
+        } else if (cmdLine.getCommandLineString().contains("cob list") && cmdLine.getCommandLineString().contains(RadCobList.Type.ISSUE.value)) {
             StringBuilder issuesId = new StringBuilder();
             for (var issue : IssueListPanelTest.getTestIssues()) {
                 issuesId.append(issue.id).append("\n");
             }
             stdout = issuesId.toString();
-        } else if (cmdLine.getCommandLineString().contains("cob show")) {
+        } else if (cmdLine.getCommandLineString().contains("cob show") && cmdLine.getCommandLineString().contains(RadCobList.Type.ISSUE.value)) {
             var parts = cmdLine.getCommandLineString().split("--object");
             var issueId = parts[parts.length - 1].replace("\"", "").trim();
             var issues = IssueListPanelTest.getTestIssues();
             var issue = issues.stream().filter(is -> issueId.equals(is.id)).findFirst().orElse(null);
-            var serializeIssue = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
-            var discussions = (ArrayList<Map<String, Object>>) serializeIssue.get("thread");
-            serializeIssue.remove("thread");
-            var discussionMap = new HashMap<String, Object>();
-            for (var disc : discussions) {
-                discussionMap.put(disc.get("id").toString(), disc);
-            }
-            var commentMap = new HashMap<String, Object>();
-            commentMap.put("comments", discussionMap);
-            serializeIssue.put("thread", commentMap);
             if (issue != null) {
-                try {
-                    stdout = RadicleProjectApi.MAPPER.writeValueAsString(serializeIssue);
-                } catch (Exception e) {
-                    logger.warn("Unable to write value as a string");
+                var serializeIssue = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
+                var discussions = (ArrayList<Map<String, Object>>) serializeIssue.get("thread");
+                serializeIssue.remove("thread");
+                var discussionMap = new HashMap<String, Object>();
+                for (var disc : discussions) {
+                    discussionMap.put(disc.get("id").toString(), disc);
+                }
+                var commentMap = new HashMap<String, Object>();
+                commentMap.put("comments", discussionMap);
+                serializeIssue.put("thread", commentMap);
+                if (issue != null) {
+                    try {
+                        stdout = RadicleProjectApi.MAPPER.writeValueAsString(serializeIssue);
+                    } catch (Exception e) {
+                        logger.warn("Unable to write value as a string");
+                    }
                 }
             }
         } else if (cmdLine.getCommandLineString().contains("which")) {

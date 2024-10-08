@@ -274,6 +274,8 @@ public class IssueListPanelTest extends AbstractIT {
     }
 
     private static RadDiscussion createDiscussion(String id, String authorId, String body) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(), List.of(), null);
+        var edit = new RadPatch.Edit(new RadAuthor("myTestAuthor"), "", Instant.now(), List.of());
+        var edits = List.of(edit);
+        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "", List.of(), List.of(), null, edits);
     }
 }

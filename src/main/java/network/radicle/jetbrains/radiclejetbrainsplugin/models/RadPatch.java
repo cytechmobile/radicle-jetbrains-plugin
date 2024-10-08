@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Set;
 
@@ -37,7 +38,8 @@ public class RadPatch {
     public String target;
     public List<String> labels;
     public State state;
-    public List<Revision> revisions;
+    public Map<String, Revision> revisions;
+    @JsonIgnore
     public List<Merge> merges;
 
     public RadPatch() {
@@ -46,7 +48,7 @@ public class RadPatch {
 
     public RadPatch(
             String id, RadProject radProject, RadAuthor self, String title, RadAuthor author, String target,
-            List<String> labels, State state, List<Revision> revisions) {
+            List<String> labels, State state, Map<String, Revision> revisions) {
         this.id = id;
         this.radProject = radProject;
         this.self = self;
@@ -86,8 +88,8 @@ public class RadPatch {
     }
 
     public String findRevisionId(String commentId) {
-        for (var revision : revisions) {
-            var found = revision.discussions.stream().anyMatch(d -> d.id.equals(commentId));
+        for (var revision : getRevisionList()) {
+            var found = revision.getDiscussions().stream().anyMatch(d -> d.id.equals(commentId));
             if (found) {
                 return revision.id;
             }
@@ -115,63 +117,125 @@ public class RadPatch {
 
     @JsonIgnore
     public Revision getLatestRevision() {
-        if (this.revisions == null || this.revisions.isEmpty()) {
+        var myRevisions = getRevisionList();
+        if (myRevisions == null || myRevisions.isEmpty()) {
             return null;
         }
-        return this.revisions.get(this.revisions.size() - 1);
+        return myRevisions.get(myRevisions.size() - 1);
     }
 
     @JsonIgnore
     public String getLatestNonEmptyRevisionDescription() {
-        for (int i = this.revisions.size() - 1; i >= 0; i--) {
-            var rev = this.revisions.get(i);
-            if (!Strings.isNullOrEmpty(rev.description)) {
-                return Strings.nullToEmpty(rev.description);
+        var myRevisions = getRevisionList();
+        for (int i = myRevisions.size() - 1; i >= 0; i--) {
+            var rev = myRevisions.get(i);
+            if (!Strings.isNullOrEmpty(rev.getDescription())) {
+                return Strings.nullToEmpty(rev.getDescription());
             }
         }
         return "";
     }
 
     @JsonIgnore
+    public List<Revision> getRevisionList() {
+        if (revisions == null || revisions.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return this.revisions.keySet().stream()
+                .map(revId -> this.revisions.get(revId))
+                .sorted(Comparator.comparing(rev -> rev.timestamp))
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    @JsonIgnore
     public List<TimelineEvent> getTimelineEvents() {
         var list = new ArrayList<TimelineEvent>();
-        for (var revision : revisions) {
+        for (var revision : getRevisionList()) {
             list.add(revision);
-            list.addAll(revision.getReviews());
-            list.addAll(revision.discussions);
+            list.addAll(revision.getReviewList());
+            list.addAll(revision.getDiscussions());
         }
         list.sort(Comparator.comparing(TimelineEvent::getTimestamp));
         return list;
     }
 
     public Revision findRevision(String revisionId) {
-       return revisions.stream().filter(rev -> rev.id().equals(revisionId)).findFirst().orElse(null);
+       return getRevisionList().stream().filter(rev -> rev.id().equals(revisionId)).findFirst().orElse(null);
+    }
+
+    public static class DiscussionObj {
+        public Map<String, RadDiscussion> comments;
+        public List<String> timeline;
+
+        public DiscussionObj() {
+        }
+
+        public DiscussionObj(Map<String, RadDiscussion> comments,
+                             List<String> timeline) {
+            this.comments = comments;
+            this.timeline = timeline;
+        }
+
+        public void setComments(Map<String, RadDiscussion> myComments) {
+            for (var discId : myComments.keySet()) {
+                var discussion = myComments.get(discId);
+                discussion.id = discId;
+            }
+            this.comments = myComments;
+        }
     }
 
     public record Revision(
-            String id, RadAuthor author, String description, List<Edit> edits, List<Reaction> reactions, String base, String oid, List<String> refs,
-            Instant timestamp, List<RadDiscussion> discussions, List<Review> reviews) implements TimelineEvent {
+            String id, RadAuthor author,
+            @JsonProperty("description")
+            List<Edit> edits,
+            List<Reaction> reactions, String base, String oid, List<String> refs,
+            Instant timestamp,
+            DiscussionObj discussion,
+            Map<String, List<Review>> reviews) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
             return timestamp;
         }
 
-        public List<Review> getReviews() {
+        public List<Review> getReviewList() {
             Set<String> seen = new HashSet<>();
-            var myReviews = new ArrayList<>(reviews);
+            var myReviews = new ArrayList<Review>();
+            for (var reviewId : reviews.keySet()) {
+                var reviewList = reviews.get(reviewId);
+                myReviews.addAll(reviewList);
+            }
+            myReviews.sort(Comparator.comparing(Review::timestamp));
             // Remove the duplicates reviews. We can only have 1 review per author per revision
             myReviews.removeIf(e -> !seen.add(e.author.id));
             return myReviews;
         }
 
+        public List<RadDiscussion> getDiscussions() {
+            if (discussion.comments == null || discussion.comments.isEmpty()) {
+                return new ArrayList<>();
+            }
+            return discussion.comments.keySet().stream().map(discussion.comments::get)
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+
         public List<RadDiscussion> getReviewComments(String filePath) {
-            return discussions.stream().filter(disc -> disc.isReviewComment() &&
+            return getDiscussions().stream().filter(disc -> disc.isReviewComment() &&
                             disc.location.path.equals(filePath))
                     .collect(Collectors.toList());
         }
 
         public RadDiscussion findDiscussion(String commentId) {
-            return discussions().stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+            return getDiscussions().stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+        }
+
+        @JsonIgnore
+        public String getDescription() {
+            if (edits.isEmpty()) {
+                return "";
+            }
+            var edit = edits.get(edits.size() - 1);
+            return edit.body;
         }
     }
 
@@ -180,7 +244,7 @@ public class RadPatch {
     public record Merge(RadAuthor author, String commit, Instant timestamp, String revision) { }
 
     public record Review(String id, RadAuthor author, Verdict verdict, String summary,
-                         List<RadDiscussion> comments, Instant timestamp) implements TimelineEvent {
+                         DiscussionObj comments, Instant timestamp) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
             return timestamp;

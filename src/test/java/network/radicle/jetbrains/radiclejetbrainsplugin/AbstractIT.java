@@ -33,6 +33,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliServi
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.assertj.core.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -47,13 +48,13 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.GitTestUtil.addRadRemote;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest.RAD_PROJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -119,6 +120,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         logger.debug("Before revision hash : {}", change.getBeforeRevision().getRevisionNumber().asString());
         logger.debug("Current revision hash : {}", firstRepo.getCurrentRevision());
 
+        replaceCliService("");
         replaceAuthService();
 
         /* add HTTP daemon in config */
@@ -224,20 +226,28 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     public RadicleProjectApi replaceApiService() {
         var client = mock(CloseableHttpClient.class);
-        var api = new RadicleProjectApi(myProject, client);
+        var api = new RadicleProjectApi(myProject, client) {
+            @Override
+            public String getWebUrl() {
+                return "url";
+            }
+        };
         ServiceContainerUtil.replaceService(myProject, RadicleProjectApi.class, api, this.getTestRootDisposable());
         return api;
     }
 
-    public RadicleCliService replaceCliService(String head) {
-        var cli = new RadicleCliService(myProject) {
+    public void replaceCliService(String head) {
+        var cliService = new RadicleCliService(myProject) {
             @Override
             public RadProject getRadRepo(GitRepository repo) {
-                return new RadProject(UUID.randomUUID().toString(), "TestProject", "", "main", head, List.of());
+                if (Strings.isNullOrEmpty(head)) {
+                    return new RadProject(RAD_PROJECT_ID, "test", "", "", List.of());
+                } else {
+                    return new RadProject(RAD_PROJECT_ID, "TestProject", "", "main", head, List.of());
+                }
             }
         };
-        ServiceContainerUtil.replaceService(myProject, RadicleCliService.class, cli, this.getTestRootDisposable());
-        return cli;
+        ServiceContainerUtil.replaceService(myProject, RadicleCliService.class, cliService, this.getTestRootDisposable());
     }
 
     public void executeUiTasks() {

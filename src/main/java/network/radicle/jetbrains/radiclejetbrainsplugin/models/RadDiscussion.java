@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -27,12 +28,13 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
     public List<Reaction> reactions;
     public List<Embed> embeds;
     public Location location;
+    public List<RadPatch.Edit> edits;
 
     public RadDiscussion() {
     }
 
     public RadDiscussion(String id, RadAuthor author, String body, Instant timestamp,
-                         String replyTo, List<Reaction> reactions, List<Embed> embeds, Location location) {
+                         String replyTo, List<Reaction> reactions, List<Embed> embeds, Location location, List<RadPatch.Edit> edits) {
         this.id = id;
         this.author = author;
         this.body = body;
@@ -41,6 +43,7 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
         this.reactions = reactions;
         this.embeds = embeds;
         this.location = location;
+        this.edits = edits;
     }
 
     public boolean isReviewComment() {
@@ -78,6 +81,7 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
             this.commit = commit;
         }
 
+        @JsonIgnore
         public Map<String, Object> getMapObject() {
             return Map.of("path",  path, "commit", commit, "new",
                     Map.of("type", "lines", "range", Map.of("start", start, "end", end)));
@@ -90,6 +94,13 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
             start = range.get("start");
             end = range.get("end");
         }
+    }
+
+    public void setEdits(List<RadPatch.Edit> myEdits) {
+        if (!myEdits.isEmpty()) {
+            timestamp = myEdits.get(0).timestamp();
+        }
+        this.edits = myEdits;
     }
 
     public static class ReactionDeserializer extends StdDeserializer<List<Reaction>> {

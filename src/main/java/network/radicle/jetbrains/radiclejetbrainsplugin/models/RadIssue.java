@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -110,12 +109,6 @@ public class RadIssue {
                     var comment = comments.get(key);
                     var discussion = RadicleProjectApi.MAPPER.readValue(comment.toString(), new TypeReference<RadDiscussion>() { });
                     discussion.id = key;
-                    var edits = comment.get("edits");
-                    if (edits != null && edits.size() > 0) {
-                        var timestampStr = comment.get("edits").get(0).get("timestamp").toString();
-                        long timestamp = Long.parseLong(timestampStr);
-                        discussion.timestamp = Instant.ofEpochMilli(timestamp);
-                    }
                     discussions.add(discussion);
                 }
             } catch (Exception e) {

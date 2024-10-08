@@ -759,7 +759,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(map.get("type")).isEqualTo("comment");
         assertThat(map.get("body")).isEqualTo(dummyComment);
         assertThat(map.get("replyTo")).isEqualTo(issue.id);
-        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of(), null));
+        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of(), null, null));
 
         // Open createEditor
         issue.repo = firstRepo;
@@ -873,7 +873,7 @@ public class OverviewTest extends AbstractIT {
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
         return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null);
+                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null, null);
     }
 }
 

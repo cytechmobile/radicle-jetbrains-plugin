@@ -94,6 +94,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -117,14 +118,14 @@ public class TimelineTest extends AbstractIT {
     private static final Logger logger = Logger.getInstance(TimelineTest.class);
     private FileEditor myEditor;
     private static final String AUTHOR = "did:key:testAuthor";
-    private static final String RAD_PROJECT_ID = "rad:123";
+    public static final String RAD_PROJECT_ID = "rad:123";
     private static final String DISCUSSION_ID = UUID.randomUUID().toString();
     private static final String OUTDATED_DISUCSSION_ID = UUID.randomUUID().toString();
     private static final String REVIEW_SUMMARY = "Accepted";
 
     private String dummyComment = "Hello";
     private String replyComment = "This is my reply";
-    private RadPatch patch;
+    public static RadPatch patch;
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
@@ -188,11 +189,11 @@ public class TimelineTest extends AbstractIT {
                         discussion.put("timestamp", Instant.now().getEpochSecond());
                         if (discussion.get("id").equals(DISCUSSION_ID)) {
                             discussion.remove("location");
-                            discussion.put("location", patch.revisions.get(1).discussions().get(1).location.getMapObject());
+                            discussion.put("location", patch.getRevisionList().get(1).getDiscussions().get(1).location.getMapObject());
                         }
                         if (discussion.get("id").equals(OUTDATED_DISUCSSION_ID)) {
                             discussion.remove("location");
-                            discussion.put("location", patch.revisions.get(0).discussions().get(1).location.getMapObject());
+                            discussion.put("location", patch.getRevisionList().get(0).getDiscussions().get(1).location.getMapObject());
                         }
                     }
                 }
@@ -270,8 +271,10 @@ public class TimelineTest extends AbstractIT {
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
-        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
-        patch.revisions.get(0).discussions().add(createDiscussionWithLocation(OUTDATED_DISUCSSION_ID, authorId, outDatedComment, List.of(), location));
+        patch.getRevisionList().get(1).discussion().comments.put(DISCUSSION_ID,
+                createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        patch.getRevisionList().get(0).discussion().comments.put(OUTDATED_DISUCSSION_ID,
+                createDiscussionWithLocation(OUTDATED_DISUCSSION_ID, authorId, outDatedComment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         boolean findOutDatedComment = false;
@@ -324,7 +327,7 @@ public class TimelineTest extends AbstractIT {
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
         var discussion = createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location);
-        patch.revisions.get(1).discussions().add(discussion);
+        patch.getRevisionList().get(1).discussion().comments.put(DISCUSSION_ID, discussion);
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
@@ -343,7 +346,7 @@ public class TimelineTest extends AbstractIT {
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("comment")).isEqualTo(discussion.id);
         assertThat(map.get("type")).isEqualTo("revision.comment.redact");
-        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        assertThat(map.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
         EditorFactory.getInstance().releaseEditor(editor);
     }
 
@@ -355,7 +358,7 @@ public class TimelineTest extends AbstractIT {
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = firstChange.getVirtualFile().getPath();
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
-        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        patch.getRevisionList().get(1).getDiscussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var reviewAction = new ReviewSubmitAction(patch);
@@ -383,7 +386,8 @@ public class TimelineTest extends AbstractIT {
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
-        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        patch.getRevisionList().get(1).discussion().comments.put(DISCUSSION_ID,
+                createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
@@ -408,7 +412,7 @@ public class TimelineTest extends AbstractIT {
         var map = response.poll(5, TimeUnit.SECONDS);
         assertThat(map.get("type")).isEqualTo("revision.comment.edit");
         assertThat(map.get("body")).isEqualTo(editedComment);
-        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        assertThat(map.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
         EditorFactory.getInstance().releaseEditor(editor);
     }
 
@@ -420,7 +424,8 @@ public class TimelineTest extends AbstractIT {
         var firstChange = firstCommit.getChanges().stream().findFirst().orElseThrow();
         var fileName = findPath(firstChange.getVirtualFile());
         var location = new RadDiscussion.Location(fileName, "range", firstChange.getAfterRevision().getRevisionNumber().asString(), 0, 0);
-        patch.revisions.get(1).discussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
+        patch.getRevisionList().get(1).discussion().comments.put(DISCUSSION_ID,
+                createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
@@ -476,7 +481,7 @@ public class TimelineTest extends AbstractIT {
         //Comment
         executeUiTasks();
         var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        assertThat(map.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
         assertThat(map.get("body")).isEqualTo(dummyComment);
         assertThat(map.get("type")).isEqualTo("revision.comment");
         assertThat(map.get("location")).isNotNull();
@@ -725,7 +730,7 @@ public class TimelineTest extends AbstractIT {
 
         var borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
         var myEmojiLabel = ((JLabel) ((BorderLayoutPanel) ((JPanel) borderPanel.getComponent(1)).getComponent(1)).getComponent(0));
-        assertThat(myEmojiLabel.getText()).isEqualTo(patch.revisions.get(0).discussions().get(0).reactions.get(0).emoji());
+        assertThat(myEmojiLabel.getText()).isEqualTo(patch.getRevisionList().get(0).getDiscussions().get(0).reactions.get(0).emoji());
 
         // Make new reaction
         var emojiPanel = patchEditorProvider.getTimelineComponent().getComponentsFactory().getEmojiPanel();
@@ -750,8 +755,8 @@ public class TimelineTest extends AbstractIT {
         assertThat(res.get("type")).isEqualTo("revision.comment.react");
         assertThat((Boolean) res.get("active")).isTrue();
         assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat(res.get("comment")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).discussions().get(0).id);
-        assertThat(res.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
+        assertThat(res.get("comment")).isEqualTo(patch.getLatestRevision().getDiscussions().get(0).id);
+        assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
 
         //Remove reaction
         borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
@@ -763,8 +768,8 @@ public class TimelineTest extends AbstractIT {
         assertThat(res.get("type")).isEqualTo("revision.comment.react");
         assertThat((Boolean) res.get("active")).isFalse();
         assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat(res.get("comment")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).discussions().get(0).id);
-        assertThat(res.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
+        assertThat(res.get("comment")).isEqualTo(patch.getLatestRevision().getDiscussions().get(0).id);
+        assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
     }
 
     @Test
@@ -849,8 +854,8 @@ public class TimelineTest extends AbstractIT {
         for (var el : elements) {
             timeline += el.getText();
         }
-        var latestRevision = patch.revisions.get(patch.revisions.size() - 1);
-        assertThat(timeline).contains(latestRevision.description());
+        var latestRevision = patch.getLatestRevision();
+        assertThat(timeline).contains(latestRevision.getDescription());
     }
 
     @Test
@@ -863,8 +868,8 @@ public class TimelineTest extends AbstractIT {
         for (var el : elements) {
             comments += el.getText();
         }
-        assertThat(comments).contains(patch.revisions.get(0).id());
-        assertThat(comments).contains(patch.revisions.get(1).id());
+        assertThat(comments).contains(patch.getRevisionList().get(0).id());
+        assertThat(comments).contains(patch.getRevisionList().get(1).id());
     }
 
     @Test
@@ -874,9 +879,9 @@ public class TimelineTest extends AbstractIT {
         var elements = UIUtil.findComponentsOfType(revisionSection, JEditorPane.class);
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(firstComment);
-        assertThat(comments).contains(patch.revisions.get(0).id());
+        assertThat(comments).contains(patch.getRevisionList().get(0).id());
         assertThat(comments).contains(secondComment);
-        assertThat(comments).contains(patch.revisions.get(1).id());
+        assertThat(comments).contains(patch.getRevisionList().get(1).id());
         assertThat(comments).contains(getExpectedTag(txtEmbed));
         assertThat(comments).contains(getExpectedTag(imgEmbed));
     }
@@ -971,10 +976,13 @@ public class TimelineTest extends AbstractIT {
         Thread.sleep(1000);
         //Comment
         var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("revision")).isEqualTo(patch.revisions.get(patch.revisions.size() - 1).id());
+        assertThat(map.get("revision")).isEqualTo(patch.getLatestRevision().id());
         assertThat(map.get("body")).isEqualTo(dummyComment);
-        var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of(), null);
-        patch.revisions.get(patch.revisions.size() - 1).discussions().add(discussion);
+        var edit = new RadPatch.Edit(new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), List.of());
+        var edits = List.of(edit);
+        var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of(), null, edits);
+        patch.getLatestRevision().discussion().comments.put("542", discussion);
+
 
         // Open createEditor
         patch.repo = firstRepo;
@@ -992,11 +1000,11 @@ public class TimelineTest extends AbstractIT {
         assertThat(elements).isNotEmpty();
         var comments = elements.stream().map(JEditorPane::getText).collect(Collectors.joining());
         assertThat(comments).contains(firstComment);
-        assertThat(comments).contains(patch.revisions.get(0).id());
+        assertThat(comments).contains(patch.getRevisionList().get(0).id());
         assertThat(comments).contains(secondComment);
-        assertThat(comments).contains(patch.revisions.get(1).id());
+        assertThat(comments).contains(patch.getRevisionList().get(1).id());
         // Assert that the new comment exists
-        assertThat(comments).contains(patch.revisions.get(1).discussions().get(1).body);
+        assertThat(comments).contains(patch.getRevisionList().get(1).getDiscussions().get(1).body);
 
         //Check that notification get triggered
         markAsShowing(ef.getParent(), ef);
@@ -1032,9 +1040,9 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.edit");
-        assertThat(res.get("revision")).isEqualTo(patch.revisions.get(1).id());
+        assertThat(res.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
         assertThat(res.get("body")).isEqualTo(editedComment);
-        assertThat(res.get("comment")).isEqualTo(patch.revisions.get(1).discussions().get(0).id);
+        assertThat(res.get("comment")).isEqualTo(patch.getRevisionList().get(1).getDiscussions().get(0).id);
     }
 
     private RadPatch createPatch() {
@@ -1051,11 +1059,14 @@ public class TimelineTest extends AbstractIT {
         var secondCommit = commitHistory.get(1);
         var firstDiscussion = createDiscussion("123", "123", firstComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
-        var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion);
-        var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion);
+        var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion, Instant.now());
+        var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion, Instant.now().plus(1, ChronoUnit.DAYS));
+        var revMap = new HashMap<String, RadPatch.Revision>();
+        revMap.put(firstRev.id(), firstRev);
+        revMap.put(secondRev.id(), secondRev);
         var myPatch = new RadPatch(UUID.randomUUID().toString(), new RadProject(UUID.randomUUID().toString(),
                 "test", "test", "main", List.of()), new RadAuthor(AUTHOR),
-                "testPatch", new RadAuthor(AUTHOR), "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(firstRev, secondRev));
+                "testPatch", new RadAuthor(AUTHOR), "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, revMap);
         myPatch.project = getProject();
         myPatch.repo = firstRepo;
         return myPatch;
@@ -1116,25 +1127,40 @@ public class TimelineTest extends AbstractIT {
         return Paths.get(rootPath).relativize(Paths.get(file.getPath())).toString().replace("\\", "/");
     }
 
-    private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion) {
+    private RadPatch.Revision createRevision(String id, String description, GitCommit commit, RadDiscussion discussion, Instant timestamp) {
         var firstChange = commit.getChanges().stream().findFirst().orElseThrow();
         var base = firstChange.getBeforeRevision().getRevisionNumber().asString();
         var discussions = new ArrayList<RadDiscussion>();
         discussions.add(discussion);
         var review = new RadPatch.Review(UUID.randomUUID().toString(), new RadAuthor("fakeDid"),
-                RadPatch.Review.Verdict.ACCEPT, REVIEW_SUMMARY, List.of(), Instant.now());
+                RadPatch.Review.Verdict.ACCEPT, REVIEW_SUMMARY, null, Instant.now());
 
-        return new RadPatch.Revision(id, new RadAuthor(UUID.randomUUID().toString()), description, List.of(), List.of(), base, commit.getId().asString(),
-                List.of("branch"), Instant.now(), discussions, List.of(review));
+        var reviewMap = new HashMap<String, List<RadPatch.Review>>();
+        reviewMap.put(review.id(), List.of(review));
+
+        var author = new RadAuthor(UUID.randomUUID().toString());
+
+        var discMap = new HashMap<String, RadDiscussion>();
+        for (var disc : discussions) {
+            discMap.put(disc.id, disc);
+        }
+
+        return new RadPatch.Revision(id, author, List.of(new RadPatch.Edit(author, description, Instant.now(),
+                List.of())), List.of(), base, commit.getId().asString(), List.of("branch"), timestamp,
+                new RadPatch.DiscussionObj(discMap, List.of()), reviewMap);
     }
 
     private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
+        var edit = new RadPatch.Edit(new RadAuthor("myTestAuthor"), body, Instant.now(), List.of());
+        var edits = List.of(edit);
         return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null);
+                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null, edits);
     }
 
     private RadDiscussion createDiscussionWithLocation(String id, String authorId, String body, List<Embed> embedList, RadDiscussion.Location location) {
+        var edit = new RadPatch.Edit(new RadAuthor("myTestAuthor"), body, Instant.now(), List.of());
+        var edits = List.of(edit);
         return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, location);
+                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, location, edits);
     }
 }

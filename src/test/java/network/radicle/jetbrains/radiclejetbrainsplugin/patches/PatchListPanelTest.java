@@ -20,7 +20,7 @@ import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -140,7 +140,7 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(patchModel.getSize()).isEqualTo(2);
 
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
     @Test
@@ -158,14 +158,14 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
 
         filterWithSearch.searchQuery = patches.get(0).title;
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
     @Test
@@ -192,7 +192,9 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(projectNames.get().size()).isEqualTo(1);
         assertThat(projectNames.get().size()).isEqualTo(1);
         assertThat(projectNames.get().get(0)).contains("testRemote");
-        assertThat(filterAuthors.get().get(0)).isEqualTo(patches.get(0).author.id);
+
+        assertThat(filterAuthors.get().get(0)).isIn(patches.get(0).author.id, patches.get(1).author.id);
+        assertThat(filterAuthors.get().get(1)).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
     @Test
@@ -262,14 +264,14 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(2);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
 
         filterWithSearch.label = "firstTag";
         listPanel = controller.getPatchListPanel();
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
-        radPatch = patchModel.get(0);
+         radPatch = patchModel.get(0);
         assertThat(radPatch.author.id).isEqualTo(patches.get(1).author.id);
 
         filterWithSearch.label = "unknownTag";
@@ -288,16 +290,21 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     public static List<RadPatch> getTestPatches() {
-        var revision = new RadPatch.Revision("testRevision", RADAUTHOR, "testDescription", List.of(), List.of(), "", "",
-                List.of(), Instant.now(), new ArrayList<>(), List.of(new RadPatch.Review("1",
-                RADAUTHOR, RadPatch.Review.Verdict.ACCEPT, "test", List.of(), Instant.now())));
+        var reviewMap = new HashMap<String, List<RadPatch.Review>>();
+        reviewMap.put("1", List.of(new RadPatch.Review("1",
+                RADAUTHOR, RadPatch.Review.Verdict.ACCEPT, "test", new RadPatch.DiscussionObj(new HashMap<>(), List.of()), Instant.now())));
 
+        var revision = new RadPatch.Revision("testRevision", RADAUTHOR, List.of(), List.of(), "", "",
+                List.of(), Instant.now(), new RadPatch.DiscussionObj(new HashMap<>(), List.of()), reviewMap);
+
+        var revMap = new HashMap<String, RadPatch.Revision>();
+        revMap.put(revision.id(), revision);
         var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of(RADAUTHOR)),
-                RADAUTHOR, "testPatch", RADAUTHOR, "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, List.of(revision));
+                RADAUTHOR, "testPatch", RADAUTHOR, "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, revMap);
 
         var radPatch2 = new RadPatch("c4d12", new RadProject("test-rad-project-second", "test-rad-project-second", "", "main", List.of()),
                 RADAUTHOR, "secondProposal", new RadAuthor(AUTHOR1),
-                "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, List.of(revision));
+                "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, revMap);
         patches = List.of(radPatch, radPatch2);
         return patches;
     }

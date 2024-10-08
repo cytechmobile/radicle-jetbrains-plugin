@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -16,37 +17,101 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSet
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RadicleCliService {
-    public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
     private static final Logger logger = LoggerFactory.getLogger(RadicleCliService.class);
 
-    private final RadicleProjectSettingsHandler projectSettingsHandler;
-    private final Project project;
+    public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
+            .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
+    private Project project;
     private final Map<String, RadProject> radRepoIds;
     private RadDetails identity;
 
     public RadicleCliService(Project project) {
-        this.projectSettingsHandler = new RadicleProjectSettingsHandler(project);
         this.project = project;
         radRepoIds = new HashMap<>();
+    }
+
+    public RadIssue getIssue(GitRepository repo, String projectId, String objectId) {
+        var cobShow = new RadCobShow(repo, projectId, objectId, RadCobList.Type.ISSUE);
+        return cobShow.getIssue();
+    }
+
+    public List<RadIssue> getIssues(GitRepository repo, String projectId) {
+        var cobList = new RadCobList(repo, projectId, RadCobList.Type.ISSUE);
+        var listOutput = cobList.perform();
+        var listOutputSuccess = RadAction.isSuccess(listOutput);
+        if (!listOutputSuccess) {
+            return List.of();
+        }
+        var issueIds = listOutput.getStdoutLines();
+        var issues = new ArrayList<RadIssue>();
+        for (var objectId : issueIds) {
+            var issue = getIssue(repo, projectId, objectId);
+            if (issue == null) {
+                continue;
+            }
+            issues.add(issue);
+        }
+        return issues;
+    }
+
+    public RadPatch getPatch(GitRepository repo, String projectId, String patchId) {
+        var cobShow = new RadCobShow(repo, projectId, patchId, RadCobList.Type.PATCH);
+        final var myIdentity = getCurrentIdentity();
+        final var self = myIdentity == null ? null : myIdentity.toRadAuthor();
+        var patch =  cobShow.getPatch();
+        if (patch == null) {
+            return null;
+        }
+        patch.id = patchId;
+        patch.project = repo.getProject();
+        patch.repo = repo;
+        patch.self = self;
+        patch.seedNode = getSeedNode();
+        patch.radProject = getRadRepo(repo);
+        return patch;
+    }
+
+    public  List<RadPatch> getPatches(GitRepository repo, String projectId) {
+        var cobList = new RadCobList(repo, projectId, RadCobList.Type.PATCH);
+        var listOutput = cobList.perform();
+        var listOutputSuccess = RadAction.isSuccess(listOutput);
+        if (!listOutputSuccess) {
+            return List.of();
+        }
+        var patchesId = listOutput.getStdoutLines();
+        var patches = new ArrayList<RadPatch>();
+        for (var objectId : patchesId) {
+            var patch = getPatch(repo, projectId, objectId);
+            if (patch == null) {
+                continue;
+            }
+            patches.add(patch);
+        }
+        patches.sort(Comparator.comparing(patch -> ((RadPatch) patch).getLatestRevision().getTimestamp()).reversed());
+        return patches;
     }
 
     public RadDetails getCurrentIdentity() {
         if (identity != null) {
             return identity;
         }
-        var self = new RadSelf(project);
-        this.identity = self.getRadSelfDetails();
+        var radSelf = new RadSelf(project);
+        radSelf.askForIdentity(false);
+        identity = radSelf.getRadSelfDetails();
         return identity;
     }
 
@@ -139,27 +204,13 @@ public class RadicleCliService {
         return radRepo;
     }
 
-    public RadIssue getIssue(GitRepository repo, String projectId, String objectId) {
-        var cobShow = new RadCobShow(repo, projectId, objectId, RadCobList.Type.ISSUE);
-        return cobShow.getIssue();
+    protected SeedNode getSeedNode() {
+        var sh = new RadicleProjectSettingsHandler(project);
+        var settings = sh.loadSettings();
+        return settings.getSeedNode();
     }
 
-    public List<RadIssue> getIssues(GitRepository repo, String projectId) {
-        var cobList = new RadCobList(repo, projectId, RadCobList.Type.ISSUE);
-        var listOutput = cobList.perform();
-        var listOutputSuccess = RadAction.isSuccess(listOutput);
-        if (!listOutputSuccess) {
-            return List.of();
-        }
-        var issueIds = listOutput.getStdoutLines();
-        var issues = new ArrayList<RadIssue>();
-        for (var objectId : issueIds) {
-            var issue = getIssue(repo, projectId, objectId);
-            if (issue == null) {
-                continue;
-            }
-            issues.add(issue);
-        }
-        return issues;
+    public Project getProject() {
+        return project;
     }
 }

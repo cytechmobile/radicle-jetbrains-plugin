@@ -212,49 +212,6 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch fetchPatch(String projectId, GitRepository repo, String patchId) {
-        final var radProject = fetchRadProject(projectId);
-        if (radProject == null) {
-            return null;
-        }
-        final var myIdentity = getCurrentIdentity();
-        final var self = myIdentity == null ? null : myIdentity.toRadAuthor();
-        final var node = getSeedNode();
-        final var url = node.url + "/api/v1/projects/" + projectId + "/patches/" + patchId;
-        try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchError"));
-            if (res.isSuccess()) {
-                var patch = MAPPER.readValue(res.body, RadPatch.class);
-                patch.seedNode = node;
-                patch.project = repo.getProject();
-                patch.radProject = radProject;
-                patch.self = self;
-                patch.repo = repo;
-                return patch;
-            }
-        } catch (Exception e) {
-            logger.warn("http request exception {}", url, e);
-        }
-        return null;
-    }
-
-    public List<RadProject> fetchRadProjects(int page) {
-        var url = getHttpNodeUrl() + "/api/v1/projects?show=all&perPage=" + PER_PAGE + "&page=" + page;
-        try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchProjectsError"));
-            if (res.isSuccess()) {
-                if (Strings.isNullOrEmpty(res.body)) {
-                    return new ArrayList<>();
-                }
-                return MAPPER.readValue(res.body, new TypeReference<>() { });
-            }
-            return null;
-        } catch (Exception e) {
-            logger.warn("http request exception {}", url, e);
-            return null;
-        }
-    }
-
     public RadProject fetchRadProject(String projectId) {
         var url = getHttpNodeUrl() + "/api/v1/projects/" + projectId;
         try {
@@ -546,7 +503,7 @@ public class RadicleProjectApi {
     }
 
     public RadPatch addPatchComment(RadPatch patch, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList) {
-        return addPatchComment(patch, comment, replyTo, location, embedList,  patch.revisions.get(patch.revisions.size() - 1).id());
+        return addPatchComment(patch, comment, replyTo, location, embedList,  patch.getLatestRevision().id());
     }
 
     public RadPatch addPatchComment(RadPatch patch, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList, String revId) {

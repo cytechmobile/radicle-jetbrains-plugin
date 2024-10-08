@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
@@ -49,6 +51,23 @@ public class RadCobShow extends RadAction {
             logger.warn("Unable to deserialize issue");
         }
         return issue;
+    }
+
+    public RadPatch getPatch() {
+        var output = perform();
+        var isSuccess = RadAction.isSuccess(output);
+        if (!isSuccess) {
+            return null;
+        }
+        var json = output.getStdout();
+        RadPatch patch = null;
+        try {
+            patch = RadicleCliService.MAPPER.readValue(json, new TypeReference<>() { });
+            return patch;
+        } catch (Exception e) {
+            logger.warn("Unable to deserialize patch");
+        }
+        return patch;
     }
 
     @Override

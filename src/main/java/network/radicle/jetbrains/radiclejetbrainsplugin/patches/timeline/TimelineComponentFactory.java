@@ -118,8 +118,8 @@ public class TimelineComponentFactory {
     }
 
     private String findMessage(String replyTo) {
-        for (var rev : patch.revisions) {
-            for (var com : rev.discussions()) {
+        for (var rev : patch.getRevisionList()) {
+            for (var com : rev.getDiscussions()) {
                 if (com.id.equals(replyTo)) {
                     return com.body;
                 }

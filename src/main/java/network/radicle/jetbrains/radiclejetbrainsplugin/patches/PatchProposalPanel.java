@@ -275,8 +275,7 @@ public class PatchProposalPanel {
         var branchPanel = new NonOpaquePanel();
         branchPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         var to = createLabel(patch.radProject.defaultBranch);
-        var revision = patch.revisions.get(patch.revisions.size() - 1);
-        var ref = !revision.refs().isEmpty() ? revision.refs().get(revision.refs().size() - 1) : "ref/head/patches/" + patch.id;
+        var ref = "ref/head/patches/" + patch.id;
         var from = createLabel(ref);
         branchPanel.add(to, new CC().minWidth(Integer.toString(JBUIScale.scale(30))));
         var arrowLabel = new JLabel(UIUtil.leftArrow());
