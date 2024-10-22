@@ -152,7 +152,7 @@ public abstract class RadAction {
         var success = output.checkSuccess(com.intellij.openapi.diagnostic.Logger.getInstance(RadicleProjectService.class));
         latch.countDown();
         if (!success) {
-            logger.warn(this.getActionName() + ": " + this.getErrorMessage() + ": exit:{}, out:{} err:{}",
+            logger.warn("error in rad action: name:{} success:{}: exit:{}, out:{} err:{}", this.getActionName(), this.getSuccessMessage(),
                     output.getExitCode(), output.getStdout(), output.getStderr());
             if (shouldShowNotification()) {
                 var errorMsg = output.getStderr();
@@ -161,7 +161,7 @@ public abstract class RadAction {
             }
             return output;
         }
-        logger.warn(this.getActionName() + ": " + this.getSuccessMessage() + ": exit:{}, out:{} err:{}",
+        logger.debug("successful rad action: name:{} success:{} exit:{}, out:{} err:{}", this.getActionName(), this.getSuccessMessage(),
                 output.getExitCode(), output.getStdout(), output.getStderr());
         if (!this.getNotificationSuccessMessage().isEmpty() && shouldShowNotification()) {
             showNotification(project, "", this.getNotificationSuccessMessage(), NotificationType.INFORMATION, this.notificationActions());

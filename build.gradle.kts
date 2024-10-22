@@ -145,13 +145,6 @@ tasks {
         systemProperty("jbScreenMenuBar.enabled", "false")
         systemProperty("idea.trust.all.projects", "true")
         systemProperty("ide.show.tips.on.startup.default.value", "false")
-        //    systemProperty "eap.require.license", "true"
-
-//        val projectPath = environment("PROJECT_PATH").getOrElse("")
-//        if (projectPath.isNotEmpty()) {
-//            args (projectPath)
-//        }
-
     }
 
     test {
@@ -162,7 +155,6 @@ tasks {
         // systemProperty "robot.encryption.password", "my super secret"
         exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
     }
-
 
     signPlugin {
         certificateChain = environment("CERTIFICATE_CHAIN")
@@ -184,12 +176,13 @@ tasks {
 val uiTestTask = tasks.register<Test>("uiTest") {
     useJUnitPlatform()
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
-    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/**")
-    exclude("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
+    environment(mapOf("RADICLE_REPO" to System.getenv("RADICLE_REPO")))
+    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/ui/**")
 }
 
 val e2eTestTask = tasks.register<Test>("endToEndTests") {
     useJUnitPlatform()
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
-    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/endToEnd/**")
+    environment(mapOf("RADICLE_REPO" to System.getenv("RADICLE_REPO")))
+    include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/e2e/**")
 }

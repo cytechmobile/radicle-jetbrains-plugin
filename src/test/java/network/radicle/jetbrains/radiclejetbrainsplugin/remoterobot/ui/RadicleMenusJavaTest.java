@@ -1,4 +1,4 @@
-package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot;
+package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.ui;
 
 import com.automation.remarks.junit5.Video;
 import com.intellij.remoterobot.RemoteRobot;
@@ -7,10 +7,10 @@ import com.intellij.remoterobot.fixtures.ContainerFixture;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.steps.CommonSteps;
 import com.intellij.remoterobot.utils.Keyboard;
-import network.radicle.jetbrains.radiclejetbrainsplugin.pages.IdeaFrame;
-import network.radicle.jetbrains.radiclejetbrainsplugin.steps.ReusableSteps;
-import network.radicle.jetbrains.radiclejetbrainsplugin.utils.RemoteRobotExtension;
-import network.radicle.jetbrains.radiclejetbrainsplugin.utils.StepsLogger;
+import network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.pages.IdeaFrame;
+import network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.steps.ReusableSteps;
+import network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.utils.RemoteRobotExtension;
+import network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.utils.StepsLogger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +31,8 @@ import java.util.Comparator;
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.stepsProcessing.StepWorkerKt.step;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
-import static java.awt.event.KeyEvent.VK_ESCAPE;
-import static java.time.Duration.ofMinutes;
-import static java.time.Duration.ofSeconds;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenu;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.pages.ActionMenuFixtureKt.actionMenuItem;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.pages.ActionMenuFixture.actionMenu;
+import static network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.pages.ActionMenuItemFixture.actionMenuItem;
 
 @ExtendWith(RemoteRobotExtension.class)
 @Tag("UI")
@@ -64,7 +62,7 @@ public class RadicleMenusJavaTest {
         step("Close the project", () -> {
             var keyboard = new Keyboard(remoteRobot);
             // close any possibly open menu
-            keyboard.hotKey(VK_ESCAPE);
+            keyboard.hotKey(KeyEvent.VK_ESCAPE);
 
             CommonSteps steps = new CommonSteps(remoteRobot);
             steps.closeProject();
@@ -73,6 +71,7 @@ public class RadicleMenusJavaTest {
             try {
                 // FileUtils.deleteDirectory(tmpDir.toFile());
                 Files.walk(tmpDir).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+                Files.deleteIfExists(tmpDir);
             } catch (Exception e) {
                 logger.warn("error deleting directory", e);
             }
@@ -87,13 +86,13 @@ public class RadicleMenusJavaTest {
         var sharedSteps = new ReusableSteps(remoteRobot);
         sharedSteps.importProjectFromVCS(tmpDir);
 
-        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, ofMinutes(5));
+        final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, Duration.ofMinutes(5));
 
         step("Wait for project to load", () -> {
-            waitFor(ofMinutes(5), () -> !idea.isDumbMode());
+            waitFor(Duration.ofMinutes(5), () -> !idea.isDumbMode());
 
-            var projectView = remoteRobot.find(ContainerFixture.class, byXpath("ProjectViewTree", "//div[@class='ProjectViewTree']"), ofMinutes(5));
-            waitFor(ofMinutes(5), () -> projectView.hasText("radicle"));
+            var projectView = remoteRobot.find(ContainerFixture.class, byXpath("ProjectViewTree", "//div[@class='ProjectViewTree']"), Duration.ofMinutes(5));
+            waitFor(Duration.ofMinutes(5), () -> projectView.hasText("radicle"));
         });
 
         step("initialize project", () -> {
@@ -104,12 +103,10 @@ public class RadicleMenusJavaTest {
 
         step("Ensure Radicle sub-menu category is visible", () -> {
 
-            remoteRobot.find(ComponentFixture.class,
-                            byXpath("//div[@accessiblename='Git' and @class='ActionMenu' and @text='Git']"),
-                            ofSeconds(ReusableSteps.COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)
-            ).isShowing();
+            remoteRobot.find(ComponentFixture.class, byXpath("//div[@accessiblename='Git' and @class='ActionMenu' and @text='Git']"),
+                    Duration.ofSeconds(ReusableSteps.COMPONENT_SEARCH_TIMEOUT_IN_SECONDS)).isShowing();
 
-            keyboard.hotKey(VK_ESCAPE);
+            keyboard.hotKey(KeyEvent.VK_ESCAPE);
             actionMenu(remoteRobot, "Git", "").click();
             actionMenu(remoteRobot, "Radicle", "Git").isShowing();
         });
@@ -136,7 +133,7 @@ public class RadicleMenusJavaTest {
         });
 
         step("Ensure Radicle toolbar actions show", () -> {
-            keyboard.hotKey(VK_ESCAPE);
+            keyboard.hotKey(KeyEvent.VK_ESCAPE);
             isXPathComponentVisible(idea, "//div[@myicon='rad_sync.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_fetch.svg']");
             isXPathComponentVisible(idea, "//div[@myicon='rad_clone.svg']");

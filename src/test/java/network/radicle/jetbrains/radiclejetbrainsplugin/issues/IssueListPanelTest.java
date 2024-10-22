@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
@@ -263,8 +264,8 @@ public class IssueListPanelTest extends AbstractIT {
 
 
     public static List<RadIssue> getTestIssues() {
-        var discussion = createDiscussion("123", AUTHOR, "Figure it out, i dont care");
-        var discussion1 = createDiscussion("321", AUTHOR1, "This is a feature not a bug");
+        var discussion = createDiscussion(UUID.randomUUID().toString(), AUTHOR, "Figure it out, i dont care");
+        var discussion1 = createDiscussion(UUID.randomUUID().toString(), AUTHOR1, "This is a feature not a bug");
         var radIssue = new RadIssue("c5df12", new RadAuthor(AUTHOR), "Title1", RadIssue.State.OPEN, List.of(new RadAuthor(AUTHOR), new RadAuthor(AUTHOR1)),
                 List.of("tag1", "tag2"), List.of(discussion));
         var radIssue1 = new RadIssue("123ca", new RadAuthor(AUTHOR1), "Title", RadIssue.State.CLOSED, List.of(new RadAuthor(AUTHOR1), new RadAuthor(AUTHOR2)),

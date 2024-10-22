@@ -1,21 +1,21 @@
 [versions]
 # libraries
-annotations = "24.1.0"
-jacksonJsr310 = "2.15.2"
-tika = "2.9.1"
-sshTools = "3.0.11"
+annotations = "26.0.1"
+jacksonJsr310 = "2.18.0"
+tika = "3.0.0"
+sshTools = "3.1.2"
 
 # test libraries
-junitJupiter = "5.10.0"
-junitPlatformLauncher = "1.10.0"
-assertj = "3.24.2"
-loggingInterceptor = "4.11.0"
-mockito = "5.5.0"
-remoteRobot = "0.11.21"
-checkstyleTools = "10.12.2"
+junitJupiter = "5.11.3"
+junitPlatformLauncher = "1.11.3"
+assertj = "3.26.3"
+loggingInterceptor = "4.12.0"
+mockito = "5.14.2"
+remoteRobot = "0.11.23"
+checkstyleTools = "10.18.2"
 
 # plugins
-kotlin = "1.9.23"
+kotlin = "1.9.25"
 changelog = "2.2.0"
 gradleIntelliJPlugin = "1.17.3"
 

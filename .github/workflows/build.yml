@@ -67,7 +67,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       # Run tests
       - name: Run Tests
-        run: ./gradlew :check
+        run: ./gradlew :check --scan
 
       # Collect Tests Result of failed tests
       - name: Collect Tests Result

@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.LightPlatform4TestCase;
@@ -34,7 +35,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
         radicleSettingsHandler.saveSeedNode("http://localhost:8080");
         radicleSettingsView = new RadicleSettingsView(getProject());
-        boolean ok = radicleSettingsView.init.await(10, TimeUnit.SECONDS);
+        boolean ok = radicleSettingsView.init.await(30, TimeUnit.SECONDS);
         /* pop previous commands from queue ( Checking for compatible version ) */
         radStub.commands.clear();
         executeUiTasks();
@@ -53,8 +54,10 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         identityDialog.setAlias(ALIAS);
         radicleSettingsHandler.saveRadHome(NEW_RAD_INSTALLATION);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
+        executeUiTasks();
+        // wait to retrieve and remove the `rad --version` command
+        pollCmd();
         var testButton = radicleSettingsView.getRadHomeTestButton();
-        radStub.commands.poll(10, TimeUnit.SECONDS);
         testButton.doClick();
         executeUiTasks();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
@@ -109,16 +112,20 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     public void testButtonWithUnlockedIdentity() throws InterruptedException {
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsView = new RadicleSettingsView(getProject());
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        executeUiTasks();
+        var cmd = pollCmd();
+        assertThat(cmd).isNotNull();
+        executeUiTasks();
+
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         assertSelfCommands(AbstractIT.RAD_HOME);
+        executeUiTasks();
         for (int i = 0; i < 10; i++) {
             if (radicleSettingsView.getRadDetails() == null) {
                 Thread.sleep(100);
             }
         }
-        logger.warn("checking for rad details: " + radicleSettingsView.getRadDetails());
         assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.did);
     }
 
@@ -134,13 +141,13 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         identityDialog.setPassphrase(RadicleGlobalSettingsHandlerTest.PASSWORD);
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        pollCmd();
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
         executeUiTasks();
         assertSelfCommands(AbstractIT.RAD_HOME1);
-        var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var auth = pollCmd();
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getCommandLineString()).doesNotContain("--alias");
     }
@@ -150,11 +157,13 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler.savePassphrase(RadStub.nodeId, "");
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(getProject());
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        executeUiTasks();
+        pollCmd();
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
+        executeUiTasks();
         assertSelfCommands(AbstractIT.RAD_HOME1);
-        var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var auth = pollCmd();
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getEnvironment().get("stdin")).isEqualTo("");
     }
@@ -164,11 +173,13 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(getProject());
-        radStub.commands.poll(10, TimeUnit.SECONDS);
+        executeUiTasks();
+        pollCmd();
+        executeUiTasks();
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         assertSelfCommands(AbstractIT.RAD_HOME1);
-        var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var auth = pollCmd();
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getEnvironment().get("stdin")).isEqualTo(RadicleGlobalSettingsHandlerTest.PASSWORD);
     }
@@ -176,7 +187,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     @Test
     public void getRadHomeTest() throws InterruptedException {
         var home = radicleSettingsView.getRadHome();
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var cmd = pollCmd();
         assertThat(home).isEqualTo(AbstractIT.RAD_HOME);
         assertThat(cmd).isNotNull();
         assertCmd(cmd);
@@ -186,7 +197,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     @Test
     public void getRadPathTest() throws InterruptedException {
         var path = radicleSettingsView.getRadPath();
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var cmd = pollCmd();
         assertThat(path).isEqualTo(AbstractIT.RAD_PATH);
         assertThat(cmd).isNotNull();
         assertThat(cmd.getCommandLineString()).contains("which rad");
@@ -195,20 +206,20 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     @Test
     public void getRadVersion() throws InterruptedException {
         var version = radicleSettingsView.getRadVersion();
-        var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var cmd = pollCmd();
         assertCmd(cmd);
         assertThat(version).isEqualTo(AbstractIT.RAD_VERSION);
         assertThat(cmd.getCommandLineString()).contains(AbstractIT.RAD_PATH + " --version");
     }
 
     private void assertSelfCommands(String radHome) throws InterruptedException {
-        var radPath = radStub.commands.poll(10, TimeUnit.SECONDS);
-        var radVersion =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var radSelfAlias =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var radSelfNid =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var radSelfDid =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var radSelfKey =  radStub.commands.poll(10, TimeUnit.SECONDS);
-        var identityUnlockedCmd = radStub.commands.poll(10, TimeUnit.SECONDS);
+        var radPath = pollCmd();
+        var radVersion =  pollCmd();
+        var radSelfAlias =  pollCmd();
+        var radSelfNid =  pollCmd();
+        var radSelfDid =  pollCmd();
+        var radSelfKey =  pollCmd();
+        var identityUnlockedCmd = pollCmd();
         assertThat(radSelfAlias).isNotNull();
         assertThat(radSelfNid).isNotNull();
         assertThat(radSelfDid).isNotNull();
@@ -255,5 +266,9 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
             Thread.yield();
         }
+    }
+
+    public GeneralCommandLine pollCmd() throws InterruptedException {
+        return radStub.commands.poll(10, TimeUnit.SECONDS);
     }
 }

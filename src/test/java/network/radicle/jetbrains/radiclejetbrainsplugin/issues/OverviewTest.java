@@ -859,8 +859,8 @@ public class OverviewTest extends AbstractIT {
         var discussions = new ArrayList<RadDiscussion>();
         issueDesc = "How are you";
         var myDescription = issueDesc + txtEmbedMarkDown + imgEmbedMarkDown;
-        var firstDiscussion = createDiscussion("123", "123", myDescription, embeds);
-        var secondDiscussion = createDiscussion("321", "321", commentDescription, embeds);
+        var firstDiscussion = createDiscussion(UUID.randomUUID().toString(), UUID.randomUUID().toString(), myDescription, embeds);
+        var secondDiscussion = createDiscussion(UUID.randomUUID().toString(), UUID.randomUUID().toString(), commentDescription, embeds);
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
         var myIssue = new RadIssue(UUID.randomUUID().toString(), new RadAuthor(AUTHOR), "My Issue",

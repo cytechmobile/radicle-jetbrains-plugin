@@ -1057,8 +1057,10 @@ public class TimelineTest extends AbstractIT {
         secondComment = "hello back";
         var firstCommit = commitHistory.get(0);
         var secondCommit = commitHistory.get(1);
-        var firstDiscussion = createDiscussion("123", "123", firstComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
-        var secondDiscussion = createDiscussion("321", "321", secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
+        var firstDiscussion = createDiscussion(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
+                firstComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
+        var secondDiscussion = createDiscussion(UUID.randomUUID().toString(), UUID.randomUUID().toString(),
+                secondComment + txtEmbedMarkDown + imgEmbedMarkDown, List.of(txtEmbed, imgEmbed));
         var firstRev = createRevision("testRevision1", "testRevision1", firstCommit, firstDiscussion, Instant.now());
         var secondRev = createRevision("testRevision2", "testRevision1", secondCommit, secondDiscussion, Instant.now().plus(1, ChronoUnit.DAYS));
         var revMap = new HashMap<String, RadPatch.Revision>();

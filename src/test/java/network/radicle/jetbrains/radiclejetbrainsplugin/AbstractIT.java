@@ -29,6 +29,7 @@ import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
+import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
@@ -241,9 +242,9 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
             @Override
             public RadProject getRadRepo(GitRepository repo) {
                 if (Strings.isNullOrEmpty(head)) {
-                    return new RadProject(RAD_PROJECT_ID, "test", "", "", List.of());
+                    return new RadProject(RAD_PROJECT_ID, "test", "", "", PatchListPanelTest.getTestProjects().get(0).delegates);
                 } else {
-                    return new RadProject(RAD_PROJECT_ID, "TestProject", "", "main", head, List.of());
+                    return new RadProject(RAD_PROJECT_ID, "TestProject", "", "main", head, PatchListPanelTest.getTestProjects().get(0).delegates);
                 }
             }
         };
