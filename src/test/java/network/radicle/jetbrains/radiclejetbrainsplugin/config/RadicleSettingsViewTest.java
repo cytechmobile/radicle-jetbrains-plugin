@@ -53,8 +53,10 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         identityDialog.setAlias(ALIAS);
         radicleSettingsHandler.saveRadHome(NEW_RAD_INSTALLATION);
         radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
-        var testButton = radicleSettingsView.getRadHomeTestButton();
+        executeUiTasks();
+        // wait to retrieve and remove the `rad --version` command
         radStub.commands.poll(10, TimeUnit.SECONDS);
+        var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         executeUiTasks();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
@@ -109,16 +111,19 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     public void testButtonWithUnlockedIdentity() throws InterruptedException {
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsView = new RadicleSettingsView(getProject());
+        executeUiTasks();
         radStub.commands.poll(10, TimeUnit.SECONDS);
+        executeUiTasks();
+
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         assertSelfCommands(AbstractIT.RAD_HOME);
+        executeUiTasks();
         for (int i = 0; i < 10; i++) {
             if (radicleSettingsView.getRadDetails() == null) {
                 Thread.sleep(100);
             }
         }
-        logger.warn("checking for rad details: " + radicleSettingsView.getRadDetails());
         assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.did);
     }
 
@@ -150,9 +155,11 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler.savePassphrase(RadStub.nodeId, "");
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(getProject());
+        executeUiTasks();
         radStub.commands.poll(10, TimeUnit.SECONDS);
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
+        executeUiTasks();
         assertSelfCommands(AbstractIT.RAD_HOME1);
         var auth = radStub.commands.poll(10, TimeUnit.SECONDS);
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
@@ -164,7 +171,9 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         radicleSettingsView = new RadicleSettingsView(getProject());
+        executeUiTasks();
         radStub.commands.poll(10, TimeUnit.SECONDS);
+        executeUiTasks();
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         assertSelfCommands(AbstractIT.RAD_HOME1);

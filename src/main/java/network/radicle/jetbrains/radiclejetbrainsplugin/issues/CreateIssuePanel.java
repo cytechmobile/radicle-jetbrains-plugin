@@ -38,13 +38,13 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionList
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JButton;
-import javax.swing.BorderFactory;
-import javax.swing.JPanel;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.PlainDocument;
@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 public class CreateIssuePanel {
     private final RadicleProjectApi api;
+    private final RadicleCliService cli;
     private final Project project;
     private AssigneesSelect assigneeSelect;
     private LabelSelect labelSelect;
@@ -79,6 +80,7 @@ public class CreateIssuePanel {
     public CreateIssuePanel(IssueTabController issueTabController, Project project) {
         this.issueTabController = issueTabController;
         this.api = project.getService(RadicleProjectApi.class);
+        this.cli = project.getService(RadicleCliService.class);
         this.project = project;
     }
 
@@ -176,8 +178,7 @@ public class CreateIssuePanel {
                 }
                 newIssueButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var rad = project.getService(RadicleCliService.class);
-                    var radProject = rad.getRadRepo(repo);
+                    var radProject = cli.getRadRepo(repo);
                     var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProject.id, descriptionField.getEmbedList());
                     ApplicationManager.getApplication().invokeLater(() -> {
                         if (isSuccess) {
@@ -315,10 +316,8 @@ public class CreateIssuePanel {
                 if (selectedProject == null) {
                     return assignees;
                 }
-                var rad = project.getService(RadicleCliService.class);
-                var radProject = rad.getRadRepo(selectedProject);
-                var projectInfo = api.fetchRadProject(radProject.id);
-                for (var delegate : projectInfo.delegates) {
+                var radProject = cli.getRadRepo(selectedProject);
+                for (var delegate : radProject.delegates) {
                     var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate.id, delegate.alias);
                     var isSelected = delegates.stream().anyMatch(d -> d.id.equals(delegate.id));
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);

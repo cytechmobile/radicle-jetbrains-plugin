@@ -15,6 +15,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            runHttpApi: |
+              cd "${RAD_HOME}"/bin
+              wget -q -O rha.tar.xz https://minio-api.radicle.gr/radicle-releases/radicle-http-server/radicle-httpd-0.11.1-rit-1-g3ae64bd2-x86_64-unknown-linux-musl.tar.xz
+              # now there will be radicle-httpd inside bin directory, which is in path
+              tar xf rha.tar.xz --strip-components 2
             runIde: |
               export DISPLAY=:99.0
               Xvfb -ac :99 -screen 0 1920x1080x24 &
@@ -27,6 +32,11 @@ jobs:
               export DISPLAY=:99.0
               ./gradlew :endToEndTests
           - os: macos-latest
+            runHttpApi: |
+              cd "${RAD_HOME}"/bin
+              wget -q -O rha.tar.xz https://minio-api.radicle.gr/radicle-releases/radicle-http-server/radicle-httpd-0.11.1-rit-1-g3ae64bd2-aarch64-apple-darwin.tar.xz
+              # now there will be radicle-httpd inside bin directory, which is in path
+              tar xf rha.tar.xz --strip-components 2
             runIde: |
               mkdir -p build/reports
               ls -alh ${RADICLE_REPO}
@@ -43,20 +53,26 @@ jobs:
           curl -sSf https://radicle.xyz/install | sh
           echo "${RAD_HOME}/bin" >> $GITHUB_PATH
           echo "RAD_HOME=${{ github.workspace }}/.radicle" >> $GITHUB_ENV
-
+      - name: Install radicle-http-api
+        run: ${{ matrix.runHttpApi }}
       - name: Create New Radicle Identity
         run: |
           RAD_PASSPHRASE="" rad auth --alias test_user
-
+      - name: Configure Radicle Node
+        run: |
+          # Source: https://app.radicle.xyz/nodes/seed.radicle.xyz/rad:z3gqcJUoA1n9HaHKufZs5FCSGazv5/tree/HACKING.md
+          jq '.node.network = "test" | .preferredSeeds = [] | .node.connect = [] | .node.peers.type = "static"' ${RAD_HOME}/config.json > ${RAD_HOME}/config.json.tmp
+          mv ${RAD_HOME}/config.json.tmp ${RAD_HOME}/config.json
       - name: Start Radicle Node and http API
         run: |
-          RAD_PASSPHRASE="" rad node start &
+          rad --version
+          rad node start
           echo "allowing node to start up..."
           sleep 5
-          RAD_PASSPHRASE="" radicle-httpd --listen 0.0.0.0:8080 &
+          radicle-httpd --version
+          radicle-httpd --listen 0.0.0.0:8080 &
           rad node status
           rad self
-
       - name: Create a new Radicle Repository
         id: radicle-init
         run: |
@@ -69,12 +85,11 @@ jobs:
           echo "# A Blog" > README.md
           git add README.md
           git commit -m 'adds readme'
-          RAD_PASSPHRASE="" rad init --private --default-branch main --name "a-test-blog" --description "Some repo" --no-confirm --verbose
+          rad init --public --default-branch main --name "a-test-blog" --description "Some repo" --no-confirm --verbose
           pwd
           cd ..
           chmod -R 777 a_blog
           echo "RADICLE_REPO=${{ github.workspace }}/a_blog" >> "$GITHUB_OUTPUT"
-
       - uses: actions/checkout@v4
         with:
           path: ${{ github.workspace }}/radicle-jetbrains-plugin
@@ -84,11 +99,15 @@ jobs:
           distribution: corretto
           java-version: 17
       - name: Setup FFmpeg
+        if: ${{matrix.os == 'ubuntu-latest'}}
         uses: FedericoCarboni/setup-ffmpeg@v3
         with:
           # Not strictly necessary, but it may prevent rate limit
           # errors especially on GitHub-hosted macos machines.
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup FFmpeg mac
+        if: ${{matrix.os == 'macos-latest'}}
+        run: brew install ffmpeg
       - name: Clean
         working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
         run: ./gradlew :clean

@@ -125,7 +125,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var output = radSelf.perform(radHome, radPath, dialog);
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
-            logger.warn("got rad details: " + radDetails.did);
+            logger.debug("got rad details: {}", radDetails.did);
             var api = myProject.getService(RadicleProjectApi.class);
             if (api != null) {
                 api.resetCurrentIdentity();

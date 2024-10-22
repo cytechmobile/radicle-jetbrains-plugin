@@ -23,16 +23,15 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueLabe
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueState;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
-
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -47,7 +46,7 @@ public class IssuePanel {
     protected SingleValueModel<RadIssue> issueModel;
     protected TabInfo infoTab;
     protected IssueTabController issueTabController;
-    private final RadicleProjectApi api;
+    private final RadicleCliService cli;
     private final AssigneesSelect assigneesSelect;
     private final StateSelect stateSelect;
     private final LabelSelect labelSelect;
@@ -59,7 +58,7 @@ public class IssuePanel {
         this.issueTabController = issueTabController;
         this.issueModel = issueModel;
         this.issue = issueModel.getValue();
-        this.api = issue.project.getService(RadicleProjectApi.class);
+        this.cli = issue.project.getService(RadicleCliService.class);
         this.assigneesSelect = new AssigneesSelect();
         this.stateSelect = new StateSelect();
         this.labelSelect = new LabelSelect();
@@ -82,9 +81,9 @@ public class IssuePanel {
         var actionPanel = new JPanel();
         actionPanel.setOpaque(false);
         actionPanel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
-        addListPanel(actionPanel, assigneesSelect);
-        addListPanel(actionPanel, stateSelect);
-        addListPanel(actionPanel, labelSelect);
+        Utils.addListPanel(actionPanel, assigneesSelect);
+        Utils.addListPanel(actionPanel, stateSelect);
+        Utils.addListPanel(actionPanel, labelSelect);
         final var splitter = new OnePixelSplitter(true, "Radicle.IssuePanel.action.Component", 0.6f);
         splitter.setFirstComponent(getIssueInfo());
         splitter.setSecondComponent(actionPanel);
@@ -138,11 +137,6 @@ public class IssuePanel {
         panel.setLayout(new MigLayout(new LC().fillX().gridGap("0", "0").insets("0", "0", "0", "0")));
         panel.add(new JLabel(txt), new CC().gapBottom(String.valueOf(UI.scale(10))));
         return panel;
-    }
-
-    private void addListPanel(JPanel panel, LabeledListPanelHandle<?> handle) {
-        panel.add(handle.getTitleLabel(), new CC().alignY("top").width("30"));
-        panel.add(handle.getPanel(), new CC().minWidth("0").growX().pushX().wrap());
     }
 
     protected JComponent createReturnToListSideComponent() {
@@ -408,7 +402,7 @@ public class IssuePanel {
         @Override
         public CompletableFuture<List<SelectionListCellRenderer.SelectableWrapper<Assignee>>> getData() {
             return CompletableFuture.supplyAsync(() -> {
-                var projectInfo = api.fetchRadProject(issue.projectId);
+                var projectInfo = cli.getRadRepo(issue.repo);
                 var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Assignee>>();
                 for (var delegate : projectInfo.delegates) {
                     final Assignee assignee = new AssigneesSelect.Assignee(delegate.id, delegate.generateLabelText());

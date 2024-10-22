@@ -21,7 +21,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.client.config.RequestConfig;
@@ -42,8 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +50,8 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAc
 public class RadicleProjectApi {
     public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
-    public static final int ALL_IN_ONE_PAGE = 10000;
     public static final int TIMEOUT = 5000;
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectApi.class);
-    private static final int PER_PAGE = 10;
 
     private final CloseableHttpClient client;
     private final Project project;
@@ -121,71 +116,6 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public List<RadIssue> fetchIssues(String projectId, GitRepository repo) {
-        var node = getSeedNode();
-        var allIssues = new ArrayList<RadIssue>();
-        var states = Arrays.stream(RadIssue.State.values()).map(e -> e.status).toList();
-        try {
-            for (var state : states) {
-                var url = node.url + "/api/v1/projects/" + projectId + "/issues?page=0&state=" + state + "&perPage=" + ALL_IN_ONE_PAGE;
-                var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchIssuesError"));
-                if (res.status == -1) {
-                    break;
-                }
-                if (res.isSuccess()) {
-                    var issues = MAPPER.readValue(res.body, new TypeReference<List<RadIssue>>() { });
-                    for (var issue : issues) {
-                        issue.repo = repo;
-                        issue.projectId = projectId;
-                        issue.project = repo.getProject();
-                        issue.seedNode = node;
-                    }
-                    allIssues.addAll(issues);
-                }
-            }
-            return allIssues;
-        } catch (Exception e) {
-            logger.warn("http request exception", e);
-        }
-        return allIssues;
-    }
-
-    public List<RadPatch> fetchPatches(String projectId, GitRepository repo) {
-        final var radProject = fetchRadProject(projectId);
-        if (radProject == null) {
-            return List.of();
-        }
-        final var myIdentity = getCurrentIdentity();
-        var self = myIdentity == null ? null : myIdentity.toRadAuthor();
-        var node = getSeedNode();
-        var states = Arrays.stream(RadPatch.State.values()).map(e -> e.status).toList();
-        var allPatches = new ArrayList<RadPatch>();
-        try {
-            for (var state : states) {
-                var url = node.url + "/api/v1/projects/" + projectId + "/patches?page=0&state=" + state + "&perPage=" + ALL_IN_ONE_PAGE;
-                var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchPatchesError"));
-                if (res.status == -1) {
-                    break;
-                }
-                if (res.isSuccess()) {
-                    var patches = MAPPER.readValue(res.body, new TypeReference<List<RadPatch>>() { });
-                    for (var patch : patches) {
-                        patch.seedNode = node;
-                        patch.project = repo.getProject();
-                        patch.radProject = radProject;
-                        patch.self = self;
-                        patch.repo = repo;
-                    }
-                    allPatches.addAll(patches);
-                }
-            }
-            return allPatches;
-        } catch (Exception e) {
-            logger.warn("http request exception", e);
-        }
-        return List.of();
-    }
-
     public RadPatch addReview(String verdict, String summary, RadPatch patch) {
         var session = createAuthenticatedSession();
         if (session == null) {
@@ -210,21 +140,6 @@ public class RadicleProjectApi {
         }
 
         return null;
-    }
-
-    public RadProject fetchRadProject(String projectId) {
-        var url = getHttpNodeUrl() + "/api/v1/projects/" + projectId;
-        try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchProjectError"));
-            if (res.isSuccess()) {
-                return MAPPER.readValue(res.body, RadProject.class);
-            }
-            return null;
-        } catch (Exception e) {
-            logger.warn("http request exception {}", url, e);
-            showNotification(project, RadicleBundle.message("fetchProjectError"), "", NotificationType.ERROR, null);
-            return null;
-        }
     }
 
     public boolean createIssue(String title, String description, List<String> assignees,
@@ -298,29 +213,6 @@ public class RadicleProjectApi {
         } catch (Exception e) {
             logger.warn("exception creating new patch title:{} description:{} base_oid:{} patch_oid:{} repo:{} projectId:{}",
                     title, description, baseOid, patchOid, repo, projectId, e);
-        }
-        return null;
-    }
-
-    public RadIssue fetchIssue(String projectId, GitRepository repo, String issueId) {
-        var node = getSeedNode();
-        var radProject = fetchRadProject(projectId);
-        if (radProject == null) {
-            return null;
-        }
-        var url = node.url + "/api/v1/projects/" + projectId + "/issues/" + issueId;
-        try {
-            var res = makeRequest(new HttpGet(url), RadicleBundle.message("fetchIssueError"));
-            if (res.isSuccess()) {
-                var issue = MAPPER.readValue(res.body, RadIssue.class);
-                issue.repo = repo;
-                issue.projectId = projectId;
-                issue.project = repo.getProject();
-                issue.seedNode = node;
-                return issue;
-            }
-        } catch (Exception e) {
-            logger.warn("http request exception {}", url, e);
         }
         return null;
     }
