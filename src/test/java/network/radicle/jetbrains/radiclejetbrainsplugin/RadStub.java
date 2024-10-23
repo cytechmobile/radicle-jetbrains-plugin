@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -76,8 +77,12 @@ public class RadStub extends RadicleProjectService {
 
     @Override
     public ProcessOutput executeCommandFromFile(GitRepository repo, List<String> params) {
-        commandsStr.add(String.join(" ", params));
+        var command = String.join(" ", params);
+        commandsStr.add(command);
         var pr = new ProcessOutput(0);
+        if (command.contains("comment") && command.contains(ExecUtil.escapeUnixShellArgument("break"))) {
+            pr = new ProcessOutput(-1);
+        }
         var stdout = "stdout";
         pr.appendStdout(stdout);
         return pr;

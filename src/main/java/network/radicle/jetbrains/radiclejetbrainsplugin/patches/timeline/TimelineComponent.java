@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
@@ -105,9 +106,11 @@ public class TimelineComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return false;
         }
-        var ok = api.addPatchComment(radPatch, field.getText(), null, field.getEmbedList());
-        if (ok != null) {
-            radPatchModel.setValue(ok);
+        var patchComment = new RadComment(radPatch.repo, radPatch.getLatestRevision().id(), field.getText(), RadComment.Type.PATCH);
+        var output = patchComment.perform();
+        var ok = RadAction.isSuccess(output);
+        if (ok) {
+            radPatchModel.setValue(radPatch);
             return true;
         }
         return false;
@@ -118,6 +121,7 @@ public class TimelineComponent {
                 RadicleBundle.message("patch.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
+                .enableDragAndDrop(false)
                 .closeEditorAfterSubmit(false)
                 .build();
         panelHandle.showAndFocusEditor();

@@ -48,7 +48,7 @@ public abstract class ReplyPanel<T> {
                 model.setValue(model.getValue());
             }
             return success;
-        }).enableDragAndDrop(true)
+        }).enableDragAndDrop(false)
                 .hideCancelAction(false)
                 .build();
         panelHandle.addOnCloseListener(() -> toggleModel.setValue(false));

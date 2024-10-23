@@ -19,6 +19,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
@@ -155,7 +156,7 @@ public class TimelineComponentFactory {
         myPanel.add(StatusMessageComponentFactory.INSTANCE.create(new JLabel(verdictMsg), color));
         panel.addToCenter(myPanel);
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
-                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> true).build();
+                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> true).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         var item = createTimeLineItem(contentPanel, actionsPanel, review.author().generateLabelText(), review.timestamp());
@@ -202,7 +203,7 @@ public class TimelineComponentFactory {
                 patchModel.setValue(patch);
             }
             return success;
-        }).build();
+        }).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
@@ -260,8 +261,9 @@ public class TimelineComponentFactory {
 
         @Override
         public boolean addReply(String comment, List<Embed> list, String replyToId) {
-            var res = api.addPatchComment(patch, comment, replyToId, null, list);
-            return res != null;
+            var patchComment = new RadComment(patch.repo, patch.getLatestRevision().id(), replyToId, comment, RadComment.Type.PATCH);
+            var output = patchComment.perform();
+            return RadAction.isSuccess(output);
         }
     }
 

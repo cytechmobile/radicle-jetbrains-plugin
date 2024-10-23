@@ -20,6 +20,8 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -152,6 +154,7 @@ public class IssueComponent {
                 RadicleBundle.message("issue.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
+                .enableDragAndDrop(false)
                 .closeEditorAfterSubmit(false)
                 .build();
         panelHandle.showAndFocusEditor();
@@ -162,10 +165,10 @@ public class IssueComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return true;
         }
-        var edited = api.addIssueComment(radIssue, field.getText(), field.getEmbedList());
-        final boolean success = edited != null;
-        if (success) {
-            issueModel.setValue(edited);
+        var issueComment = new RadComment(radIssue.repo, radIssue.id, field.getText(), RadComment.Type.ISSUE);
+        var output = issueComment.perform();
+        if (RadAction.isSuccess(output)) {
+            issueModel.setValue(radIssue);
         }
         return true;
     }
@@ -248,8 +251,9 @@ public class IssueComponent {
 
         @Override
         public boolean addReply(String comment, List<Embed> embedList, String replyToId) {
-            var res = api.addIssueComment(radIssue, comment, replyToId, embedList);
-            return res != null;
+            var issueComment = new RadComment(radIssue.repo, radIssue.id, replyToId, comment, RadComment.Type.ISSUE);
+            var output = issueComment.perform();
+            return RadAction.isSuccess(output);
         }
     }
 

@@ -29,6 +29,7 @@ import git4idea.util.GitVcsConsoleWriter;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadNodeStatus;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
@@ -385,11 +386,13 @@ public class RadicleProjectService {
         return executeCommand(root.getRoot().getPath(), List.of("issue", "state", issueId, state), root);
     }
 
-    public ProcessOutput patchComment(GitRepository root, String patchId, String message) {
-        if (SystemInfo.isWindows) {
-            message = "'" + message + "'";
+    public ProcessOutput comment(GitRepository root, String id, String message, String replyTo, RadComment.Type type) {
+        List<String> params = new ArrayList<>(Arrays.asList(type.value, "comment", id, "--message", ExecUtil.escapeUnixShellArgument(message)));
+        if (!Strings.isNullOrEmpty(replyTo)) {
+            params.add("--reply-to");
+            params.add(replyTo);
         }
-        return executeCommand(root.getRoot().getPath(), List.of("comment", patchId, "--message", message), root);
+        return executeCommandFromFile(root, params);
     }
 
     public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
