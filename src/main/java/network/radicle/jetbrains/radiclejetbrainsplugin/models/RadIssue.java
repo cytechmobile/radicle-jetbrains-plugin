@@ -14,6 +14,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -114,6 +115,7 @@ public class RadIssue {
             } catch (Exception e) {
                 logger.warn("Unable to deserialize rad issue");
             }
+            discussions.sort(Comparator.comparing(RadDiscussion::getTimestamp));
             return discussions;
         }
     }

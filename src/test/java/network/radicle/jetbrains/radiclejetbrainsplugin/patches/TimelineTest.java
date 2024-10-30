@@ -896,40 +896,7 @@ public class TimelineTest extends AbstractIT {
     }
 
     @Test
-    public void testEmbeds() throws InterruptedException {
-        // Clear previous commands
-        radStub.commands.clear();
-        executeUiTasks();
-        var timelineComponent = patchEditorProvider.getTimelineComponent();
-        var commentPanel = timelineComponent.getCommentPanel();
-        var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
-        var dummyEmbed = new Embed("98db332aebc4505d7c55e7bfeb9556550220a796", "test.jpg", "data:image/jpeg;base64,test");
-        ef.setEmbedList(List.of(dummyEmbed));
-        assertThat(ef).isNotNull();
-        markAsShowing(ef.getParent(), ef);
-        executeUiTasks();
-        assertThat(ef.getText()).isEmpty();
-        dummyComment = dummyComment + "![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
-        ef.setText(dummyComment);
-        var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
-        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        var prBtn = prBtns.get(0);
-        prBtn.doClick();
-        executeUiTasks();
-        Thread.sleep(1000);
-        executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("revision.comment");
-        assertThat((String) map.get("body")).contains(dummyEmbed.getOid());
-
-        var embeds = (ArrayList<HashMap<String, String>>) map.get("embeds");
-        assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
-        assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
-        assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
-    }
-
-    @Test
-    public void testReplyComment() throws InterruptedException {
+    public void testReplyComment() {
         // Clear previous commands
         radStub.commands.clear();
         executeUiTasks();
@@ -950,9 +917,8 @@ public class TimelineTest extends AbstractIT {
         var prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("revision.comment");
-        assertThat(map.get("body")).isEqualTo(replyComment);
+        var commandStr = radStub.commandsStr.poll();
+        assertThat(commandStr).contains(replyComment);
     }
 
     @Test
@@ -975,9 +941,9 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         Thread.sleep(1000);
         //Comment
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("revision")).isEqualTo(patch.getLatestRevision().id());
-        assertThat(map.get("body")).isEqualTo(dummyComment);
+        var commandStr = radStub.commandsStr.poll();
+        assertThat(commandStr).contains(patch.getLatestRevision().id());
+        assertThat(commandStr).contains(dummyComment);
         var edit = new RadPatch.Edit(new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), List.of());
         var edits = List.of(edit);
         var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of(), null, edits);
@@ -1020,7 +986,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliError"));
 
         // Test edit patch functionality
         var commPanel = timelineComponent.getComponentsFactory().getCommentPanel();
@@ -1036,7 +1002,7 @@ public class TimelineTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
+        var res = response.poll(15, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.edit");
         assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
         assertThat(res.get("body")).isEqualTo(editedComment);

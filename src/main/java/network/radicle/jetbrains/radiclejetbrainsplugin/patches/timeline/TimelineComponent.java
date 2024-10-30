@@ -26,6 +26,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
@@ -45,12 +46,14 @@ public class TimelineComponent {
     private JComponent commentPanel;
     private JComponent revisionSection;
     private final RadicleProjectApi api;
+    private final RadicleCliService radicleCliService;
 
     public TimelineComponent(PatchProposalPanel patchProposalPanel, PatchVirtualFile file) {
         this.radPatchModel = file.getPatchModel();
         this.radPatch = file.getPatchModel().getValue();
         componentsFactory = new TimelineComponentFactory(patchProposalPanel, radPatchModel, file);
         api = radPatch.project.getService(RadicleProjectApi.class);
+        radicleCliService = radPatch.project.getService(RadicleCliService.class);
     }
 
     public JComponent create() {
@@ -105,9 +108,10 @@ public class TimelineComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return false;
         }
-        var ok = api.addPatchComment(radPatch, field.getText(), null, field.getEmbedList());
-        if (ok != null) {
-            radPatchModel.setValue(ok);
+        var output = radicleCliService.createPatchComment(radPatch.repo, radPatch.getLatestRevision().id(), field.getText(), null);
+        var ok = RadAction.isSuccess(output);
+        if (ok) {
+            radPatchModel.setValue(radPatch);
             return true;
         }
         return false;
@@ -118,6 +122,7 @@ public class TimelineComponent {
                 RadicleBundle.message("patch.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
+                .enableDragAndDrop(false)
                 .closeEditorAfterSubmit(false)
                 .build();
         panelHandle.showAndFocusEditor();
