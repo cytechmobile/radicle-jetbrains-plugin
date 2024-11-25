@@ -50,8 +50,8 @@ public class DragAndDropField extends EditorTextField {
         this.addDocumentListener(new MyListener(this));
     }
 
-    public DragAndDropField(Project project, int border) {
-        this(project, true);
+    public DragAndDropField(Project project, int border, boolean allowDragAndDrop) {
+        this(project, allowDragAndDrop);
         this.border = border;
     }
 

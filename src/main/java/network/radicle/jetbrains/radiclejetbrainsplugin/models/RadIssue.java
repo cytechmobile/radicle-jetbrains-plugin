@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -107,7 +107,7 @@ public class RadIssue {
                 for (Iterator<String> it = comments.fieldNames(); it.hasNext();) {
                     var key = it.next();
                     var comment = comments.get(key);
-                    var discussion = RadicleProjectApi.MAPPER.readValue(comment.toString(), new TypeReference<RadDiscussion>() { });
+                    var discussion = RadicleCliService.MAPPER.readValue(comment.toString(), new TypeReference<RadDiscussion>() { });
                     discussion.id = key;
                     discussions.add(discussion);
                 }

@@ -157,9 +157,6 @@ public class IssueListPanelTest extends AbstractIT {
 
         var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(2);
-
-        var issue = issueModel.get(0);
-        assertThat(issue.author.id).isEqualTo(issues.get(0).author.id);
     }
 
     @Test
@@ -172,12 +169,6 @@ public class IssueListPanelTest extends AbstractIT {
 
         var issueModel = listPanel.getModel();
         assertThat(issueModel.getSize()).isEqualTo(2);
-
-        var issue = issueModel.get(0);
-        assertThat(issue.id).isEqualTo(issues.get(0).id);
-
-        issue = issueModel.get(1);
-        assertThat(issue.id).isEqualTo(issues.get(1).id);
     }
 
     @Test

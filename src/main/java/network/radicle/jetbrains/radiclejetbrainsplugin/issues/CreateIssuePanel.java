@@ -58,7 +58,6 @@ import java.util.stream.Collectors;
 
 public class CreateIssuePanel {
     private final RadicleProjectApi api;
-    private final RadicleCliService cli;
     private final Project project;
     private AssigneesSelect assigneeSelect;
     private LabelSelect labelSelect;
@@ -68,6 +67,7 @@ public class CreateIssuePanel {
     private DragAndDropField descriptionField;
     protected IssueTabController issueTabController;
     private ComboBox<GitRepository> projectSelect;
+    private final RadicleCliService cliService;
 
     public AssigneesSelect getAssigneeSelect() {
         return assigneeSelect;
@@ -80,7 +80,7 @@ public class CreateIssuePanel {
     public CreateIssuePanel(IssueTabController issueTabController, Project project) {
         this.issueTabController = issueTabController;
         this.api = project.getService(RadicleProjectApi.class);
-        this.cli = project.getService(RadicleCliService.class);
+        this.cliService = project.getService(RadicleCliService.class);
         this.project = project;
     }
 
@@ -140,7 +140,7 @@ public class CreateIssuePanel {
         borderPanel.add(projectSelect, BorderLayout.NORTH);
         borderPanel.add(titleField, BorderLayout.CENTER);
 
-        descriptionField = new DragAndDropField(project, 0);
+        descriptionField = new DragAndDropField(project, 0, false);
         descriptionField.setBackground(UIUtil.getListBackground());
         descriptionField.setFont(JBFont.label());
         descriptionField.getComponent().setBorder(JBUI.Borders.empty(8));
@@ -178,8 +178,8 @@ public class CreateIssuePanel {
                 }
                 newIssueButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var radProject = cli.getRadRepo(repo);
-                    var isSuccess = api.createIssue(issueTitle, issueDescription, assignees, labels, repo, radProject.id, descriptionField.getEmbedList());
+                    var output = cliService.createIssue(repo, issueTitle, issueDescription, assignees, labels);
+                    var isSuccess = RadAction.isSuccess(output);
                     ApplicationManager.getApplication().invokeLater(() -> {
                         if (isSuccess) {
                             issueTabController.createPanel();
@@ -316,7 +316,7 @@ public class CreateIssuePanel {
                 if (selectedProject == null) {
                     return assignees;
                 }
-                var radProject = cli.getRadRepo(selectedProject);
+                var radProject = cliService.getRadRepo(selectedProject);
                 for (var delegate : radProject.delegates) {
                     var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate.id, delegate.alias);
                     var isSelected = delegates.stream().anyMatch(d -> d.id.equals(delegate.id));

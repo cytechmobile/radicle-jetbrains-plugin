@@ -375,17 +375,11 @@ public class OverviewTest extends AbstractIT {
         var createIssueButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
         createIssueButton.doClick();
         executeUiTasks();
-        var res = response.poll(10, TimeUnit.SECONDS);
-
-        var embeds = (ArrayList<HashMap<String, String>>) res.get("embeds");
-        assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
-        assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
-        assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
-
-        assertThat(res.get("title")).isEqualTo(ISSUE_NAME);
-        assertThat(res.get("description")).isEqualTo(issueDescription);
-        assertThat(res.get("labels")).usingRecursiveAssertion().isEqualTo(List.of(label2));
-        assertThat(res.get("assignees")).usingRecursiveAssertion().isEqualTo(List.of(getTestProjects().get(0).delegates.get(0).id));
+        var issueCommand = radStub.commandsStr.poll();
+        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(ISSUE_NAME));
+        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueDescription));
+        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(label2));
+        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(getTestProjects().get(0).delegates.get(0).id));
     }
 
     @Test

@@ -6,7 +6,6 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +39,7 @@ public class RadCobShow extends RadAction {
         var json = output.getStdout();
         RadIssue issue = null;
         try {
-            issue = RadicleProjectApi.MAPPER.readValue(json, new TypeReference<>() { });
+            issue = RadicleCliService.MAPPER.readValue(json, new TypeReference<>() { });
             var firstDiscussion = issue.discussion.get(0);
             issue.author = firstDiscussion.author;
             issue.project = repo.getProject();

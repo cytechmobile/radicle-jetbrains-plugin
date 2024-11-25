@@ -1,8 +1,12 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.commands;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,17 +28,19 @@ public abstract class RadicleScriptCommand {
     public String exePath;
     public String shebang;
     public List<String> args;
+    public RadicleCliService cliService;
 
-    public RadicleScriptCommand(String workDir, String shebang, String exePath, String radHome, List<String> args) {
+    public RadicleScriptCommand(String workDir, String shebang, String exePath, String radHome, List<String> args, Project project) {
         this.workDir = workDir;
         this.shebang = shebang;
         this.exePath = exePath;
         this.radHome = radHome;
         this.args = args;
+        this.cliService = project.getService(RadicleCliService.class);
     }
 
-    public RadicleScriptCommand(String workDir, String exePath, String radHome, List<String> args) {
-        this(workDir, "#!/bin/bash", exePath, radHome, args);
+    public RadicleScriptCommand(String workDir, String exePath, String radHome, List<String> args, Project project) {
+        this(workDir, "#!/bin/bash", exePath, radHome, args, project);
     }
 
     public File createTempExecutableScript() {
@@ -52,7 +58,8 @@ public abstract class RadicleScriptCommand {
 
     public String getCommand() {
         var command = String.join(" ", args);
-        return shebang + "\n" + getExportRadHomeCommand() + exePath + " " + command;
+        return shebang + "\n" + getExportRadPassphrase() +
+                getExportRadHomeCommand() + exePath + " " + command;
     }
 
     public File getTempPath() {
@@ -71,6 +78,19 @@ public abstract class RadicleScriptCommand {
 
     private String getExportRadHomeCommand() {
         return "export RAD_HOME=" + radHome + "\n";
+    }
+
+    private String getExportRadPassphrase() {
+        var currentIdentity = cliService.getCurrentIdentity();
+        if (currentIdentity == null) {
+            return "";
+        }
+        var projectSettings = new RadicleProjectSettingsHandler(cliService.getProject());
+        var password = projectSettings.getPassword(currentIdentity.nodeId);
+        if (Strings.isNullOrEmpty(password)) {
+            return "";
+        }
+        return "export RAD_PASSPHRASE=" + password + "\n";
     }
 
     private String getRandomScriptName() {

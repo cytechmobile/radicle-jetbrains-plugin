@@ -381,6 +381,20 @@ public class RadicleProjectService {
         return executeCommandFromFile(root, params);
     }
 
+    public ProcessOutput createIssue(GitRepository root, String title, String description, List<String> assignees, List<String> labels) {
+        var labelsStr = labels.stream().map(label -> "--label " + ExecUtil.escapeUnixShellArgument(label)).collect(Collectors.joining(" "));
+        var assigneesStr = assignees.stream().map(assignee -> "--assign " + ExecUtil.escapeUnixShellArgument(assignee)).collect(Collectors.joining(" "));
+        List<String> params = new ArrayList<>(Arrays.asList("issue", "open", "--title",
+                ExecUtil.escapeUnixShellArgument(title), "--description", ExecUtil.escapeUnixShellArgument(description)));
+        if (!Strings.isNullOrEmpty(labelsStr)) {
+            params.add(labelsStr);
+        }
+        if (!Strings.isNullOrEmpty(assigneesStr)) {
+            params.add(assigneesStr);
+        }
+        return executeCommandFromFile(root, params);
+    }
+
     public ProcessOutput changeIssueState(GitRepository root, String issueId, String state) {
         return executeCommand(root.getRoot().getPath(), List.of("issue", "state", issueId, state), root);
     }
@@ -422,7 +436,7 @@ public class RadicleProjectService {
         final var radPath = projectSettings.getPath();
         final var radHome = projectSettings.getRadHome();
         var workDir = repo.getRoot().getPath();
-        var scriptCommand = RadicleScriptCommandFactory.create(workDir, radPath, radHome, params, this);
+        var scriptCommand = RadicleScriptCommandFactory.create(workDir, radPath, radHome, params, this, project);
         var output = runCommand(scriptCommand.getCommandLine(), repo, workDir, null);
         scriptCommand.deleteTempFile();
         return output;

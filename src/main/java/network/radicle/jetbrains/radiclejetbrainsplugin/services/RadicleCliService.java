@@ -4,6 +4,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import git4idea.commands.Git;
 import git4idea.repo.GitRemote;
@@ -12,6 +13,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobShow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
@@ -44,6 +46,11 @@ public class RadicleCliService {
         radRepoIds = new HashMap<>();
     }
 
+    public ProcessOutput createIssue(GitRepository repo, String title, String description, List<String> assignees, List<String> labels) {
+        var issueCreate = new RadIssueCreate(repo, title, description, assignees, labels);
+        return issueCreate.perform();
+    }
+
     public RadIssue getIssue(GitRepository repo, String projectId, String objectId) {
         var cobShow = new RadCobShow(repo, projectId, objectId, RadCobList.Type.ISSUE);
         return cobShow.getIssue();
@@ -65,6 +72,7 @@ public class RadicleCliService {
             }
             issues.add(issue);
         }
+        issues.sort(Comparator.comparing(issue -> ((RadIssue) issue).discussion.get(0).timestamp).reversed());
         return issues;
     }
 
