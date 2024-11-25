@@ -104,8 +104,14 @@ public class RadicleSettingsView  implements SearchableConfigurable {
     }
 
     protected String getRadHome() {
-        var radPath = getPathFromTextField(radPathField);
-        return myProject.getService(RadicleProjectService.class).detectRadHome(radPath);
+        var radHome = getPathFromTextField(radPathField);
+        if (Strings.isNullOrEmpty(radHome)) {
+            radHome = autoDetectRadHome.detected;
+        }
+        if (Strings.isNullOrEmpty(radHome)) {
+            return "";
+        }
+        return myProject.getService(RadicleProjectService.class).detectRadHome(radHome);
     }
 
     private boolean isRadHomeValidPath(String radPath, String radHome, IdentityDialog dialog) {
@@ -330,30 +336,28 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         autoDetectRadPath = new AutoDetect(AutoDetect.Type.RAD_EXE_PATH);
         autoDetectRadHome = new AutoDetect(AutoDetect.Type.RAD_HOME);
         final var latch = new CountDownLatch(1);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            autoDetectRadPath.detect();
-            autoDetectRadHome.detect();
-            latch.countDown();
-        });
         var hasRadPath = !Strings.isNullOrEmpty(getPathFromTextField(radPathField));
         var hasRadHome = !Strings.isNullOrEmpty(getPathFromTextField(radHomeField));
         if (!hasRadPath || !hasRadHome) {
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                try {
-                    //We have to wait for RAD_PATH, in order to find RAD_HOME
-                    latch.await(5, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    logger.warn("Unable to wait for rad path/home");
+                if (!hasRadPath) {
+                    autoDetectRadPath.detect();
                 }
-               ApplicationManager.getApplication().invokeLater(() -> {
-                   if (!hasRadPath) {
-                       autoDetectRadPath.updateField(radPathField, autoDetectRadPath.detected);
-                   }
-                   if (!hasRadHome) {
-                       autoDetectRadHome.updateField(radHomeField, autoDetectRadHome.detected);
-                   }
-               }, ModalityState.any());
+                if (!hasRadHome) {
+                    autoDetectRadHome.detect();
+                }
+                latch.countDown();
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    if (!hasRadPath) {
+                        autoDetectRadPath.updateField(radPathField, autoDetectRadPath.detected);
+                    }
+                    if (!hasRadHome) {
+                        autoDetectRadHome.updateField(radHomeField, autoDetectRadHome.detected);
+                    }
+                }, ModalityState.any());
             });
+        } else {
+            latch.countDown();
         }
 
         seedNodeApiUrl.setText(this.projectSettings.getSeedNode().url);
@@ -362,6 +366,11 @@ public class RadicleSettingsView  implements SearchableConfigurable {
         initListeners();
         // Show a warning label if the rad version is incompatible
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+                latch.await(5, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                logger.warn("Unable to wait for detection");
+            }
             var version = getRadVersion();
             init.countDown();
             ApplicationManager.getApplication().invokeLater(() -> showHideEnforceLabel(version), ModalityState.any());

@@ -22,6 +22,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JButton;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class StatusPanelTest extends AbstractIT {
@@ -33,9 +35,17 @@ public class StatusPanelTest extends AbstractIT {
     }
 
     @Test
-    public void testStatusPanelWithMissingSettings() {
+    public void testStatusPanelWithMissingSettings() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("");
-        var statusBarServiceStub = new StatusBarServiceStub(getProject(), true, false);
+        var latch = new CountDownLatch(1);
+        var statusBarServiceStub = new StatusBarServiceStub(getProject(), true, false) {
+            @Override
+            public List<GitRepository> getInitializedRepos() {
+                var repos = super.getInitializedRepos();
+                latch.countDown();
+                return repos;
+            }
+        };
         stubStatusBarService(statusBarServiceStub);
         var radStatusBar = new RadStatusBar();
         var widget = (RadStatusBar.RadWidget) radStatusBar.createWidget(getProject(), new CoroutineScope() {
@@ -50,6 +60,7 @@ public class StatusPanelTest extends AbstractIT {
         var button = UIUtil.findComponentOfType(panel, JButton.class);
         assertNotNull(label);
         assertNotNull(button);
+        latch.await(10, TimeUnit.SECONDS);
         assertTrue(radStatusBar.isAvailable(getProject()));
         assertEquals(widget.getIcon().toString(), RadicleIcons.RADICLE_STATUS_BAR_MISSING_SETTINGS.toString());
         assertEquals(label.getText(), RadicleBundle.message("missing.settings"));
@@ -139,7 +150,7 @@ public class StatusPanelTest extends AbstractIT {
 
         @Override
         public void checkServicesStatus(int period) {
-            super.checkServicesStatus(500);
+            super.checkServicesStatus(100);
         }
 
         @Override

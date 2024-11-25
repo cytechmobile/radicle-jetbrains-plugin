@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
@@ -168,17 +167,6 @@ public class PatchListPanelTest extends AbstractIT {
         assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
     }
 
-    @Test
-    public void test() {
-        var commandLine = new GeneralCommandLine();
-        commandLine.setExePath("e x e path");
-        commandLine.addParameter("with space");
-        commandLine.addParameter("\"quoted\"");
-        commandLine.addParameter("\"quoted with spaces\"");
-        commandLine.addParameters("param 1", "param2");
-        commandLine.addParameter("trailing slash\\");
-        System.out.println(commandLine.getCommandLineString());
-    }
     @Test
     public void testFiltersData() throws ExecutionException, InterruptedException {
         var controller = (PatchTabController) radicleToolWindow.patchTabController;

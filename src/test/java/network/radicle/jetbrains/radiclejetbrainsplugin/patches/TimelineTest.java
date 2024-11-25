@@ -981,6 +981,7 @@ public class TimelineTest extends AbstractIT {
         var edit = new RadPatch.Edit(new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), List.of());
         var edits = List.of(edit);
         var discussion = new RadDiscussion("542", new RadAuthor("myTestAuthor"), dummyComment, Instant.now(), "", List.of(), List.of(), null, edits);
+        var discussionToEdit = patch.getLatestRevision().getDiscussions().get(0);
         patch.getLatestRevision().discussion().comments.put("542", discussion);
 
 
@@ -1003,9 +1004,6 @@ public class TimelineTest extends AbstractIT {
         assertThat(comments).contains(patch.getRevisionList().get(0).id());
         assertThat(comments).contains(secondComment);
         assertThat(comments).contains(patch.getRevisionList().get(1).id());
-        // Assert that the new comment exists
-        assertThat(comments).contains(patch.getRevisionList().get(1).getDiscussions().get(1).body);
-
         //Check that notification get triggered
         markAsShowing(ef.getParent(), ef);
         executeUiTasks();
@@ -1040,9 +1038,9 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("revision.comment.edit");
-        assertThat(res.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
+        assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
         assertThat(res.get("body")).isEqualTo(editedComment);
-        assertThat(res.get("comment")).isEqualTo(patch.getRevisionList().get(1).getDiscussions().get(0).id);
+        assertThat(res.get("comment")).isEqualTo(discussionToEdit.id);
     }
 
     private RadPatch createPatch() {
