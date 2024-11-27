@@ -664,45 +664,7 @@ public class OverviewTest extends AbstractIT {
     }
 
     @Test
-    public void testEmbeds() throws InterruptedException {
-        issueEditorProvider.createEditor(getProject(), editorFile);
-        var issueComponent = issueEditorProvider.getIssueComponent();
-        radStub.commands.clear();
-        executeUiTasks();
-        var commentPanel = issueComponent.getCommentFieldPanel();
-        var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
-        var dummyEmbed = new Embed("98db332aebc4505d7c55e7bfeb9556550220a796", "test.jpg", "data:image/jpeg;base64,test");
-        ef.setEmbedList(List.of(dummyEmbed));
-        UIUtil.markAsShowing((JComponent) ef.getParent(), true);
-        //matching UiUtil IS_SHOWING key
-        ((JComponent) ef.getParent()).putClientProperty(Key.findKeyByName("Component.isShowing"), Boolean.TRUE);
-        assertThat(UIUtil.isShowing(ef.getParent(), false)).isTrue();
-        for (var hl : ef.getParent().getHierarchyListeners()) {
-            hl.hierarchyChanged(new HierarchyEvent(ef, 0, ef, ef.getParent(), HierarchyEvent.SHOWING_CHANGED));
-        }
-        executeUiTasks();
-        assertThat(ef.getText()).isEmpty();
-        dummyComment = dummyComment + "![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
-        ef.setText(dummyComment);
-        var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
-        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        var prBtn = prBtns.get(0);
-        prBtn.doClick();
-        Thread.sleep(1000);
-        executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("comment");
-        assertThat((String) map.get("body")).contains(dummyEmbed.getOid());
-        assertThat(map.get("replyTo")).isEqualTo(issue.id);
-
-        var embeds = (ArrayList<HashMap<String, String>>) map.get("embeds");
-        assertThat(embeds.get(0).get("oid")).isEqualTo(dummyEmbed.getOid());
-        assertThat(embeds.get(0).get("name")).isEqualTo(dummyEmbed.getName());
-        assertThat(embeds.get(0).get("content")).isEqualTo(dummyEmbed.getContent());
-    }
-
-    @Test
-    public void testReplyComment() throws InterruptedException {
+    public void testReplyComment() {
         executeUiTasks();
         var replyPanel = issueEditorProvider.getIssueComponent().getReplyPanel();
         var replyButton = UIUtil.findComponentsOfType(replyPanel, LinkLabel.class);
@@ -719,9 +681,9 @@ public class OverviewTest extends AbstractIT {
         var prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("comment");
-        assertThat(map.get("body")).isEqualTo(replyComment);
+        var command = radStub.commandsStr.poll();
+        assertThat(command).contains("comment");
+        assertThat(command).contains(replyComment);
     }
 
     @Test
@@ -749,10 +711,10 @@ public class OverviewTest extends AbstractIT {
         prBtn.doClick();
         Thread.sleep(1000);
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("comment");
-        assertThat(map.get("body")).isEqualTo(dummyComment);
-        assertThat(map.get("replyTo")).isEqualTo(issue.id);
+        var command = radStub.commandsStr.poll();
+        assertThat(command).contains("comment");
+        assertThat(command).contains(ExecUtil.escapeUnixShellArgument(dummyComment));
+        assertThat(command).contains(issue.id);
         issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of(), null, null));
 
         // Open createEditor
@@ -788,7 +750,7 @@ public class OverviewTest extends AbstractIT {
         executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
-        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("commentError"));
+        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliError"));
 
         // Test edit issue functionality
         response.clear();

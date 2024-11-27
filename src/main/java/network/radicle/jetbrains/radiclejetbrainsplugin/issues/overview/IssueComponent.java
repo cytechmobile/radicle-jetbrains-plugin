@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -29,6 +30,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
@@ -58,12 +60,14 @@ public class IssueComponent {
     private EmojiPanel<RadIssue> emojiPanel;
     private final IssueVirtualFile  file;
     private JComponent replyPanel;
+    private final RadicleCliService cliService;
 
     public IssueComponent(IssueVirtualFile file) {
         this.file = file;
         this.radIssue = file.getIssueModel().getValue();
         this.issueModel = file.getIssueModel();
         this.api = radIssue.project.getService(RadicleProjectApi.class);
+        this.cliService = radIssue.project.getService(RadicleCliService.class);
     }
 
     public JComponent create() {
@@ -152,6 +156,7 @@ public class IssueComponent {
                 RadicleBundle.message("issue.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
+                .enableDragAndDrop(false)
                 .closeEditorAfterSubmit(false)
                 .build();
         panelHandle.showAndFocusEditor();
@@ -162,10 +167,9 @@ public class IssueComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return true;
         }
-        var edited = api.addIssueComment(radIssue, field.getText(), field.getEmbedList());
-        final boolean success = edited != null;
-        if (success) {
-            issueModel.setValue(edited);
+        var output = cliService.createIssueComment(radIssue.repo, radIssue.id, field.getText(), null);
+        if (RadAction.isSuccess(output)) {
+            issueModel.setValue(radIssue);
         }
         return true;
     }
@@ -248,8 +252,8 @@ public class IssueComponent {
 
         @Override
         public boolean addReply(String comment, List<Embed> embedList, String replyToId) {
-            var res = api.addIssueComment(radIssue, comment, replyToId, embedList);
-            return res != null;
+            var output = cliService.createIssueComment(radIssue.repo, radIssue.id, comment, replyToId);
+            return RadAction.isSuccess(output);
         }
     }
 

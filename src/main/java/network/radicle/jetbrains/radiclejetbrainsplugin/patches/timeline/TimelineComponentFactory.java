@@ -28,6 +28,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
@@ -64,6 +65,7 @@ public class TimelineComponentFactory {
     private JComponent commentPanel;
     private JComponent mainPanel;
     private JComponent replyPanel;
+    private final RadicleCliService radicleCliService;
 
     public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel, PatchVirtualFile file) {
         this.file = file;
@@ -71,6 +73,7 @@ public class TimelineComponentFactory {
         this.patchProposalPanel = patchProposalPanel;
         this.patchModel = patchModel;
         this.api = patch.project.getService(RadicleProjectApi.class);
+        this.radicleCliService = patch.project.getService(RadicleCliService.class);
     }
 
     public JComponent createDescSection() {
@@ -155,7 +158,7 @@ public class TimelineComponentFactory {
         myPanel.add(StatusMessageComponentFactory.INSTANCE.create(new JLabel(verdictMsg), color));
         panel.addToCenter(myPanel);
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
-                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> true).build();
+                RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> true).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         var item = createTimeLineItem(contentPanel, actionsPanel, review.author().generateLabelText(), review.timestamp());
@@ -202,7 +205,7 @@ public class TimelineComponentFactory {
                 patchModel.setValue(patch);
             }
             return success;
-        }).build();
+        }).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
@@ -260,8 +263,8 @@ public class TimelineComponentFactory {
 
         @Override
         public boolean addReply(String comment, List<Embed> list, String replyToId) {
-            var res = api.addPatchComment(patch, comment, replyToId, null, list);
-            return res != null;
+            var output = radicleCliService.createPatchComment(patch.repo, patch.getLatestRevision().id(), comment, replyToId);
+            return RadAction.isSuccess(output);
         }
     }
 

@@ -4,6 +4,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import git4idea.commands.Git;
@@ -13,6 +14,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobShow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -127,6 +129,14 @@ public class RadicleCliService {
         this.identity = null;
     }
 
+    public ProcessOutput createPatchComment(GitRepository repo, String revisionId, String comment, String replyTo) {
+        return createComment(repo, revisionId, comment, replyTo, RadComment.Type.PATCH);
+    }
+
+    public ProcessOutput createIssueComment(GitRepository repo, String issueId, String comment, String replyTo) {
+        return createComment(repo, issueId, comment, replyTo, RadComment.Type.ISSUE);
+    }
+
     public RadProject getRadRepo(GitRepository repo) {
         RadProject radRepo;
         if (radRepoIds.containsKey(repo.getRoot().getPath())) {
@@ -220,5 +230,16 @@ public class RadicleCliService {
 
     public Project getProject() {
         return project;
+    }
+
+    private ProcessOutput createComment(GitRepository repo, String id, String comment, String replyTo,
+                                        RadComment.Type type) {
+        final RadComment radComment;
+        if (!Strings.isNullOrEmpty(replyTo)) {
+            radComment = new RadComment(repo, id, replyTo, comment, type);
+        } else {
+            radComment = new RadComment(repo, id, comment, type);
+        }
+        return radComment.perform();
     }
 }
