@@ -46,14 +46,14 @@ public class TimelineComponent {
     private JComponent commentPanel;
     private JComponent revisionSection;
     private final RadicleProjectApi api;
-    private final RadicleCliService radicleCliService;
+    private final RadicleCliService cli;
 
     public TimelineComponent(PatchProposalPanel patchProposalPanel, PatchVirtualFile file) {
         this.radPatchModel = file.getPatchModel();
         this.radPatch = file.getPatchModel().getValue();
         componentsFactory = new TimelineComponentFactory(patchProposalPanel, radPatchModel, file);
         api = radPatch.project.getService(RadicleProjectApi.class);
-        radicleCliService = radPatch.project.getService(RadicleCliService.class);
+        cli = radPatch.project.getService(RadicleCliService.class);
     }
 
     public JComponent create() {
@@ -108,7 +108,7 @@ public class TimelineComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return false;
         }
-        var output = radicleCliService.createPatchComment(radPatch.repo, radPatch.getLatestRevision().id(), field.getText(), null);
+        var output = cli.createPatchComment(radPatch.repo, radPatch.getLatestRevision().id(), field.getText(), null);
         var ok = RadAction.isSuccess(output);
         if (ok) {
             radPatchModel.setValue(radPatch);
@@ -143,7 +143,10 @@ public class TimelineComponent {
                 RadicleBundle.message("patch.proposal.change.title"), new SingleValueModel<>(radPatch.title), (field) -> {
             var edit = new RadPatch(radPatch);
             edit.title = field.getText();
-            var edited = api.changePatchTitle(edit);
+            if (Strings.isNullOrEmpty(edit.title) || edit.title.contains("\n\n")) {
+                return false;
+            }
+            var edited = cli.changePatchTitleDescription(edit, edit.title, edit.getLatestNonEmptyRevisionDescription());
             final boolean success = edited != null;
             if (success) {
                 radPatchModel.setValue(edited);

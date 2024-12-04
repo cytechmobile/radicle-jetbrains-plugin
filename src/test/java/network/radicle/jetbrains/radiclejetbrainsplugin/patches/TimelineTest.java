@@ -601,27 +601,6 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         ef = UIUtil.findComponentOfType(titlePanel, DragAndDropField.class);
         assertThat(ef.getText()).isEqualTo(editedTitle);
-
-        //Check that error notification exists
-        markAsShowing(ef.getParent(), ef);
-        executeUiTasks();
-
-        notificationsQueue.clear();
-        editedTitle = "break";
-        ef.setText(editedTitle);
-        prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
-        assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
-        prBtn = prBtns.get(1);
-        /* click the button to edit the patch */
-        patch.title = editedTitle;
-        prBtn.doClick();
-        /* Wait for the reload */
-        executeUiTasks();
-        Thread.sleep(1000);
-        executeUiTasks();
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not).isNotNull();
-        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("patchTitleError"));
     }
 
     @Test

@@ -19,6 +19,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
@@ -135,6 +136,10 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var api = myProject.getService(RadicleProjectApi.class);
             if (api != null) {
                 api.resetCurrentIdentity();
+            }
+            var cli = myProject.getService(RadicleCliService.class);
+            if (cli != null) {
+                cli.resetIdentity();
             }
             myLatch.countDown();
             // check if rad home is non-default

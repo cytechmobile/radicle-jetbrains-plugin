@@ -65,7 +65,7 @@ public class TimelineComponentFactory {
     private JComponent commentPanel;
     private JComponent mainPanel;
     private JComponent replyPanel;
-    private final RadicleCliService radicleCliService;
+    private final RadicleCliService cli;
 
     public TimelineComponentFactory(PatchProposalPanel patchProposalPanel, SingleValueModel<RadPatch> patchModel, PatchVirtualFile file) {
         this.file = file;
@@ -73,7 +73,7 @@ public class TimelineComponentFactory {
         this.patchProposalPanel = patchProposalPanel;
         this.patchModel = patchModel;
         this.api = patch.project.getService(RadicleProjectApi.class);
-        this.radicleCliService = patch.project.getService(RadicleCliService.class);
+        this.cli = patch.project.getService(RadicleCliService.class);
     }
 
     public JComponent createDescSection() {
@@ -82,7 +82,18 @@ public class TimelineComponentFactory {
             description = RadicleBundle.message("noDescription");
         }
         var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.radProject.id, file);
-        descSection = Utils.descriptionPanel(editorPane, patch.project);
+        descSection = Utils.descriptionPanel(editorPane, patch.project, true, "patch.proposal.change.description", f -> {
+            var newDesc = f.getText();
+            if (Strings.isNullOrEmpty(newDesc)) {
+                return false;
+            }
+            var edited = cli.changePatchTitleDescription(patch, patch.title, newDesc);
+            final boolean success = edited != null;
+            if (success) {
+                patchModel.setValue(edited);
+            }
+            return success;
+        });
         return descSection;
     }
 
@@ -91,7 +102,7 @@ public class TimelineComponentFactory {
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            radDetails = api.getCurrentIdentity();
+            radDetails = cli.getCurrentIdentity();
             latch.countDown();
             ApplicationManager.getApplication().invokeLater(() -> {
                 loadingIcon.setVisible(false);
@@ -263,7 +274,7 @@ public class TimelineComponentFactory {
 
         @Override
         public boolean addReply(String comment, List<Embed> list, String replyToId) {
-            var output = radicleCliService.createPatchComment(patch.repo, patch.getLatestRevision().id(), comment, replyToId);
+            var output = cli.createPatchComment(patch.repo, patch.getLatestRevision().id(), comment, replyToId);
             return RadAction.isSuccess(output);
         }
     }

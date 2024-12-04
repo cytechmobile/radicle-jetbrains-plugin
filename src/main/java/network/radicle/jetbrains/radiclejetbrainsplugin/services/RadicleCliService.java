@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -40,13 +39,15 @@ public class RadicleCliService {
     public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
             .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
-    private Project project;
+    private final Project project;
     private final Map<String, RadProject> radRepoIds;
+    private final RadicleProjectService rad;
     private RadDetails identity;
 
     public RadicleCliService(Project project) {
         this.project = project;
         radRepoIds = new HashMap<>();
+        this.rad = project.getService(RadicleProjectService.class);
     }
 
     public ProcessOutput createIssue(GitRepository repo, String title, String description, List<String> assignees, List<String> labels) {
@@ -143,12 +144,28 @@ public class RadicleCliService {
         return createComment(repo, issueId, comment, replyTo, RadComment.Type.ISSUE);
     }
 
+    public RadPatch changePatchTitleDescription(RadPatch patch, String newTitle, String newDescription) {
+        try {
+            var res = rad.editPatchTitleDescription(patch.repo, patch.id, newTitle, newDescription);
+            if (!RadAction.isSuccess(res)) {
+                logger.warn("received invalid command output for changing patch message (title/description): {} - {} - {}",
+                        res.getExitCode(), res.getStdout(), res.getStderr());
+                return null;
+            }
+            // return patch as-is, it will trigger a re-fetch anyway
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error changing patch message (title/description): {}", patch, e);
+        }
+
+        return null;
+    }
+
     public RadProject getRadRepo(GitRepository repo) {
         RadProject radRepo;
         if (radRepoIds.containsKey(repo.getRoot().getPath())) {
             radRepo = radRepoIds.get(repo.getRoot().getPath());
         } else {
-            var rad = project.getService(RadicleProjectService.class);
             var output = rad.inspect(repo);
             if (!RadAction.isSuccess(output)) {
                 RadAction.showErrorNotification(project, RadicleBundle.message("radCliError"), RadicleBundle.message("errorFindingProjectId"));

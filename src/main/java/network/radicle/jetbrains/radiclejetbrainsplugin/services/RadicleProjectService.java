@@ -360,6 +360,11 @@ public class RadicleProjectService {
         return executeCommandFromFile(root, params);
     }
 
+    public ProcessOutput editPatchTitleDescription(GitRepository repo, String patchId, String title, String description) {
+        return executeCommandFromFile(repo, List.of("patch", "edit", patchId, "--message",
+                ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title) + "\n\n" + Strings.nullToEmpty(description))));
+    }
+
     public ProcessOutput addRemovePatchLabels(GitRepository root, String patchId, List<String> addedLabels, List<String> deletedLabels) {
         return addRemoveLabels(root, patchId, addedLabels, deletedLabels, true);
     }

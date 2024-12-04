@@ -1,8 +1,10 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
 import com.google.common.base.Strings;
+import com.intellij.collaboration.ui.CollaborationToolsUIUtilKt;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil;
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.ListLayout;
+import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import net.miginfocom.layout.CC;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -93,12 +96,25 @@ public class Utils {
     }
 
     public static JPanel descriptionPanel(MarkDownEditorPaneFactory editorPane, Project project) {
+        return descriptionPanel(editorPane, project, false, "issue.change.title", e -> true);
+    }
+
+    public static JPanel descriptionPanel(
+            MarkDownEditorPaneFactory editorPane, Project project, boolean allowEdit, String changeTitle, Function<DragAndDropField, Boolean> editAction) {
         var panelHandle = new EditablePanelHandler.PanelBuilder(project, editorPane.htmlEditorPane(),
-                RadicleBundle.message("issue.change.title"),
-                new SingleValueModel<>(editorPane.getRawContent()), (editedTitle) -> true).build();
+                RadicleBundle.message(changeTitle),
+                new SingleValueModel<>(editorPane.getRawContent()), editAction).build();
         var contentPanel = panelHandle.panel;
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(new ImageIcon()), contentPanel);
+        if (allowEdit) {
+            var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
+            actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+                panelHandle.showAndFocusEditor();
+                return null;
+            }));
+            b.withHeader(contentPanel, actionsPanel);
+        }
         b.setMaxContentWidth(Integer.MAX_VALUE);
         return (JPanel) b.build();
     }
