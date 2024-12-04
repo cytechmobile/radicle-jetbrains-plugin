@@ -32,7 +32,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchComponentFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JButton;
@@ -105,9 +104,10 @@ public class ReviewSubmitAction extends JButtonAction {
     private void submitReview(RadPatch.Review.Verdict verdict, String summary) {
         disableUI();
         Runnable submitTask = () -> {
-            var api = patch.project.getService(RadicleProjectApi.class);
-            var res = api.addReview(verdict.getValue(), summary, patch);
-            var success = res != null;
+            var cliService = patch.project.getService(RadicleCliService.class);
+            var res = cliService.addReview(verdict.getValue(), summary, patch);
+            var success = RadAction.isSuccess(res);
+            RadPatch fetched = success ? cliService.getPatch(patch.repo, patch.radProject.id, patch.id) : null;
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (!success) {
                     RadAction.showSuccessNotification(patch.project, RadicleBundle.message("review"),
@@ -116,7 +116,7 @@ public class ReviewSubmitAction extends JButtonAction {
                 } else {
                     RadAction.showSuccessNotification(patch.project, RadicleBundle.message("review"),
                             RadicleBundle.message("reviewSuccess"));
-                    refreshTab();
+                    refreshTab(fetched);
                     popup.cancel();
                 }
             });
@@ -128,7 +128,10 @@ public class ReviewSubmitAction extends JButtonAction {
         }
     }
 
-    private void refreshTab() {
+    private void refreshTab(RadPatch fetched) {
+        if (fetched == null) {
+            return;
+        }
         var editorManager = FileEditorManager.getInstance(patch.project);
         var editorTab = Arrays.stream(editorManager.getAllEditors()).filter(ed ->
                 ed.getFile() instanceof PatchVirtualFile pvf && pvf.getPatch().id.equals(patch.id)).findFirst();
@@ -137,8 +140,6 @@ public class ReviewSubmitAction extends JButtonAction {
             return;
         }
         //If tab is open then refresh it with the new review
-        var cliService = patch.project.getService(RadicleCliService.class);
-        var fetched = cliService.getPatch(patch.repo, patch.radProject.id, patch.id);
         var tab = editorTab.get();
         var file = (PatchVirtualFile) tab.getFile();
         file.getProposalPanel().getController().createPatchProposalPanel(fetched);

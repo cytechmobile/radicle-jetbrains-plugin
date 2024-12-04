@@ -145,7 +145,7 @@ public class TimelineComponentFactory {
         var reviewPanel = getVerticalPanel(0);
         var textHtmlEditor = new BaseHtmlEditorPane();
         textHtmlEditor.setOpaque(false);
-        var message = review.summary();
+        var message = Strings.nullToEmpty(review.summary());
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
         var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);

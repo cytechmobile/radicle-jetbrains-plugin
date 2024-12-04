@@ -205,7 +205,7 @@ public class RadPatch {
                 var reviewList = reviews.get(reviewId);
                 myReviews.addAll(reviewList);
             }
-            myReviews.sort(Comparator.comparing(Review::timestamp));
+            myReviews.sort(Comparator.comparing(Review::timestamp).reversed());
             // Remove the duplicates reviews. We can only have 1 review per author per revision
             myReviews.removeIf(e -> !seen.add(e.author.id));
             return myReviews;
@@ -252,13 +252,15 @@ public class RadPatch {
 
         @JsonFormat(shape = JsonFormat.Shape.STRING)
         public enum Verdict {
-            ACCEPT("accept"),
-            REJECT("reject");
+            ACCEPT("--accept", "accept"),
+            REJECT("--reject", "reject");
 
+            private final String label;
             private final String value;
 
-            Verdict(String value) {
+            Verdict(String value, String label) {
                 this.value = value;
+                this.label = label;
             }
 
             @JsonValue
@@ -269,7 +271,7 @@ public class RadPatch {
             @JsonCreator
             public static Verdict forValues(String val) {
                 for (Verdict verdict : Verdict.values()) {
-                    if (verdict.value.equals(val.toLowerCase())) {
+                    if (verdict.label.equals(val.toLowerCase())) {
                         return verdict;
                     }
                 }

@@ -371,10 +371,10 @@ public class TimelineTest extends AbstractIT {
         editorTextField.setText(REVIEW_SUMMARY);
         approveButton.doClick();
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("summary")).isEqualTo(REVIEW_SUMMARY);
-        assertThat(map.get("verdict")).isEqualTo(RadPatch.Review.Verdict.ACCEPT.getValue());
-        assertThat(map.get("type")).isEqualTo("review");
+        var command = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
+        assertThat(command).contains(RadPatch.Review.Verdict.ACCEPT.getValue());
+        assertThat(command).contains(ExecUtil.escapeUnixShellArgument(REVIEW_SUMMARY));
+        assertThat(command).contains("review");
         EditorFactory.getInstance().releaseEditor(editor);
     }
 

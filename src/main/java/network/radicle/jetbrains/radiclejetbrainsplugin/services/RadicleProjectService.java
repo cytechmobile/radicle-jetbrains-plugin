@@ -396,6 +396,15 @@ public class RadicleProjectService {
         return executeCommandFromFile(root, params);
     }
 
+    public ProcessOutput addReview(GitRepository repo, String verdict, String message, String id) {
+        List<String> params = new ArrayList<>(Arrays.asList("patch", "review", id, verdict));
+        if (!Strings.isNullOrEmpty(message)) {
+            params.add("--message");
+            params.add(ExecUtil.escapeUnixShellArgument(message));
+        }
+        return executeCommandFromFile(repo, params);
+    }
+
     public ProcessOutput changeIssueState(GitRepository root, String issueId, String state) {
         return executeCommand(root.getRoot().getPath(), List.of("issue", "state", issueId, state), root);
     }
