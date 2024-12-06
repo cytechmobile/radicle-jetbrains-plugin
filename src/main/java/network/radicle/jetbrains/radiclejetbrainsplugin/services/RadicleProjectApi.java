@@ -116,29 +116,6 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch changePatchState(RadPatch patch, String state) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "lifecycle", "state", Map.of("status", state, "reason", "other"));
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("stateChangeError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error changing state {} to patch:{} resp:{}", state, patch, resp);
-                return null;
-            }
-            return patch;
-        } catch (Exception e) {
-            logger.warn("error changing state to patch: {}", patch, e);
-        }
-        return null;
-    }
-
     public String createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
         var session = createAuthenticatedSession();
         if (session == null) {

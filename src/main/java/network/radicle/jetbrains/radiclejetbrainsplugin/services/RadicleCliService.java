@@ -198,6 +198,22 @@ public class RadicleCliService {
         return null;
     }
 
+    public RadPatch changePatchState(RadPatch patch, String state) {
+        try {
+            var res = rad.changePatchState(patch.repo, patch.id, patch.state.status, state);
+            if (!RadAction.isSuccess(res)) {
+                logger.warn("received invalid command output:{} for changing patch state: {} - out:{} - err:{}",
+                        res.getExitCode(), res.getStdout(), res.getStderr());
+                return null;
+            }
+            // return issue as-is, it will trigger a re-fetch anyway
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error changing state to patch: {}", patch, e);
+        }
+        return null;
+    }
+
     public RadProject getRadRepo(GitRepository repo) {
         RadProject radRepo;
         if (radRepoIds.containsKey(repo.getRoot().getPath())) {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -554,18 +555,29 @@ public class OverviewTest extends AbstractIT {
         var selectedEmoji = jblist.getSelectedValue();
         var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("type")).isEqualTo("comment.react");
+        Thread.sleep(1000);
+        List<GeneralCommandLine> cmds = new ArrayList<>();
+        radStub.commands.drainTo(cmds);
+        if (cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue react " + issue.id)).findFirst().isEmpty()) {
+            var cmd = radStub.commands.poll(5, TimeUnit.SECONDS);
+            if (cmd != null) {
+                cmds.add(cmd);
+            }
+        }
+        assertThat(cmds).anyMatch(cmd -> cmd.getCommandLineString().contains("rad issue react " + issue.id) &&
+                                         cmd.getCommandLineString().contains(issue.discussion.get(1).id));
+        // var res = response.poll(5, TimeUnit.SECONDS);
+        /* assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
         assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat((Boolean) res.get("active")).isTrue();
+        assertThat((Boolean) res.get("active")).isTrue(); */
 
         borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
         var reactorsPanel = ((JPanel) borderPanel.getComponents()[1]).getComponents()[1];
         var listeners = reactorsPanel.getMouseListeners();
         listeners[0].mouseClicked(null);
         executeUiTasks();
-        res = response.poll(5, TimeUnit.SECONDS);
+        var res = response.poll(5, TimeUnit.SECONDS);
         assertThat(res.get("type")).isEqualTo("comment.react");
         assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
         assertThat(res.get("reaction")).isEqualTo(emoji.unicode());

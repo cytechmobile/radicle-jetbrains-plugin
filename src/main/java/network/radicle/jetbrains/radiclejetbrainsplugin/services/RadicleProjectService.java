@@ -36,6 +36,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.commands.RadicleScriptCommandFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -409,7 +410,7 @@ public class RadicleProjectService {
 
     public ProcessOutput reactToIssueComment(GitRepository repo, String issueId, String commentId, String emoji, boolean active) {
         // active = false does not work :p
-        return executeCommandFromFile(repo, List.of("issue", "react", issueId, "--emoji", emoji, "--to", commentId));
+        return executeCommand(repo, List.of("issue", "react", issueId, "--emoji", emoji, "--to", commentId));
     }
 
     public ProcessOutput addReview(GitRepository repo, String verdict, String message, String id) {
@@ -419,6 +420,34 @@ public class RadicleProjectService {
             params.add(ExecUtil.escapeUnixShellArgument(message));
         }
         return executeCommandFromFile(repo, params);
+    }
+
+    public ProcessOutput changePatchState(GitRepository repo, String patchId, String currState, String state) {
+        if (Strings.isNullOrEmpty(currState) || Strings.isNullOrEmpty(state) || currState.equals(state)) {
+            logger.error("cannot change patch state with invalid curr:{}/new:{} states for patch:{}", currState, state, patchId);
+            return new ProcessOutput(-1);
+        }
+        if (RadPatch.State.MERGED.status.equals(currState) || RadPatch.State.MERGED.status.equals(state)) {
+            logger.error("cannot change patch state to/from merged for patch:{}", patchId);
+            return new ProcessOutput(-1);
+        }
+        ProcessOutput res = null;
+        // we now make sure that the patch state is open
+        if (RadPatch.State.ARCHIVED.status.equals(currState)) {
+            res = executeCommand(repo, List.of("patch", "archive", patchId, "--undo"));
+        } else if (RadPatch.State.DRAFT.status.equals(currState)) {
+            res = executeCommand(repo, List.of("patch", "ready", patchId));
+        }
+
+        if (RadPatch.State.OPEN.status.equals(state)) {
+            return res;
+        } else if (RadPatch.State.ARCHIVED.status.equals(state)) {
+            return executeCommand(repo, List.of("patch", "archive", patchId));
+        } else if (RadPatch.State.DRAFT.status.equals(state)) {
+            return executeCommand(repo, List.of("patch", "ready", patchId, "--undo"));
+        }
+
+        return executeCommand(repo, List.of("patch", "state", patchId, state));
     }
 
     public ProcessOutput changeIssueState(GitRepository root, String issueId, String state) {
@@ -440,6 +469,10 @@ public class RadicleProjectService {
         final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;
         return executeCommand(path, home, workDir, args, repo, stdin);
+    }
+
+    public ProcessOutput executeCommand(GitRepository repo, List<String> args) {
+        return executeCommand(repo.getRoot().getPath(), args, repo);
     }
 
     public ProcessOutput executeCommand(String workDir, List<String> args, @Nullable GitRepository repo) {

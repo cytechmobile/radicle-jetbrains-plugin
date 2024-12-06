@@ -10,6 +10,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.Side;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -820,9 +821,10 @@ public class TimelineTest extends AbstractIT {
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        var state = (HashMap<String, String>) res.get("state");
-        assertThat(state.get("status")).isEqualTo(RadPatch.State.DRAFT.status);
+        var cmds = new ArrayList<GeneralCommandLine>();
+        radStub.commands.drainTo(cmds);
+        // var res = response.poll(5, TimeUnit.SECONDS);
+        assertThat(cmds).anyMatch(cmd -> cmd.getCommandLineString().contains("rad patch ready " + patch.id + " --undo"));
     }
 
     @Test
@@ -1080,8 +1082,8 @@ public class TimelineTest extends AbstractIT {
         var review = new RadPatch.Review(UUID.randomUUID().toString(), new RadAuthor("fakeDid"),
                 RadPatch.Review.Verdict.ACCEPT, REVIEW_SUMMARY, null, Instant.now());
 
-        var reviewMap = new HashMap<String, List<RadPatch.Review>>();
-        reviewMap.put(review.id(), List.of(review));
+        var reviewMap = new HashMap<String, RadPatch.Review>();
+        reviewMap.put(review.id(), review);
 
         var author = new RadAuthor(UUID.randomUUID().toString());
 

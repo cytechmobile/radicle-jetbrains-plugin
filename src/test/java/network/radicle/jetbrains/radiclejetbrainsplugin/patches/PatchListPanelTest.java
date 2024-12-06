@@ -278,9 +278,9 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     public static List<RadPatch> getTestPatches() {
-        var reviewMap = new HashMap<String, List<RadPatch.Review>>();
-        reviewMap.put("1", List.of(new RadPatch.Review("1",
-                RADAUTHOR, RadPatch.Review.Verdict.ACCEPT, "test", new RadPatch.DiscussionObj(new HashMap<>(), List.of()), Instant.now())));
+        var reviewMap = new HashMap<String, RadPatch.Review>();
+        reviewMap.put("1", new RadPatch.Review("1",
+                RADAUTHOR, RadPatch.Review.Verdict.ACCEPT, "test", new RadPatch.DiscussionObj(new HashMap<>(), List.of()), Instant.now()));
 
         var revision = new RadPatch.Revision("testRevision", RADAUTHOR, List.of(), List.of(), "", "",
                 List.of(), Instant.now(), new RadPatch.DiscussionObj(new HashMap<>(), List.of()), reviewMap);
