@@ -13,9 +13,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobShow;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchReview;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchReview;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
@@ -78,6 +78,26 @@ public class RadicleCliService {
         }
         issues.sort(Comparator.comparing(issue -> ((RadIssue) issue).discussion.get(0).timestamp).reversed());
         return issues;
+    }
+
+    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction, boolean active) {
+        if (!active) {
+            logger.error("not implemented yet from the CLI!");
+            return null;
+        }
+        try {
+            var res = rad.reactToIssueComment(issue.repo, issue.id, discussionId, reaction, active);
+            if (!RadAction.isSuccess(res)) {
+                logger.warn("received invalid command output:{} for reacting to issue:{} comment:{}. out:{} err:{}",
+                        res.getExitCode(), issue.id, discussionId, res.getStdout(), res.getStderr());
+                return null;
+            }
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error reacting to discussion: {}", discussionId, e);
+        }
+
+        return null;
     }
 
     public ProcessOutput addReview(String message, String verdict, RadPatch patch) {
@@ -156,6 +176,23 @@ public class RadicleCliService {
             return patch;
         } catch (Exception e) {
             logger.warn("error changing patch message (title/description): {}", patch, e);
+        }
+
+        return null;
+    }
+
+    public RadIssue changeIssueTitleDescription(RadIssue issue, String newTitle, String newDescription) {
+        try {
+            var res = rad.editIssueTitleDescription(issue.repo, issue.id, newTitle, newDescription);
+            if (!RadAction.isSuccess(res)) {
+                logger.warn("received invalid command output for changing issue message (title/description): {} - {} - {}",
+                        res.getExitCode(), res.getStdout(), res.getStderr());
+                return null;
+            }
+            // return issue as-is, it will trigger a re-fetch anyway
+            return issue;
+        } catch (Exception e) {
+            logger.warn("error changing issue message (title/description): {}", issue, e);
         }
 
         return null;

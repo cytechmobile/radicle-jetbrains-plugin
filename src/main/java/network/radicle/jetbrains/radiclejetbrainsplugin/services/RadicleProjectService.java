@@ -365,6 +365,12 @@ public class RadicleProjectService {
                 ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title) + "\n\n" + Strings.nullToEmpty(description))));
     }
 
+    public ProcessOutput editIssueTitleDescription(GitRepository repo, String issueId, String title, String description) {
+        // TODO: this is not going to work, as `rad issue edit` does not support `--message`
+        return executeCommandFromFile(repo, List.of("issue", "edit", issueId, "--message",
+                ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title) + "\n\n" + Strings.nullToEmpty(description))));
+    }
+
     public ProcessOutput addRemovePatchLabels(GitRepository root, String patchId, List<String> addedLabels, List<String> deletedLabels) {
         return addRemoveLabels(root, patchId, addedLabels, deletedLabels, true);
     }
@@ -399,6 +405,11 @@ public class RadicleProjectService {
             params.add(assigneesStr);
         }
         return executeCommandFromFile(root, params);
+    }
+
+    public ProcessOutput reactToIssueComment(GitRepository repo, String issueId, String commentId, String emoji, boolean active) {
+        // active = false does not work :p
+        return executeCommandFromFile(repo, List.of("issue", "react", issueId, "--emoji", emoji, "--to", commentId));
     }
 
     public ProcessOutput addReview(GitRepository repo, String verdict, String message, String id) {

@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -39,8 +40,7 @@ public class RadIssue {
         // for json
     }
 
-    public RadIssue(String id, RadAuthor author, String title, State state,
-                    List<RadAuthor> assignees, List<String> labels, List<RadDiscussion> discussion) {
+    public RadIssue(String id, RadAuthor author, String title, State state, List<RadAuthor> assignees, List<String> labels, List<RadDiscussion> discussion) {
         this.id = id;
         this.author = author;
         this.title = title;
@@ -66,6 +66,11 @@ public class RadIssue {
 
     public RadDiscussion findDiscussion(String commentId) {
         return discussion.stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+    }
+
+    @JsonIgnore
+    public String getDescription() {
+        return discussion == null || discussion.isEmpty() ? "" : discussion.get(0).body;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)

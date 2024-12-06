@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.commands;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -13,7 +14,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public abstract class RadicleScriptCommand {
@@ -53,13 +56,24 @@ public abstract class RadicleScriptCommand {
         } catch (IOException e) {
             logger.warn("Unable to create / write to a file");
         }
+
+        try {
+            Files.setPosixFilePermissions(tempFile.toPath(), Set.of(
+                    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+                    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_EXECUTE));
+        } catch (Exception e) {
+            logger.debug("Unable to change script file permissions", e);
+        }
         return tempFile;
     }
 
     public String getCommand() {
         var command = String.join(" ", args);
-        return shebang + "\n" + getExportRadPassphrase() +
-                getExportRadHomeCommand() + exePath + " " + command;
+        return shebang + "\n" +
+               getExportRadPassphrase() + "\n" +
+               getExportRadHomeCommand() + "\n" +
+               exePath + " " + command;
     }
 
     public File getTempPath() {
@@ -77,7 +91,7 @@ public abstract class RadicleScriptCommand {
     public abstract GeneralCommandLine getCommandLine();
 
     private String getExportRadHomeCommand() {
-        return "export RAD_HOME=" + radHome + "\n";
+        return "export RAD_HOME=" + radHome;
     }
 
     private String getExportRadPassphrase() {
@@ -90,7 +104,7 @@ public abstract class RadicleScriptCommand {
         if (Strings.isNullOrEmpty(password)) {
             return "";
         }
-        return "export RAD_PASSPHRASE=" + password + "\n";
+        return "export RAD_PASSPHRASE=" + ExecUtil.escapeUnixShellArgument(password);
     }
 
     private String getRandomScriptName() {

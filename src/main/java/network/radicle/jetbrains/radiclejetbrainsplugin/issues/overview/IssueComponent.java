@@ -60,14 +60,14 @@ public class IssueComponent {
     private EmojiPanel<RadIssue> emojiPanel;
     private final IssueVirtualFile  file;
     private JComponent replyPanel;
-    private final RadicleCliService cliService;
+    private final RadicleCliService cli;
 
     public IssueComponent(IssueVirtualFile file) {
         this.file = file;
         this.radIssue = file.getIssueModel().getValue();
         this.issueModel = file.getIssueModel();
         this.api = radIssue.project.getService(RadicleProjectApi.class);
-        this.cliService = radIssue.project.getService(RadicleCliService.class);
+        this.cli = radIssue.project.getService(RadicleCliService.class);
     }
 
     public JComponent create() {
@@ -78,7 +78,7 @@ public class IssueComponent {
 
         var horizontalPanel = getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            radDetails = api.getCurrentIdentity();
+            radDetails = cli.getCurrentIdentity();
             if (radDetails != null) {
                 ApplicationManager.getApplication().invokeLater(() -> {
                     commentSection = createCommentSection(radIssue.discussion);
@@ -167,7 +167,7 @@ public class IssueComponent {
         if (Strings.isNullOrEmpty(field.getText())) {
             return true;
         }
-        var output = cliService.createIssueComment(radIssue.repo, radIssue.id, field.getText(), null);
+        var output = cli.createIssueComment(radIssue.repo, radIssue.id, field.getText(), null);
         if (RadAction.isSuccess(output)) {
             issueModel.setValue(radIssue);
         }
@@ -175,7 +175,7 @@ public class IssueComponent {
     }
 
     private JComponent getDescription() {
-        var bodyIssue = !radIssue.discussion.isEmpty() ? radIssue.discussion.get(0).body : "";
+        var bodyIssue = radIssue.getDescription();
         var editorPane = new MarkDownEditorPaneFactory(bodyIssue, radIssue.project, radIssue.projectId, file);
         descPanel = Utils.descriptionPanel(editorPane, radIssue.project);
         return descPanel;
@@ -192,6 +192,8 @@ public class IssueComponent {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), headerTitle,
                 RadicleBundle.message("issue.change.title"),
                 new SingleValueModel<>(radIssue.title), (field) -> {
+            // TODO: this will not work
+            // var edited = cli.changeIssueTitleDescription(radIssue, field.getText(), radIssue.getDescription());
             var issue = new RadIssue(radIssue);
             issue.title = field.getText();
             var edited = api.changeIssueTitle(issue);
@@ -202,15 +204,15 @@ public class IssueComponent {
             return success;
         }).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
+        var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
+                i -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), contentPanel);
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
             panelHandle.showAndFocusEditor();
             return null;
         }));
-
-        var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
-                i -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), contentPanel);
         b.withHeader(contentPanel, actionsPanel);
+
         headerPanel = (JPanel) b.build();
         return headerPanel;
     }
@@ -252,7 +254,7 @@ public class IssueComponent {
 
         @Override
         public boolean addReply(String comment, List<Embed> embedList, String replyToId) {
-            var output = cliService.createIssueComment(radIssue.repo, radIssue.id, comment, replyToId);
+            var output = cli.createIssueComment(radIssue.repo, radIssue.id, comment, replyToId);
             return RadAction.isSuccess(output);
         }
     }
@@ -264,7 +266,7 @@ public class IssueComponent {
 
         @Override
         public RadIssue addEmoji(Emoji emoji, String discussionId) {
-            return api.issueCommentReact(radIssue, discussionId, emoji.unicode(), true);
+            return cli.issueCommentReact(radIssue, discussionId, emoji.unicode(), true);
         }
 
         @Override

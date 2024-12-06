@@ -5,23 +5,31 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RadPatch {
     private static final Logger logger = LoggerFactory.getLogger(RadPatch.class);
@@ -185,6 +193,29 @@ public class RadPatch {
         }
     }
 
+    public static class ReviewsDeserializer extends JsonDeserializer<Map<String, Review>> {
+        @Override
+        public Map<String, Review> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+            //manually deserialize map of reviews, as 1.0.0 contained a list of reviews, while 1.1.0 contains a single review per reviewer
+            var tree = jsonParser.getCodec().readTree(jsonParser);
+            Map<String, Review> reviews = new HashMap<>();
+            tree.fieldNames().forEachRemaining(fn -> {
+                var rev = tree.get(fn);
+                if (rev.isArray()) {
+                    rev = rev.get(0);
+                }
+                try {
+                    Review review = RadicleCliService.MAPPER.treeToValue(rev, Review.class);
+                    reviews.put(fn, review);
+                } catch (Exception e) {
+                    logger.error("error reading Review from tree: {}", rev, e);
+                }
+            });
+
+            return reviews;
+        }
+    }
+
     public record Revision(
             String id, RadAuthor author,
             @JsonProperty("description")
@@ -192,7 +223,8 @@ public class RadPatch {
             List<Reaction> reactions, String base, String oid, List<String> refs,
             Instant timestamp,
             DiscussionObj discussion,
-            Map<String, List<Review>> reviews) implements TimelineEvent {
+            @JsonDeserialize(using = ReviewsDeserializer.class)
+            Map<String, Review> reviews) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
             return timestamp;
@@ -202,8 +234,8 @@ public class RadPatch {
             Set<String> seen = new HashSet<>();
             var myReviews = new ArrayList<Review>();
             for (var reviewId : reviews.keySet()) {
-                var reviewList = reviews.get(reviewId);
-                myReviews.addAll(reviewList);
+                var review = reviews.get(reviewId);
+                myReviews.add(review);
             }
             myReviews.sort(Comparator.comparing(Review::timestamp).reversed());
             // Remove the duplicates reviews. We can only have 1 review per author per revision

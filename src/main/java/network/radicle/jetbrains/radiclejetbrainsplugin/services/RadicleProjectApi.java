@@ -116,58 +116,6 @@ public class RadicleProjectApi {
         return null;
     }
 
-    public RadPatch addReview(String verdict, String summary, RadPatch patch) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var patchReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + patch.radProject.id + "/patches/" + patch.id);
-            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchEditData = Map.of("type", "review", "revision", patch.getLatestRevision().id(), "summary", summary, "verdict", verdict,
-                    "labels", List.of());
-            var json = MAPPER.writeValueAsString(patchEditData);
-            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(patchReq, RadicleBundle.message("reviewTitleError"));
-            if (!resp.isSuccess()) {
-                logger.warn("received invalid response with status:{} and body:{} while adding a review: {}",
-                        resp.status, resp.body, patch);
-                return null;
-            }
-            return patch;
-        } catch (Exception e) {
-            logger.warn("error adding patch review: {}", patch, e);
-        }
-
-        return null;
-    }
-
-    public boolean createIssue(String title, String description, List<String> assignees,
-                               List<String> labels, GitRepository repo, String projectId, List<Embed> embedList) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return false;
-        }
-        try {
-            var issueReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/issues");
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("title", title, "description", description, "labels", labels, "assignees", assignees, "embeds", embedList);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("createIssueError"), RadicleBundle.message("commentDescError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error creating new issue, title : {}, assignees : {}, labels : {}, " +
-                        "repo : {}, projectId : {}", title, assignees, labels, repo, projectId);
-                return false;
-            }
-            return true;
-        } catch (Exception e) {
-            logger.warn("error creating new issue, title : {}, assignees : {}, labels : {}, " +
-                    "repo : {}, projectId : {}", title, assignees, labels, repo, projectId);
-        }
-        return false;
-    }
-
     public RadPatch changePatchState(RadPatch patch, String state) {
         var session = createAuthenticatedSession();
         if (session == null) {
@@ -286,34 +234,6 @@ public class RadicleProjectApi {
         }
 
         return null;
-    }
-
-    public RadIssue addIssueComment(RadIssue issue, String comment, String replyTo, List<Embed> embedList) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "comment", "body", comment, "replyTo", replyTo, "embeds", embedList);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("commentError"), RadicleBundle.message("commentDescError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error adding comment: {} to patch:{} resp:{}", comment, issue, resp);
-                return null;
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error creating issue comment: {}", issue, e);
-        }
-
-        return null;
-    }
-
-    public RadIssue addIssueComment(RadIssue issue, String comment, List<Embed> embedList) {
-        return addIssueComment(issue, comment, issue.id, embedList);
     }
 
     public RadIssue changeIssueTitle(RadIssue issue) {
