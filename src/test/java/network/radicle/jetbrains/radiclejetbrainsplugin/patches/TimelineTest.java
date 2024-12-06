@@ -551,13 +551,12 @@ public class TimelineTest extends AbstractIT {
         var createPatchButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
         createPatchButton.doClick();
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("target")).isEqualTo(currentRevision);
-        assertThat(res.get("description")).isEqualTo(PATCH_DESC);
-        assertThat(res.get("title")).isEqualTo(PATCH_NAME);
-        var labels = (ArrayList) res.get("labels");
-        assertThat(labels.get(0)).isEqualTo(label1);
-        assertThat(labels.get(1)).isEqualTo(label2);
+        var res = radStub.commandsStr.poll();
+        assertThat(res).contains(PATCH_DESC);
+        assertThat(res).contains(PATCH_NAME);
+        var labels = radStub.commandsStr.poll(10, TimeUnit.SECONDS);
+        assertThat(labels).contains(label1);
+        assertThat(labels).contains(label2);
     }
 
     @Test

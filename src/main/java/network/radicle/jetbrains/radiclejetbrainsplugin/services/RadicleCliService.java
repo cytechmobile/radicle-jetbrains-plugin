@@ -13,9 +13,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobShow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchCreate;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchLabel;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchReview;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchReview;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
@@ -53,6 +55,35 @@ public class RadicleCliService {
     public ProcessOutput createIssue(GitRepository repo, String title, String description, List<String> assignees, List<String> labels) {
         var issueCreate = new RadIssueCreate(repo, title, description, assignees, labels);
         return issueCreate.perform();
+    }
+
+    public String createPatch(GitRepository repo, String title, String description, String branch, List<String> labels) {
+        var radPatch = new RadPatchCreate(repo, title, description, branch);
+        var output = radPatch.perform();
+        if (!RadAction.isSuccess(output)) {
+            return null;
+        }
+        var lines = output.getStderrLines();
+        if (lines.isEmpty()) {
+            return "";
+        }
+        var firstLine = lines.get(0);
+        var parts = firstLine.split(" ");
+        String patchId = null;
+        if (parts.length > 2) {
+            patchId = parts[2];
+        }
+
+        if (!labels.isEmpty() && !Strings.isNullOrEmpty(patchId)) {
+            createPatchLabels(repo, patchId, labels, List.of());
+        }
+        return patchId;
+    }
+
+    public ProcessOutput createPatchLabels(GitRepository repo, String patchId,
+                                           List<String> addedLabels, List<String> deletedLabels) {
+        var radPatchLabel = new RadPatchLabel(repo, patchId, addedLabels, deletedLabels);
+        return radPatchLabel.perform();
     }
 
     public RadIssue getIssue(GitRepository repo, String projectId, String objectId) {

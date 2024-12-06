@@ -76,6 +76,19 @@ public class RadStub extends RadicleProjectService {
     }
 
     @Override
+    public ProcessOutput executeCommandFromFile(String exePatch, GitRepository repo, List<String> params) {
+        var command = exePatch + " " + String.join(" ", params);
+        commandsStr.add(command);
+        var pr = new ProcessOutput(0);
+        var stdout = "stdout";
+        pr.appendStdout(stdout);
+        if (exePatch.equals("git")) {
+            pr.appendStderr("t t 123123 r");
+        }
+        return pr;
+    }
+
+    @Override
     public ProcessOutput executeCommandFromFile(GitRepository repo, List<String> params) {
         var command = String.join(" ", params);
         commandsStr.add(command);

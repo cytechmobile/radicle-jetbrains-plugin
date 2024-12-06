@@ -26,6 +26,6 @@ public class RadPatchLabel extends RadAction {
 
     @Override
     public String getActionName() {
-        return "Label";
+        return "";
     }
 }

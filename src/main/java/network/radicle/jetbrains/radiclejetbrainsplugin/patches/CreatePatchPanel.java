@@ -311,45 +311,20 @@ public class CreatePatchPanel {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             newPatchButton.setEnabled(false);
             loadingPanel.setVisible(true);
-            var result = radicleProjectService.pushChanges(mySelectedRepo, mySelectedBranch, remote);
-            if (result == null) {
-                RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), "");
+            var cli = project.getService(RadicleCliService.class);
+            var patchId = cli.createPatch(mySelectedRepo, titleField.getText(), descriptionField.getText(),
+                    mySelectedBranch.getName(), labelSelect.storeLabels);
+            if (Strings.isNullOrEmpty(patchId)) {
                 loadingPanel.setVisible(false);
                 newPatchButton.setEnabled(true);
                 return;
             }
-            var isSuccess = (boolean) result.get("success");
-            if (!isSuccess) {
-                var errorMsg = (String) result.get("message");
-                RadAction.showErrorNotification(project, RadicleBundle.message("gitPushError"), errorMsg);
-                loadingPanel.setVisible(false);
-                newPatchButton.setEnabled(true);
-                return;
-            }
-            var branchRevision = radicleProjectService.getBranchRevision(project, mySelectedRepo, mySelectedBranch.getName());
-            if (Strings.isNullOrEmpty(branchRevision)) {
-                RadAction.showErrorNotification(project,
-                        RadicleBundle.message("resolveRevNumberError"),
-                        RadicleBundle.message("resolveRevNumberErrorDesc"));
-                loadingPanel.setVisible(false);
-                newPatchButton.setEnabled(true);
-                return;
-            }
-            var patchId = api.createPatch(titleField.getText(), descriptionField.getText(), labelSelect.storeLabels, projectInfo.head,
-                    branchRevision, mySelectedRepo, projectInfo.id);
-            if (patchId != null) {
-                //Fetch the patch that created from the remote
-                radicleProjectService.fetchPeerChanges(mySelectedRepo);
-                //Set the created patch as ref for the branch
-                var success = radicleProjectService.setUpstream(mySelectedBranch.getName(), "rad/patches/" + patchId, mySelectedRepo);
-                if (RadAction.isSuccess(success)) {
-                    mySelectedRepo.update();
-                }
+            var success = radicleProjectService.setUpstream(mySelectedBranch.getName(), "rad/patches/" + patchId, mySelectedRepo);
+            if (RadAction.isSuccess(success)) {
+                mySelectedRepo.update();
             }
             ApplicationManager.getApplication().invokeLater(() -> {
-                if (patchId != null) {
-                    patchTabController.createPanel();
-                }
+                patchTabController.createPanel();
                 newPatchButton.setEnabled(true);
                 loadingPanel.setVisible(false);
             }, ModalityState.any());

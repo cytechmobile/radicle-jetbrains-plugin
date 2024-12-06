@@ -214,6 +214,18 @@ public class RadicleProjectService {
         return executeCommand(repo.getRoot().getPath(), List.of("cob", "list", "--repo", projectId, "--type", type.value), repo);
     }
 
+    public ProcessOutput createPatch(GitRepository repo, String title, String description, String branch) {
+        branch = branch + ":refs/patches";
+        var params = List.of("push", "rad", "-o", "patch.message=" + ExecUtil.escapeUnixShellArgument(title),
+                 "-o", "patch.message=" + ExecUtil.escapeUnixShellArgument(description), branch);
+        return executeCommandFromFile("git", repo, params);
+    }
+
+    public ProcessOutput patchCache(GitRepository repo) {
+        var params = List.of("patch", "cache");
+        return executeCommandFromFile(repo, params);
+    }
+
     public ProcessOutput clone(String urn, String directory, String radPath, String radHome) {
         if (!Strings.isNullOrEmpty(radPath) && !Strings.isNullOrEmpty(radHome)) {
             return executeCommand(radPath, radHome, directory, List.of("clone", urn, "--no-confirm"), null);
@@ -492,15 +504,20 @@ public class RadicleProjectService {
         return executeCommand(exePath, radHome, workDir, args, repo, null);
     }
 
-    public ProcessOutput executeCommandFromFile(GitRepository repo, List<String> params) {
+    public ProcessOutput executeCommandFromFile(String exePatch, GitRepository repo, List<String> params) {
         final var projectSettings = projectSettingsHandler.loadSettings();
-        final var radPath = projectSettings.getPath();
         final var radHome = projectSettings.getRadHome();
         var workDir = repo.getRoot().getPath();
-        var scriptCommand = RadicleScriptCommandFactory.create(workDir, radPath, radHome, params, this, project);
+        var scriptCommand = RadicleScriptCommandFactory.create(workDir, exePatch, radHome, params, this, project);
         var output = runCommand(scriptCommand.getCommandLine(), repo, workDir, null);
         scriptCommand.deleteTempFile();
         return output;
+    }
+
+    public ProcessOutput executeCommandFromFile(GitRepository repo, List<String> params) {
+        final var projectSettings = projectSettingsHandler.loadSettings();
+        final var radPath = projectSettings.getPath();
+        return executeCommandFromFile(radPath, repo, params);
     }
 
     public ProcessOutput runCommand(GeneralCommandLine cmdLine, GitRepository repo, String workDir, String stdin) {
