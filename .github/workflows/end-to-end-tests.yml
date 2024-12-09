@@ -17,8 +17,8 @@ jobs:
           - os: ubuntu-latest
             runHttpApi: |
               cd "${RAD_HOME}"/bin
-              wget -q -O rha.tar.xz https://minio-api.radicle.gr/radicle-releases/radicle-http-server/radicle-httpd-0.11.1-rit-1-g3ae64bd2-x86_64-unknown-linux-musl.tar.xz
-              # now there will be radicle-httpd inside bin directory, which is in path
+              wget -q -O rha.tar.xz https://minio-api.radicle.gr/radicle-releases/radicle-http-api/radicle-http-api_latest+x86_64-unknown-linux-musl.tar.xz
+              # now there will be radicle-http-api inside bin directory, which is in path
               tar xf rha.tar.xz --strip-components 2
             runIde: |
               export DISPLAY=:99.0
@@ -34,8 +34,8 @@ jobs:
           - os: macos-latest
             runHttpApi: |
               cd "${RAD_HOME}"/bin
-              wget -q -O rha.tar.xz https://minio-api.radicle.gr/radicle-releases/radicle-http-server/radicle-httpd-0.11.1-rit-1-g3ae64bd2-aarch64-apple-darwin.tar.xz
-              # now there will be radicle-httpd inside bin directory, which is in path
+              wget -q -O rha.tar.xz https://minio-api.radicle.gr/radicle-releases/radicle-http-api/radicle-http-api_latest+aarch64-apple-darwin.tar.xz
+              # now there will be radicle-http-api inside bin directory, which is in path
               tar xf rha.tar.xz --strip-components 2
             runIde: |
               mkdir -p build/reports
@@ -69,8 +69,8 @@ jobs:
           rad node start
           echo "allowing node to start up..."
           sleep 5
-          radicle-httpd --version
-          radicle-httpd --listen 0.0.0.0:8080 &
+          radicle-http-api --version
+          radicle-http-api --listen 0.0.0.0:8080 &
           rad node status
           rad self
       - name: Create a new Radicle Repository
