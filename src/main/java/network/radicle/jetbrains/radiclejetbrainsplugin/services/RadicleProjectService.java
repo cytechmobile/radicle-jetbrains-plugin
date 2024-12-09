@@ -379,9 +379,9 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput editIssueTitleDescription(GitRepository repo, String issueId, String title, String description) {
-        // TODO: this is not going to work, as `rad issue edit` does not support `--message`
-        return executeCommandFromFile(repo, List.of("issue", "edit", issueId, "--message",
-                ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title) + "\n\n" + Strings.nullToEmpty(description))));
+        // TODO: this is not going to work, as `rad issue edit` does not support `--title` and `--description` yet
+        return executeCommandFromFile(repo, List.of("issue", "edit", issueId, "--title", ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title)),
+                "--description", ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(description))));
     }
 
     public ProcessOutput addRemovePatchLabels(GitRepository root, String patchId, List<String> addedLabels, List<String> deletedLabels) {

@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
+import com.google.common.base.Strings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
@@ -34,7 +35,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliServi
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.assertj.core.util.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -241,11 +241,8 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         var cliService = new RadicleCliService(myProject) {
             @Override
             public RadProject getRadRepo(GitRepository repo) {
-                if (Strings.isNullOrEmpty(head)) {
-                    return new RadProject(RAD_PROJECT_ID, "test", "", "", PatchListPanelTest.getTestProjects().get(0).delegates);
-                } else {
-                    return new RadProject(RAD_PROJECT_ID, "TestProject", "", "main", head, PatchListPanelTest.getTestProjects().get(0).delegates);
-                }
+                return new RadProject(RAD_PROJECT_ID, "TestProject", "TestProjectDescr", "main",
+                        Strings.nullToEmpty(head), PatchListPanelTest.getTestProjects().get(0).delegates);
             }
         };
         ServiceContainerUtil.replaceService(myProject, RadicleCliService.class, cliService, this.getTestRootDisposable());

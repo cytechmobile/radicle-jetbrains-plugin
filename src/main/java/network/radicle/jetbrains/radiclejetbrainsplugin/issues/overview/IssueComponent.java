@@ -132,20 +132,22 @@ public class IssueComponent {
             verticalPanel.add(replyPanel);
             panel.addToBottom(verticalPanel);
             var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.project, panel,
-                    RadicleBundle.message("save"), new SingleValueModel<>(com.body), (field) -> {
+                    RadicleBundle.message("save"), new SingleValueModel<>(com.body), f -> true).build();
+            // TODO: disabling editing issue comment
+            /*(field) -> {
                 var edited = api.editIssueComment(radIssue, field.getText(), com.id, field.getEmbedList());
                 final boolean success = edited != null;
                 if (success) {
                     issueModel.setValue(radIssue);
                 }
                 return success;
-            }).build();
-            var contentPanel = panelHandle.panel;
+            }*/
             var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-            actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+            /* actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
                 panelHandle.showAndFocusEditor();
                 return null;
-            }));
+            })); */
+            var contentPanel = panelHandle.panel;
             mainPanel.add(createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp));
         }
         return mainPanel;
@@ -193,10 +195,7 @@ public class IssueComponent {
                 RadicleBundle.message("issue.change.title"),
                 new SingleValueModel<>(radIssue.title), (field) -> {
             // TODO: this will not work
-            // var edited = cli.changeIssueTitleDescription(radIssue, field.getText(), radIssue.getDescription());
-            var issue = new RadIssue(radIssue);
-            issue.title = field.getText();
-            var edited = api.changeIssueTitle(issue);
+            var edited = cli.changeIssueTitleDescription(radIssue, field.getText(), radIssue.getDescription());
             final boolean success = edited != null;
             if (success) {
                 issueModel.setValue(edited);
@@ -271,7 +270,8 @@ public class IssueComponent {
 
         @Override
         public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
-            return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
+            //return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
+            return cli.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
         }
 
         @Override

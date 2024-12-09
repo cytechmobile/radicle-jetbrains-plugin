@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -11,7 +10,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.serviceContainer.NonInjectable;
-import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -93,55 +91,6 @@ public class RadicleProjectApi {
         }
     }
 
-    public RadIssue editIssueComment(RadIssue issue, String comment, String id, List<Embed> embedList) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("type", "comment.edit", "id", id, "body", comment, "replyTo", issue.id, "embeds", embedList);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("commentEditError"), RadicleBundle.message("commentDescError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error editing comment: {} to issue:{} resp:{}", comment, issue, resp);
-                return null;
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error editing issue comment: {}", issue, e);
-        }
-        return null;
-    }
-
-    public String createPatch(String title, String description, List<String> labels, String baseOid, String patchOid, GitRepository repo, String projectId) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var patchReq = new HttpPost(getHttpNodeUrl() + "/api/v1/projects/" + projectId + "/patches");
-            patchReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchIssueData = Map.of("title", title, "description", description, "oid", patchOid, "target", baseOid, "labels", labels);
-            var json = MAPPER.writeValueAsString(patchIssueData);
-            patchReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(patchReq, RadicleBundle.message("createPatchError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error creating new patch title:{} description:{} base_oid:{} patch_oid:{} repo:{} projectId:{}",
-                        title, description, baseOid, patchOid, repo, projectId);
-                return null;
-            }
-            var map = (Map<String, String>) MAPPER.readValue(resp.body, new TypeReference<>() { });
-            return map.get("id");
-        } catch (Exception e) {
-            logger.warn("exception creating new patch title:{} description:{} base_oid:{} patch_oid:{} repo:{} projectId:{}",
-                    title, description, baseOid, patchOid, repo, projectId, e);
-        }
-        return null;
-    }
-
     public RadPatch deleteRevisionComment(RadPatch patch, String revId, String commentId) {
         var session = createAuthenticatedSession();
         if (session == null) {
@@ -186,53 +135,6 @@ public class RadicleProjectApi {
             logger.warn("error reacting to revision:{} comment:{}", revId, commendId, e);
         }
 
-        return null;
-    }
-
-    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction, boolean active) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var issueData = Map.of("type", "comment.react", "id", discussionId, "reaction", reaction, "active", active);
-            var json = MAPPER.writeValueAsString(issueData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("reactionError"));
-            if (!resp.isSuccess()) {
-                logger.warn("error reacting to discussion:{} resp:{}", discussionId, resp);
-                return null;
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error reacting to discussion: {}", discussionId, e);
-        }
-
-        return null;
-    }
-
-    public RadIssue changeIssueTitle(RadIssue issue) {
-        var session = createAuthenticatedSession();
-        if (session == null) {
-            return null;
-        }
-        try {
-            var issueReq = new HttpPatch(getHttpNodeUrl() + "/api/v1/projects/" + issue.projectId + "/issues/" + issue.id);
-            issueReq.setHeader("Authorization", "Bearer " + session.sessionId);
-            var patchEditData = Map.of("type", "edit", "title", issue.title);
-            var json = MAPPER.writeValueAsString(patchEditData);
-            issueReq.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-            var resp = makeRequest(issueReq, RadicleBundle.message("issueTitleError"));
-            if (!resp.isSuccess()) {
-                logger.warn("received invalid response with status:{} and body:{} while editing patch: {}",
-                        resp.status, resp.body, issue);
-            }
-            return issue;
-        } catch (Exception e) {
-            logger.warn("error changing issue title: {}", issue, e);
-        }
         return null;
     }
 

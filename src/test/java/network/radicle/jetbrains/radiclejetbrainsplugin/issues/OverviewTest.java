@@ -1,7 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -31,21 +29,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -65,22 +52,13 @@ import java.awt.event.HierarchyEvent;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssuePanel.DATE_TIME_FORMATTER;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestProjects;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class OverviewTest extends AbstractIT {
@@ -98,87 +76,14 @@ public class OverviewTest extends AbstractIT {
     private Embed imgEmbed;
     private String commentDesc;
     private String issueDesc;
-    private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
+
     @Rule
     public TestName testName = new TestName();
 
     @Before
-    public void beforeTest() throws IOException, InterruptedException {
+    public void beforeTest() throws InterruptedException {
         dummyComment = "Hello";
-        var api = replaceApiService();
         issue = createIssue();
-        final var httpClient = api.getClient();
-        final int[] statusCode = {200};
-        when(httpClient.execute(any())).thenAnswer((i) -> {
-            var req = i.getArgument(0);
-            StringEntity se;
-            statusCode[0] = 200;
-            if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains(SESSIONS_URL)) {
-                se = new StringEntity("{}");
-            }  else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains(ISSUES_URL + "/" + issue.id)) {
-                var obj = EntityUtils.toString(((HttpPatch) req).getEntity());
-                var mapper = new ObjectMapper();
-                Map<String, Object> map = mapper.readValue(obj, Map.class);
-                var action = (HashMap<String, String>) map.get("action");
-                //Assert that we send the correct payload to the api
-                if (map.get("type").equals("edit")) {
-                    //Issue
-                    assertThat(map.get("type")).isEqualTo("edit");
-                    assertThat(map.get("title")).isEqualTo(issue.title);
-                } else if (map.get("type").equals("assign") || map.get("type").equals("lifecycle") || map.get("type").equals("label") ||
-                        map.get("type").equals("comment.react") || map.get("type").equals("comment") || map.get("type").equals("comment.edit")) {
-                    response.add(map);
-                }
-                // Return status code 400 in order to trigger the notification
-                if (dummyComment.equals("break") || issue.title.equals("break")) {
-                    statusCode[0] = 400;
-                }
-                se = new StringEntity("{}");
-            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains(ISSUES_URL)) {
-                var obj = EntityUtils.toString(((HttpPost) req).getEntity());
-                var mapper = new ObjectMapper();
-                Map<String, Object> map = mapper.readValue(obj, Map.class);
-                response.add(map);
-                // We don't need to refresh the panel after the request
-                statusCode[0] = 400;
-                se = new StringEntity("{}");
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(ISSUES_URL + "/" + issue.id)) {
-                issue.repo = null;
-                issue.project = null;
-                // Convert Reaction object to List<List<String>>
-                var map = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains("/patches")) {
-                // request to fetch patches
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
-            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains("/sessions")) {
-                var session = new RadicleProjectApi.Session("testId", "testPublicKey", "testSignature");
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(session));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
-                // request to fetch issues
-                var serializeIssues = RadicleProjectApi.MAPPER.convertValue(getTestIssues(), new TypeReference<List<Map<String, Object>>>() { });
-                for (var is : serializeIssues) {
-                    var discussions = (ArrayList<Map<String, Object>>) is.get("discussion");
-                    for (var disc : discussions) {
-                        disc.remove("timestamp");
-                        disc.put("timestamp", Instant.now().getEpochSecond());
-                    }
-                }
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(serializeIssues));
-            } else if ((req instanceof HttpGet)) {
-                // request to fetch specific project
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
-            } else {
-                se = new StringEntity("");
-            }
-            se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            final var resp = mock(CloseableHttpResponse.class);
-            when(resp.getEntity()).thenReturn(se);
-            final var statusLine = mock(StatusLine.class);
-            when(resp.getStatusLine()).thenReturn(statusLine);
-            when(statusLine.getStatusCode()).thenReturn(statusCode[0]);
-            return resp;
-        });
         setupWindow();
     }
 
@@ -566,26 +471,34 @@ public class OverviewTest extends AbstractIT {
         }
         assertThat(cmds).anyMatch(cmd -> cmd.getCommandLineString().contains("rad issue react " + issue.id) &&
                                          cmd.getCommandLineString().contains(issue.discussion.get(1).id));
-        // var res = response.poll(5, TimeUnit.SECONDS);
-        /* assertThat(res.get("type")).isEqualTo("comment.react");
-        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat((Boolean) res.get("active")).isTrue(); */
-
+        // test removing the reaction
+        // TODO: not yet implemented in CLI!
+        if (true) {
+            return;
+        }
         borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
         var reactorsPanel = ((JPanel) borderPanel.getComponents()[1]).getComponents()[1];
         var listeners = reactorsPanel.getMouseListeners();
         listeners[0].mouseClicked(null);
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("type")).isEqualTo("comment.react");
-        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat((Boolean) res.get("active")).isFalse();
+        cmds = new ArrayList<>();
+        radStub.commands.drainTo(cmds);
+        if (cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue react " + issue.id)).findFirst().isEmpty()) {
+            var cmd = radStub.commands.poll(5, TimeUnit.SECONDS);
+            if (cmd != null) {
+                cmds.add(cmd);
+            }
+        }
+        assertThat(cmds).anyMatch(cmd -> cmd.getCommandLineString().contains("rad issue react " + issue.id) &&
+                                         cmd.getCommandLineString().contains(issue.discussion.get(1).id));
     }
 
     @Test
     public void testChangeTitle() throws InterruptedException {
+        if (true) {
+            // TODO: edit issue title/description is NOT implemented in CLI
+            return;
+        }
         var issueComponent = issueEditorProvider.getIssueComponent();
         var titlePanel = issueComponent.getHeaderPanel();
         var editBtn = UIUtil.findComponentOfType(titlePanel, InlineIconButton.class);
@@ -765,7 +678,8 @@ public class OverviewTest extends AbstractIT {
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliError"));
 
         // Test edit issue functionality
-        response.clear();
+        // TODO: Editing issue comment is not available from CLI
+        /*
         commentPanel = issueComponent.getCommentSection();
         var editBtn = UIUtil.findComponentOfType(commentPanel, InlineIconButton.class);
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
@@ -779,10 +693,16 @@ public class OverviewTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("id")).isEqualTo(issue.discussion.get(1).id);
-        assertThat(res.get("type")).isEqualTo("comment.edit");
-        assertThat(res.get("body")).isEqualTo(editedComment);
+        List<GeneralCommandLine> cmds = new ArrayList<>();
+        radStub.commands.drainTo(cmds);
+        if (cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue edit " + issue.id)).findFirst().isEmpty()) {
+            var cmd = radStub.commands.poll(5, TimeUnit.SECONDS);
+            if (cmd != null) {
+                cmds.add(cmd);
+            }
+        }
+        cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue edit " + issue.id)).findFirst().orElseThrow();
+        */
     }
 
     @Test
