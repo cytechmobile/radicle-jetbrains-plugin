@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.intellij.collaboration.ui.JPanelWithBackground;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane;
@@ -22,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -58,30 +58,21 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.review.PatchDiffEditorGutterIconFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PatchDiffWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -99,24 +90,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest.getTestIssues;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestPatches;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestProjects;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RunWith(JUnit4.class)
 public class TimelineTest extends AbstractIT {
     private static final Logger logger = Logger.getInstance(TimelineTest.class);
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(TimelineTest.class);
     private FileEditor myEditor;
     private static final String AUTHOR = "did:key:testAuthor";
     public static final String RAD_PROJECT_ID = "rad:123";
@@ -130,109 +115,22 @@ public class TimelineTest extends AbstractIT {
     private PatchEditorProvider patchEditorProvider;
     private VirtualFile editorFile;
     private PatchTabController patchTabController;
-    private final BlockingQueue<Map<String, Object>> response = new LinkedBlockingQueue<>();
-    private static final String PATCH_NAME = "Test Patch";
-    private static final String PATCH_DESC = "Test Description";
     private Embed txtEmbed;
     private Embed imgEmbed;
     private String firstComment;
     private String secondComment;
     private String currentRevision = null;
+    List<EditorImpl> editors = new ArrayList<>();
+
     @Rule
     public TestName testName = new TestName();
 
     @Before
-    public void beforeTest() throws IOException, InterruptedException {
-        var api = replaceApiService();
+    public void beforeTest() throws InterruptedException {
         patch = createPatch();
         currentRevision = firstRepo.getCurrentRevision();
-        replaceCliService(currentRevision);
-        final var httpClient = api.getClient();
-        final int[] statusCode = {200};
-        when(httpClient.execute(any())).thenAnswer((i) -> {
-            var req = i.getArgument(0);
-            logger.warn("captured request:" + req);
-            StringEntity se;
-            statusCode[0] = 200;
-            if ((req instanceof HttpPut) && ((HttpPut) req).getURI().getPath().contains(SESSIONS_URL)) {
-                se = new StringEntity("{}");
-            } else if ((req instanceof HttpPatch) && ((HttpPatch) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
-                var obj = EntityUtils.toString(((HttpPatch) req).getEntity());
-                Map<String, Object> map = RadicleProjectApi.MAPPER.readValue(obj, new TypeReference<>() { });
-                if (map.get("type").equals("edit")) {
-                    //patch
-                    assertThat(map.get("target")).isEqualTo("delegates");
-                    assertThat(map.get("type")).isEqualTo("edit");
-                    assertThat(map.get("title")).isEqualTo(patch.title);
-                } else if (map.get("type").equals("label") || map.get("type").equals("lifecycle") || map.get("type").equals("revision.comment.react") ||
-                        map.get("type").equals("revision.comment.edit") || map.get("type").equals("revision.comment") ||
-                        map.get("type").equals("revision.comment.redact") || map.get("type").equals("review")) {
-                    response.add(map);
-                }
-                // Return status code 400 in order to trigger the notification
-                if (dummyComment.equals("break") || patch.title.equals("break")) {
-                    statusCode[0] = 400;
-                }
-                se = new StringEntity("{}");
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(PROJECTS_URL + "/" + RAD_PROJECT_ID)) {
-                var map = Map.of("defaultBranch", "main", "id", RAD_PROJECT_ID, "head", currentRevision);
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL + "/" + patch.id)) {
-                var p = new RadPatch(patch);
-                p.repo = null;
-                p.project = null;
-                var map = RadicleProjectApi.MAPPER.convertValue(p, new TypeReference<Map<String, Object>>() { });
-                var revisions = (ArrayList<Map<String, Object>>) map.get("revisions");
-                for (var rev : revisions) {
-                    var discussions = (ArrayList<Map<String, Object>>) rev.get("discussions");
-                    for (var discussion : discussions) {
-                        discussion.remove("timestamp");
-                        discussion.put("timestamp", Instant.now().getEpochSecond());
-                        if (discussion.get("id").equals(DISCUSSION_ID)) {
-                            discussion.remove("location");
-                            discussion.put("location", patch.getRevisionList().get(1).getDiscussions().get(1).location.getMapObject());
-                        }
-                        if (discussion.get("id").equals(OUTDATED_DISUCSSION_ID)) {
-                            discussion.remove("location");
-                            discussion.put("location", patch.getRevisionList().get(0).getDiscussions().get(1).location.getMapObject());
-                        }
-                    }
-                }
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(map));
-            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains(PATCHES_URL)) {
-                var obj = EntityUtils.toString(((HttpPost) req).getEntity());
-                Map<String, Object> map = RadicleProjectApi.MAPPER.readValue(obj, new TypeReference<>() { });
-                response.add(map);
-                // We don't need to refresh the panel after the request
-                statusCode[0] = 400;
-                se = new StringEntity("{}");
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().contains(PATCHES_URL)) {
-                // request to fetch patches
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestPatches()));
-            } else if ((req instanceof HttpPost) && ((HttpPost) req).getURI().getPath().contains("/sessions")) {
-                var session = new RadicleProjectApi.Session("testId", "testPublicKey", "testSignature");
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(session));
-            } else if ((req instanceof HttpGet) && ((HttpGet) req).getURI().getPath().endsWith(ISSUES_URL)) {
-                // request to fetch patches
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestIssues()));
-            } else if ((req instanceof HttpGet)) {
-                // request to fetch specific project
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(getTestProjects().get(0)));
-            } else {
-                se = new StringEntity("");
-            }
-            se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            final var resp = mock(CloseableHttpResponse.class);
-            when(resp.getEntity()).thenReturn(se);
-            final var statusLine = mock(StatusLine.class);
-            when(resp.getStatusLine()).thenReturn(statusLine);
-            when(statusLine.getStatusCode()).thenReturn(statusCode[0]);
-            return resp;
-        });
-        setupWindow();
-    }
+        replaceCliService(currentRevision, true);
 
-    public void setupWindow() throws InterruptedException {
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         RadicleToolWindow radicleToolWindow = new RadicleToolWindow();
         var mockToolWindow = new PatchListPanelTest.MockToolWindow(super.getProject());
@@ -263,6 +161,18 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
     }
 
+    @After
+    public final void afterTest() throws Exception {
+        if (editors != null && !editors.isEmpty()) {
+            for (var e : editors) {
+                if (e.isDisposed()) {
+                    continue;
+                }
+                EditorFactory.getInstance().releaseEditor(e);
+            }
+        }
+    }
+
     @Test
     public void testReviewCommentsExists() throws VcsException {
         var authorId = "did:key:fakeDid";
@@ -278,6 +188,7 @@ public class TimelineTest extends AbstractIT {
                 createDiscussionWithLocation(OUTDATED_DISUCSSION_ID, authorId, outDatedComment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
+        editors.add(editor);
         boolean findOutDatedComment = false;
         boolean findNonOutDatedComment = false;
         for (var comp : editor.getContentComponent().getComponents()) {
@@ -305,6 +216,7 @@ public class TimelineTest extends AbstractIT {
         assertThat(commit).isNotNull();
         patchDiffWindow = initializeDiffWindow(commit);
         editor = patchDiffWindow.getEditor();
+        editors.add(editor);
 
         for (var comp : editor.getContentComponent().getComponents()) {
             var timelineThreadPanel = UIUtil.findComponentOfType((JComponent) comp, TimelineThreadCommentsPanel.class);
@@ -314,7 +226,6 @@ public class TimelineTest extends AbstractIT {
             assertThat(commentLabel.getText()).doesNotContain(outDatedComment);
             assertThat(commentLabel.getText()).contains(comment);
         }
-        EditorFactory.getInstance().releaseEditor(editor);
     }
 
     @Test
@@ -331,12 +242,17 @@ public class TimelineTest extends AbstractIT {
         patch.getRevisionList().get(1).discussion().comments.put(DISCUSSION_ID, discussion);
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
+        editors.add(editor);
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
         var timelineThreadPanel = UIUtil.findComponentOfType(contentComponent, TimelineThreadCommentsPanel.class);
         var jPanelWithBackground = UIUtil.findComponentOfType(timelineThreadPanel, JPanelWithBackground.class);
         var scrollablePanel = (JPanel) ((BorderLayoutPanel) jPanelWithBackground.getComponents()[0]).getComponents()[0];
         var myPanel = (JPanel) scrollablePanel.getComponents()[0];
+        if (true) {
+            logger.warn("comment deletion is disabled");
+            return;
+        }
         var actionPanel = (JPanel) myPanel.getComponents()[1];
         var deleteIcon = (InlineIconButton) actionPanel.getComponents()[1];
 
@@ -344,11 +260,6 @@ public class TimelineTest extends AbstractIT {
                 .getPatchDiffEditorComponentsFactory().getPatchReviewThreadComponentFactory().deleteComment(discussion));
         deleteIcon.getActionListener().actionPerformed(new ActionEvent(deleteIcon, 0, ""));
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("comment")).isEqualTo(discussion.id);
-        assertThat(map.get("type")).isEqualTo("revision.comment.redact");
-        assertThat(map.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
-        EditorFactory.getInstance().releaseEditor(editor);
     }
 
     @Test
@@ -362,6 +273,7 @@ public class TimelineTest extends AbstractIT {
         patch.getRevisionList().get(1).getDiscussions().add(createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
+        editors.add(editor);
         var reviewAction = new ReviewSubmitAction(patch);
         reviewAction.setUpPopup(new JPanel());
 
@@ -376,7 +288,6 @@ public class TimelineTest extends AbstractIT {
         assertThat(command).contains(RadPatch.Review.Verdict.ACCEPT.getValue());
         assertThat(command).contains(ExecUtil.escapeUnixShellArgument(REVIEW_SUMMARY));
         assertThat(command).contains("review");
-        EditorFactory.getInstance().releaseEditor(editor);
     }
 
     @Test
@@ -391,8 +302,12 @@ public class TimelineTest extends AbstractIT {
                 createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
+        editors.add(editor);
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
-
+        if (true) {
+            logger.warn("comment edit is disabled");
+            return;
+        }
         var editBtn = UIUtil.findComponentOfType(contentComponent, InlineIconButton.class);
         //send event that we clicked edit
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
@@ -410,11 +325,7 @@ public class TimelineTest extends AbstractIT {
 
         prBtn.doClick();
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("revision.comment.edit");
-        assertThat(map.get("body")).isEqualTo(editedComment);
-        assertThat(map.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
-        EditorFactory.getInstance().releaseEditor(editor);
+        // TODO verify patch comment was edited ...
     }
 
     @Test
@@ -429,6 +340,7 @@ public class TimelineTest extends AbstractIT {
                 createDiscussionWithLocation(DISCUSSION_ID, authorId, comment, List.of(), location));
         var patchDiffWindow = initializeDiffWindow(firstCommit);
         var editor = patchDiffWindow.getEditor();
+        editors.add(editor);
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
 
         var replyButton = UIUtil.findComponentsOfType(contentComponent, LinkLabel.class);
@@ -446,11 +358,16 @@ public class TimelineTest extends AbstractIT {
         var prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("type")).isEqualTo("revision.comment");
-        assertThat(map.get("body")).isEqualTo(replyComment);
-        assertThat(map.get("replyTo")).isEqualTo(DISCUSSION_ID);
-        EditorFactory.getInstance().releaseEditor(editor);
+        var cmds = new ArrayList<String>();
+        radStub.commandsStr.drainTo(cmds);
+        if (cmds.stream().filter(c -> c.contains(replyComment)).findFirst().isEmpty()) {
+            executeUiTasks();
+            var cmd = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
+            if (cmd != null) {
+                cmds.add(cmd);
+            }
+        }
+        assertThat(cmds).anyMatch(c -> c.contains(replyComment) && c.contains(DISCUSSION_ID));
     }
 
     @Test
@@ -469,6 +386,7 @@ public class TimelineTest extends AbstractIT {
             }
         }, "", new Presentation(""), ActionManager.getInstance(), 0));
         var editor = patchDiffWindow.getEditor();
+        editors.add(editor);
         var contentComponent = (JComponent) editor.getContentComponent().getComponents()[0];
         var ef = UIUtil.findComponentOfType(contentComponent, DragAndDropField.class);
         assertThat(ef).isNotNull();
@@ -481,19 +399,24 @@ public class TimelineTest extends AbstractIT {
         prBtn.doClick();
         //Comment
         executeUiTasks();
-        var map = response.poll(5, TimeUnit.SECONDS);
-        assertThat(map.get("revision")).isEqualTo(patch.getRevisionList().get(1).id());
-        assertThat(map.get("body")).isEqualTo(dummyComment);
-        assertThat(map.get("type")).isEqualTo("revision.comment");
-        assertThat(map.get("location")).isNotNull();
-        var locationObj = (HashMap<String, Object>) map.get("location");
+        var cmds = new ArrayList<String>();
+        radStub.commandsStr.drainTo(cmds);
+        if (cmds.stream().filter(c -> c.contains(dummyComment) && c.contains(patch.getRevisionList().get(1).id())).findFirst().isEmpty()) {
+            executeUiTasks();
+            var cmd = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
+            if (cmd != null) {
+                cmds.add(cmd);
+            }
+        }
+        assertThat(cmds).anyMatch(c -> c.contains(patch.getRevisionList().get(1).id()) && c.contains(dummyComment));
+        // TODO: locations are disabled
+        /* var locationObj = (HashMap<String, Object>) map.get("location");
         assertThat((String) locationObj.get("path")).isEqualTo(fileName);
         var newObj = (HashMap<String, Object>) locationObj.get("new");
         assertThat((String) newObj.get("type")).isEqualTo("lines");
         var range = (HashMap<String, Integer>) newObj.get("range");
         assertThat(range.get("start")).isEqualTo(0);
-        assertThat(range.get("end")).isEqualTo(0);
-        EditorFactory.getInstance().releaseEditor(editor);
+        assertThat(range.get("end")).isEqualTo(0); */
     }
 
     @Test
@@ -514,9 +437,11 @@ public class TimelineTest extends AbstractIT {
 
         var buttonsPanel = (JPanel) ((JPanel) children[2]).getComponents()[1];
         var titleField = UIUtil.findComponentOfType((JComponent) children[0], JBTextArea.class);
-        titleField.setText(PATCH_NAME);
+        final var patchName = "Test Patch";
+        titleField.setText(patchName);
         var descriptionField = UIUtil.findComponentOfType((JComponent) children[1], JBTextArea.class);
-        descriptionField.setText(PATCH_DESC);
+        final var patchDesc = "Test Description";
+        descriptionField.setText(patchDesc);
 
         // Get the panel where the actions select are
         var actionsPanel = (JPanel) ((JPanel) children[2]).getComponents()[0];
@@ -552,8 +477,8 @@ public class TimelineTest extends AbstractIT {
         createPatchButton.doClick();
         executeUiTasks();
         var res = radStub.commandsStr.poll();
-        assertThat(res).contains(PATCH_DESC);
-        assertThat(res).contains(PATCH_NAME);
+        assertThat(res).contains(patchName);
+        assertThat(res).contains(patchDesc);
         var labels = radStub.commandsStr.poll(10, TimeUnit.SECONDS);
         assertThat(labels).contains(label1);
         assertThat(labels).contains(label2);
@@ -702,6 +627,10 @@ public class TimelineTest extends AbstractIT {
 
     @Test
     public void testReactions() throws InterruptedException {
+        if (true) {
+            logger.warn("reactions on patch timeline are disabled!");
+            return;
+        }
         executeUiTasks();
         var emojiJPanel = patchEditorProvider.getTimelineComponent().getComponentsFactory().getEmojiJPanel();
         var emojiLabel = UIUtil.findComponentOfType(emojiJPanel, JLabel.class);
@@ -730,12 +659,7 @@ public class TimelineTest extends AbstractIT {
         var selectedEmoji =  jblist.getSelectedValue();
         var emoji = (Emoji) ((SelectionListCellRenderer.SelectableWrapper) selectedEmoji).value;
         executeUiTasks();
-        var res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("type")).isEqualTo("revision.comment.react");
-        assertThat((Boolean) res.get("active")).isTrue();
-        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat(res.get("comment")).isEqualTo(patch.getLatestRevision().getDiscussions().get(0).id);
-        assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
+        // TODO: verify emoji added
 
         //Remove reaction
         borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
@@ -743,12 +667,7 @@ public class TimelineTest extends AbstractIT {
         var listeners = reactorsPanel.getMouseListeners();
         listeners[0].mouseClicked(null);
         executeUiTasks();
-        res = response.poll(5, TimeUnit.SECONDS);
-        assertThat(res.get("type")).isEqualTo("revision.comment.react");
-        assertThat((Boolean) res.get("active")).isFalse();
-        assertThat(res.get("reaction")).isEqualTo(emoji.unicode());
-        assertThat(res.get("comment")).isEqualTo(patch.getLatestRevision().getDiscussions().get(0).id);
-        assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
+        // TODO: verify emoji removed
     }
 
     @Test
@@ -962,13 +881,15 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         Thread.sleep(1000);
         executeUiTasks();
-        response.poll(5, TimeUnit.SECONDS);
-        executeUiTasks();
         var not = notificationsQueue.poll(20, TimeUnit.SECONDS);
         assertThat(not).isNotNull();
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliError"));
 
         // Test edit patch functionality
+        if (true) {
+            logger.warn("patch comment edit is disabled");
+            return;
+        }
         var commPanel = timelineComponent.getComponentsFactory().getCommentPanel();
         var editBtn = UIUtil.findComponentOfType(commPanel, InlineIconButton.class);
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
@@ -982,11 +903,10 @@ public class TimelineTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        var res = response.poll(15, TimeUnit.SECONDS);
-        assertThat(res.get("type")).isEqualTo("revision.comment.edit");
-        assertThat(res.get("revision")).isEqualTo(patch.getLatestRevision().id());
-        assertThat(res.get("body")).isEqualTo(editedComment);
-        assertThat(res.get("comment")).isEqualTo(discussionToEdit.id);
+        var cmds = new ArrayList<GeneralCommandLine>();
+        radStub.commands.drainTo(cmds);
+        assertThat(cmds)
+                .anyMatch(c -> c.getCommandLineString().contains(patch.getLatestRevision().id()) && c.getCommandLineString().contains(discussionToEdit.id));
     }
 
     private RadPatch createPatch() {

@@ -36,7 +36,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.CreateIssuePanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
@@ -77,7 +76,6 @@ public class CreatePatchPanel {
     private final PatchTabController patchTabController;
     private final RadicleProjectService radicleProjectService;
     private final List<GitRepository> repos;
-    private final RadicleProjectApi api;
     private final Project project;
 
     private CreateIssuePanel.LabelSelect labelSelect;
@@ -95,7 +93,6 @@ public class CreatePatchPanel {
         this.patchTabController = patchTabController;
         this.project = project;
         this.repos = repos;
-        this.api = this.project.getService(RadicleProjectApi.class);
     }
 
     public JComponent create() {

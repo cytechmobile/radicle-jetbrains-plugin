@@ -30,7 +30,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.PublishDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
@@ -57,7 +56,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
 public class CreateIssuePanel {
-    private final RadicleProjectApi api;
     private final Project project;
     private AssigneesSelect assigneeSelect;
     private LabelSelect labelSelect;
@@ -67,7 +65,7 @@ public class CreateIssuePanel {
     private DragAndDropField descriptionField;
     protected IssueTabController issueTabController;
     private ComboBox<GitRepository> projectSelect;
-    private final RadicleCliService cliService;
+    private final RadicleCliService cli;
 
     public AssigneesSelect getAssigneeSelect() {
         return assigneeSelect;
@@ -79,8 +77,7 @@ public class CreateIssuePanel {
 
     public CreateIssuePanel(IssueTabController issueTabController, Project project) {
         this.issueTabController = issueTabController;
-        this.api = project.getService(RadicleProjectApi.class);
-        this.cliService = project.getService(RadicleCliService.class);
+        this.cli = project.getService(RadicleCliService.class);
         this.project = project;
     }
 
@@ -178,7 +175,7 @@ public class CreateIssuePanel {
                 }
                 newIssueButton.setEnabled(false);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                    var output = cliService.createIssue(repo, issueTitle, issueDescription, assignees, labels);
+                    var output = cli.createIssue(repo, issueTitle, issueDescription, assignees, labels);
                     var isSuccess = RadAction.isSuccess(output);
                     ApplicationManager.getApplication().invokeLater(() -> {
                         if (isSuccess) {
@@ -316,7 +313,7 @@ public class CreateIssuePanel {
                 if (selectedProject == null) {
                     return assignees;
                 }
-                var radProject = cliService.getRadRepo(selectedProject);
+                var radProject = cli.getRadRepo(selectedProject);
                 for (var delegate : radProject.delegates) {
                     var assignee = new IssuePanel.AssigneesSelect.Assignee(delegate.id, delegate.alias);
                     var isSelected = delegates.stream().anyMatch(d -> d.id.equals(delegate.id));

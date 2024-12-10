@@ -17,7 +17,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTes
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.assertj.core.util.Strings;
 import org.slf4j.Logger;
@@ -37,10 +37,6 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.RAD_PA
 public class RadStub extends RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadStub.class);
 
-    private int counter = 0;
-    public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
-    public final BlockingQueue<String> commandsStr = new LinkedBlockingQueue<>();
-    public String firstCommitHash;
     public static final String SECOND_COMMIT_HASH = "970b7ceb6678bc42e4fb0b9e3628914e1e1b8dae";
     public static final String FIRST_PEER_ID = "hyy7y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ibyw";
     public static final String SECOND_PEER_ID = "hyy8y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ww";
@@ -63,12 +59,10 @@ public class RadStub extends RadicleProjectService {
     public static String nodeId = "fakeDid";
     public static String alias = "alias";
 
-    private String getSelfResponse(String hash) {
-        return  alias + "\n" +
-                nodeId + "\n" +
-                did + "\n" +
-                hash;
-    }
+    public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
+    public final BlockingQueue<String> commandsStr = new LinkedBlockingQueue<>();
+    public String firstCommitHash;
+    private int counter = 0;
 
     public RadStub(String commitHash, Project project) {
         super(project);
@@ -139,7 +133,7 @@ public class RadStub extends RadicleProjectService {
             }
             var patch = patches.stream().filter(p -> p.id.equals(patchId)).findFirst().orElse(null);
             try {
-                stdout = RadicleProjectApi.MAPPER.writeValueAsString(patch);
+                stdout = RadicleCliService.MAPPER.writeValueAsString(patch);
             } catch (Exception e) {
                 logger.warn("unable to write values as string", e);
             }
@@ -155,7 +149,7 @@ public class RadStub extends RadicleProjectService {
             var issues = IssueListPanelTest.getTestIssues();
             var issue = issues.stream().filter(is -> issueId.equals(is.id)).findFirst().orElse(null);
             if (issue != null) {
-                var serializeIssue = RadicleProjectApi.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
+                var serializeIssue = RadicleCliService.MAPPER.convertValue(issue, new TypeReference<Map<String, Object>>() { });
                 var discussions = (ArrayList<Map<String, Object>>) serializeIssue.get("thread");
                 serializeIssue.remove("thread");
                 var discussionMap = new HashMap<String, Object>();
@@ -167,7 +161,7 @@ public class RadStub extends RadicleProjectService {
                 serializeIssue.put("thread", commentMap);
                 if (issue != null) {
                     try {
-                        stdout = RadicleProjectApi.MAPPER.writeValueAsString(serializeIssue);
+                        stdout = RadicleCliService.MAPPER.writeValueAsString(serializeIssue);
                     } catch (Exception e) {
                         logger.warn("Unable to write value as a string");
                     }

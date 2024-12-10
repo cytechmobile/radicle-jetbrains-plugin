@@ -11,20 +11,20 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 public class PatchDiffEditorComponentsFactory {
     private final ObservableThreadModel observableThreadModel;
-    private final RadicleProjectApi api;
+    private final RadicleCliService cli;
     private final RadPatch patch;
     private final int editorLine;
     private PatchReviewThreadComponentFactory patchReviewThreadComponentFactory;
 
     public PatchDiffEditorComponentsFactory(RadPatch radPatch, int editorLine, ObservableThreadModel observableThreadModel) {
-        this.api = radPatch.project.getService(RadicleProjectApi.class);
+        this.cli = radPatch.project.getService(RadicleCliService.class);
         this.editorLine = editorLine;
         this.patch = radPatch;
         this.observableThreadModel = observableThreadModel;
@@ -41,7 +41,7 @@ public class PatchDiffEditorComponentsFactory {
                 new SingleValueModel<>(""), field -> {
             var location = new RadDiscussion.Location(observableThreadModel.getFilePath(), "ranges",
                     observableThreadModel.getCommitHash(), editorLine, editorLine);
-            var res = this.api.addPatchComment(patch, field.getText(), location, field.getEmbedList());
+            var res = this.cli.createPatchComment(patch.repo, patch.getLatestRevision().id(), field.getText(), null, location, field.getEmbedList());
             boolean success = res != null;
             if (success) {
                 observableThreadModel.update(patch);

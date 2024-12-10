@@ -26,7 +26,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import org.jdesktop.swingx.VerticalLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +47,6 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     private static final Logger logger = Logger.getInstance(ListPanel.class);
     protected final TabController<P, Q, S> controller;
     protected final Project project;
-    protected final RadicleProjectApi api;
     protected final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     protected ProgressStripe progressStripe;
     protected List<P> loadedData = null;
@@ -59,7 +57,6 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
     public ListPanel(TabController<P, Q, S> controller, Project project) {
         this.controller = controller;
         this.project = project;
-        this.api = project.getService(RadicleProjectApi.class);
         this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         this.model = new DefaultListModel<>();
     }

@@ -46,7 +46,7 @@ public class RadCobShow extends RadAction {
             issue.projectId = projectId;
             issue.id = objectId;
         } catch (Exception e) {
-            logger.warn("Unable to deserialize issue", e);
+            logger.warn("Unable to deserialize issue:" + objectId + " in project:" + projectId, e);
         }
         return issue;
     }

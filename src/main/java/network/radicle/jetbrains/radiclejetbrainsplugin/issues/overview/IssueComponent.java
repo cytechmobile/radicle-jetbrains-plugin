@@ -10,10 +10,10 @@ import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentF
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBFont;
@@ -31,7 +31,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
@@ -54,7 +53,6 @@ public class IssueComponent {
     private JPanel descPanel;
     private JComponent commentFieldPanel;
     private JComponent commentSection;
-    private final RadicleProjectApi api;
     private RadDetails radDetails;
     private JPanel emojiJPanel;
     private EmojiPanel<RadIssue> emojiPanel;
@@ -66,7 +64,6 @@ public class IssueComponent {
         this.file = file;
         this.radIssue = file.getIssueModel().getValue();
         this.issueModel = file.getIssueModel();
-        this.api = radIssue.project.getService(RadicleProjectApi.class);
         this.cli = radIssue.project.getService(RadicleCliService.class);
     }
 
@@ -185,7 +182,7 @@ public class IssueComponent {
 
     private JComponent getHeader() {
         // final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radIssue.title, radIssue.id, "", "");
-        final var issueWebLink = HtmlChunk.link(api.getIssueWebUrl(radIssue), radIssue.id).attr("title", radIssue.title)
+        final var issueWebLink = HtmlChunk.link(cli.getIssueWebUrl(radIssue), radIssue.id).attr("title", radIssue.title)
                 .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())));
         final var title = new HtmlBuilder().appendRaw(radIssue.title).nbsp().append(issueWebLink).toString();
         var headerTitle = new BaseHtmlEditorPane();

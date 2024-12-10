@@ -475,8 +475,8 @@ public class RadicleProjectService {
         return executeCommandFromFile(root, params);
     }
 
-    public ProcessOutput executeCommandWithStdin(String workDir, String radHome, String radPath, List<String> args,
-                                                 @Nullable GitRepository repo, String stdin) {
+    public ProcessOutput executeCommandWithStdin(
+            String workDir, String radHome, String radPath, List<String> args, @Nullable GitRepository repo, String stdin) {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var path = Strings.isNullOrEmpty(radPath) ? projectSettings.getPath() : radPath;
         final var home = Strings.isNullOrEmpty(radHome) ? projectSettings.getRadHome() : radHome;

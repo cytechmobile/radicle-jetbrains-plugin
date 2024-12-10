@@ -12,6 +12,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 
 import javax.swing.BorderFactory;
@@ -45,8 +46,7 @@ public abstract class EmojiPanel<T> {
     private JBPopupListener popupListener;
     private CountDownLatch latch;
 
-    protected EmojiPanel(SingleValueModel<T> model, List<Reaction> reactions, String discussionId,
-                         RadDetails radDetails) {
+    protected EmojiPanel(SingleValueModel<T> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
         this.model = model;
         this.reactions = reactions;
         this.discussionId = discussionId;
@@ -55,9 +55,9 @@ public abstract class EmojiPanel<T> {
 
     private static class EmojiRender extends SelectionListCellRenderer<Emoji> {
         @Override
-        public Component getListCellRendererComponent(JList<? extends SelectableWrapper<Emoji>> list,
-                                                      SelectableWrapper<Emoji> selectableWrapperObj,
-                                                      int index, boolean isSelected, boolean cellHasFocus) {
+        public Component getListCellRendererComponent(
+                JList<? extends SelectableWrapper<Emoji>> list, SelectableWrapper<Emoji> selectableWrapperObj,
+                int index, boolean isSelected, boolean cellHasFocus) {
             var jLabel = new JLabel();
             jLabel.setFont(new Font(FONT_NAME, FONT_STYLE, FONT_SIZE));
             jLabel.setText(getText(selectableWrapperObj.value));
@@ -143,7 +143,10 @@ public abstract class EmojiPanel<T> {
         });
         var borderPanel = new BorderLayoutPanel();
         borderPanel.setOpaque(false);
-        borderPanel.addToLeft(emojiButton);
+        if (!(this.model.getValue() instanceof RadPatch)) {
+            // TODO: disable reactions on patch comments, not supported from CLI
+            borderPanel.addToLeft(emojiButton);
+        }
         var horizontalPanel = getHorizontalPanel(10);
         horizontalPanel.setOpaque(false);
         horizontalPanel.add(progressLabel);

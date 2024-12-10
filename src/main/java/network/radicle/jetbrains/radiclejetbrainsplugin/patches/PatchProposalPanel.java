@@ -40,7 +40,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCheckout;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.PopupBuilder;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.SelectionListCellRenderer;
@@ -70,8 +69,7 @@ public class PatchProposalPanel {
     protected TabInfo commitTab;
     protected PatchTabController controller;
     private SingleHeightTabs tabs;
-    private final RadicleProjectApi api;
-    private final RadicleCliService cliService;
+    private final RadicleCliService cli;
     private final LabelSelect labelSelect;
     private final StateSelect stateSelect;
     private final PatchComponentFactory patchComponentFactory;
@@ -82,8 +80,7 @@ public class PatchProposalPanel {
     public PatchProposalPanel(PatchTabController controller, SingleValueModel<RadPatch> patch) {
         this.controller = controller;
         this.patch = patch.getValue();
-        this.api = this.patch.project.getService(RadicleProjectApi.class);
-        this.cliService = this.patch.project.getService(RadicleCliService.class);
+        this.cli = this.patch.project.getService(RadicleCliService.class);
         this.patchModel = patch;
         this.labelSelect = new LabelSelect();
         this.stateSelect = new StateSelect();
@@ -362,7 +359,7 @@ public class PatchProposalPanel {
             if (selectedState.equals(patch.state.status)) {
                 return true;
             }
-            var resp = cliService.changePatchState(patch, selectedState);
+            var resp = cli.changePatchState(patch, selectedState);
             var isSuccess = resp != null;
             if (isSuccess) {
                 patchModel.setValue(patch);
@@ -437,7 +434,7 @@ public class PatchProposalPanel {
 
             var deletedLabels = new ArrayList<>(patch.labels);
             deletedLabels.removeAll(labelList);
-            var output = cliService.createPatchLabels(patch.repo, patch.id, addedLabels, deletedLabels);
+            var output = cli.createPatchLabels(patch.repo, patch.id, addedLabels, deletedLabels);
             var isSuccess = RadAction.isSuccess(output);
             if (isSuccess) {
                 patchModel.setValue(patch);

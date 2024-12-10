@@ -4,19 +4,16 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 
 import java.awt.BorderLayout;
 
 public abstract class TabController<S, Q extends ReviewListSearchValue, P extends SearchViewModelBase<Q, ?, S>> {
     protected final Project project;
     protected final Content tab;
-    protected final RadicleProjectApi api;
 
     public TabController(Project project, Content tab) {
         this.project = project;
         this.tab = tab;
-        this.api = project.getService(RadicleProjectApi.class);
     }
 
     public void createPanel() {

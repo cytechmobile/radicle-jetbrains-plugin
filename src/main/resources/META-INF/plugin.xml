@@ -14,7 +14,6 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService"/>
-        <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.FileService"/>
         <projectService serviceImplementation="network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleStatusBarService"/>

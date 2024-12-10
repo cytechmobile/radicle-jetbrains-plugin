@@ -8,7 +8,6 @@ import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ui.EDT;
 import com.sshtools.common.publickey.SshKeyUtils;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
@@ -48,7 +47,7 @@ public class AuthService {
         this.radicleProjectService = radicleProjectService;
     }
 
-    public String authenticate(RadicleProjectApi.Session session) {
+    public String authenticate(Session session) {
         var sh = new RadicleProjectSettingsHandler(project);
         var password = sh.getPassword(session.publicKey());
         //If we don't have the password then ask it from the user
@@ -92,7 +91,7 @@ public class AuthService {
         return null;
     }
 
-    protected String sign(RadicleProjectApi.Session session, String password) {
+    protected String sign(Session session, String password) {
         try {
             var settings = projectSettingsHandler.loadSettings();
             var keyPath = getRadicleKey(settings.getRadHome());
@@ -120,4 +119,6 @@ public class AuthService {
         }
         return radicleKeyPath;
     }
+
+    public record Session(String sessionId, String publicKey, String signature) { }
 }

@@ -62,16 +62,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class OverviewTest extends AbstractIT {
-    private static final String AUTHOR = "did:key:testAuthor";
-    private static String dummyComment = "Hello";
-    private static String replyComment = "This is my reply";
+    public static final String AUTHOR = "did:key:testAuthor";
+
     private RadicleToolWindow radicleToolWindow;
     private RadIssue issue;
     private IssueEditorProvider issueEditorProvider;
     private VirtualFile editorFile;
     private IssueTabController issueTabController;
-    private static final String ISSUE_NAME = "Test Issue";
-    private static String issueDescription = "Test Description";
     private Embed txtEmbed;
     private Embed imgEmbed;
     private String commentDesc;
@@ -82,7 +79,6 @@ public class OverviewTest extends AbstractIT {
 
     @Before
     public void beforeTest() throws InterruptedException {
-        dummyComment = "Hello";
         issue = createIssue();
         setupWindow();
     }
@@ -213,10 +209,11 @@ public class OverviewTest extends AbstractIT {
         var buttonsPanel = (JPanel) ((JPanel) children[2]).getComponents()[1];
 
         var titleField = UIUtil.findComponentOfType((JComponent) children[0], JBTextArea.class);
-        titleField.setText(ISSUE_NAME);
+        final var issueName = "Test Issue " + UUID.randomUUID();
+        titleField.setText(issueName);
         var descriptionField = UIUtil.findComponentOfType((JComponent) children[1], DragAndDropField.class);
         var dummyEmbed = new Embed("98db332aebc4505d7c55e7bfeb9556550220a796", "test.jpg", "data:image/jpeg;base64,test");
-        issueDescription = issueDescription + "![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
+        String issueDescription = "Test Description ![" + dummyEmbed.getName() + "](" + dummyEmbed.getOid() + ")";
         descriptionField.setEmbedList(List.of(dummyEmbed));
         descriptionField.setText(issueDescription);
 
@@ -282,7 +279,7 @@ public class OverviewTest extends AbstractIT {
         createIssueButton.doClick();
         executeUiTasks();
         var issueCommand = radStub.commandsStr.poll();
-        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(ISSUE_NAME));
+        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueName));
         assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueDescription));
         assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(label2));
         assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(getTestProjects().get(0).delegates.get(0).id));
@@ -600,6 +597,7 @@ public class OverviewTest extends AbstractIT {
         markAsShowing(ef.getParent(), ef);
         assertThat(ef.getText()).isEmpty();
         executeUiTasks();
+        final String replyComment = "This is my reply";
         ef.setText(replyComment);
         var prBtns = UIUtil.findComponentsOfType(replyPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
@@ -629,6 +627,7 @@ public class OverviewTest extends AbstractIT {
         }
         executeUiTasks();
         assertThat(ef.getText()).isEmpty();
+        final String dummyComment = "dummy";
         ef.setText(dummyComment);
         var prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
@@ -664,8 +663,7 @@ public class OverviewTest extends AbstractIT {
         //Check that notification get triggered
         markAsShowing(ef.getParent(), ef);
         executeUiTasks();
-        dummyComment = "break";
-        ef.setText(dummyComment);
+        ef.setText("break");
         prBtns = UIUtil.findComponentsOfType(commentPanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         prBtn = prBtns.get(1);
@@ -679,7 +677,10 @@ public class OverviewTest extends AbstractIT {
 
         // Test edit issue functionality
         // TODO: Editing issue comment is not available from CLI
-        /*
+        // TODO: not yet implemented in CLI!
+        if (true) {
+            return;
+        }
         commentPanel = issueComponent.getCommentSection();
         var editBtn = UIUtil.findComponentOfType(commentPanel, InlineIconButton.class);
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
@@ -702,7 +703,6 @@ public class OverviewTest extends AbstractIT {
             }
         }
         cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue edit " + issue.id)).findFirst().orElseThrow();
-        */
     }
 
     @Test

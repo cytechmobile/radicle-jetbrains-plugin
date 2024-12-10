@@ -20,8 +20,10 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
@@ -29,6 +31,8 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -188,6 +192,12 @@ public class RadicleCliService {
     }
 
     public ProcessOutput createPatchComment(GitRepository repo, String revisionId, String comment, String replyTo) {
+        return createPatchComment(repo, revisionId, comment, replyTo, null, null);
+    }
+
+    public ProcessOutput createPatchComment(
+            GitRepository repo, String revisionId, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList) {
+        //TODO: location and embeds are not supported by the CLI
         return createComment(repo, revisionId, comment, replyTo, RadComment.Type.PATCH);
     }
 
@@ -339,8 +349,7 @@ public class RadicleCliService {
         return project;
     }
 
-    private ProcessOutput createComment(GitRepository repo, String id, String comment, String replyTo,
-                                        RadComment.Type type) {
+    private ProcessOutput createComment(GitRepository repo, String id, String comment, String replyTo, RadComment.Type type) {
         final RadComment radComment;
         if (!Strings.isNullOrEmpty(replyTo)) {
             radComment = new RadComment(repo, id, replyTo, comment, type);
@@ -348,5 +357,47 @@ public class RadicleCliService {
             radComment = new RadComment(repo, id, comment, type);
         }
         return radComment.perform();
+    }
+
+    public String getWebUrl() {
+        final var defaultWebNode = "seed.radicle.garden";
+        final var radHome = new RadicleProjectSettingsHandler(project).loadSettings().getRadHome();
+        if (Strings.isNullOrEmpty(radHome) || !Files.exists(Paths.get(radHome))) {
+            return defaultWebNode;
+        }
+        try {
+            var configJson = Files.readString(Paths.get(radHome, "config.json"));
+            var conf = MAPPER.readTree(configJson);
+            if (conf.has("preferredSeeds")) {
+                var pref = conf.get("preferredSeeds");
+                if (pref.isArray() && !pref.isEmpty()) {
+                    var prefSeed = pref.get(0).asText();
+                    if (!Strings.isNullOrEmpty(prefSeed)) {
+                        prefSeed = prefSeed.split("@")[1].split(":")[0];
+                        return prefSeed;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("error reading config.json", e);
+        }
+
+        return defaultWebNode;
+    }
+
+    public String getPatchWebUrl(RadPatch radPatch) {
+        return createPatchWebUrl(radPatch, getWebUrl());
+    }
+
+    public String getIssueWebUrl(RadIssue radIssue) {
+        return createIssueWebUrl(radIssue, getWebUrl());
+    }
+
+    protected String createPatchWebUrl(RadPatch patch, String node) {
+        return "https://app.radicle.xyz/nodes/" + node + "/" + patch.radProject.id + "/patches/" + patch.id;
+    }
+
+    protected String createIssueWebUrl(RadIssue issue, String node) {
+        return "https://app.radicle.xyz/nodes/" + node + "/" + issue.projectId + "/issues/" + issue.id;
     }
 }

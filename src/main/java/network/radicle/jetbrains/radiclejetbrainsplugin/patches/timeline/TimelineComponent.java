@@ -27,7 +27,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.DragAndDropField;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
@@ -45,14 +44,12 @@ public class TimelineComponent {
     private JPanel headerPanel;
     private JComponent commentPanel;
     private JComponent revisionSection;
-    private final RadicleProjectApi api;
     private final RadicleCliService cli;
 
     public TimelineComponent(PatchProposalPanel patchProposalPanel, PatchVirtualFile file) {
         this.radPatchModel = file.getPatchModel();
         this.radPatch = file.getPatchModel().getValue();
         componentsFactory = new TimelineComponentFactory(patchProposalPanel, radPatchModel, file);
-        api = radPatch.project.getService(RadicleProjectApi.class);
         cli = radPatch.project.getService(RadicleCliService.class);
     }
 
@@ -131,7 +128,7 @@ public class TimelineComponent {
 
     private JComponent getHeader() {
         // final var title = CodeReviewTitleUIUtil.INSTANCE.createTitleText(radPatch.title, radPatch.id, "", "");
-        final var patchWebLink = HtmlChunk.link(api.getPatchWebUrl(radPatch), radPatch.id).attr("title", radPatch.title)
+        final var patchWebLink = HtmlChunk.link(cli.getPatchWebUrl(radPatch), radPatch.id).attr("title", radPatch.title)
                 .wrapWith(HtmlChunk.font(ColorUtil.toHex(NamedColorUtil.getInactiveTextColor())));
         final var title = new HtmlBuilder().appendRaw(radPatch.title).nbsp().append(patchWebLink).toString();
 

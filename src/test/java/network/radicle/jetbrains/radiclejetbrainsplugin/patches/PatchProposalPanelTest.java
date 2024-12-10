@@ -17,14 +17,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchEditorProvider;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +26,6 @@ import org.junit.runners.JUnit4;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -57,50 +49,13 @@ public class PatchProposalPanelTest extends AbstractIT {
     PatchEditorProvider patchEditorProvider;
 
     @Before
-    public void setUpToolWindow() throws InterruptedException, IOException {
-        var api = replaceApiService();
-        final var httpClient = api.getClient();
+    public void setUpToolWindow() throws InterruptedException {
         projects = PatchListPanelTest.getTestProjects();
         patches = PatchListPanelTest.getTestPatches();
         patch = new RadPatch(patches.get(0));
         patch.repo = firstRepo;
         patch.project = getProject();
         patch.radProject.defaultBranch = projects.get(0).defaultBranch;
-        when(httpClient.execute(any())).thenAnswer((i) -> {
-            var req = (HttpGet) i.getArgument(0);
-            final StringEntity se;
-            logger.warn("mocked request:" + req.getURI());
-            if (req.getURI().getPath().endsWith(PROJECTS_URL)) {
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(projects));
-            } else if (req.getURI().getPath().endsWith(PATCHES_URL)) {
-                // request to fetch patches
-                var query = req.getURI().getQuery();
-                var parts = query.split("&");
-                var state = parts[1].split("=")[1];
-                var pps = patches.stream().filter(p -> p.state.status.equals(state)).toList();
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(pps));
-            } else if (req.getURI().getPath().endsWith(ISSUES_URL)) {
-                se = new StringEntity("[]");
-            } else if (req.getURI().getPath().endsWith(PROJECTS_URL + "/" + patch.radProject.id + PATCHES_URL + "/" + patch.id)) {
-                // request to re-fetch the patch
-                var fetchedPatch = new RadPatch(patch);
-                fetchedPatch.project = null;
-                fetchedPatch.repo = null;
-                fetchedPatch.seedNode = null;
-                fetchedPatch.state = RadPatch.State.MERGED;
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(fetchedPatch));
-            } else {
-                // request to fetch specific project
-                se = new StringEntity(RadicleProjectApi.MAPPER.writeValueAsString(projects.get(0)));
-            }
-            se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            final var resp = mock(CloseableHttpResponse.class);
-            when(resp.getEntity()).thenReturn(se);
-            final var statusLine = mock(StatusLine.class);
-            when(resp.getStatusLine()).thenReturn(statusLine);
-            when(statusLine.getStatusCode()).thenReturn(200);
-            return resp;
-        });
 
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleToolWindow = new RadicleToolWindow();

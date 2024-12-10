@@ -7,10 +7,7 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadStatusBar;
-import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
-import org.apache.commons.lang3.BooleanUtils;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -57,7 +54,8 @@ public class RadicleStatusBarService {
             return;
         }
         var nodeStatus = checkNodeStatus();
-        var httpdStatus = checkHttpd(settingsHandler.loadSettings().getSeedNode());
+        // TODO: ignore httpd, moving to CLI only
+        var httpdStatus = true; // checkHttpd(settingsHandler.loadSettings().getSeedNode());
         /* Update the status bar if this is the first time the checkServices method runs or if
         the node/httpd statuses have changed, and RAD is initialized: */
         if (isFirstCheck() || nodeStatus != isNodeRunning || httpdStatus != isHttpdRunning) {
@@ -76,17 +74,12 @@ public class RadicleStatusBarService {
         return projectService.isNodeRunning();
     }
 
-    public boolean checkHttpd(SeedNode seedNode) {
-        var api = project.getService(RadicleProjectApi.class);
-        return Utils.isValidNodeApi(api.checkApi(seedNode, false));
-    }
-
     public boolean isNodeRunning() {
-        return BooleanUtils.isTrue(isNodeRunning);
+        return isNodeRunning != null && isNodeRunning;
     }
 
     public boolean isHttpdRunning() {
-        return BooleanUtils.isTrue(isHttpdRunning);
+        return isHttpdRunning != null && isHttpdRunning;
     }
 
     public boolean isRadInitialized() {

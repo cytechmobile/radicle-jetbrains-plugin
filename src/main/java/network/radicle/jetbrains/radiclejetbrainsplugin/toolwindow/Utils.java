@@ -23,14 +23,13 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectApi;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.Action;
-import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
@@ -164,10 +163,6 @@ public class Utils {
                 super.replace(fb, offset, length, text, attrs);
             }
         }
-    }
-
-    public static boolean isValidNodeApi(RadicleProjectApi.SeedNodeInfo resp) {
-        return resp != null && Strings.isNullOrEmpty(resp.errorMessage());
     }
 
     public static class CopyButton extends JButton {

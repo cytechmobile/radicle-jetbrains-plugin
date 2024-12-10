@@ -169,7 +169,7 @@ public class RadStatusBar implements StatusBarWidgetFactory {
 
                 var verticalPanel = getVerticalPanel(2);
                 verticalPanel.add(nodeStatusPanel);
-                verticalPanel.add(httpdStatusPanel);
+                // verticalPanel.add(httpdStatusPanel);
 
                 var titlePanel = new JPanel();
                 titlePanel.add(new JLabel(RadicleBundle.message("status"), SwingConstants.CENTER));
