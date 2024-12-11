@@ -17,7 +17,7 @@ checkstyleTools = "10.18.2"
 # plugins
 kotlin = "1.9.25"
 changelog = "2.2.0"
-gradleIntelliJPlugin = "1.17.3"
+gradleIntelliJPlugin = "1.17.4"
 
 [libraries]
 annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
