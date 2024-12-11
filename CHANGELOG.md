@@ -4,24 +4,49 @@
 
 ## [Unreleased]
 
+## [0.11.1] - 2024-12-11
+
+- refactor(patches): Disable functionality missing from CLI
+
+- refactor(issues): Disable functionality missing from CLI
+
+- refactor(patches): Create patch through CLI instead of http-api
+
+- refactor(patch): Change patch state via CLI
+
+- refactor(issues): Use CLI for issue comment reactions
+
+- refactor(patches): edit patch message (title/description) via cli
+
+- refactor(patches): Add review via CLI
+
+- refactor(issues): Create issue via CLI
+
+- refactor: Issue & patch comments via CLI
+
+- test: refactor e2e tests to use public repos (with isolated node)
+
+- refactor(patches): Get patches via CLI
+
+- refactor: Inspect repo via CLI
+
+- refactor: remove api service and http api configuration from settings
+
+- fix(patch): fix patch cob reviews format to be compatible with rad 1.1.0
+
+- build: update deps and bump version
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.11.0...v0.11.1
+
 ## [0.11.0] - 2024-09-27
 
 - Settings: Make the settings window responsive
-
 - Status Bar: Show or hide the status bar based on whether the project is RAD initialized
-
 - Radicle Clone Window: Remove the "Browse Projects" view
-
 - Get issue list: Use cli in order to fetch issues instead of HTTPD
-
 - Add / remove issue assignees: Use cli to perform these actions instead of HTTPD
-
 - Add / remove issue labels: Use cli to perform these actions instead of HTTPD
-
 - Add / remove patch labels: Use cli to perform these actions instead of HTTPD
-
 - Change issue state: Use cli to perform this action instead of HTTPD
-
 - Welcome screen clone: Add RAD Path and RAD Home text fields to the welcome screen so the user can clone a Radicle project
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.10.0...v0.11.0
 
@@ -438,7 +463,8 @@ Others:
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
 
-[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.0...HEAD
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.1...HEAD
+[0.11.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.0...v0.11.1
 [0.11.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.10.0...v0.11.0
 [0.10.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.2...v0.10.0
 [0.9.2]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.1...v0.9.2
