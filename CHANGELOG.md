@@ -4,36 +4,45 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2024-12-12
+
+- Disable editing patch comments
+
+- Disable deleting patch comments
+
+- Disable removing patch reactions
+
+- Disable adding patch comments on code locations, add them straight on revision instead
+
+- Disable editing issue comments
+
+- Disable removing issue reactions
+
+- Disable changing issue title/description
+
+- Disable embeds on patches/issues
+
+- fix(patch): Fix discussion deserialization, when the contained value is `null`
+
+- fix(patch): fix creating a patch. Git refuses multiline push options, so patch descriptions must be single line. Auto-replace `\n` with `<br/>`.
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.11.1...v0.12.0
+
 ## [0.11.1] - 2024-12-11
 
 - refactor(patches): Disable functionality missing from CLI
-
 - refactor(issues): Disable functionality missing from CLI
-
 - refactor(patches): Create patch through CLI instead of http-api
-
 - refactor(patch): Change patch state via CLI
-
 - refactor(issues): Use CLI for issue comment reactions
-
 - refactor(patches): edit patch message (title/description) via cli
-
 - refactor(patches): Add review via CLI
-
 - refactor(issues): Create issue via CLI
-
 - refactor: Issue & patch comments via CLI
-
 - test: refactor e2e tests to use public repos (with isolated node)
-
 - refactor(patches): Get patches via CLI
-
 - refactor: Inspect repo via CLI
-
 - refactor: remove api service and http api configuration from settings
-
 - fix(patch): fix patch cob reviews format to be compatible with rad 1.1.0
-
 - build: update deps and bump version
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.11.0...v0.11.1
 
@@ -463,7 +472,8 @@ Others:
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
 
-[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.1...HEAD
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.12.0...HEAD
+[0.12.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.1...v0.12.0
 [0.11.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.0...v0.11.1
 [0.11.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.10.0...v0.11.0
 [0.10.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.9.2...v0.10.0
