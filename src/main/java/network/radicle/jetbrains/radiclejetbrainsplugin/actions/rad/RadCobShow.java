@@ -63,7 +63,7 @@ public class RadCobShow extends RadAction {
             patch = RadicleCliService.MAPPER.readValue(json, new TypeReference<>() { });
             return patch;
         } catch (Exception e) {
-            logger.error("Unable to deserialize patch", e);
+            logger.error("Unable to deserialize patch from json: " + json, e);
         }
         return patch;
     }

@@ -62,6 +62,7 @@ public class RadicleCliService {
     }
 
     public String createPatch(GitRepository repo, String title, String description, String branch, List<String> labels) {
+        description = Strings.nullToEmpty(description).replace("\n", "<br/>");
         var radPatch = new RadPatchCreate(repo, title, description, branch);
         var output = radPatch.perform();
         if (!RadAction.isSuccess(output)) {

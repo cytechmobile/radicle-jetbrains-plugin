@@ -185,8 +185,13 @@ public class RadPatch {
 
         public void setComments(Map<String, RadDiscussion> myComments) {
             for (var discId : myComments.keySet()) {
+                if (Strings.isNullOrEmpty(discId)) {
+                    continue;
+                }
                 var discussion = myComments.get(discId);
-                discussion.id = discId;
+                if (discussion != null) {
+                    discussion.id = discId;
+                }
             }
             this.comments = myComments;
         }
