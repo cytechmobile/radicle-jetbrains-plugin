@@ -8,7 +8,6 @@ plugins {
     // Java support
     id("java")
     checkstyle
-    alias(libs.plugins.kotlin) // Kotlin support
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     alias(libs.plugins.changelog) // Gradle Changelog Plugin
 }
@@ -52,11 +51,6 @@ checkstyle {
     toolVersion = libs.versions.checkstyleTools.get();
     maxErrors = 0;
     maxWarnings = 0;
-}
-
-// Set the JVM language level used to build the project.
-kotlin {
-    jvmToolchain(17)
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
