@@ -195,7 +195,6 @@
                       default="checkstyle-xpath-suppressions.xml" />
             <property name="optional" value="true"/>
         </module>
-
     </module>
-
+    <module name="SuppressWithPlainTextCommentFilter" />
 </module>
