@@ -4,26 +4,28 @@
 
 ## [Unreleased]
 
+## [0.13.0] - 2024-12-24
+
+- Requires Jetbrains IDE version 243+ (2024.3+)
+
+- Fix compatibility with Jetbrains IDE version 243+
+
+- Upgrade to the latest major version of the jetbrains platform gradle plugin (v2)
+
+- Update all tests to use the "New UI" of the Jetbrains IDE
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.12.0...v0.13.0
+
 ## [0.12.0] - 2024-12-12
 
 - Disable editing patch comments
-
 - Disable deleting patch comments
-
 - Disable removing patch reactions
-
 - Disable adding patch comments on code locations, add them straight on revision instead
-
 - Disable editing issue comments
-
 - Disable removing issue reactions
-
 - Disable changing issue title/description
-
 - Disable embeds on patches/issues
-
 - fix(patch): Fix discussion deserialization, when the contained value is `null`
-
 - fix(patch): fix creating a patch. Git refuses multiline push options, so patch descriptions must be single line. Auto-replace `\n` with `<br/>`.
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.11.1...v0.12.0
 
@@ -472,7 +474,8 @@ Others:
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
 
-[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.12.0...HEAD
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.13.0...HEAD
+[0.13.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.12.0...v0.13.0
 [0.12.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.1...v0.12.0
 [0.11.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.0...v0.11.1
 [0.11.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.10.0...v0.11.0
