@@ -111,8 +111,8 @@ tasks {
     }
 
     patchPluginXml {
-        version = properties("pluginVersion")
-        sinceBuild = properties("pluginSinceBuild")
+        version = properties("pluginVersion").get()
+        sinceBuild = properties("pluginSinceBuild").get()
         untilBuild = provider { null } // properties("pluginUntilBuild")
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
