@@ -19,6 +19,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleNativeService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +157,9 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             if (!Strings.isNullOrEmpty(version)) {
                 msg = RadicleBundle.message("radVersion") + " " + version;
             }
-            String finalMsg = msg;
+            var radNative = myProject.getService(RadicleNativeService.class);
+            var radHome = radNative.radHome();
+            String finalMsg = msg + "\n\n[" + radHome + "]";
             ApplicationManager.getApplication().invokeLater(() -> {
                 radVersionLabel.setText(finalMsg);
                 showHideEnforceLabel(version);

@@ -94,26 +94,20 @@ public class Utils {
                 "</div><div style=\"margin-top:5px\">" + message + "</div></div>";
     }
 
-    public static JPanel descriptionPanel(MarkDownEditorPaneFactory editorPane, Project project) {
-        return descriptionPanel(editorPane, project, false, "issue.change.title", e -> true);
-    }
-
     public static JPanel descriptionPanel(
-            MarkDownEditorPaneFactory editorPane, Project project, boolean allowEdit, String changeTitle, Function<DragAndDropField, Boolean> editAction) {
+            MarkDownEditorPaneFactory editorPane, Project project, String changeTitle, Function<DragAndDropField, Boolean> editAction) {
         var panelHandle = new EditablePanelHandler.PanelBuilder(project, editorPane.htmlEditorPane(),
                 RadicleBundle.message(changeTitle),
                 new SingleValueModel<>(editorPane.getRawContent()), editAction).build();
         var contentPanel = panelHandle.panel;
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(new ImageIcon()), contentPanel);
-        if (allowEdit) {
-            var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-            actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
-                panelHandle.showAndFocusEditor();
-                return null;
-            }));
-            b.withHeader(contentPanel, actionsPanel);
-        }
+        var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
+        actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+            panelHandle.showAndFocusEditor();
+            return null;
+        }));
+        b.withHeader(contentPanel, actionsPanel);
         b.setMaxContentWidth(Integer.MAX_VALUE);
         return (JPanel) b.build();
     }

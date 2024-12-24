@@ -176,7 +176,18 @@ public class IssueComponent {
     private JComponent getDescription() {
         var bodyIssue = radIssue.getDescription();
         var editorPane = new MarkDownEditorPaneFactory(bodyIssue, radIssue.project, radIssue.projectId, file);
-        descPanel = Utils.descriptionPanel(editorPane, radIssue.project);
+        descPanel = Utils.descriptionPanel(editorPane, radIssue.project, "issue.change.description", f -> {
+            var newDesc = f.getText();
+            if (Strings.isNullOrEmpty(newDesc)) {
+                return false;
+            }
+            var edited = cli.changeIssueTitleDescription(radIssue, radIssue.title, newDesc);
+            final boolean success = edited != null;
+            if (success) {
+                issueModel.setValue(edited);
+            }
+            return success;
+        });
         return descPanel;
     }
 
@@ -191,7 +202,6 @@ public class IssueComponent {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), headerTitle,
                 RadicleBundle.message("issue.change.title"),
                 new SingleValueModel<>(radIssue.title), (field) -> {
-            // TODO: this will not work
             var edited = cli.changeIssueTitleDescription(radIssue, field.getText(), radIssue.getDescription());
             final boolean success = edited != null;
             if (success) {

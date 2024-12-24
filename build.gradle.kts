@@ -60,6 +60,9 @@ dependencies {
     implementation("org.apache.tika:tika-core:${libs.versions.tika.get()}")
     implementation("com.automation-remarks:video-recorder-junit5:2.+")
     implementation("com.sshtools:maverick-synergy-client:${libs.versions.sshTools.get()}")
+
+    // java -> rust
+    implementation("com.github.jnr:jnr-ffi:2.2.17")
 }
 
 checkstyle {

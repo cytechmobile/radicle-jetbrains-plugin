@@ -13,11 +13,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobShow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchLabel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchReview;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -48,12 +48,14 @@ public class RadicleCliService {
     private final Project project;
     private final Map<String, RadProject> radRepoIds;
     private final RadicleProjectService rad;
+    private final RadicleNativeService jrad;
     private RadDetails identity;
 
     public RadicleCliService(Project project) {
         this.project = project;
         radRepoIds = new HashMap<>();
         this.rad = project.getService(RadicleProjectService.class);
+        this.jrad = project.getService(RadicleNativeService.class);
     }
 
     public ProcessOutput createIssue(GitRepository repo, String title, String description, List<String> assignees, List<String> labels) {
@@ -225,10 +227,10 @@ public class RadicleCliService {
 
     public RadIssue changeIssueTitleDescription(RadIssue issue, String newTitle, String newDescription) {
         try {
-            var res = rad.editIssueTitleDescription(issue.repo, issue.id, newTitle, newDescription);
-            if (!RadAction.isSuccess(res)) {
-                logger.warn("received invalid command output for changing issue message (title/description): {} - {} - {}",
-                        res.getExitCode(), res.getStdout(), res.getStderr());
+            var resp = jrad.editIssueTitleDescription(issue.projectId, issue.id, newTitle, newDescription);
+            if (!resp.ok()) {
+                logger.warn("received invalid native response for changing issue(title/description): repoId:{} issueId:{} title:{} description:{} resp:{}",
+                        issue.projectId, issue.id, newTitle, newDescription, resp);
                 return null;
             }
             // return issue as-is, it will trigger a re-fetch anyway

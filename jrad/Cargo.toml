@@ -1,0 +1,16 @@
+[package]
+name = "jrad"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+radicle = "^0.14.0"
+anyhow = { version = "^1.0.95" }
+serde_json = { version = "^1.0.134", features = ["preserve_order"] }
+serde = { version = "1.0.216", features = ["derive"] }
+#jni = "^0.21.1"
+#j4rs = "^0.21.0"
+#j4rs_derive = "^0.1.1"

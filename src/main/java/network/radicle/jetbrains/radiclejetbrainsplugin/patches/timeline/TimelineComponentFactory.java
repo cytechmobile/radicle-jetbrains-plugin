@@ -79,7 +79,7 @@ public class TimelineComponentFactory {
             description = RadicleBundle.message("noDescription");
         }
         var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.radProject.id, file);
-        descSection = Utils.descriptionPanel(editorPane, patch.project, true, "patch.proposal.change.description", f -> {
+        descSection = Utils.descriptionPanel(editorPane, patch.project, "patch.proposal.change.description", f -> {
             var newDesc = f.getText();
             if (Strings.isNullOrEmpty(newDesc)) {
                 return false;
