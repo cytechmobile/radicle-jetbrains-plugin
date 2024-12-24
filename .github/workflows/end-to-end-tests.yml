@@ -144,7 +144,11 @@ jobs:
       - name: Copy logs
         if: ${{ failure() }}
         working-directory: ${{ github.workspace }}/radicle-jetbrains-plugin
-        run: mv build/idea-sandbox/system/log/ build/reports
+        run: |
+          # make a loop to iterate over the wildcard in the directory, as we don't want to hardcode the ij version
+          for f in ./build/idea-sandbox/*/log/idea.log; do
+            cp "$f" ./build/reports/idea.log
+          done
       - name: Save fails report
         if: ${{ failure() }}
         uses: actions/upload-artifact@v4

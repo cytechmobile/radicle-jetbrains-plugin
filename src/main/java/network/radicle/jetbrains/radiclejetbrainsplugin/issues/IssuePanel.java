@@ -21,7 +21,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueAssignee;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueLabel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueState;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.LabeledListPanelHandle;
@@ -107,7 +106,7 @@ public class IssuePanel {
 
         detailsSection.add(issueIdAndCopyButton, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
-        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.generateLabelText())));
+        var issueAuthor = getLabelPanel(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.generateLabelText(cli))));
         detailsSection.add(issueAuthor, new CC().gapBottom(String.valueOf(UI.scale(4))));
 
         if (!issue.labels.isEmpty()) {
@@ -117,7 +116,7 @@ public class IssuePanel {
 
         if (!issue.assignees.isEmpty()) {
             var issueAssignees = getLabelPanel(RadicleBundle.message("issueAssignees",
-                    issue.assignees.stream().map(RadAuthor::generateLabelText).collect(Collectors.joining(","))));
+                    issue.assignees.stream().map(a -> a.generateLabelText(cli)).collect(Collectors.joining(","))));
             detailsSection.add(issueAssignees, new CC().gapBottom(String.valueOf(UI.scale(4))));
         }
 
@@ -405,8 +404,9 @@ public class IssuePanel {
                 var projectInfo = cli.getRadRepo(issue.repo);
                 var assignees = new ArrayList<SelectionListCellRenderer.SelectableWrapper<Assignee>>();
                 for (var delegate : projectInfo.delegates) {
-                    final Assignee assignee = new AssigneesSelect.Assignee(delegate.id, delegate.generateLabelText());
-                    final boolean isSelected = issue.assignees.stream().anyMatch(as -> as.id.contains(delegate.id));
+                    delegate.tryResolveAlias(cli);
+                    final Assignee assignee = new AssigneesSelect.Assignee(delegate.id, delegate.alias);
+                    final boolean isSelected = issue.assignees.stream().anyMatch(as -> as.contains(cli, delegate.id));
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, isSelected);
                     assignees.add(selectableWrapper);
                 }
@@ -416,7 +416,8 @@ public class IssuePanel {
                     if (exists) {
                         continue;
                     }
-                    var assignee = new AssigneesSelect.Assignee(assign.id, assign.generateLabelText());
+                    assign.tryResolveAlias(cli);
+                    var assignee = new AssigneesSelect.Assignee(assign.id, assign.alias);
                     var selectableWrapper = new SelectionListCellRenderer.SelectableWrapper<>(assignee, true);
                     assignees.add(selectableWrapper);
                 }

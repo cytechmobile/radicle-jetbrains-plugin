@@ -82,7 +82,7 @@ public class AuthService {
         try {
             latch.await();
         } catch (InterruptedException e) {
-            logger.error("error awaiting update latch!", e);
+            logger.warn("error awaiting update latch!", e);
             return null;
         }
         if (okButton.get()) {

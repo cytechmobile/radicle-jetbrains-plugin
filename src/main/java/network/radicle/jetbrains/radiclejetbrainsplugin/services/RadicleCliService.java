@@ -13,11 +13,11 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobShow;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
+import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchLabel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPatchReview;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadComment;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadIssueCreate;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -45,15 +46,17 @@ public class RadicleCliService {
     public static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
             .configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES);
-    private final Project project;
-    private final Map<String, RadProject> radRepoIds;
-    private final RadicleProjectService rad;
-    private RadDetails identity;
+    protected final Project project;
+    protected final Map<String, RadProject> radRepoIds;
+    protected RadicleProjectService rad;
+    protected RadicleNativeService jrad;
+    protected RadDetails identity;
 
     public RadicleCliService(Project project) {
         this.project = project;
         radRepoIds = new HashMap<>();
         this.rad = project.getService(RadicleProjectService.class);
+        this.jrad = project.getService(RadicleNativeService.class);
     }
 
     public ProcessOutput createIssue(GitRepository repo, String title, String description, List<String> assignees, List<String> labels) {
@@ -72,7 +75,7 @@ public class RadicleCliService {
         if (lines.isEmpty()) {
             return "";
         }
-        var firstLine = lines.get(0);
+        var firstLine = lines.getFirst();
         var parts = firstLine.split(" ");
         String patchId = null;
         if (parts.length > 2) {
@@ -85,8 +88,7 @@ public class RadicleCliService {
         return patchId;
     }
 
-    public ProcessOutput createPatchLabels(GitRepository repo, String patchId,
-                                           List<String> addedLabels, List<String> deletedLabels) {
+    public ProcessOutput createPatchLabels(GitRepository repo, String patchId, List<String> addedLabels, List<String> deletedLabels) {
         var radPatchLabel = new RadPatchLabel(repo, patchId, addedLabels, deletedLabels);
         return radPatchLabel.perform();
     }
@@ -104,33 +106,56 @@ public class RadicleCliService {
             return List.of();
         }
         var issueIds = listOutput.getStdoutLines();
-        var issues = new ArrayList<RadIssue>();
+        List<RadIssue> issues = new ArrayList<>();
         for (var objectId : issueIds) {
             var issue = getIssue(repo, projectId, objectId);
             if (issue == null) {
                 continue;
             }
+
             issues.add(issue);
         }
-        issues.sort(Comparator.comparing(issue -> ((RadIssue) issue).discussion.get(0).timestamp).reversed());
+        issues.sort(Comparator.comparing((RadIssue issue) -> issue.discussion == null || issue.discussion.isEmpty() ? Instant.now() :
+                issue.discussion.getFirst().timestamp).reversed());
         return issues;
     }
 
-    public RadIssue issueCommentReact(RadIssue issue, String discussionId, String reaction, boolean active) {
+    public RadIssue editIssueComment(RadIssue issue, String commentId, String comment, List<Embed> embeds) {
+        boolean ok = jrad.editIssueComment(issue.projectId, issue.id, commentId, comment, embeds);
+        return ok ? issue : null;
+    }
+
+    public RadPatch patchCommentReact(RadPatch patch, String commentId, String reaction, boolean active) {
+        try {
+            var revId = patch.findRevisionId(commentId);
+            var res = jrad.patchCommentReact(patch.radProject.id, patch.id, revId, commentId, reaction, active);
+            if (!res) {
+                logger.warn("received invalid result for reacting to patch:{} comment:{}", patch.id, commentId);
+                return null;
+            }
+            return patch;
+        } catch (Exception e) {
+            logger.warn("error reacting to patch:{} comment: {}", patch.id, commentId, e);
+        }
+
+        return null;
+    }
+
+    public RadIssue issueCommentReact(RadIssue issue, String commentId, String reaction, boolean active) {
         if (!active) {
-            logger.error("not implemented yet from the CLI!");
-            return null;
+            boolean ok = jrad.issueCommentReact(issue.projectId, issue.id, commentId, reaction, false);
+            return ok ? issue : null;
         }
         try {
-            var res = rad.reactToIssueComment(issue.repo, issue.id, discussionId, reaction, active);
+            var res = rad.reactToIssueComment(issue.repo, issue.id, commentId, reaction, true);
             if (!RadAction.isSuccess(res)) {
                 logger.warn("received invalid command output:{} for reacting to issue:{} comment:{}. out:{} err:{}",
-                        res.getExitCode(), issue.id, discussionId, res.getStdout(), res.getStderr());
+                        res.getExitCode(), issue.id, commentId, res.getStdout(), res.getStderr());
                 return null;
             }
             return issue;
         } catch (Exception e) {
-            logger.warn("error reacting to discussion: {}", discussionId, e);
+            logger.warn("error reacting to discussion: {}", commentId, e);
         }
 
         return null;
@@ -178,6 +203,10 @@ public class RadicleCliService {
         return patches;
     }
 
+    public String getAlias(String did) {
+        return jrad.getAlias(did);
+    }
+
     public RadDetails getCurrentIdentity() {
         if (identity != null) {
             return identity;
@@ -192,14 +221,24 @@ public class RadicleCliService {
         this.identity = null;
     }
 
-    public ProcessOutput createPatchComment(GitRepository repo, String revisionId, String comment, String replyTo) {
-        return createPatchComment(repo, revisionId, comment, replyTo, null, null);
+    public boolean createPatchComment(
+            RadPatch patch, String revisionId, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList) {
+        if (location == null && (embedList == null || embedList.isEmpty())) {
+            var res = createComment(patch.repo, revisionId, comment, replyTo, RadComment.Type.PATCH);
+            return RadAction.isSuccess(res);
+        }
+        return jrad.createPatchComment(patch.radProject.id, patch.id, revisionId, comment, replyTo, location, embedList);
     }
 
-    public ProcessOutput createPatchComment(
-            GitRepository repo, String revisionId, String comment, String replyTo, RadDiscussion.Location location, List<Embed> embedList) {
-        //TODO: location and embeds are not supported by the CLI
-        return createComment(repo, revisionId, comment, replyTo, RadComment.Type.PATCH);
+    public RadPatch editPatchComment(
+            RadPatch patch, String revisionId, String commentId, String comment, List<Embed> embedList) {
+        boolean ok = jrad.editPatchComment(patch.radProject.id, patch.id, revisionId, commentId, comment, embedList);
+        return ok ? patch : null;
+    }
+
+    public RadPatch deletePatchComment(RadPatch patch, String revisionId, String commentId) {
+        boolean ok = jrad.deletePatchComment(patch.radProject.id, patch.id, revisionId, commentId);
+        return ok ? patch : null;
     }
 
     public ProcessOutput createIssueComment(GitRepository repo, String issueId, String comment, String replyTo) {
@@ -223,12 +262,12 @@ public class RadicleCliService {
         return null;
     }
 
-    public RadIssue changeIssueTitleDescription(RadIssue issue, String newTitle, String newDescription) {
+    public RadIssue changeIssueTitleDescription(RadIssue issue, String newTitle, String newDescription, List<Embed> embeds) {
         try {
-            var res = rad.editIssueTitleDescription(issue.repo, issue.id, newTitle, newDescription);
-            if (!RadAction.isSuccess(res)) {
-                logger.warn("received invalid command output for changing issue message (title/description): {} - {} - {}",
-                        res.getExitCode(), res.getStdout(), res.getStderr());
+            var resp = jrad.editIssueTitleDescription(issue.projectId, issue.id, newTitle, newDescription, embeds);
+            if (!resp.ok()) {
+                logger.warn("received invalid native response for changing issue(title/description): repoId:{} issueId:{} title:{} description:{} resp:{}",
+                        issue.projectId, issue.id, newTitle, newDescription, resp);
                 return null;
             }
             // return issue as-is, it will trigger a re-fetch anyway

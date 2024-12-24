@@ -55,10 +55,10 @@ import java.util.stream.Collectors;
 public class RadicleProjectService {
     private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
-    private final RadicleProjectSettingsHandler projectSettingsHandler;
-    private RadDetails radDetails;
-    private String wslDistro;
-    private Project project;
+    protected final RadicleProjectSettingsHandler projectSettingsHandler;
+    protected RadDetails radDetails;
+    protected String wslDistro;
+    protected Project project;
 
     public RadicleProjectService(Project project) {
         this(new RadicleProjectSettingsHandler(project));
@@ -437,11 +437,11 @@ public class RadicleProjectService {
 
     public ProcessOutput changePatchState(GitRepository repo, String patchId, String currState, String state) {
         if (Strings.isNullOrEmpty(currState) || Strings.isNullOrEmpty(state) || currState.equals(state)) {
-            logger.error("cannot change patch state with invalid curr:{}/new:{} states for patch:{}", currState, state, patchId);
+            logger.warn("cannot change patch state with invalid curr:{}/new:{} states for patch:{}", currState, state, patchId);
             return new ProcessOutput(-1);
         }
         if (RadPatch.State.MERGED.status.equals(currState) || RadPatch.State.MERGED.status.equals(state)) {
-            logger.error("cannot change patch state to/from merged for patch:{}", patchId);
+            logger.warn("cannot change patch state to/from merged for patch:{}", patchId);
             return new ProcessOutput(-1);
         }
         ProcessOutput res = null;
@@ -547,8 +547,8 @@ public class RadicleProjectService {
                 }
             }
             return result;
-        } catch (ExecutionException ex) {
-            logger.error("unable to execute rad command", ex);
+        } catch (Exception ex) {
+            logger.warn("unable to execute rad command", ex);
             return new ProcessOutput(-1);
         }
     }

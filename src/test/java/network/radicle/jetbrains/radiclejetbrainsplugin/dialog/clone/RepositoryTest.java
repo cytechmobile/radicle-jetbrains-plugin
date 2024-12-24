@@ -33,7 +33,7 @@ public class RepositoryTest extends AbstractIT {
     public void testClone() throws InterruptedException {
         var urlField = UIUtil.findComponentOfType(radCheckoutComponent.getView(), TextFieldWithHistory.class);
         urlField.setText("rad:git123");
-        radStub.commands.clear();
+        clearCommandQueues();
         radCheckoutComponent.doClone(new CompositeCheckoutListener(super.myProject));
         executeUiTasks();
         var cmd = radStub.commands.poll(10, TimeUnit.SECONDS);

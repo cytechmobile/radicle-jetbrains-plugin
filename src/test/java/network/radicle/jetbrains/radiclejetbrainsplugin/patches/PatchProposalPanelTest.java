@@ -42,10 +42,9 @@ import static org.mockito.Mockito.when;
 public class PatchProposalPanelTest extends AbstractIT {
     private static final Logger logger = Logger.getInstance(MergePatchAction.class);
 
-    private RadicleToolWindow radicleToolWindow;
-    private static List<RadPatch> patches;
-    private static List<RadProject> projects;
-
+    RadicleToolWindow radicleToolWindow;
+    List<RadPatch> patches;
+    List<RadProject> projects;
     RadPatch patch;
     PatchTabController patchTabController;
     VirtualFile editorFile;
@@ -55,10 +54,10 @@ public class PatchProposalPanelTest extends AbstractIT {
     public void setUpToolWindow() throws InterruptedException {
         projects = PatchListPanelTest.getTestProjects();
         patches = PatchListPanelTest.getTestPatches();
-        patch = new RadPatch(patches.get(0));
+        patch = new RadPatch(patches.getFirst());
         patch.repo = firstRepo;
         patch.project = getProject();
-        patch.radProject.defaultBranch = projects.get(0).defaultBranch;
+        patch.radProject.defaultBranch = projects.getFirst().defaultBranch;
 
         radicleProjectSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleToolWindow = new RadicleToolWindow();
@@ -75,7 +74,7 @@ public class PatchProposalPanelTest extends AbstractIT {
         var providerManager = FileEditorProviderManager.getInstance();
         var providers = providerManager.getProviderList(getProject(), editorFile);
         assertThat(providers.size()).isEqualTo(1);
-        patchEditorProvider = (PatchEditorProvider) providers.get(0);
+        patchEditorProvider = (PatchEditorProvider) providers.getFirst();
         // Open createEditor
         patchEditorProvider.createEditor(getProject(), editorFile);
         //Wait to load the patch proposal

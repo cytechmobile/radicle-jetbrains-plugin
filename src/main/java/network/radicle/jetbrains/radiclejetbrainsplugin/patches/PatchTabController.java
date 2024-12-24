@@ -23,9 +23,11 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
     private SingleValueModel<RadPatch> patchModel;
     private PatchProposalPanel patchProposalPanel;
     private JComponent patchProposalJPanel;
+    private RadicleCliService rad;
 
     public PatchTabController(Content tab, Project project) {
         super(project, tab);
+        rad = project.getService(RadicleCliService.class);
         patchListPanel = new PatchListPanel(this, project);
     }
 
@@ -54,7 +56,7 @@ public class PatchTabController extends TabController<RadPatch, PatchListSearchV
     }
 
     protected void createInternalPatchProposalPanel(SingleValueModel<RadPatch> patch, JComponent mainPanel) {
-        tab.setDisplayName(RadicleBundle.message("patchProposalFrom") + ": " + patch.getValue().author.generateLabelText());
+        tab.setDisplayName(RadicleBundle.message("patchProposalFrom") + ": " + patch.getValue().author.generateLabelText(rad));
         patchProposalPanel = new PatchProposalPanel(this, patch);
         patchProposalJPanel = patchProposalPanel.createViewPatchProposalPanel();
         mainPanel.removeAll();

@@ -30,9 +30,11 @@ import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleNativeService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -46,6 +48,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,6 +77,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     private MessageBusConnection mbc;
     private MessageBusConnection applicationMbc;
     public RadStub radStub;
+    public RadicleNativeStub nativeStub;
     public RadicleCliService radCli;
     public List<GitCommit> commitHistory;
 
@@ -111,6 +115,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         radicleProjectSettingsHandler.savePath(RAD_PATH);
 
         /* initialize rad stub service */
+        nativeStub = replaceNativeService();
         radStub = RadStub.replaceRadicleProjectService(this, change.getBeforeRevision().getRevisionNumber().asString(), getProject());
         radCli = replaceCliService("", true);
         replaceAuthService();
@@ -119,7 +124,7 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
         /* add HTTP daemon in config */
         initializeProject(firstRepo);
-        addSeedNodeInConfig(firstRepo);
+        //addSeedNodeInConfig(firstRepo);
         applicationMbc = ApplicationManager.getApplication().getMessageBus().connect();
         mbc = getProject().getMessageBus().connect();
         mbc.setDefaultHandler((event1, params) -> {
@@ -233,12 +238,24 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         return cliService;
     }
 
+    public RadicleNativeStub replaceNativeService() {
+        final var nat = new RadicleNativeStub(myProject);
+        ServiceContainerUtil.replaceService(myProject, RadicleNativeService.class, nat, this.getTestRootDisposable());
+        return nat;
+    }
+
     public <T> T getInBackground(BackgroundCallable<T> callable) {
         return getInBackground(myProject, callable);
     }
 
     public void runInBackground(BackgroundRunnable runnable) {
         runInBackground(myProject, runnable);
+    }
+
+    public void clearCommandQueues() {
+        radStub.commands.clear();
+        radStub.commandsStr.clear();
+        nativeStub.getCommands().clear();
     }
 
     public void executeUiTasks() {
@@ -282,6 +299,14 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
         assertThat(UIUtil.isShowing(jc, false)).isTrue();
     }
 
+    public static RadAuthor randomAuthor() {
+        return new RadAuthor("did:key:" + randomId(), randomId());
+    }
+
+    public static String randomId() {
+        return UUID.randomUUID().toString();
+    }
+
     public static <T> T getInBackground(Project project, BackgroundCallable<T> runnable) {
         try {
             var finished = new AtomicBoolean(false);
@@ -319,6 +344,85 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
 
     public interface BackgroundRunnable {
         void run() throws Exception;
+    }
+
+    public static class RadicleNativeStub extends RadicleNativeService {
+        public static final BlockingQueue<Capture> CAPTURES = new LinkedBlockingQueue<>();
+        public record Capture(String method, String input) { }
+
+        public RadicleNativeStub(Project project) {
+            super(setupBeforeSuper(project));
+        }
+
+        public BlockingQueue<Capture> getCommands() {
+            return CAPTURES;
+        }
+
+        public static Project setupBeforeSuper(Project project) {
+            CAPTURES.clear();
+            javaRad = new JavaRad() {
+                @Override
+                public String radHome(String input) {
+                    CAPTURES.add(new Capture("radHome", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String changeIssueTitleDescription(String input) {
+                    CAPTURES.add(new Capture("radHome", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String getEmbeds(String input) {
+                    CAPTURES.add(new Capture("getEmbeds", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String getAlias(String input) {
+                    CAPTURES.add(new Capture("getAlias", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String createPatchComment(String input) {
+                    CAPTURES.add(new Capture("createPatchComment", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String editPatchComment(String input) {
+                    CAPTURES.add(new Capture("editPatchComment", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String deletePatchComment(String input) {
+                    CAPTURES.add(new Capture("deletePatchComment", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String editIssueComment(String input) {
+                    CAPTURES.add(new Capture("editIssueComment", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String patchCommentReact(String input) {
+                    CAPTURES.add(new Capture("patchCommentReact", input));
+                    return "{\"ok\": true}";
+                }
+
+                @Override
+                public String issueCommentReact(String input) {
+                    CAPTURES.add(new Capture("issueCommentReact", input));
+                    return "{\"ok\": true}";
+                }
+            };
+            return project;
+        }
     }
 
     public static class NoopContinuation<T> implements Continuation<T> {

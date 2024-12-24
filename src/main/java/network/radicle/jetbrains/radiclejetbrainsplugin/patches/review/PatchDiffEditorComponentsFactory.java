@@ -41,14 +41,13 @@ public class PatchDiffEditorComponentsFactory {
                 new SingleValueModel<>(""), field -> {
             var location = new RadDiscussion.Location(observableThreadModel.getFilePath(), "ranges",
                     observableThreadModel.getCommitHash(), editorLine, editorLine);
-            var res = this.cli.createPatchComment(patch.repo, patch.getLatestRevision().id(), field.getText(), null, location, field.getEmbedList());
-            boolean success = res != null;
+            boolean success = this.cli.createPatchComment(patch, patch.getLatestRevision().id(), field.getText(), null, location, field.getEmbedList());
             if (success) {
                 observableThreadModel.update(patch);
                 ApplicationManager.getApplication().invokeLater(() -> hideComponent.hide(editorLine));
             }
             return success;
-        }).enableDragAndDrop(false).hideCancelAction(true).build();
+        }).enableDragAndDrop(true).hideCancelAction(true).build();
         panelHandle.showAndFocusEditor();
         var builder = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.COMPACT,
                 integer -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), panelHandle.panel);

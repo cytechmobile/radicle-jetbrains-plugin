@@ -9,6 +9,7 @@ import git4idea.repo.GitRepositoryManager;
 import kotlinx.coroutines.CoroutineScope;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,12 +23,14 @@ public abstract class SearchViewModelBase<T extends ReviewListSearchValue, E ext
     protected final Project project;
     protected CountDownLatch countDown;
     protected List<Q> myList;
+    protected RadicleCliService rad;
     private List<String> projectNames = List.of();
 
     public SearchViewModelBase(@NotNull CoroutineScope scope, @NotNull ReviewListSearchHistoryModel<T> historyModel,
                                @NotNull T emptySearch, @NotNull T defaultQuickFilter, Project project) {
         super(scope, historyModel, emptySearch, defaultQuickFilter);
         this.project = project;
+        this.rad = project.getService(RadicleCliService.class);
     }
 
     public void setList(List<Q> list) {

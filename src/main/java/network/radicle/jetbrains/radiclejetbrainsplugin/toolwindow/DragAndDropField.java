@@ -119,9 +119,7 @@ public class DragAndDropField extends EditorTextField {
         public void drop(DropTargetDropEvent evt) {
             try {
                 evt.acceptDrop(DnDConstants.ACTION_COPY);
-                var droppedFiles = (List<File>) evt
-                        .getTransferable().getTransferData(
-                                DataFlavor.javaFileListFlavor);
+                var droppedFiles = (List<File>) evt.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                 for (var file : droppedFiles) {
                     var fileName = file.getName();
                     var fileBytes = Files.readAllBytes(file.toPath());

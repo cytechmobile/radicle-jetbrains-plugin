@@ -156,7 +156,7 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             if (!Strings.isNullOrEmpty(version)) {
                 msg = RadicleBundle.message("radVersion") + " " + version;
             }
-            String finalMsg = msg;
+            final var finalMsg = msg;
             ApplicationManager.getApplication().invokeLater(() -> {
                 radVersionLabel.setText(finalMsg);
                 showHideEnforceLabel(version);

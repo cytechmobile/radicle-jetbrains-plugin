@@ -17,6 +17,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import kotlin.Unit;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
@@ -79,7 +80,7 @@ public class TimelineComponentFactory {
             description = RadicleBundle.message("noDescription");
         }
         var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.radProject.id, file);
-        descSection = Utils.descriptionPanel(editorPane, patch.project, true, "patch.proposal.change.description", f -> {
+        descSection = Utils.descriptionPanel(editorPane, patch.project, "patch.proposal.change.description", f -> {
             var newDesc = f.getText();
             if (Strings.isNullOrEmpty(newDesc)) {
                 return false;
@@ -144,9 +145,8 @@ public class TimelineComponentFactory {
         contentPanel.setOpaque(false);
         var horizontalPanel = getHorizontalPanel(8);
         horizontalPanel.setOpaque(false);
-        var revAuthor = !Strings.isNullOrEmpty(rev.author().alias) ? rev.author().alias : rev.author().id;
-        return createTimeLineItem(contentPanel, horizontalPanel, RadicleBundle.message("revisionPublish", rev.id(), revAuthor),
-                rev.timestamp());
+        var revAuthor = rev.author().generateLabelText(cli);
+        return createTimeLineItem(contentPanel, horizontalPanel, RadicleBundle.message("revisionPublish", rev.id(), revAuthor), rev.timestamp());
     }
 
     private JComponent createReviewComponent(RadPatch.Review review) {
@@ -169,7 +169,7 @@ public class TimelineComponentFactory {
                 RadicleBundle.message("save"), new SingleValueModel<>(message), (field) -> true).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-        var item = createTimeLineItem(contentPanel, actionsPanel, review.author().generateLabelText(), review.timestamp());
+        var item = createTimeLineItem(contentPanel, actionsPanel, review.author().generateLabelText(cli), review.timestamp());
         reviewPanel.add(item);
         return reviewPanel;
     }
@@ -207,21 +207,35 @@ public class TimelineComponentFactory {
         }
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, panel,
                 RadicleBundle.message("save"), new SingleValueModel<>(com.body), (field) -> {
-            RadPatch edited = null; // api.changePatchComment(patch.findRevisionId(com.id), com.id, field.getText(), patch, field.getEmbedList());
+            var edited = cli.editPatchComment(patch, patch.findRevisionId(com.id), com.id, field.getText(), field.getEmbedList());
             final boolean success = edited != null;
             if (success) {
                 patchModel.setValue(patch);
             }
             return success;
-        }).enableDragAndDrop(false).build();
+        }).enableDragAndDrop(true).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-        // TODO: disable editing patch comments, not supported from CLI
-        /* actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
-            panelHandle.showAndFocusEditor();
-            return null;
-        })); */
-        commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp);
+        var self = cli.getCurrentIdentity();
+        if (self != null && com.author.id.contains(self.nodeId)) {
+            final var editButton = CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+                panelHandle.showAndFocusEditor();
+                return null;
+            });
+            final var deleteButton = CodeReviewCommentUIUtil.INSTANCE.createDeleteCommentIconButton(e -> {
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    var revisionId = patch.findRevisionId(com.id);
+                    var success = cli.deletePatchComment(patch, revisionId, com.id);
+                    if (success != null) {
+                        patchModel.setValue(patch);
+                    }
+                });
+                return Unit.INSTANCE;
+            });
+            actionsPanel.add(editButton);
+            actionsPanel.add(deleteButton);
+        }
+        commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(cli), com.timestamp);
         myMainPanel.add(commentPanel);
         myMainPanel.setName(JPANEL_PREFIX_NAME + com.id);
         return myMainPanel;
@@ -268,31 +282,23 @@ public class TimelineComponentFactory {
 
         @Override
         public boolean addReply(String comment, List<Embed> list, String replyToId) {
-            var output = cli.createPatchComment(patch.repo, patch.getLatestRevision().id(), comment, replyToId);
-            return RadAction.isSuccess(output);
+            return cli.createPatchComment(patch, patch.getLatestRevision().id(), comment, replyToId, null, list);
         }
     }
 
     private class PatchEmojiPanel extends EmojiPanel<RadPatch> {
-
         public PatchEmojiPanel(SingleValueModel<RadPatch> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
-            super(model, reactions, discussionId, radDetails);
+            super(patch.project, model, reactions, discussionId, radDetails);
         }
 
         @Override
         public RadPatch addEmoji(Emoji emoji, String commentId) {
-            // TODO: disabling patch comment reactions, not supported from CLI
-            // var revisionId = patch.findRevisionId(commentId);
-            // return api.patchCommentReact(patch, commentId, revisionId, emoji.unicode(), true);
-            return null;
+            return cli.patchCommentReact(patch, commentId, emoji.unicode(), true);
         }
 
         @Override
         public RadPatch removeEmoji(String emojiUnicode, String commentId) {
-            // TODO: disabling patch comment reactions, not supported from CLI
-            // var revisionId = patch.findRevisionId(commentId);
-            // return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
-            return null;
+            return cli.patchCommentReact(patch, commentId, emojiUnicode, false);
         }
 
         @Override

@@ -13,32 +13,35 @@ import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StyleSheetUtil;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettings;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleNativeService;
 import org.apache.tika.Tika;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTextPane;
 import javax.swing.JEditorPane;
+import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class MarkDownEditorPaneFactory {
     public static final String IMG_WIDTH = "450px";
-    private final RadicleProjectSettings settings;
+    public static final String EMBED_REGEX = "\\[([^]]+)\\]\\(([^)]+)\\)";
+    public static final Pattern EMBED_PATTERN = Pattern.compile(EMBED_REGEX);
+    public static final String IMG_REGEX = "<img\\s+[^>]*>";
+    public static final Pattern IMG_PATTERN = Pattern.compile(IMG_REGEX);
     private final String radProjectId;
     private final VirtualFile file;
     private final Project project;
     private final String rawContent;
     private String content;
+    private Map<String, String> embedMap;
 
     public MarkDownEditorPaneFactory(String content, Project project, String radProjectId, VirtualFile file) {
-        this.settings = new RadicleProjectSettingsHandler(project).loadSettings();
         this.content = content;
         this.radProjectId = radProjectId;
         this.file = file;
@@ -79,10 +82,8 @@ public class MarkDownEditorPaneFactory {
     }
 
     private List<String> getAllImgHtmlTags() {
+        var matcher = IMG_PATTERN.matcher(this.content);
         var imgTags = new ArrayList<String>();
-        var imgPattern = "<img\\s+[^>]*>";
-        var pattern = Pattern.compile(imgPattern);
-        var matcher = pattern.matcher(this.content);
         while (matcher.find()) {
             imgTags.add(matcher.group());
         }
@@ -91,9 +92,7 @@ public class MarkDownEditorPaneFactory {
 
     private List<Embed> findEmbedList() {
         // Find all embeds from the content e.g [name.jpg](4f4ba)
-        String regex = "\\[([^]]+)\\]\\(([^)]+)\\)";
-        var pattern = Pattern.compile(regex);
-        var matcher = pattern.matcher(this.rawContent);
+        var matcher = EMBED_PATTERN.matcher(this.rawContent);
         var embedList = new ArrayList<Embed>();
         while (matcher.find()) {
             String filename = matcher.group(1);
@@ -101,22 +100,6 @@ public class MarkDownEditorPaneFactory {
             embedList.add(new Embed(gitObjectId, filename, null));
         }
         return embedList;
-    }
-
-    private boolean isExternalFile(String objectId) {
-        return objectId.contains("https://") || objectId.contains("http://");
-    }
-
-    private boolean isSvg(String mimeType) {
-        return mimeType.contains("svg");
-    }
-
-    private String findMimeType(Embed embed) {
-        var tika = new Tika();
-        if (isExternalFile(embed.getOid())) {
-            return tika.detect(embed.getOid());
-        }
-        return tika.detect(embed.getName());
     }
 
     private void replaceHtmlTags() {
@@ -129,6 +112,16 @@ public class MarkDownEditorPaneFactory {
             return;
         }
         var map = new HashMap<String, String>();
+        var embedOids = embedList.stream().map(Embed::getOid).filter(oid -> !Strings.isNullOrEmpty(oid)).filter(oid -> !isExternalFile(oid)).toList();
+        var radNative = project.getService(RadicleNativeService.class);
+        var repoId = radProjectId;
+        if (repoId.startsWith("rad:")) {
+            repoId = repoId.substring(4);
+        }
+        embedMap = radNative.getEmbeds(repoId, embedOids);
+        if (embedMap == null) {
+            embedMap = new HashMap<>();
+        }
         for (var embed : embedList) {
             var objectId = embed.getOid();
             if (Strings.isNullOrEmpty(objectId)) {
@@ -161,28 +154,48 @@ public class MarkDownEditorPaneFactory {
         if (isExternalFile(objectId)) {
             return objectId;
         }
-        var url = settings.getSeedNode() + "/raw/" + radProjectId + "/blobs/" + objectId;
-        if (!Strings.isNullOrEmpty(mimeType)) {
-            //In order to know the browser what type of file is and open it
-            url += "?mime=" + mimeType;
+        // return a data url
+        if (Strings.isNullOrEmpty(mimeType)) {
+            mimeType = "image/png";
         }
-        return url;
+
+        var b64 = embedMap.get(objectId);
+        if (Strings.isNullOrEmpty(b64)) {
+            return objectId;
+        }
+        return "data:" + mimeType + ";base64," + b64;
     }
 
-    private String getHrefTag(String url, String fileName) {
+    private void convertMarkdownToHtml() {
+        this.content = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, this.content, project);
+    }
+
+    public static boolean isExternalFile(String objectId) {
+        return objectId.contains("https://") || objectId.contains("http://");
+    }
+
+    public static boolean isSvg(String mimeType) {
+        return mimeType.contains("svg");
+    }
+
+    public static String findMimeType(Embed embed) {
+        var tika = new Tika();
+        if (isExternalFile(embed.getOid())) {
+            return tika.detect(embed.getOid());
+        }
+        return tika.detect(embed.getName());
+    }
+
+    public static String getHrefTag(String url, String fileName) {
         return "<a href=\"" + url + "\">" + fileName + "</a>";
     }
 
-    private String getImgTag(String url) {
+    public static String getImgTag(String url) {
         return "<div style=\"width:" + IMG_WIDTH + ";\"><img src=\"" + url + "\"/></div>";
     }
 
     public static String wrapHtml(String body) {
         return "<html><head><style>p, h1, h2, h3, h4, h5, h6 { margin: 0; padding: 0; }</head><body>" + body + "</body></html>";
-    }
-
-    private void convertMarkdownToHtml() {
-        this.content = MarkdownUtil.INSTANCE.generateMarkdownHtml(file, this.content, project);
     }
 
 }

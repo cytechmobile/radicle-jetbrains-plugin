@@ -14,6 +14,7 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadCobList;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsViewTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssueListPanelTest;
+import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.TimelineTest;
@@ -42,7 +43,7 @@ public class RadStub extends RadicleProjectService {
     public static final String SECOND_PEER_ID = "hyy8y1g4bpkt9yn57wqph73dhfbwmnz9nf5hwtzdx8rhh3r1n7ww";
     public static final String FIRST_BRANCH_NAME = "main";
     public static final String SECOND_BRANCH_NAME = "main2";
-    public String trackResponse = "{exitCode=0, timeout=false, cancelled=false, stdout=asd " +
+    public static final String TEMPLATE_TRACK_RESPONSE = "{exitCode=0, timeout=false, cancelled=false, stdout=asd " +
             "rad:git:hnrkqxsqc8oz8cth167tua786mof7btgrubto (pine.radicle.garden)\n" +
             "├── " + FIRST_PEER_ID + "\n" +
             "│   └── " + FIRST_BRANCH_NAME + " MY_COMMIT_HASH\n" +
@@ -51,13 +52,11 @@ public class RadStub extends RadicleProjectService {
             "│   └── " + SECOND_BRANCH_NAME + " " + SECOND_COMMIT_HASH + " \n" +
             "│\n" +
             ", stderr=}";
-    public static final String SESSION_RESP = "{\"sessionId\":\"mySession\"," +
-            "\"publicKey\":\"myPrivateKey\"," +
-            "\"signature\":\"mySignature\"}";
-    public static String keyHash = "SHA256:myFakeHash";
-    public static String did =  "did:key:fakeDid";
-    public static String nodeId = "fakeDid";
-    public static String alias = "alias";
+    public static final String SELF_KEYHASH = "SHA256:myFakeHash";
+    public static final String SELF_DID =  "did:key:fakeDid";
+    public static final String SELF_NODEID = "fakeDid";
+    public static final String SELF_ALIAS = "alias";
+    public static final RadAuthor SELF = new RadAuthor(SELF_DID, SELF_ALIAS);
 
     public final BlockingQueue<GeneralCommandLine> commands = new LinkedBlockingQueue<>();
     public final BlockingQueue<String> commandsStr = new LinkedBlockingQueue<>();
@@ -172,15 +171,13 @@ public class RadStub extends RadicleProjectService {
         } else if (cmdLine.getCommandLineString().contains("clone rad:ooo")) {
             return new ProcessOutput(-1);
         } else if (cmdLine.getCommandLineString().contains("ssh-add")) {
-            stdout = keyHash;
-        } else if (cmdLine.getCommandLineString().contains("web")) {
-            stdout = SESSION_RESP;
+            stdout = SELF_KEYHASH;
         } else if (cmdLine.getCommandLineString().contains("self --alias")) {
-            stdout = alias + "\n";
+            stdout = SELF_ALIAS + "\n";
         } else if (cmdLine.getCommandLineString().contains("self --nid")) {
-            stdout = nodeId + "\n";
+            stdout = SELF_NODEID + "\n";
         } else if (cmdLine.getCommandLineString().contains("self --did")) {
-            stdout = did + "\n";
+            stdout = SELF_DID + "\n";
         } else if (cmdLine.getCommandLineString().contains("self --ssh-fingerprint")) {
             var envRadHome = cmdLine.getEnvironment().get("RAD_HOME");
             if (cmdLine.getCommandLineString().contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION) || (!Strings.isNullOrEmpty(envRadHome) &&
@@ -189,13 +186,13 @@ public class RadStub extends RadicleProjectService {
             }
             if (cmdLine.getCommandLineString().contains(RAD_HOME1) || (!Strings.isNullOrEmpty(envRadHome) &&
                     envRadHome.contains(RAD_HOME1))) {
-                stdout = keyHash + "A" + "\n";
+                stdout = SELF_KEYHASH + "A" + "\n";
             } else if (cmdLine.getCommandLineString().contains(RAD_HOME) || (!Strings.isNullOrEmpty(envRadHome) &&
                     envRadHome.contains(RAD_HOME))) {
-                stdout = keyHash + "\n";
+                stdout = SELF_KEYHASH + "\n";
             } else if ((cmdLine.getCommandLineString().contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION) || (!Strings.isNullOrEmpty(envRadHome) &&
                     envRadHome.contains(RadicleSettingsViewTest.NEW_RAD_INSTALLATION))) && counter == 2) {
-                stdout = keyHash + "\n";
+                stdout = SELF_KEYHASH + "\n";
             } else {
                 pr.setExitCode(-1);
             }
@@ -208,17 +205,16 @@ public class RadStub extends RadicleProjectService {
                          "\"name\": \"test\"" +
                          "}" +
                          "}," +
-                         " \"delegates\": [\"" + did + "\"]," +
+                         " \"delegates\": [\"" + SELF_DID + "\"]," +
                          "\"threshold\": 1" +
                          "}";
             } else if (cmdLine.getCommandLineString().contains("--delegates")) {
-                stdout = did + " (" + alias + ")";
+                stdout = SELF_DID + " (" + SELF_ALIAS + ")";
             } else {
                 stdout = "rad:123";
             }
         } else if (cmdLine.getCommandLineString().contains("track")) {
-            trackResponse = trackResponse.replace("MY_COMMIT_HASH", this.firstCommitHash);
-            stdout = trackResponse;
+            stdout = TEMPLATE_TRACK_RESPONSE.replace("MY_COMMIT_HASH", this.firstCommitHash);
         } else if (cmdLine.getCommandLineString().contains("remote ls")) {
             stdout = "";
         }

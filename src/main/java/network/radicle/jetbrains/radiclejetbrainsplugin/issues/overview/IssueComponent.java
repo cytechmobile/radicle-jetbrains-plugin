@@ -80,7 +80,7 @@ public class IssueComponent {
                 ApplicationManager.getApplication().invokeLater(() -> {
                     commentSection = createCommentSection(radIssue.discussion);
                     issueContainer.add(commentSection);
-                    this.commentFieldPanel = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.did, null);
+                    this.commentFieldPanel = createTimeLineItem(getCommentField().panel, horizontalPanel, radDetails.toRadAuthor().generateLabelText(), null);
                     issueContainer.add(commentFieldPanel);
                 }, ModalityState.any());
             }
@@ -105,7 +105,7 @@ public class IssueComponent {
     public JComponent createCommentSection(List<RadDiscussion> discussionList) {
         var mainPanel = getVerticalPanel(0);
         /* The first discussion is the description of the issue */
-        if (discussionList.size() == 1) {
+        if (discussionList.size() <= 1) {
             return mainPanel;
         }
         for (var i = 1; i < discussionList.size(); i++) {
@@ -129,23 +129,21 @@ public class IssueComponent {
             verticalPanel.add(replyPanel);
             panel.addToBottom(verticalPanel);
             var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.project, panel,
-                    RadicleBundle.message("save"), new SingleValueModel<>(com.body), f -> true).build();
-            // TODO: disabling editing issue comment
-            /*(field) -> {
-                var edited = api.editIssueComment(radIssue, field.getText(), com.id, field.getEmbedList());
+                    RadicleBundle.message("save"), new SingleValueModel<>(com.body), (field) -> {
+                var edited = cli.editIssueComment(radIssue, com.id, field.getText(), field.getEmbedList());
                 final boolean success = edited != null;
                 if (success) {
                     issueModel.setValue(radIssue);
                 }
                 return success;
-            }*/
+            }).build();
             var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
-            /* actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+            actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
                 panelHandle.showAndFocusEditor();
                 return null;
-            })); */
+            }));
             var contentPanel = panelHandle.panel;
-            mainPanel.add(createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(), com.timestamp));
+            mainPanel.add(createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(cli), com.timestamp));
         }
         return mainPanel;
     }
@@ -176,7 +174,18 @@ public class IssueComponent {
     private JComponent getDescription() {
         var bodyIssue = radIssue.getDescription();
         var editorPane = new MarkDownEditorPaneFactory(bodyIssue, radIssue.project, radIssue.projectId, file);
-        descPanel = Utils.descriptionPanel(editorPane, radIssue.project);
+        descPanel = Utils.descriptionPanel(editorPane, radIssue.project, "issue.change.description", f -> {
+            var newDesc = f.getText();
+            if (Strings.isNullOrEmpty(newDesc)) {
+                return false;
+            }
+            var edited = cli.changeIssueTitleDescription(radIssue, radIssue.title, newDesc, f.getEmbedList());
+            final boolean success = edited != null;
+            if (success) {
+                issueModel.setValue(edited);
+            }
+            return success;
+        });
         return descPanel;
     }
 
@@ -191,8 +200,7 @@ public class IssueComponent {
         var panelHandle = new EditablePanelHandler.PanelBuilder(radIssue.repo.getProject(), headerTitle,
                 RadicleBundle.message("issue.change.title"),
                 new SingleValueModel<>(radIssue.title), (field) -> {
-            // TODO: this will not work
-            var edited = cli.changeIssueTitleDescription(radIssue, field.getText(), radIssue.getDescription());
+            var edited = cli.changeIssueTitleDescription(radIssue, field.getText(), radIssue.getDescription(), field.getEmbedList());
             final boolean success = edited != null;
             if (success) {
                 issueModel.setValue(edited);
@@ -257,18 +265,17 @@ public class IssueComponent {
 
     public class IssueEmojiPanel extends EmojiPanel<RadIssue> {
         protected IssueEmojiPanel(SingleValueModel<RadIssue> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
-            super(model, reactions, discussionId, radDetails);
+            super(radIssue.project, model, reactions, discussionId, radDetails);
         }
 
         @Override
-        public RadIssue addEmoji(Emoji emoji, String discussionId) {
-            return cli.issueCommentReact(radIssue, discussionId, emoji.unicode(), true);
+        public RadIssue addEmoji(Emoji emoji, String commentId) {
+            return cli.issueCommentReact(radIssue, commentId, emoji.unicode(), true);
         }
 
         @Override
-        public RadIssue removeEmoji(String emojiUnicode, String discussionId) {
-            //return api.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
-            return cli.issueCommentReact(radIssue, discussionId, emojiUnicode, false);
+        public RadIssue removeEmoji(String emojiUnicode, String commentId) {
+            return cli.issueCommentReact(radIssue, commentId, emojiUnicode, false);
         }
 
         @Override

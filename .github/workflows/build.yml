@@ -76,3 +76,28 @@ jobs:
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
+  buildNativeLib:
+    name: BuildNativeLib
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-latest
+          # radicle cannot be compiled on Windows
+          # - os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Lint
+        working-directory: ./jrad
+        run: |
+          cargo fmt --all --check
+          cargo clippy --all --tests
+      - name: Build
+        working-directory: ./jrad
+        run: |
+          cargo build --release

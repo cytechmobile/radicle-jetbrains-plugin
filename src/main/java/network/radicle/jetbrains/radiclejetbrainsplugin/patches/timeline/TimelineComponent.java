@@ -18,11 +18,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchProposalPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.editor.PatchVirtualFile;
@@ -70,10 +66,10 @@ public class TimelineComponent {
 
         var horizontalPanel = Utils.getHorizontalPanel(8);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            var radDetails = getCurrentRadDetails();
+            var radDetails = cli.getCurrentIdentity();
             if (radDetails != null) {
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    var selfAuthor = new RadAuthor(radDetails.nodeId, radDetails.alias);
+                    var selfAuthor = radDetails.toRadAuthor();
                     var self = selfAuthor.generateLabelText();
                     var commentSection = createTimeLineItem(getCommentField().panel, horizontalPanel, self, null);
                     commentPanel = commentSection;
@@ -91,22 +87,11 @@ public class TimelineComponent {
         return mainPanel;
     }
 
-    private RadDetails getCurrentRadDetails() {
-        var radSelf = new RadSelf(radPatch.project);
-        radSelf.askForIdentity(false);
-        var output = radSelf.perform();
-        if (RadAction.isSuccess(output)) {
-            return new RadDetails(output.getStdoutLines(true));
-        }
-        return null;
-    }
-
     public boolean createComment(DragAndDropField field) {
         if (Strings.isNullOrEmpty(field.getText())) {
             return false;
         }
-        var output = cli.createPatchComment(radPatch.repo, radPatch.getLatestRevision().id(), field.getText(), null);
-        var ok = RadAction.isSuccess(output);
+        boolean ok = cli.createPatchComment(radPatch, radPatch.getLatestRevision().id(), field.getText(), null, null, field.getEmbedList());
         if (ok) {
             radPatchModel.setValue(radPatch);
             return true;

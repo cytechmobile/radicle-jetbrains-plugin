@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -20,14 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class PatchListPanelTest extends AbstractIT {
-    public static final String AUTHOR = "did:key:testAuthor";
-    public static final RadAuthor RADAUTHOR = new RadAuthor("did:key:testAuthor", "testAuthor");
-    public static final String AUTHOR1 = "did:key:testAuthor1";
-    private static List<RadPatch> patches;
-    private RadicleToolWindow radicleToolWindow;
+    RadicleToolWindow radicleToolWindow;
+    List<RadPatch> patches;
 
     @Before
-    public void setUpToolWindow() throws InterruptedException, IOException {
+    public void setUpToolWindow() throws Exception {
         patches = getTestPatches();
 
         radicleToolWindow = new RadicleToolWindow();
@@ -41,7 +37,7 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testFilterEmptyResults() {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
@@ -60,21 +56,21 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testFilterByAuthor() {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
         var filter = new PatchListSearchValue();
-        filter.author = AUTHOR;
+        filter.author = patches.getFirst().author.id;
         listPanel.filterList(filter);
         executeUiTasks();
 
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isEqualTo(patches.getFirst().author.id);
 
-        filter.author = AUTHOR1;
+        filter.author = patches.get(1).author.id;
         listPanel.filterList(filter);
         executeUiTasks();
 
@@ -86,14 +82,14 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testFilterByProject() throws ExecutionException, InterruptedException {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
         var filter = new PatchListSearchValue();
         var searchVm = listPanel.getSearchVm();
         var projectNames = searchVm.getProjectNames();
-        filter.project = projectNames.get().get(0);
+        filter.project = projectNames.get().getFirst();
         listPanel.filterList(filter);
         executeUiTasks();
 
@@ -106,22 +102,22 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testSearch() {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
         //Filter with search (peer id)
         var filterWithSearch = new PatchListSearchValue();
-        filterWithSearch.searchQuery = AUTHOR;
+        filterWithSearch.searchQuery = patches.getFirst().author.id;
         listPanel.filterList(filterWithSearch);
         executeUiTasks();
 
         var patchModel = listPanel.getModel();
-        assertThat(patchModel.getSize()).isEqualTo(2);
+        assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isIn(patches.get(0).author.id, patches.get(1).author.id);
+        assertThat(radPatch.author.id).isEqualTo(patches.getFirst().author.id);
 
-        filterWithSearch.searchQuery = patches.get(0).title;
+        filterWithSearch.searchQuery = patches.getFirst().title;
         listPanel.filterList(filterWithSearch);
         patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
@@ -131,7 +127,7 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testFiltersData() throws ExecutionException, InterruptedException {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
@@ -141,7 +137,7 @@ public class PatchListPanelTest extends AbstractIT {
 
         assertThat(projectNames.get().size()).isEqualTo(1);
         assertThat(projectNames.get().size()).isEqualTo(1);
-        assertThat(projectNames.get().get(0)).contains("testRemote");
+        assertThat(projectNames.get().getFirst()).contains("testRemote");
 
         assertThat(filterAuthors.get().get(0)).isIn(patches.get(0).author.id, patches.get(1).author.id);
         assertThat(filterAuthors.get().get(1)).isIn(patches.get(0).author.id, patches.get(1).author.id);
@@ -149,19 +145,19 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testListPanel() {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var firstPatch = patchModel.get(0);
-        assertThat(firstPatch.author.id).isEqualTo(patches.get(0).author.id);
-        assertThat(firstPatch.title).isEqualTo(patches.get(0).title);
-        assertThat(firstPatch.labels).isEqualTo(patches.get(0).labels);
+        assertThat(firstPatch.author.id).isEqualTo(patches.getFirst().author.id);
+        assertThat(firstPatch.title).isEqualTo(patches.getFirst().title);
+        assertThat(firstPatch.labels).isEqualTo(patches.getFirst().labels);
     }
 
     @Test
     public void testState() {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
@@ -173,7 +169,7 @@ public class PatchListPanelTest extends AbstractIT {
         var patchModel = listPanel.getModel();
         assertThat(patchModel.getSize()).isEqualTo(1);
         var radPatch = patchModel.get(0);
-        assertThat(radPatch.author.id).isEqualTo(patches.get(0).author.id);
+        assertThat(radPatch.author.id).isEqualTo(patches.getFirst().author.id);
 
         filterWithSearch.state = RadPatch.State.DRAFT.label;
         listPanel = controller.getPatchListPanel();
@@ -192,7 +188,7 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testTagDuplicates() throws ExecutionException, InterruptedException {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
         var searchVm = listPanel.getSearchVm();
@@ -202,7 +198,7 @@ public class PatchListPanelTest extends AbstractIT {
 
     @Test
     public void testTag() {
-        var controller = (PatchTabController) radicleToolWindow.patchTabController;
+        var controller = radicleToolWindow.patchTabController;
         var listPanel = controller.getPatchListPanel();
         executeUiTasks();
 
@@ -232,30 +228,31 @@ public class PatchListPanelTest extends AbstractIT {
     }
 
     public static List<RadProject> getTestProjects() {
-        return List.of(new RadProject("test-rad-project", "test project", "test project description",
-                        "main", List.of(new RadAuthor("did:key:test", "test"), new RadAuthor("did:key:assignee2", "assignee2"), new RadAuthor("did:key" +
-                ":assignee3", "assignee3"))),
-                new RadProject("test-rad-project-second", "test project 2", "test project 2 description",
-                        "main", List.of(new RadAuthor("did:key:test", "test"))));
+        final var author1 = new RadAuthor("did:key:test1", "test1");
+        final var author2 = new RadAuthor("did:key:test2", "test2");
+        final var author3 = new RadAuthor("did:key:test3", "test3");
+        return List.of(new RadProject("test-rad-project", "test project", "test project description", "main", List.of(author1, author2, author3)),
+                new RadProject("test-rad-project-second", "test project 2", "test project 2 description", "main", List.of(author1)));
     }
 
     public static List<RadPatch> getTestPatches() {
-        var reviewMap = new HashMap<String, RadPatch.Review>();
-        reviewMap.put("1", new RadPatch.Review("1",
-                RADAUTHOR, RadPatch.Review.Verdict.ACCEPT, "test", new RadPatch.DiscussionObj(new HashMap<>(), List.of()), Instant.now()));
+        final var author1 = new RadAuthor("did:key:test1", "test1");
+        final var author2 = new RadAuthor("did:key:test2", "test2");
 
-        var revision = new RadPatch.Revision("testRevision", RADAUTHOR, List.of(), List.of(), "", "",
+        var reviewMap = new HashMap<String, RadPatch.Review>();
+        reviewMap.put("1", new RadPatch.Review("1", author1, RadPatch.Review.Verdict.ACCEPT, "test",
+                new RadPatch.DiscussionObj(new HashMap<>(), List.of()), Instant.now()));
+
+        var revision = new RadPatch.Revision("testRevision", author1, List.of(), List.of(), "", "",
                 List.of(), Instant.now(), new RadPatch.DiscussionObj(new HashMap<>(), List.of()), reviewMap);
 
         var revMap = new HashMap<String, RadPatch.Revision>();
         revMap.put(revision.id(), revision);
-        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of(RADAUTHOR)),
-                RADAUTHOR, "testPatch", RADAUTHOR, "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, revMap);
+        var radPatch = new RadPatch("c5df12", new RadProject("test-rad-project", "test-rad-project", "", "main", List.of(author1)),
+                author1, "testPatch", author1, "testTarget", List.of("tag1", "tag2"), RadPatch.State.OPEN, revMap);
 
-        var radPatch2 = new RadPatch("c4d12", new RadProject("test-rad-project-second", "test-rad-project-second", "", "main", List.of()),
-                RADAUTHOR, "secondProposal", new RadAuthor(AUTHOR1),
-                "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, revMap);
-        patches = List.of(radPatch, radPatch2);
-        return patches;
+        var radPatch2 = new RadPatch("c4d12", new RadProject("test-rad-project-second", "test-rad-project-second", "", "main", List.of(author1)),
+                author1, "secondProposal", author2, "testTarget", List.of("firstTag", "secondTag", "tag1"), RadPatch.State.DRAFT, revMap);
+        return List.of(radPatch, radPatch2);
     }
 }

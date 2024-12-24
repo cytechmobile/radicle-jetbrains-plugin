@@ -24,7 +24,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.issues.overview.editor.IssueEditorProvider;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
@@ -55,6 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static network.radicle.jetbrains.radiclejetbrainsplugin.issues.IssuePanel.DATE_TIME_FORMATTER;
 import static network.radicle.jetbrains.radiclejetbrainsplugin.patches.PatchListPanelTest.getTestProjects;
@@ -62,17 +62,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class OverviewTest extends AbstractIT {
-    public static final String AUTHOR = "did:key:testAuthor";
-
-    private RadicleToolWindow radicleToolWindow;
-    private RadIssue issue;
-    private IssueEditorProvider issueEditorProvider;
-    private VirtualFile editorFile;
-    private IssueTabController issueTabController;
-    private Embed txtEmbed;
-    private Embed imgEmbed;
-    private String commentDesc;
-    private String issueDesc;
+    RadicleToolWindow radicleToolWindow;
+    RadIssue issue;
+    IssueEditorProvider issueEditorProvider;
+    VirtualFile editorFile;
+    IssueTabController issueTabController;
+    Embed txtEmbed;
+    Embed imgEmbed;
+    String commentDesc;
+    String issueDesc;
 
     @Rule
     public TestName testName = new TestName();
@@ -132,10 +130,10 @@ public class OverviewTest extends AbstractIT {
 
         assertThat(titleLabel.getText()).isEqualTo(RadicleBundle.message("title", Strings.nullToEmpty(issue.title)));
         assertThat(issueIdLabel.getText()).isEqualTo(RadicleBundle.message("issueId", Strings.nullToEmpty(Utils.formatId(issue.id))));
-        assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", Strings.nullToEmpty(issue.author.id)));
+        assertThat(issueAuthorLabel.getText()).isEqualTo(RadicleBundle.message("issueAuthor", issue.author.alias));
         assertThat(issueTagLabel.getText()).isEqualTo(RadicleBundle.message("issueLabels", String.join(",", issue.labels)));
         assertThat(issueAssigneeLabel.getText()).isEqualTo(RadicleBundle.message("issueAssignees",
-                String.join(",", issue.assignees.stream().map(as -> as.id).toList())));
+                String.join(",", issue.assignees.stream().map(as -> as.alias).toList())));
         assertThat(issueStateLabel.getText()).isEqualTo(RadicleBundle.message("issueState", Strings.nullToEmpty(issue.state.label)));
         assertThat(issueCreatedLabel.getText()).isEqualTo(RadicleBundle.message("issueCreated", DATE_TIME_FORMATTER.format(issue.discussion.get(0).timestamp)));
     }
@@ -186,7 +184,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(secondTag.value.value()).isEqualTo(issue.labels.get(1));
         assertThat(secondTag.selected).isTrue();
 
-        radStub.commands.clear();
+        clearCommandQueues();
         //Remove first value
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
@@ -278,11 +276,12 @@ public class OverviewTest extends AbstractIT {
         var createIssueButton = UIUtil.findComponentOfType(buttonsPanel, JButton.class);
         createIssueButton.doClick();
         executeUiTasks();
-        var issueCommand = radStub.commandsStr.poll();
+        var issueCommand = radStub.commandsStr.poll(1, TimeUnit.SECONDS);
+        assertThat(issueCommand).isNotNull();
         assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueName));
         assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueDescription));
         assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(label2));
-        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(getTestProjects().get(0).delegates.get(0).id));
+        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(getTestProjects().getFirst().delegates.getFirst().id));
     }
 
     @Test
@@ -341,7 +340,7 @@ public class OverviewTest extends AbstractIT {
         // Change state to closed
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(0)).selected = false;
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = true;
-        radStub.commands.clear();
+        clearCommandQueues();
         //Trigger close function in order to trigger the stub and verify the request
         popupListener.onClosed(new LightweightWindowEvent(stateSelect.jbPopup));
         // Fix AlreadyDisposedException
@@ -353,7 +352,7 @@ public class OverviewTest extends AbstractIT {
 
     @Test
     public void addRemoveAssignersTest() throws InterruptedException {
-        var projectDelegates = getTestProjects().get(0).delegates;
+        var projectDelegates = getTestProjects().getFirst().delegates;
         var issuePanel = issueTabController.getIssuePanel();
         var panel = issueTabController.getIssueJPanel();
 
@@ -368,15 +367,8 @@ public class OverviewTest extends AbstractIT {
 
         // Assert that the label has the selected values
         var assigneeValuesLabel = (JLabel) myPanel.getComponents()[0];
-        var formattedDid = new ArrayList<String>();
-        for (var delegate : issue.assignees) {
-            if (!Strings.isNullOrEmpty(delegate.alias)) {
-                formattedDid.add(delegate.alias);
-            } else {
-                formattedDid.add(Utils.formatDid(delegate.id));
-            }
-        }
-        assertThat(assigneeValuesLabel.getText()).contains(String.join(",", formattedDid));
+        var assigneeAliases = issue.assignees.stream().map(a -> a.alias).collect(Collectors.joining(","));
+        assertThat(assigneeValuesLabel.getText()).contains(assigneeAliases);
 
         // Find edit key and press it
         var assigneeActionPanel = (NonOpaquePanel) components[1];
@@ -397,7 +389,8 @@ public class OverviewTest extends AbstractIT {
         popupListener.beforeShown(new LightweightWindowEvent(fakePopup));
         //Wait to load delegates
         assigneesSelect.latch.await(5, TimeUnit.SECONDS);
-        assertThat(listmodel.getSize()).isEqualTo(3);
+        assertThat(listmodel.getSize()).as("unexpected number of assignees: expected 3 from the delegates and then another 2 from random issue assignees")
+                .isGreaterThanOrEqualTo(3);
 
         var firstAssignee = (SelectionListCellRenderer.SelectableWrapper<IssuePanel.AssigneesSelect.Assignee>) listmodel.getElementAt(0);
         assertThat(firstAssignee.value.did()).isEqualTo(projectDelegates.get(0).id);
@@ -415,7 +408,7 @@ public class OverviewTest extends AbstractIT {
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(1)).selected = false;
         ((SelectionListCellRenderer.SelectableWrapper<?>) listmodel.getElementAt(2)).selected = true;
 
-        radStub.commands.clear();
+        clearCommandQueues();
         popupListener.onClosed(new LightweightWindowEvent(assigneesSelect.jbPopup));
         // Fix AlreadyDisposedException
         Thread.sleep(1000);
@@ -469,33 +462,18 @@ public class OverviewTest extends AbstractIT {
         assertThat(cmds).anyMatch(cmd -> cmd.getCommandLineString().contains("rad issue react " + issue.id) &&
                                          cmd.getCommandLineString().contains(issue.discussion.get(1).id));
         // test removing the reaction
-        // TODO: not yet implemented in CLI!
-        if (true) {
-            return;
-        }
+        // TODO: jrad: not yet implemented in CLI!
         borderPanel = UIUtil.findComponentOfType(emojiJPanel, BorderLayoutPanel.class);
         var reactorsPanel = ((JPanel) borderPanel.getComponents()[1]).getComponents()[1];
         var listeners = reactorsPanel.getMouseListeners();
         listeners[0].mouseClicked(null);
         executeUiTasks();
-        cmds = new ArrayList<>();
-        radStub.commands.drainTo(cmds);
-        if (cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue react " + issue.id)).findFirst().isEmpty()) {
-            var cmd = radStub.commands.poll(5, TimeUnit.SECONDS);
-            if (cmd != null) {
-                cmds.add(cmd);
-            }
-        }
-        assertThat(cmds).anyMatch(cmd -> cmd.getCommandLineString().contains("rad issue react " + issue.id) &&
-                                         cmd.getCommandLineString().contains(issue.discussion.get(1).id));
+        // TODO: verify emoji removed
     }
 
     @Test
     public void testChangeTitle() throws InterruptedException {
-        if (true) {
-            // TODO: edit issue title/description is NOT implemented in CLI
-            return;
-        }
+        // TODO: jrad: edit issue title/description is NOT implemented in CLI
         var issueComponent = issueEditorProvider.getIssueComponent();
         var titlePanel = issueComponent.getHeaderPanel();
         var editBtn = UIUtil.findComponentOfType(titlePanel, InlineIconButton.class);
@@ -559,7 +537,7 @@ public class OverviewTest extends AbstractIT {
         prBtns = UIUtil.findComponentsOfType(titlePanel, JButton.class);
         assertThat(prBtns).hasSizeGreaterThanOrEqualTo(1);
         prBtn = prBtns.get(1);
-        /* click the button to edit the patch */
+        /* click the button to edit the issue */
         issue.title = editedTitle;
         issue.repo = firstRepo;
         issue.project = getProject();
@@ -567,9 +545,7 @@ public class OverviewTest extends AbstractIT {
         /* Wait for the reload */
         Thread.sleep(1000);
         executeUiTasks();
-        var not = notificationsQueue.poll(10, TimeUnit.SECONDS);
-        assertThat(not).isNotNull();
-        assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("issueTitleError"));
+        assertThat(ef.getText()).isEqualTo(issue.title);
     }
 
     @Test
@@ -614,7 +590,7 @@ public class OverviewTest extends AbstractIT {
         // Open createEditor
         issueEditorProvider.createEditor(getProject(), editorFile);
         var issueComponent = issueEditorProvider.getIssueComponent();
-        radStub.commands.clear();
+        clearCommandQueues();
         executeUiTasks();
         var commentPanel = issueComponent.getCommentFieldPanel();
         var ef = UIUtil.findComponentOfType(commentPanel, DragAndDropField.class);
@@ -639,13 +615,13 @@ public class OverviewTest extends AbstractIT {
         assertThat(command).contains("comment");
         assertThat(command).contains(ExecUtil.escapeUnixShellArgument(dummyComment));
         assertThat(command).contains(issue.id);
-        issue.discussion.add(new RadDiscussion("542", new RadAuthor("das"), dummyComment, Instant.now(), "", List.of(), List.of(), null, null));
+        issue.discussion.add(new RadDiscussion("542", randomAuthor(), dummyComment, Instant.now(), "", List.of(), List.of(), null, null));
 
         // Open createEditor
         issue.repo = firstRepo;
         issue.project = getProject();
         issueEditorProvider.createEditor(getProject(), editorFile);
-        radStub.commands.clear();
+        clearCommandQueues();
         executeUiTasks();
         var commentSection = issueEditorProvider.getIssueComponent().getCommentSection();
         var elements = UIUtil.findComponentsOfType(commentSection, JEditorPane.class);
@@ -653,11 +629,11 @@ public class OverviewTest extends AbstractIT {
         for (var el : elements) {
             comments += el.getText();
         }
-        assertThat(comments).contains(issue.discussion.get(1).author.id);
+        assertThat(comments).contains(issue.discussion.get(1).author.alias);
         assertThat(comments).contains(commentDesc);
-        assertThat(comments).contains(issue.discussion.get(2).author.id);
+        assertThat(comments).contains(issue.discussion.get(2).author.alias);
         assertThat(comments).contains(issue.discussion.get(2).body);
-        assertThat(comments).doesNotContain(issue.discussion.get(0).author.id);
+        assertThat(comments).doesNotContain(issue.discussion.get(0).author.alias);
         assertThat(comments).doesNotContain(issue.discussion.get(0).body);
 
         //Check that notification get triggered
@@ -676,11 +652,7 @@ public class OverviewTest extends AbstractIT {
         assertThat(not.getTitle()).isEqualTo(RadicleBundle.message("radCliError"));
 
         // Test edit issue functionality
-        // TODO: Editing issue comment is not available from CLI
-        // TODO: not yet implemented in CLI!
-        if (true) {
-            return;
-        }
+        // TODO: jrad: Editing issue comment is not available from CLI
         commentPanel = issueComponent.getCommentSection();
         var editBtn = UIUtil.findComponentOfType(commentPanel, InlineIconButton.class);
         editBtn.getActionListener().actionPerformed(new ActionEvent(editBtn, 0, ""));
@@ -694,15 +666,8 @@ public class OverviewTest extends AbstractIT {
         prBtn = prBtns.get(1);
         prBtn.doClick();
         executeUiTasks();
-        List<GeneralCommandLine> cmds = new ArrayList<>();
-        radStub.commands.drainTo(cmds);
-        if (cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue edit " + issue.id)).findFirst().isEmpty()) {
-            var cmd = radStub.commands.poll(5, TimeUnit.SECONDS);
-            if (cmd != null) {
-                cmds.add(cmd);
-            }
-        }
-        cmds.stream().filter(c -> c.getCommandLineString().contains("rad issue edit " + issue.id)).findFirst().orElseThrow();
+
+        assertThat(ef.getText()).isEqualTo(editedComment);
     }
 
     @Test
@@ -714,20 +679,21 @@ public class OverviewTest extends AbstractIT {
         for (var el : elements) {
             comments += el.getText();
         }
-        assertThat(comments).contains(issue.discussion.get(1).author.id);
-        assertThat(comments).contains(commentDesc);
-        assertThat(comments).contains(getExpectedTag(txtEmbed));
-        assertThat(comments).contains(getExpectedTag(imgEmbed));
-        assertThat(comments).doesNotContain(issue.discussion.get(0).author.id);
-        assertThat(comments).doesNotContain(issue.discussion.get(0).body);
+        assertThat(comments).contains(issue.discussion.get(1).author.alias)
+                .contains(commentDesc)
+                .contains(getExpectedTag(txtEmbed))
+                .contains(getExpectedTag(imgEmbed));
+        assertThat(comments).doesNotContain(issue.discussion.getFirst().author.id)
+                .doesNotContain(issue.discussion.getFirst().author.alias)
+                .doesNotContain(issue.discussion.getFirst().body);
     }
 
     private String getExpectedTag(Embed dummyEmbed) {
-        var expectedUrl = radicleProjectSettingsHandler.loadSettings().getSeedNode().url + "/raw/" + issue.projectId + "/blobs/" + dummyEmbed.getOid();
+        var expectedUrl = dummyEmbed.getOid();
         if (dummyEmbed.getName().contains(".txt")) {
-            return "<a href=\"" + expectedUrl + "?mime=text/plain\">" + dummyEmbed.getName() + "</a>";
+            return "<a href=\"" + expectedUrl + "\">" + dummyEmbed.getName() + "</a>";
         } else {
-            return "<img src=\"" + expectedUrl + "?mime=image/jpeg\">";
+            return "<img src=\"" + expectedUrl + "\">";
         }
     }
 
@@ -747,21 +713,23 @@ public class OverviewTest extends AbstractIT {
         var discussions = new ArrayList<RadDiscussion>();
         issueDesc = "How are you";
         var myDescription = issueDesc + txtEmbedMarkDown + imgEmbedMarkDown;
-        var firstDiscussion = createDiscussion(UUID.randomUUID().toString(), UUID.randomUUID().toString(), myDescription, embeds);
-        var secondDiscussion = createDiscussion(UUID.randomUUID().toString(), UUID.randomUUID().toString(), commentDescription, embeds);
+        var firstDiscussion = createDiscussion(myDescription, embeds);
+        var secondDiscussion = createDiscussion(commentDescription, embeds);
         discussions.add(firstDiscussion);
         discussions.add(secondDiscussion);
-        var myIssue = new RadIssue(UUID.randomUUID().toString(), new RadAuthor(AUTHOR), "My Issue",
-                RadIssue.State.OPEN, List.of(new RadAuthor("did:key:test"), new RadAuthor("did:key:assignee2")), List.of("tag1", "tag2"), discussions);
+        // add first and second delegates of first project as issue assignees (they are expected to be there in assignees test)
+        final var prj = getTestProjects().getFirst();
+        var myIssue = new RadIssue(UUID.randomUUID().toString(), randomAuthor(), "My Issue",
+                RadIssue.State.OPEN, List.of(prj.delegates.getFirst(), prj.delegates.get(1)), List.of("tag1", "tag2"), discussions);
         myIssue.project = getProject();
         myIssue.projectId = UUID.randomUUID().toString();
         myIssue.repo = firstRepo;
         return myIssue;
     }
 
-    private RadDiscussion createDiscussion(String id, String authorId, String body, List<Embed> embedList) {
-        return new RadDiscussion(id, new RadAuthor(authorId), body, Instant.now(), "",
-                List.of(new Reaction("\uD83D\uDC4D", List.of(new RadAuthor("fakeDid")))), embedList, null, null);
+    private RadDiscussion createDiscussion(String body, List<Embed> embedList) {
+        return new RadDiscussion(randomId(), randomAuthor(), body, Instant.now(), "",
+                List.of(new Reaction("\uD83D\uDC4D", List.of(randomAuthor()))), embedList, null, null);
     }
 }
 

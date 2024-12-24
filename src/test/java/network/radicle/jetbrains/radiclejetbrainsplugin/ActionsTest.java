@@ -81,10 +81,10 @@ public class ActionsTest extends AbstractIT {
 
         //Test parsing
         var details = new RadDetails(output.getStdoutLines(true));
-        assertThat(details.alias).isEqualTo(RadStub.alias);
-        assertThat(details.did).isEqualTo(RadStub.did);
-        assertThat(details.nodeId).isEqualTo(RadStub.nodeId);
-        assertThat(details.keyHash).isEqualTo(RadStub.keyHash);
+        assertThat(details.alias).isEqualTo(RadStub.SELF_ALIAS);
+        assertThat(details.did).isEqualTo(RadStub.SELF_DID);
+        assertThat(details.nodeId).isEqualTo(RadStub.SELF_NODEID);
+        assertThat(details.keyHash).isEqualTo(RadStub.SELF_KEYHASH);
     }
 
     @Test

@@ -18,6 +18,130 @@ public class RadPatchTest {
         assertThat(patch).usingRecursiveComparison().isEqualTo(patch2);
     }
 
+    @Test
+    public void location() throws Exception {
+        var loc = new RadDiscussion.Location("path", "type", "commit", 1, 5);
+        var json = RadicleCliService.MAPPER.writeValueAsString(loc);
+        assertThat(json).isNotBlank().doesNotContain("new");
+
+        var correct = RadicleCliService.MAPPER.writeValueAsString(loc.getMapObject());
+        assertThat(correct).contains("new");
+    }
+
+    @Test
+    public void json2() throws Exception {
+        var json = """
+        {
+          "title": "test1",
+          "author": {
+            "id": "did:key:z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T"
+          },
+          "state": {
+            "status": "open"
+          },
+          "target": "delegates",
+          "labels": [],
+          "merges": {},
+          "revisions": {
+            "7a454414e607e5f237f4c5f7a1ba1cb80c493927": {
+              "id": "7a454414e607e5f237f4c5f7a1ba1cb80c493927",
+              "author": {
+                "id": "did:key:z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T"
+              },
+              "description": [
+                {
+                  "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                  "timestamp": 1735049781000,
+                  "body": "test1",
+                  "embeds": []
+                }
+              ],
+              "base": "401adcd5d6bb70e044d47f1651461192d6a2154b",
+              "oid": "320c5fafb07d7585625adeb6a50771a4e3bc194b",
+              "discussion": {
+                "comments": {
+                  "6c2af28073f4b557cddb69d27095e395e810870c": {
+                    "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                    "reactions": [],
+                    "resolved": false,
+                    "body": "line comment 1",
+                    "edits": [
+                      {
+                        "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                        "timestamp": 1736443702000,
+                        "body": "line comment 1",
+                        "embeds": []
+                      }
+                    ],
+                    "location": {
+                      "commit": "401adcd5d6bb70e044d47f1651461192d6a2154b",
+                      "path": "test.txt",
+                      "old": null,
+                      "new": null
+                    }
+                  },
+                  "710880b2026408084ef217d78a5e28f45fe6c196": {
+                    "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                    "reactions": [],
+                    "resolved": false,
+                    "body": "yo1",
+                    "edits": [
+                      {
+                        "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                        "timestamp": 1736443592000,
+                        "body": "yo1",
+                        "embeds": []
+                      }
+                    ]
+                  },
+                  "e024a1d61edfb79e391ea675dcdb404d00e24c00": {
+                    "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                    "reactions": [],
+                    "resolved": false,
+                    "body": "line comment 1",
+                    "edits": [
+                      {
+                        "author": "z6MkjWioeK34B9tWfaMgiR7niJAvuaExarQhUY35CHqFoh3T",
+                        "timestamp": 1736443788000,
+                        "body": "line comment 1",
+                        "embeds": []
+                      }
+                    ],
+                    "location": {
+                      "commit": "401adcd5d6bb70e044d47f1651461192d6a2154b",
+                      "path": "test.txt",
+                      "old": null,
+                      "new": null
+                    }
+                  }
+                },
+                "timeline": [
+                  "710880b2026408084ef217d78a5e28f45fe6c196",
+                  "6c2af28073f4b557cddb69d27095e395e810870c",
+                  "e024a1d61edfb79e391ea675dcdb404d00e24c00"
+                ]
+              },
+              "reviews": {},
+              "timestamp": 1735049781000,
+              "resolves": [],
+              "reactions": []
+            }
+          },
+          "assignees": [],
+          "timeline": [
+            "7a454414e607e5f237f4c5f7a1ba1cb80c493927",
+            "710880b2026408084ef217d78a5e28f45fe6c196",
+            "6c2af28073f4b557cddb69d27095e395e810870c",
+            "e024a1d61edfb79e391ea675dcdb404d00e24c00"
+          ],
+          "reviews": {}
+        }
+        """;
+
+        var patch = RadicleCliService.MAPPER.readValue(json, RadPatch.class);
+        assertThat(patch).isNotNull();
+    }
+
     // CHECKSTYLE:OFF
     public static String getPatchJson() {
         return """

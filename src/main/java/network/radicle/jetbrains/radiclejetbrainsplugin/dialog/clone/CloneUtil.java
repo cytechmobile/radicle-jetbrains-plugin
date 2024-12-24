@@ -32,7 +32,7 @@ public class CloneUtil {
         if (destinationValidation != null) {
             RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("directoryError"));
-            logger.error("Clone Failed. Unable to create destination directory");
+            logger.warn("Clone Failed. Unable to create destination directory");
             return;
         }
 
@@ -44,7 +44,7 @@ public class CloneUtil {
         if (destinationParent == null) {
             RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("destinationDoesntExist"));
-            logger.error("Clone Failed. Destination doesn't exist");
+            logger.warn("Clone Failed. Destination doesn't exist");
             return;
         }
 
@@ -54,7 +54,7 @@ public class CloneUtil {
         } catch (Exception e) {
             RadAction.showErrorNotification(project, RadicleBundle.message("cloneFailed"),
                     RadicleBundle.message("tempDirError"));
-            logger.error("Unable to create temp directory");
+            logger.warn("Unable to create temp directory");
             return;
         }
 

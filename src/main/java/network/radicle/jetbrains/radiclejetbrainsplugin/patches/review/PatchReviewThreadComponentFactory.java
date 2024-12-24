@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.patches.review;
 
-import com.google.common.base.Strings;
 import com.google.protobuf.Any;
 import com.intellij.collaboration.ui.CollaborationToolsUIUtilKt;
 import com.intellij.collaboration.ui.SingleValueModel;
@@ -28,15 +27,14 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.ThreadModel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.patches.timeline.EditablePanelHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.EmojiPanel;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.MarkDownEditorPaneFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -52,7 +50,6 @@ public class PatchReviewThreadComponentFactory {
     private static final int PADDING_TOP_BOTTOM = 5;
     private static final String JPANEL_PREFIX_NAME = "COMMENT_";
 
-    private final RadicleProjectService rad;
     private final RadicleCliService cli;
     private final RadPatch patch;
     private final ObservableThreadModel threadsModel;
@@ -60,7 +57,6 @@ public class PatchReviewThreadComponentFactory {
     private RadDetails radDetails;
 
     public PatchReviewThreadComponentFactory(RadPatch patch, ObservableThreadModel threadsModel, Editor editor) {
-        this.rad = patch.project.getService(RadicleProjectService.class);
         this.cli = patch.project.getService(RadicleCliService.class);
         this.radDetails = cli.getCurrentIdentity();
         this.threadsModel = threadsModel;
@@ -82,10 +78,9 @@ public class PatchReviewThreadComponentFactory {
     }
 
     public boolean deleteComment(RadDiscussion disc) {
-        // var revisionId = patch.findRevisionId(disc.id);
-        // var res = api.deleteRevisionComment(patch, revisionId, disc.id);
-        // return res != null;
-        return false;
+        var revisionId = patch.findRevisionId(disc.id);
+        var res = cli.deletePatchComment(patch, revisionId, disc.id);
+        return res != null;
     }
 
     public JComponent createUncollapsedThreadActionsComponent(ThreadModel threadModel) {
@@ -97,13 +92,12 @@ public class PatchReviewThreadComponentFactory {
             var location = new RadDiscussion.Location(threadsModel.getFilePath(), "ranges",
                     threadsModel.getCommitHash(), line, line);
             var revision = patch.findRevisionId(latestRev.id);
-            var res = this.cli.createPatchComment(patch.repo, revision, field.getText(), latestRev.id, location, field.getEmbedList());
-            boolean success = res != null;
+            boolean success = this.cli.createPatchComment(patch, revision, field.getText(), latestRev.id, location, field.getEmbedList());
             if (success) {
                 threadsModel.update(patch);
             }
             return success;
-        }).enableDragAndDrop(false).hideCancelAction(true).build();
+        }).enableDragAndDrop(true).hideCancelAction(true).build();
         panelHandle.showAndFocusEditor();
         var builder = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.COMPACT, integer ->
                 new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), panelHandle.panel);
@@ -126,9 +120,7 @@ public class PatchReviewThreadComponentFactory {
     public JComponent getThreadActionsComponent(ThreadModel myThreadsModel) {
         var toggleModel = new SingleValueModel<>(false);
         return ToggleableContainer.INSTANCE.create(toggleModel, () -> {
-            ReplyAction rep = () -> {
-                toggleModel.setValue(true);
-            };
+            ReplyAction rep = () -> toggleModel.setValue(true);
             return createCollapsedThreadActionComponent(rep);
         }, () -> createUncollapsedThreadActionsComponent(myThreadsModel));
     }
@@ -140,40 +132,38 @@ public class PatchReviewThreadComponentFactory {
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, editorPane.htmlEditorPane(),
                 RadicleBundle.message("review.edit.comment"),
                 new SingleValueModel<>(disc.body), (field) -> {
-            RadPatch res = null; // this.api.changePatchComment(revisionId, disc.id, field.getText(), patch, List.of());
+            RadPatch res = this.cli.editPatchComment(patch, revisionId, disc.id, field.getText(), field.getEmbedList());
             boolean success = res != null;
             if (success) {
                 threadsModel.update(patch);
             }
             return success;
-        }).enableDragAndDrop(false).build();
-        var editButton = CodeReviewCommentUIUtil.INSTANCE.createEditButton(actionEvent -> {
-            panelHandle.showAndFocusEditor();
-            return Unit.INSTANCE;
-        });
-        var deleteButton = CodeReviewCommentUIUtil.INSTANCE.createDeleteCommentIconButton(actionEvent -> {
-            ApplicationManager.getApplication().executeOnPooledThread(() -> {
-                var success = false; // this.deleteComment(disc);
-                if (success) {
-                    threadsModel.update(patch);
-                }
-            });
-            return Unit.INSTANCE;
-        });
+        }).enableDragAndDrop(true).build();
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         radDetails = cli.getCurrentIdentity();
-        var self = radDetails != null && radDetails.did.equals(disc.author.id);
-        // TODO: removing functionality to edit/delete comment, not supported on CLI
-        /*if (self) {
+        var self = radDetails != null && disc.author.id.contains(radDetails.nodeId);
+        if (self) {
+            var editButton = CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
+                panelHandle.showAndFocusEditor();
+                return Unit.INSTANCE;
+            });
+            var deleteButton = CodeReviewCommentUIUtil.INSTANCE.createDeleteCommentIconButton(e -> {
+                ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                    var success = this.deleteComment(disc);
+                    if (success) {
+                        threadsModel.update(patch);
+                    }
+                });
+                return Unit.INSTANCE;
+            });
             actionsPanel.add(editButton);
             actionsPanel.add(deleteButton);
-        }*/
+        }
         var emojiPanel = new MyEmojiPanel(new SingleValueModel<>(patch), disc.reactions, disc.id, radDetails);
         var builder = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.COMPACT, integer ->
                 new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), panelHandle.panel);
-        var author = !Strings.isNullOrEmpty(disc.author.alias) ? disc.author.alias : Utils.formatDid(disc.author.id);
-        var authorLink = HtmlChunk.link("#",
-                author).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground()))).bold();
+        var author = disc.author.generateLabelText(cli);
+        var authorLink = HtmlChunk.link("#", author).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground()))).bold();
         var titleText = new HtmlBuilder().append(authorLink)
                 .append(HtmlChunk.nbsp())
                 .append(disc.timestamp != null ? DATE_TIME_FORMATTER.format(disc.timestamp) : "");
@@ -195,23 +185,17 @@ public class PatchReviewThreadComponentFactory {
 
         protected MyEmojiPanel(SingleValueModel<RadPatch> model,
                                List<Reaction> reactions, String discussionId, RadDetails radDetails) {
-            super(model, reactions, discussionId, radDetails);
+            super(patch.project, model, reactions, discussionId, radDetails);
         }
 
         @Override
         public RadPatch addEmoji(Emoji emoji, String commentId) {
-            // TODO: disabling patch comment reactions, not supported from CLI
-            // var revisionId = patch.findRevisionId(commentId);
-            // return api.patchCommentReact(patch, commentId, revisionId, emoji.unicode(), true);
-            return null;
+            return cli.patchCommentReact(patch, commentId, emoji.unicode(), true);
         }
 
         @Override
         public RadPatch removeEmoji(String emojiUnicode, String commentId) {
-            // TODO: disabling patch comment reactions, not supported from CLI
-            // var revisionId = patch.findRevisionId(commentId);
-            // return api.patchCommentReact(patch, commentId, revisionId, emojiUnicode, false);
-            return null;
+            return cli.patchCommentReact(patch, commentId, emojiUnicode, false);
         }
 
         @Override

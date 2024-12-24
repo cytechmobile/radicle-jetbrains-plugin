@@ -15,7 +15,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -79,11 +81,16 @@ public class IssueSearchPanelViewModel extends SearchViewModelBase<IssueListSear
     public CompletableFuture<List<String>> getAssignees() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> assignees = new ArrayList<>();
+            Set<String> seen = new HashSet<>();
             var filteredList = filterListByProject();
             for (var issue : filteredList) {
                 for (var assignee : issue.assignees) {
-                    if (!assignees.contains(assignee.id) && !assignees.contains(assignee.alias)) {
-                        assignees.add(assignee.generateLabelText());
+                    if (!seen.contains(assignee.id) && !seen.contains(assignee.alias)) {
+                        var label = assignee.generateLabelText(rad);
+                        assignees.add(label);
+                        seen.add(assignee.id);
+                        seen.add(Strings.nullToEmpty(assignee.alias));
+                        seen.add(label);
                     }
                 }
             }

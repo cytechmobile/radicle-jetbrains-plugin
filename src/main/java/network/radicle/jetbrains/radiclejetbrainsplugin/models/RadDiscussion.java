@@ -60,7 +60,7 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
 
     @Override
     public Instant getTimestamp() {
-        return this.timestamp;
+        return this.timestamp == null ? Instant.now() : this.timestamp;
     }
 
     public static class Location {
@@ -89,6 +89,9 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
 
         @JsonProperty("new")
         private void unpackNewObject(Map<String, Object> line) {
+            if (line == null) {
+                return;
+            }
             var range = (HashMap<String, Integer>) line.get("range");
             type = (String) line.get("type");
             start = range.get("start");
@@ -136,10 +139,10 @@ public class RadDiscussion implements RadPatch.TimelineEvent {
                                 .orElse(null);
                         if (reaction == null) {
                             List<RadAuthor> authors = new ArrayList<>();
-                            authors.add(new RadAuthor(id));
+                            authors.add(new RadAuthor(id, null));
                             reactions.add(new Reaction(emoji, authors));
                         } else {
-                            reaction.authors().add(new RadAuthor(id));
+                            reaction.authors().add(new RadAuthor(id, null));
                         }
                     }
                 }

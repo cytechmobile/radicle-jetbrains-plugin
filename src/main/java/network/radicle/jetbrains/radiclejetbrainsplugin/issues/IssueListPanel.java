@@ -33,9 +33,11 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
     private final ListCellRenderer<RadIssue> issueListCellRenderer = new IssueListCellRenderer();
     private final IssueTabController cntrl;
     protected IssueListSearchValue issueListSearchValue;
+    protected RadicleCliService rad;
 
     public IssueListPanel(IssueTabController controller, Project project) {
         super(controller, project);
+        rad = project.getService(RadicleCliService.class);
         this.cntrl = controller;
         this.issueListSearchValue = getEmptySearchValueModel();
         this.issueListSearchValue.state = RadIssue.State.OPEN.label;
@@ -87,15 +89,14 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
             var assigneeFilter = searchValue.assignee;
             var loadedRadIssues = loadedData;
             List<RadIssue> filteredPatches = loadedRadIssues.stream()
-                    .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.generateLabelText().contains(searchFilter) ||
-                            p.title.contains(searchFilter))
+                    .filter(p -> Strings.isNullOrEmpty(searchFilter) || p.author.contains(rad, searchFilter) ||
+                                 p.title.contains(searchFilter))
                     .filter(p -> Strings.isNullOrEmpty(projectFilter) || p.repo.getRoot().getName().equals(projectFilter))
-                    .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
-                            p.author.id.equals(peerAuthorFilter))
+                    .filter(p -> Strings.isNullOrEmpty(peerAuthorFilter) || p.author.contains(rad, peerAuthorFilter))
                     .filter(p -> Strings.isNullOrEmpty(stateFilter) || (p.state != null && p.state.label.equals(stateFilter)))
                     .filter(p -> Strings.isNullOrEmpty(labelFilter) || p.labels.stream().anyMatch(label -> label.equals(labelFilter)))
                     .filter(p -> Strings.isNullOrEmpty(assigneeFilter) || p.assignees.stream().anyMatch(assignee ->
-                            assignee.generateLabelText().equals(assigneeFilter)))
+                            assignee.contains(rad, assigneeFilter)))
                     .collect(Collectors.toList());
             model.addAll(filteredPatches);
         }
@@ -128,6 +129,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
             public Cell(int index, RadIssue issue) {
                 this.index = index;
                 this.issue = issue;
+                var rad = issue.project.getService(RadicleCliService.class);
 
                 var gapAfter = JBUI.scale(5);
                 var issuePanel = new JPanel();
@@ -150,7 +152,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
                     var firstDiscussion = issue.discussion.get(0);
                     var formattedDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).format(firstDiscussion.timestamp.atZone(ZoneId.systemDefault()));
                     var info = new JLabel(RadicleBundle.message("created") + ": " + formattedDate + " " +
-                            RadicleBundle.message("by") + " " + issue.author.generateLabelText());
+                            RadicleBundle.message("by") + " " + issue.author.generateLabelText(rad));
                     info.setForeground(JBColor.GRAY);
                     if (!issue.labels.isEmpty()) {
                         var labels = new JLabel(RadicleBundle.message("labels") + ": " + String.join(", ", issue.labels));

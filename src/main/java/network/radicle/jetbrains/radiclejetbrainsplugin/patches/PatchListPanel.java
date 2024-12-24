@@ -34,9 +34,11 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
     private final PatchTabController controller;
     private final ListCellRenderer<RadPatch> patchListCellRenderer = new PatchListCellRenderer();
     protected PatchListSearchValue patchListSearchValue;
+    protected RadicleCliService cli;
 
     public PatchListPanel(PatchTabController ctrl, Project project) {
         super(ctrl, project);
+        this.cli = project.getService(RadicleCliService.class);
         this.controller = ctrl;
         this.patchListSearchValue = getEmptySearchValueModel();
         this.patchListSearchValue.state = RadPatch.State.OPEN.label;
@@ -92,8 +94,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
              final var search = plsv.searchQuery.toLowerCase().trim();
              patchesStream = patchesStream.filter(p ->
                      p.id.toLowerCase().contains(search) ||
-                     Strings.nullToEmpty(p.author.id).toLowerCase().contains(search) ||
-                     Strings.nullToEmpty(p.author.alias).toLowerCase().contains(search) ||
+                     (p.author != null && p.author.contains(cli, search)) ||
                      Strings.nullToEmpty(p.title).toLowerCase().contains(searchFilter.toLowerCase().trim()) ||
                      Strings.nullToEmpty(p.getLatestNonEmptyRevisionDescription()).toLowerCase().contains(search));
          }
@@ -101,8 +102,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
              patchesStream = patchesStream.filter(p -> p.repo.getRoot().getName().equals(projectFilter));
          }
          if (!Strings.isNullOrEmpty(peerAuthorFilter)) {
-             patchesStream = patchesStream.filter(p -> Strings.nullToEmpty(p.author.alias).equals(peerAuthorFilter) ||
-                     p.author.id.equals(peerAuthorFilter));
+             patchesStream = patchesStream.filter(p -> p.author != null && p.author.contains(cli, peerAuthorFilter));
          }
          if (!Strings.isNullOrEmpty(stateFilter)) {
              patchesStream = patchesStream.filter(p -> p.state != null && p.state.label.equals(stateFilter));
@@ -132,7 +132,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
             cell.setBackground(ListUiUtil.WithTallRow.INSTANCE.background(list, isSelected, list.hasFocus()));
             cell.title.setForeground(ListUiUtil.WithTallRow.INSTANCE.foreground(isSelected, list.hasFocus()));
             cell.setToolTipText("<p>" + RadicleBundle.message("patchId") + ": " + cell.patch.id + "</p>" +
-                    "<p>" + RadicleBundle.message("created") + " " + RadicleBundle.message("by") + ": " + cell.patch.author.id + "</p>");
+                    "<p>" + RadicleBundle.message("created") + " " + RadicleBundle.message("by") + ": " + cell.patch.author.generateLabelText() + "</p>");
             return cell;
         }
 
@@ -140,10 +140,12 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
             public final int index;
             public final JLabel title;
             public final RadPatch patch;
+            public final RadicleCliService rad;
 
             public Cell(int index, RadPatch patch) {
                 this.index = index;
                 this.patch = patch;
+                rad = patch.project.getService(RadicleCliService.class);
 
                 var gapAfter = JBUI.scale(5);
                 var patchPanel = new JPanel();
@@ -169,7 +171,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
                 info.setForeground(JBColor.GRAY);
                 infoPanel.add(info);
 
-                var authorLabel = new JLabel(Strings.isNullOrEmpty(patch.author.alias) ? patch.author.generateLabelText() : patch.author.alias);
+                var authorLabel = new JLabel(patch.author.generateLabelText(rad));
                 // TODO cannot enable tooltip specifically on author
                 authorLabel.setForeground(JBColor.GRAY);
                 infoPanel.add(authorLabel);
@@ -184,7 +186,7 @@ public class PatchListPanel extends ListPanel<RadPatch, PatchListSearchValue, Pa
             @Override
             public AccessibleContext getAccessibleContext() {
                 var ac = super.getAccessibleContext();
-                ac.setAccessibleName(patch.repo.getRoot().getName() + " - " + patch.author.generateLabelText());
+                ac.setAccessibleName(patch.repo.getRoot().getName() + " - " + patch.author.generateLabelText(rad));
                 return ac;
             }
         }

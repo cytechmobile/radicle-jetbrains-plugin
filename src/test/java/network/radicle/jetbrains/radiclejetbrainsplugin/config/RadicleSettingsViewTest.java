@@ -125,7 +125,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
                 Thread.sleep(100);
             }
         }
-        assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.did);
+        assertThat(radicleSettingsView.getRadDetails().did).isEqualTo(RadStub.SELF_DID);
     }
 
     @Test
@@ -156,7 +156,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void testButtonWithStoredEmptyPassword() throws InterruptedException {
-        radicleSettingsHandler.savePassphrase(RadStub.nodeId, "");
+        radicleSettingsHandler.savePassphrase(RadStub.SELF_NODEID, "");
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         var radicleSettingsView = new RadicleSettingsView(getProject());
         radicleSettingsView.init.await(10, TimeUnit.SECONDS);
@@ -175,7 +175,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
 
     @Test
     public void testButtonWithStoredPassword() throws InterruptedException {
-        radicleSettingsHandler.savePassphrase(RadStub.nodeId, RadicleGlobalSettingsHandlerTest.PASSWORD);
+        radicleSettingsHandler.savePassphrase(RadStub.SELF_NODEID, RadicleGlobalSettingsHandlerTest.PASSWORD);
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME1);
         var radicleSettingsView = new RadicleSettingsView(getProject());
         radicleSettingsView.init.await(10, TimeUnit.SECONDS);

@@ -3,6 +3,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 import com.intellij.collaboration.ui.SingleValueModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.ui.AnimatedIcon;
@@ -12,8 +13,9 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.icons.RadicleIcons;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleNativeService;
+import org.assertj.core.util.Strings;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -41,16 +43,20 @@ public abstract class EmojiPanel<T> {
     private final List<Reaction> reactions;
     private final String discussionId;
     private final RadDetails radDetails;
+    private final Project project;
+    private final RadicleNativeService rad;
     private JBPopup reactorsPopUp;
     private JBPopup emojisPopUp;
     private JBPopupListener popupListener;
     private CountDownLatch latch;
 
-    protected EmojiPanel(SingleValueModel<T> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
+    protected EmojiPanel(Project project, SingleValueModel<T> model, List<Reaction> reactions, String discussionId, RadDetails radDetails) {
+        this.project = project;
         this.model = model;
         this.reactions = reactions;
         this.discussionId = discussionId;
         this.radDetails = radDetails;
+        this.rad = project.getService(RadicleNativeService.class);
     }
 
     private static class EmojiRender extends SelectionListCellRenderer<Emoji> {
@@ -143,13 +149,18 @@ public abstract class EmojiPanel<T> {
         });
         var borderPanel = new BorderLayoutPanel();
         borderPanel.setOpaque(false);
-        if (!(this.model.getValue() instanceof RadPatch)) {
-            // TODO: disable reactions on patch comments, not supported from CLI
-            borderPanel.addToLeft(emojiButton);
-        }
+        borderPanel.addToLeft(emojiButton);
+
         var horizontalPanel = getHorizontalPanel(10);
         horizontalPanel.setOpaque(false);
         horizontalPanel.add(progressLabel);
+        for (var r : reactions) {
+            for (var a : r.authors()) {
+                if (Strings.isNullOrEmpty(a.alias)) {
+                    a.alias = rad.getAlias(a.id);
+                }
+            }
+        }
         var groupReactions = groupEmojis(reactions);
         for (var emojiUnicode : groupReactions.keySet()) {
             var reactorEmoji = new JLabel(emojiUnicode);

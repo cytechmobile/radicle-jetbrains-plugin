@@ -39,7 +39,7 @@ public class RadCobShow extends RadAction {
         RadIssue issue = null;
         try {
             issue = RadicleCliService.MAPPER.readValue(json, new TypeReference<>() { });
-            var firstDiscussion = issue.discussion.get(0);
+            var firstDiscussion = issue.discussion.getFirst();
             issue.author = firstDiscussion.author;
             issue.project = repo.getProject();
             issue.repo = repo;
@@ -63,7 +63,7 @@ public class RadCobShow extends RadAction {
             patch = RadicleCliService.MAPPER.readValue(json, new TypeReference<>() { });
             return patch;
         } catch (Exception e) {
-            logger.error("Unable to deserialize patch from json: " + json, e);
+            logger.warn("Unable to deserialize patch from json: " + json, e);
         }
         return patch;
     }

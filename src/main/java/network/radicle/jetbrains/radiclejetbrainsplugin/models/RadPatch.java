@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -128,7 +129,7 @@ public class RadPatch {
         if (myRevisions == null || myRevisions.isEmpty()) {
             return null;
         }
-        return myRevisions.get(myRevisions.size() - 1);
+        return myRevisions.getLast();
     }
 
     @JsonIgnore
@@ -150,14 +151,19 @@ public class RadPatch {
         }
         return this.revisions.keySet().stream()
                 .map(revId -> this.revisions.get(revId))
-                .sorted(Comparator.comparing(rev -> rev.timestamp))
-                .collect(Collectors.toCollection(ArrayList::new));
+                .filter(Objects::nonNull)
+                .filter(r -> r.timestamp != null)
+                .sorted(Comparator.comparing(Revision::getTimestamp))
+                .collect(Collectors.toList());
     }
 
     @JsonIgnore
     public List<TimelineEvent> getTimelineEvents() {
         var list = new ArrayList<TimelineEvent>();
         for (var revision : getRevisionList()) {
+            if (revision.timestamp == null) {
+                continue;
+            }
             list.add(revision);
             list.addAll(revision.getReviewList());
             list.addAll(revision.getDiscussions());
@@ -212,7 +218,7 @@ public class RadPatch {
                     Review review = RadicleCliService.MAPPER.treeToValue(rev, Review.class);
                     reviews.put(fn, review);
                 } catch (Exception e) {
-                    logger.error("error reading Review from tree: {}", rev, e);
+                    logger.warn("error reading Review from tree: {}", rev, e);
                 }
             });
 
@@ -231,7 +237,7 @@ public class RadPatch {
             Map<String, Review> reviews) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
-            return timestamp;
+            return timestamp == null ? Instant.now() : timestamp;
         }
 
         public List<Review> getReviewList() {
@@ -239,9 +245,11 @@ public class RadPatch {
             var myReviews = new ArrayList<Review>();
             for (var reviewId : reviews.keySet()) {
                 var review = reviews.get(reviewId);
-                myReviews.add(review);
+                if (review.timestamp != null) {
+                    myReviews.add(review);
+                }
             }
-            myReviews.sort(Comparator.comparing(Review::timestamp).reversed());
+            myReviews.sort(Comparator.comparing(Review::getTimestamp).reversed());
             // Remove the duplicates reviews. We can only have 1 review per author per revision
             myReviews.removeIf(e -> !seen.add(e.author.id));
             return myReviews;
@@ -252,17 +260,18 @@ public class RadPatch {
                 return new ArrayList<>();
             }
             return discussion.comments.keySet().stream().map(discussion.comments::get)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(c -> c != null && c.timestamp != null)
+                    .collect(Collectors.toList());
         }
 
         public List<RadDiscussion> getReviewComments(String filePath) {
-            return getDiscussions().stream().filter(disc -> disc.isReviewComment() &&
+            return getDiscussions().stream().filter(disc -> disc != null && disc.isReviewComment() &&
                             disc.location.path.equals(filePath))
                     .collect(Collectors.toList());
         }
 
         public RadDiscussion findDiscussion(String commentId) {
-            return getDiscussions().stream().filter(disc -> disc.id.equals(commentId)).findFirst().orElse(null);
+            return getDiscussions().stream().filter(disc -> disc != null && disc.id.equals(commentId)).findFirst().orElse(null);
         }
 
         @JsonIgnore
@@ -283,7 +292,7 @@ public class RadPatch {
                          DiscussionObj comments, Instant timestamp) implements TimelineEvent {
         @Override
         public Instant getTimestamp() {
-            return timestamp;
+            return timestamp == null ? Instant.now() : timestamp;
         }
 
         @JsonFormat(shape = JsonFormat.Shape.STRING)

@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -26,7 +25,7 @@ public class FileService {
             var base64Payload = base64Parts.length > 1 ? base64Parts[1] : null;
             var base64PayloadBytes = base64Payload != null ? Base64.getDecoder().decode(base64Payload) : null;
             if (base64PayloadBytes == null) {
-                logger.error("Empty base64 payload for {}", base64);
+                logger.warn("Empty base64 payload for {}", base64);
                 return null;
             }
 
@@ -57,8 +56,8 @@ public class FileService {
                 hexString.append(hex);
             }
             return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Exception caught for {}", base64, e);
+        } catch (Exception e) {
+            logger.warn("Exception caught for {}", base64, e);
             return null;
         }
     }
@@ -67,7 +66,7 @@ public class FileService {
         try (var is = new ByteArrayInputStream(fileBytes)) {
             return new Tika().detect(is);
         } catch (Exception e) {
-            logger.error("Exception upon detecting mime-type", e);
+            logger.warn("Exception upon detecting mime-type", e);
             return null;
         }
     }
