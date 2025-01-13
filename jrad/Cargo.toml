@@ -4,7 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
+name = "jrad"
 crate-type = ["cdylib"]
+
+[[bin]]
+name = "jrad"
+path = "src/bin.rs"
 
 [dependencies]
 radicle = "^0.14.0"

@@ -14,7 +14,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.Emoji;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleNativeService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.assertj.core.util.Strings;
 
 import javax.swing.BorderFactory;
@@ -44,7 +44,7 @@ public abstract class EmojiPanel<T> {
     private final String discussionId;
     private final RadDetails radDetails;
     private final Project project;
-    private final RadicleNativeService rad;
+    private final RadicleCliService rad;
     private JBPopup reactorsPopUp;
     private JBPopup emojisPopUp;
     private JBPopupListener popupListener;
@@ -56,7 +56,7 @@ public abstract class EmojiPanel<T> {
         this.reactions = reactions;
         this.discussionId = discussionId;
         this.radDetails = radDetails;
-        this.rad = project.getService(RadicleNativeService.class);
+        this.rad = project.getService(RadicleCliService.class);
     }
 
     private static class EmojiRender extends SelectionListCellRenderer<Emoji> {
@@ -136,11 +136,11 @@ public abstract class EmojiPanel<T> {
                     ApplicationManager.getApplication().executeOnPooledThread(() -> {
                         ApplicationManager.getApplication().invokeLater(() -> emojisPopUp.closeOk(null), ModalityState.any());
                         progressLabel.setVisible(true);
-                        var res = addEmoji(selectedEmoji.get(0), discussionId);
+                        var res = addEmoji(selectedEmoji.getFirst(), discussionId);
                         progressLabel.setVisible(false);
                         var isSuccess = res != null;
                         if (isSuccess) {
-                            notifyEmojiChanges(selectedEmoji.get(0).unicode(), discussionId, true);
+                            notifyEmojiChanges(selectedEmoji.getFirst().unicode(), discussionId, true);
                         }
                     });
                     return null;

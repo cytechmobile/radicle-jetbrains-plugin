@@ -14,7 +14,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StyleSheetUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleNativeService;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.apache.tika.Tika;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +34,7 @@ public class MarkDownEditorPaneFactory {
     public static final Pattern EMBED_PATTERN = Pattern.compile(EMBED_REGEX);
     public static final String IMG_REGEX = "<img\\s+[^>]*>";
     public static final Pattern IMG_PATTERN = Pattern.compile(IMG_REGEX);
+    protected RadicleCliService rad;
     private final String radProjectId;
     private final VirtualFile file;
     private final Project project;
@@ -47,6 +48,7 @@ public class MarkDownEditorPaneFactory {
         this.file = file;
         this.project = project;
         this.rawContent = content;
+        this.rad = project.getService(RadicleCliService.class);
         this.convertMarkdownToHtml();
         this.replaceHtmlTags();
     }
@@ -113,12 +115,11 @@ public class MarkDownEditorPaneFactory {
         }
         var map = new HashMap<String, String>();
         var embedOids = embedList.stream().map(Embed::getOid).filter(oid -> !Strings.isNullOrEmpty(oid)).filter(oid -> !isExternalFile(oid)).toList();
-        var radNative = project.getService(RadicleNativeService.class);
         var repoId = radProjectId;
         if (repoId.startsWith("rad:")) {
             repoId = repoId.substring(4);
         }
-        embedMap = radNative.getEmbeds(repoId, embedOids);
+        embedMap = rad.getEmbeds(repoId, embedOids);
         if (embedMap == null) {
             embedMap = new HashMap<>();
         }

@@ -347,82 +347,83 @@ public abstract class AbstractIT extends HeavyPlatformTestCase {
     }
 
     public static class RadicleNativeStub extends RadicleNativeService {
-        public static final BlockingQueue<Capture> CAPTURES = new LinkedBlockingQueue<>();
-        public record Capture(String method, String input) { }
+        public final BlockingQueue<Capture> commands;
 
         public RadicleNativeStub(Project project) {
-            super(setupBeforeSuper(project));
+            super(project);
+            commands = new LinkedBlockingQueue<>();
+            this.jRad = stubJRad(commands);
         }
 
         public BlockingQueue<Capture> getCommands() {
-            return CAPTURES;
+            return commands;
         }
 
-        public static Project setupBeforeSuper(Project project) {
-            CAPTURES.clear();
-            javaRad = new JavaRad() {
+        public static JRad stubJRad(BlockingQueue<Capture> commands) {
+            return new JRad() {
                 @Override
                 public String radHome(String input) {
-                    CAPTURES.add(new Capture("radHome", input));
+                    commands.add(new Capture("radHome", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String changeIssueTitleDescription(String input) {
-                    CAPTURES.add(new Capture("radHome", input));
+                    commands.add(new Capture("radHome", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String getEmbeds(String input) {
-                    CAPTURES.add(new Capture("getEmbeds", input));
+                    commands.add(new Capture("getEmbeds", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String getAlias(String input) {
-                    CAPTURES.add(new Capture("getAlias", input));
+                    commands.add(new Capture("getAlias", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String createPatchComment(String input) {
-                    CAPTURES.add(new Capture("createPatchComment", input));
+                    commands.add(new Capture("createPatchComment", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String editPatchComment(String input) {
-                    CAPTURES.add(new Capture("editPatchComment", input));
+                    commands.add(new Capture("editPatchComment", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String deletePatchComment(String input) {
-                    CAPTURES.add(new Capture("deletePatchComment", input));
+                    commands.add(new Capture("deletePatchComment", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String editIssueComment(String input) {
-                    CAPTURES.add(new Capture("editIssueComment", input));
+                    commands.add(new Capture("editIssueComment", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String patchCommentReact(String input) {
-                    CAPTURES.add(new Capture("patchCommentReact", input));
+                    commands.add(new Capture("patchCommentReact", input));
                     return "{\"ok\": true}";
                 }
 
                 @Override
                 public String issueCommentReact(String input) {
-                    CAPTURES.add(new Capture("issueCommentReact", input));
+                    commands.add(new Capture("issueCommentReact", input));
                     return "{\"ok\": true}";
                 }
             };
-            return project;
         }
+
+        public record Capture(String method, String input) { }
     }
 
     public static class NoopContinuation<T> implements Continuation<T> {

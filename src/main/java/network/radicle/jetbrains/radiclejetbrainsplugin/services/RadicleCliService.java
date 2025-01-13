@@ -284,7 +284,7 @@ public class RadicleCliService {
             var res = rad.changePatchState(patch.repo, patch.id, patch.state.status, state);
             if (!RadAction.isSuccess(res)) {
                 logger.warn("received invalid command output:{} for changing patch state: {} - out:{} - err:{}",
-                        res.getExitCode(), res.getStdout(), res.getStderr());
+                        res.getExitCode(), patch.id, res.getStdout(), res.getStderr());
                 return null;
             }
             // return issue as-is, it will trigger a re-fetch anyway
@@ -371,12 +371,26 @@ public class RadicleCliService {
             return null;
         }
 
-        var gitResult = Git.getInstance().lsRemoteRefs(project, repo.getRoot(), radRemote, List.of(radRepo.defaultBranch));
-        if (gitResult != null && gitResult.getOutput() != null && !gitResult.getOutput().isEmpty()) {
-            var gitOutput = gitResult.getOutput().get(0);
-            radRepo.head = gitOutput.split(" ")[0].split("\t")[0];
+        try {
+            var gitResult = Git.getInstance().lsRemoteRefs(project, repo.getRoot(), radRemote, List.of(radRepo.defaultBranch));
+            if (!gitResult.getOutput().isEmpty()) {
+                var gitOutput = gitResult.getOutput().getFirst();
+                radRepo.head = gitOutput.split(" ")[0].split("\t")[0];
+            }
+        } catch (Exception e) {
+            logger.warn("error getting head for repo:{}", repo.getRoot().getPath(), e);
+            return radRepo;
         }
         return radRepo;
+    }
+
+    public Map<String, String> getEmbeds(String repoId, List<String> oids) {
+        try {
+            return jrad.getEmbeds(repoId, oids);
+        } catch (Exception e) {
+            logger.warn("error getting embeds for repo:{} oids:{}", repoId, oids, e);
+            return new HashMap<>();
+        }
     }
 
     protected SeedNode getSeedNode() {

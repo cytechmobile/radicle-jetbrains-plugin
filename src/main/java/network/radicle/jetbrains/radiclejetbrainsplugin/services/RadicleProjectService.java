@@ -505,11 +505,12 @@ public class RadicleProjectService {
         return executeCommand(exePath, radHome, workDir, args, repo, null);
     }
 
-    public ProcessOutput executeCommandFromFile(String exePatch, GitRepository repo, List<String> params) {
+    public ProcessOutput executeCommandFromFile(String exePath, GitRepository repo, List<String> params) {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radHome = projectSettings.getRadHome();
-        var workDir = repo.getRoot().getPath();
-        var scriptCommand = RadicleScriptCommandFactory.create(workDir, exePatch, radHome, params, this, project);
+        // if command must be run in the context of a repo (e.g. `rad patch list`), then `repo` must NOT be null
+        var workDir = repo == null ? exePath : repo.getRoot().getPath();
+        var scriptCommand = RadicleScriptCommandFactory.create(workDir, exePath, radHome, params, this, project);
         var output = runCommand(scriptCommand.getCommandLine(), repo, workDir, null);
         scriptCommand.deleteTempFile();
         return output;
