@@ -20,14 +20,16 @@ jobs:
           cd jrad
           apk update && apk add --no-cache git musl-dev xz asciidoctor zig
           rustup target add \
-              x86_64-unknown-linux-musl \
+              x86_64-unknown-linux-gnu \
+              aarch64-unknown-linux-gnu \
               x86_64-apple-darwin \
               aarch64-apple-darwin
           cargo install cargo-zigbuild@0.19.3
           cargo zigbuild --locked --release \
               --target=x86_64-apple-darwin \
               --target=aarch64-apple-darwin \
-              --target=x86_64-unknown-linux-musl
+              --target=x86_64-unknown-linux-gnu \
+              --target=aarch64-unknown-linux-gnu
         
 
   buildPluginArtifact:
