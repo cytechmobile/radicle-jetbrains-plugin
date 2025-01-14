@@ -5,6 +5,31 @@ on:
     branches: [ main ]
 
 jobs:
+  buildRustLibrary:
+    name: Create Rust Library Artifact
+    runs-on: ubuntu-latest
+    container:
+      image: rust:1.81-alpine3.20
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        shell: sh
+        run: |
+          cd jrad
+          apk update && apk add --no-cache git musl-dev xz asciidoctor zig
+          rustup target add \
+              x86_64-unknown-linux-musl \
+              x86_64-apple-darwin \
+              aarch64-apple-darwin
+          cargo install cargo-zigbuild@0.19.3
+          cargo zigbuild --locked --release \
+              --target=x86_64-apple-darwin \
+              --target=aarch64-apple-darwin \
+              --target=x86_64-unknown-linux-musl
+        
+
   buildPluginArtifact:
     name: Create Plugin Artifact
     runs-on: ubuntu-latest
@@ -44,6 +69,12 @@ jobs:
           curl -sSf https://radicle.xyz/install | sh
           echo "${RAD_HOME}/bin" >> $GITHUB_PATH
           echo "RAD_HOME=${{ github.workspace }}/.radicle" >> $GITHUB_ENV
+
+      - name: Build Rust Native Library
+        env:
+          RAD_HOME: ${{ github.workspace }}/.radicle
+        run: |
+          
 
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
