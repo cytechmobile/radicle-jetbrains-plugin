@@ -17,11 +17,11 @@ jobs:
       - name: Install Zig
         shell: sh
         env:
-          SDKROOT: ${{ github.workspace }}/macos-sdk-11.3
+          SDKROOT: ${{ github.workspace }}/jrad/macos-sdk-11.3
         run: |
           cd jrad
           apk update && apk add --no-cache git musl-dev xz asciidoctor zig
-          xz -d -c macos-sdk-11.3.tar.xz | tar -x       
+          xz -d -c macos-sdk-11.3.tar.xz | tar -x
           rustup target add \
               x86_64-unknown-linux-gnu \
               aarch64-unknown-linux-gnu \
