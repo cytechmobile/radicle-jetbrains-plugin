@@ -393,7 +393,6 @@ where
 
 #[cfg(test)]
 pub mod tests {
-    use crate::changeIssueTitleDescription;
     use radicle::cob::migrate;
     use radicle::crypto::ssh::Keystore;
     use radicle::crypto::test::signer::MockSigner;
@@ -430,7 +429,7 @@ pub mod tests {
         let input_cstr = CString::new(json_input.as_bytes()).unwrap();
         let input_ptr = input_cstr.as_ptr();
 
-        let result_ptr = changeIssueTitleDescription(input_ptr);
+        let result_ptr = super::changeIssueTitleDescription(input_ptr);
         let result = unsafe { CStr::from_ptr(result_ptr) }.to_str().unwrap();
         assert_eq!(result, "{\"ok\": true}");
     }
