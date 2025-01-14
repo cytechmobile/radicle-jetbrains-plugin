@@ -1,14 +1,18 @@
 mod lib;
+use anyhow::{anyhow, Error};
 use std::env;
 use std::ffi::{c_char, CStr, CString};
-use anyhow::{anyhow, Error};
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
     let result = handle(args);
     match result {
-        Ok(out) => {println!("{}", out);},
-        Err(e) => {println!("{{\"ok\": false, \"msg\": \"{e}\"}}");}
+        Ok(out) => {
+            println!("{}", out);
+        }
+        Err(e) => {
+            println!("{{\"ok\": false, \"msg\": \"{e}\"}}");
+        }
     }
 }
 
@@ -20,7 +24,7 @@ pub fn handle(args: Vec<String>) -> Result<String, Error> {
             let res = lib::radHome(fn_input);
             let result = unsafe { CStr::from_ptr(res) }.to_str()?;
             Ok(result.to_string())
-        },
+        }
         "changeIssueTitleDescription" => lib::handle_change_issue_title_description(fn_input),
         "editIssueComment" => lib::handle_edit_issue_comment(fn_input),
         "getEmbeds" => lib::handle_get_embeds(fn_input),
