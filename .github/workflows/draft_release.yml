@@ -13,13 +13,12 @@ jobs:
     steps:
       - name: Fetch Sources
         uses: actions/checkout@v4
-
-      - name: Install Zig
+      - name: Install and Build
         shell: sh
         env:
           SDKROOT: ${{ github.workspace }}/jrad/macos-sdk-11.3
         run: |
-          cd jrad
+          cd ./jrad
           apk update && apk add --no-cache git musl-dev xz asciidoctor zig
           xz -d -c macos-sdk-11.3.tar.xz | tar -x
           rustup target add \
@@ -33,18 +32,21 @@ jobs:
               --target=aarch64-apple-darwin \
               --target=x86_64-unknown-linux-gnu \
               --target=aarch64-unknown-linux-gnu
-
+      - name: Gather artifacts for upload
+        shell: sh
+        run: |
+          mkdir -p ./artifacts
+          cp ./jrad/target/aarch64-unknown-linux-gnu/release/libjrad.so ./artifacts/aarch64_libjrad.so
+          cp ./jrad/target/aarch64-unknown-linux-gnu/release/jrad ./artifacts/aarch64_jrad
+          cp ./jrad/target/aarch64-apple-darwin/release/libjrad.dylib ./artifacts/aarch64_libjrad.dylib
+          cp ./jrad/target/x86_64-apple-darwin/release/libjrad.dylib ./artifacts/x86_64_libjrad.dylib
+          cp ./jrad/target/x86_64-unknown-linux-gnu/release/libjrad.so ./artifacts/x86_64_libjrad.so
+          cp ./jrad/target/x86_64-unknown-linux-gnu/release/jrad ./artifacts/x86_64_jrad
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cdylib
-          path: |
-            target/aarch64-unknown-linux-gnu/release/libjrad.so
-            target/aarch64-unknown-linux-gnu/release/jrad
-            target/aarch64-apple-darwin/release/libjrad.dylib
-            target/x86_64-apple-darwin/release/libjrad.dylib
-            target/x86_64-unknown-linux-gnu/release/libjrad.so
-            target/x86_64-unknown-linux-gnu/release/jrad
+          name: jrad
+          path: artifacts
 
   buildPluginArtifact:
     name: Create Plugin Artifact
@@ -90,13 +92,15 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: cdylib
-
+          name: jrad
+          path: ./artifacts
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
         id: artifact
         shell: bash
         run: |
+          ls -al ./
+          ls -al ./artifacts
           # on linux there's a bug that causes buildPlugin to fail the first time: https://youtrack.jetbrains.com/issue/IDEA-291977
           ./gradlew buildPlugin || ./gradlew buildPlugin 
           cd ${{ github.workspace }}/build/distributions
