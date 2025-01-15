@@ -5,7 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -28,6 +31,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -370,17 +374,21 @@ public class RadicleCliService {
             RadAction.showErrorNotification(project, RadicleBundle.message("radCliError"), RadicleBundle.message("errorFindingProjectId"));
             return null;
         }
-
-        try {
-            var gitResult = Git.getInstance().lsRemoteRefs(project, repo.getRoot(), radRemote, List.of(radRepo.defaultBranch));
-            if (!gitResult.getOutput().isEmpty()) {
-                var gitOutput = gitResult.getOutput().getFirst();
-                radRepo.head = gitOutput.split(" ")[0].split("\t")[0];
+        final var radGitRemote = radRemote;
+        GitVcs.runInBackground(new Task.Backgroundable(project, RadicleBundle.message("fetching"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator progressIndicator) {
+                try {
+                    var gitResult = Git.getInstance().lsRemoteRefs(project, repo.getRoot(), radGitRemote, List.of(radRepo.defaultBranch));
+                    if (!gitResult.getOutput().isEmpty()) {
+                        var gitOutput = gitResult.getOutput().getFirst();
+                        radRepo.head = gitOutput.split(" ")[0].split("\t")[0];
+                    }
+                } catch (Exception e) {
+                    logger.warn("error getting head for repo:{}", repo.getRoot().getPath(), e);
+                }
             }
-        } catch (Exception e) {
-            logger.warn("error getting head for repo:{}", repo.getRoot().getPath(), e);
-            return radRepo;
-        }
+        });
         return radRepo;
     }
 

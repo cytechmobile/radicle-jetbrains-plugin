@@ -37,7 +37,7 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
 
     public IssueListPanel(IssueTabController controller, Project project) {
         super(controller, project);
-        rad = project.getService(RadicleCliService.class);
+        this.rad = project.getService(RadicleCliService.class);
         this.cntrl = controller;
         this.issueListSearchValue = getEmptySearchValueModel();
         this.issueListSearchValue.state = RadIssue.State.OPEN.label;
@@ -46,7 +46,18 @@ public class IssueListPanel extends ListPanel<RadIssue, IssueListSearchValue, Is
     @Override
     public List<RadIssue> fetchData(String projectId, GitRepository repo) {
         var cliService = repo.getProject().getService(RadicleCliService.class);
-        return cliService.getIssues(repo, projectId);
+        var issues = cliService.getIssues(repo, projectId);
+        if (issues != null && !issues.isEmpty()) {
+            for (var issue : issues) {
+                issue.author.tryResolveAlias(rad);
+                if (issue.assignees != null && !issue.assignees.isEmpty()) {
+                    for (var a : issue.assignees) {
+                        a.tryResolveAlias(rad);
+                    }
+                }
+            }
+        }
+        return issues;
     }
 
     @Override

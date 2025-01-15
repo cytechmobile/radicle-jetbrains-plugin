@@ -2,6 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Strings;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -370,8 +372,16 @@ public class RadicleNativeService {
                 tempFile.toFile().deleteOnExit();
                 tempDirPath.toFile().deleteOnExit();
             }
+            try {
+                Files.setPosixFilePermissions(tempFile, Set.of(
+                        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+                        PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+                        PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_WRITE, PosixFilePermission.OTHERS_EXECUTE));
+            } catch (Exception e) {
+                logger.debug("Unable to change wsl binary file permissions", e);
+            }
             final var wslBinPath = wslDirPath + "/jrad";
-            jRad = new WindowsJRad(wslBinPath);
+            jRad = new WindowsJRad(project, wslBinPath);
         } catch (Throwable e) {
             logger.warn("error creating WSL temp directory", e);
             loadError = true;
@@ -415,11 +425,13 @@ public class RadicleNativeService {
         String issueCommentReact(String input);
     }
 
-    public class WindowsJRad implements JRad {
+    public static class WindowsJRad implements JRad {
+        public final Project project;
         public final String wslBin;
         public final RadicleProjectService rad;
 
-        public WindowsJRad(String binFilePath) {
+        public WindowsJRad(Project project, String binFilePath) {
+            this.project = project;
             this.wslBin = binFilePath;
             this.rad = project.getService(RadicleProjectService.class);
         }
@@ -475,7 +487,7 @@ public class RadicleNativeService {
         }
 
         public String execute(String method, String input) {
-            var out = rad.executeCommandFromFile(wslBin, null, List.of(method, input));
+            var out = rad.executeCommandFromFile(wslBin, null, List.of(method, ExecUtil.escapeUnixShellArgument(input)));
             if (!RadAction.isSuccess(out)) {
                 return "{\"ok\": false, \"msg\": \"error executing command with exit code:" + out.getExitCode() + " \"}";
             }

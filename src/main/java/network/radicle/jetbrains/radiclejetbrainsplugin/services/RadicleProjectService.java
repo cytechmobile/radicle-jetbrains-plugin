@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -39,8 +40,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -53,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class RadicleProjectService {
-    private static final Logger logger = LoggerFactory.getLogger(RadicleProjectService.class);
+    private static final Logger logger = Logger.getInstance(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
     protected final RadicleProjectSettingsHandler projectSettingsHandler;
     protected RadDetails radDetails;
@@ -147,7 +146,7 @@ public class RadicleProjectService {
         try {
             gitRevisionNumber = GitChangeUtils.resolveReference(myProject, repo.getRoot(), branchName).getRev();
         } catch (Exception e) {
-            logger.warn("Unable to get revision number. repo : {} , branch name : {}", repo, branchName);
+            logger.warn("Unable to get revision number. repo: " + repo + ", branch name: {}" + branchName);
         }
         return gitRevisionNumber;
     }
@@ -437,11 +436,11 @@ public class RadicleProjectService {
 
     public ProcessOutput changePatchState(GitRepository repo, String patchId, String currState, String state) {
         if (Strings.isNullOrEmpty(currState) || Strings.isNullOrEmpty(state) || currState.equals(state)) {
-            logger.warn("cannot change patch state with invalid curr:{}/new:{} states for patch:{}", currState, state, patchId);
+            logger.warn("cannot change patch state with invalid curr:" + currState + "/new:" + state + " states for patch:" + patchId);
             return new ProcessOutput(-1);
         }
         if (RadPatch.State.MERGED.status.equals(currState) || RadPatch.State.MERGED.status.equals(state)) {
-            logger.warn("cannot change patch state to/from merged for patch:{}", patchId);
+            logger.warn("cannot change patch state to/from merged for patch:" + patchId);
             return new ProcessOutput(-1);
         }
         ProcessOutput res = null;
@@ -509,7 +508,18 @@ public class RadicleProjectService {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radHome = projectSettings.getRadHome();
         // if command must be run in the context of a repo (e.g. `rad patch list`), then `repo` must NOT be null
-        var workDir = repo == null ? exePath : repo.getRoot().getPath();
+        /* String workDir;
+        if (repo != null) {
+            workDir = repo.getRoot().getPath();
+        } else {
+            workDir = exePath;
+            if (workDir.contains("\\")) {
+                workDir = workDir.substring(0, workDir.lastIndexOf("\\"));
+            } else if (workDir.contains("/")) {
+                workDir = workDir.substring(0, workDir.lastIndexOf("/"));
+            }
+        } */
+        var workDir = repo == null ? "." : repo.getRoot().getPath();
         var scriptCommand = RadicleScriptCommandFactory.create(workDir, exePath, radHome, params, this, project);
         var output = runCommand(scriptCommand.getCommandLine(), repo, workDir, null);
         scriptCommand.deleteTempFile();

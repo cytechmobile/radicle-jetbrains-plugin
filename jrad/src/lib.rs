@@ -375,7 +375,7 @@ fn read_input(input: *const c_char) -> Result<String, anyhow::Error> {
 }
 
 fn construct_result(input: String) -> *const c_char {
-    input.to_string().into_c_string().unwrap().into_raw()
+    input.into_c_string().unwrap().into_raw()
 }
 
 fn construct_error_result(e: anyhow::Error) -> *const c_char {

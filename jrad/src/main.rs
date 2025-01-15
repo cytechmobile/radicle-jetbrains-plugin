@@ -1,7 +1,8 @@
 mod lib;
 use anyhow::{anyhow, Error};
+use radicle::git::raw::IntoCString;
 use std::env;
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{c_char, CStr};
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
@@ -18,7 +19,8 @@ pub fn main() {
 
 pub fn handle(args: Vec<String>) -> Result<String, Error> {
     let fn_name = args.get(1).unwrap_or(&"".to_string()).to_owned();
-    let fn_input = convert_input(args.get(2).unwrap_or(&"".to_string()).to_owned())?;
+    let fn_input_str = args.get(2).unwrap_or(&"".to_string()).to_owned();
+    let fn_input = convert_input(fn_input_str.to_owned())?;
     match fn_name.as_str() {
         "radHome" => {
             let res = lib::radHome(fn_input);
@@ -39,6 +41,5 @@ pub fn handle(args: Vec<String>) -> Result<String, Error> {
 }
 
 pub fn convert_input(input: String) -> Result<*const c_char, Error> {
-    let input_cstr = CString::new(input.as_bytes())?;
-    Ok(input_cstr.as_ptr())
+    Ok(input.into_c_string().unwrap().into_raw())
 }
