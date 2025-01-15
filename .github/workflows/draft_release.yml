@@ -94,13 +94,22 @@ jobs:
         with:
           name: jrad
           path: ./artifacts
+      - name: Copy jrad libraries/binaries
+        run: |
+          mkdir -p ./src/main/resources/META-INF/jrad/aarch64
+          mkdir -p ./src/main/resources/META-INF/jrad/x86_64
+          cp ./artifacts/aarch64_libjrad.so ./src/main/resources/META-INF/jrad/aarch64/libjrad.so
+          cp ./artifacts/aarch64_jrad ./src/main/resources/META-INF/jrad/aarch64/jrad
+          cp ./artifacts/aarch64_libjrad.dylib ./src/main/resources/META-INF/jrad/aarch64/libjrad.dylib
+          cp ./artifacts/x86_64_libjrad.dylib ./src/main/resources/META-INF/jrad/x86_64/libjrad.dylib
+          cp ./artifacts/x86_64_libjrad.so ./src/main/resources/META-INF/jrad/x86_64/libjrad.so
+          cp ./artifacts/x86_64_jrad ./src/main/resources/META-INF/jrad/x86_64/jrad
+          ls -R ./src/main/resources/META-INF
       # Prepare plugin archive content for creating artifact
       - name: Prepare Plugin Artifact
         id: artifact
         shell: bash
         run: |
-          ls -al ./
-          ls -al ./artifacts
           # on linux there's a bug that causes buildPlugin to fail the first time: https://youtrack.jetbrains.com/issue/IDEA-291977
           ./gradlew buildPlugin || ./gradlew buildPlugin 
           cd ${{ github.workspace }}/build/distributions
