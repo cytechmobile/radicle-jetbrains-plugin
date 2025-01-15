@@ -365,7 +365,8 @@ public class RadicleNativeService {
             var tempDirPath = Paths.get(tempDir);
             Files.createDirectories(tempDirPath);
             var tempFile = Files.createFile(tempDirPath.resolve("jrad"));
-            try (var is = RadicleNativeService.class.getResourceAsStream("/META-INF/jrad/jrad")) {
+            final var arch = SystemInfo.isAarch64 ? "aarch64" : "x86_64"; // either aarch64 or x86_64
+            try (var is = RadicleNativeService.class.getResourceAsStream("/META-INF/jrad/" + arch + "/jrad")) {
                 Files.copy(Objects.requireNonNull(is), tempFile, StandardCopyOption.REPLACE_EXISTING);
             } finally {
                 // set folder to be deleted after VM shuts down
@@ -400,7 +401,8 @@ public class RadicleNativeService {
         // create temp file
         var tempDir = Files.createTempDirectory("radicle-jetbrains-plugin-native-" + System.currentTimeMillis());
         var tempFile = Files.createFile(tempDir.resolve(library));
-        try (var is = RadicleNativeService.class.getResourceAsStream("/META-INF/jrad/" + library)) {
+        final var arch = SystemInfo.isAarch64 ? "aarch64" : "x86_64"; // either aarch64 or x86_64
+        try (var is = RadicleNativeService.class.getResourceAsStream("/META-INF/jrad/" + arch + "/" + library)) {
             Files.copy(Objects.requireNonNull(is), tempFile, StandardCopyOption.REPLACE_EXISTING);
         } finally {
             // set folder to be deleted after VM shuts down
