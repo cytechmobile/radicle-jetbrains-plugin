@@ -9,7 +9,8 @@ jobs:
     name: Create Rust Library Artifact
     runs-on: ubuntu-latest
     container:
-      image: rust:1.81-alpine3.20
+      #image: rust:1.81-alpine3.20
+      image: rust:alpine
     steps:
       - name: Fetch Sources
         uses: actions/checkout@v4
@@ -26,7 +27,8 @@ jobs:
               aarch64-unknown-linux-gnu \
               x86_64-apple-darwin \
               aarch64-apple-darwin
-          cargo install cargo-zigbuild@0.19.3
+          # cargo install cargo-zigbuild@0.19.3
+          cargo install cargo-zigbuild
           cargo zigbuild --locked --release \
               --target=x86_64-apple-darwin \
               --target=aarch64-apple-darwin \
