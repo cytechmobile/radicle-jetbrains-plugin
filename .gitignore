@@ -7,3 +7,6 @@ video
 .intellijPlatform/
 *.iml
 target/
+macos-sdk-11.3/
+META-INF/jrad/
+artifacts/

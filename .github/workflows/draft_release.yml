@@ -14,14 +14,17 @@ jobs:
     steps:
       - name: Fetch Sources
         uses: actions/checkout@v4
-      - name: Install and Build
+      - name: Setup dependencies
         shell: sh
-        env:
-          SDKROOT: ${{ github.workspace }}/jrad/macos-sdk-11.3
+        working-directory: ./jrad
         run: |
-          cd ./jrad
           apk update && apk add --no-cache git musl-dev xz asciidoctor zig
           xz -d -c macos-sdk-11.3.tar.xz | tar -x
+          echo "SDKROOT=${{ github.workspace }}/jrad/macos-sdk-11.3" >> $GITHUB_ENV
+      - name: Install zig
+        shell: sh
+        working-directory: ./jrad
+        run: |
           rustup target add \
               x86_64-unknown-linux-gnu \
               aarch64-unknown-linux-gnu \
@@ -29,6 +32,10 @@ jobs:
               aarch64-apple-darwin
           # cargo install cargo-zigbuild@0.19.3
           cargo install cargo-zigbuild
+      - name: Build library artifacts
+        shell: sh
+        working-directory: ./jrad
+        run: |
           cargo zigbuild --locked --release \
               --target=x86_64-apple-darwin \
               --target=aarch64-apple-darwin \
@@ -56,6 +63,7 @@ jobs:
     needs: buildRustLibrary
     outputs:
       version: ${{ steps.properties.outputs.version }}
+      filename: ${{ steps.artifact.outputs.filename }}
     steps:
       # Check out current repository
       - name: Fetch Sources
@@ -115,17 +123,14 @@ jobs:
           # on linux there's a bug that causes buildPlugin to fail the first time: https://youtrack.jetbrains.com/issue/IDEA-291977
           ./gradlew buildPlugin || ./gradlew buildPlugin 
           cd ${{ github.workspace }}/build/distributions
-          FILENAME=`ls *.zip`
-          unzip "$FILENAME" -d content
-
+          FILENAME=$(ls *.zip)
           echo "filename=${FILENAME:0:-4}" >> $GITHUB_OUTPUT
-
       # Store already-built plugin as an artifact for downloading
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact.outputs.filename }}
-          path: ./build/distributions/content/*/*
+          path: ./build/distributions/${{ steps.artifact.outputs.filename }}.zip
 
   # Prepare a draft release for GitHub Releases page for the manual verification
   # If accepted and published, release workflow would be triggered
@@ -137,11 +142,9 @@ jobs:
     permissions:
       contents: write
     steps:
-
       # Check out current repository
       - name: Fetch Sources
         uses: actions/checkout@v4
-
       # Remove old release drafts by using the curl request for the available releases with draft flag
       - name: Remove Old Release Drafts
         env:
@@ -150,13 +153,26 @@ jobs:
           gh api repos/{owner}/{repo}/releases \
             --jq '.[] | select(.draft == true) | .id' \
             | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
-
+      - name: Download native library
+        uses: actions/download-artifact@v4
+        with:
+          name: jrad
+          path: ./artifacts
+      - name: Download built plugin
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.buildPluginArtifact.outputs.filename }}
+          path: ./${{ needs.buildPluginArtifact.outputs.filename }}
       # Create new release draft - which is not publicly visible and requires manual acceptance
       - name: Create Release Draft
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # zip up the native artifacts
+          zip -r jrad.zip ./artifacts
+          zip -r "${{ needs.buildPluginArtifact.outputs.filename }}.zip" "./${{ needs.buildPluginArtifact.outputs.filename }}"
           gh release create v${{ needs.buildPluginArtifact.outputs.version }} \
             --draft \
             --title "v${{ needs.buildPluginArtifact.outputs.version }}" \
-            --generate-notes
+            --generate-notes \
+            "./${{ needs.buildPluginArtifact.outputs.filename }}.zip" ./jrad.zip
