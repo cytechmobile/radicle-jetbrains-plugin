@@ -30,7 +30,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadProject;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -182,7 +181,6 @@ public class RadicleCliService {
         patch.project = repo.getProject();
         patch.repo = repo;
         patch.self = self;
-        patch.seedNode = getSeedNode();
         patch.radProject = getRadRepo(repo);
         return patch;
     }
@@ -399,12 +397,6 @@ public class RadicleCliService {
             logger.warn("error getting embeds for repo:{} oids:{}", repoId, oids, e);
             return new HashMap<>();
         }
-    }
-
-    protected SeedNode getSeedNode() {
-        var sh = new RadicleProjectSettingsHandler(project);
-        var settings = sh.loadSettings();
-        return settings.getSeedNode();
     }
 
     public Project getProject() {

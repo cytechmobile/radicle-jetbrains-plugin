@@ -127,7 +127,6 @@ public class RadStub extends RadicleProjectService {
                 var myPatch = new RadPatch(TimelineTest.patch);
                 myPatch.repo = null;
                 myPatch.project = null;
-                myPatch.seedNode = null;
                 patches.add(myPatch);
             }
             var patch = patches.stream().filter(p -> p.id.equals(patchId)).findFirst().orElse(null);

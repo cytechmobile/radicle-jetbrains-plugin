@@ -36,7 +36,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadPath;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadTrack;
 import network.radicle.jetbrains.radiclejetbrainsplugin.commands.RadicleScriptCommandFactory;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadPatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +54,6 @@ public class RadicleProjectService {
     private static final Logger logger = Logger.getInstance(RadicleProjectService.class);
     private static final int TIMEOUT = 60_000;
     protected final RadicleProjectSettingsHandler projectSettingsHandler;
-    protected RadDetails radDetails;
     protected String wslDistro;
     protected Project project;
 
@@ -67,14 +65,6 @@ public class RadicleProjectService {
     @NonInjectable
     public RadicleProjectService(RadicleProjectSettingsHandler radicleProjectSettingsHandler) {
         this.projectSettingsHandler = radicleProjectSettingsHandler;
-    }
-
-    public void setRadDetails(RadDetails details) {
-        this.radDetails = details;
-    }
-
-    public RadDetails getRadDetails() {
-        return this.radDetails;
     }
 
     public String detectRadPath() {
@@ -219,11 +209,6 @@ public class RadicleProjectService {
         var params = List.of("push", "rad", "-o", "patch.message=" + ExecUtil.escapeUnixShellArgument(title),
                  "-o", "patch.message=" + ExecUtil.escapeUnixShellArgument(description), branch);
         return executeCommandFromFile("git", repo, params);
-    }
-
-    public ProcessOutput patchCache(GitRepository repo) {
-        var params = List.of("patch", "cache");
-        return executeCommandFromFile(repo, params);
     }
 
     public ProcessOutput clone(String urn, String directory, String radPath, String radHome) {

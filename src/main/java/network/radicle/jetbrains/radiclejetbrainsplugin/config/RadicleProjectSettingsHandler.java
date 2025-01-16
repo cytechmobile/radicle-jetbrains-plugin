@@ -7,19 +7,15 @@ import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.SeedNode;
 
 public class RadicleProjectSettingsHandler {
     public static final String RAD_SETTINGS_PREFIX = RadicleProjectSettingsHandler.class.getPackageName();
     public static final String RAD_HOME_KEY = RAD_SETTINGS_PREFIX + ".radHome";
     public static final String PATH_KEY = RAD_SETTINGS_PREFIX + ".path";
-    public static final String RAD_SEED_KEY = RAD_SETTINGS_PREFIX + ".radSeedKey";
-    public static final String DEFAULT_SEED_NODES = "http://localhost:8080";
     private final Project project;
 
     public RadicleProjectSettingsHandler(Project project) {
         this.project = project;
-        saveDefaultSeedNodes();
     }
 
     public Project getProject() {
@@ -39,16 +35,7 @@ public class RadicleProjectSettingsHandler {
     }
 
     public boolean isSettingsEmpty() {
-        return Strings.isNullOrEmpty(getPath()) || Strings.isNullOrEmpty(getRadHome()) ||
-                Strings.isNullOrEmpty(getSeedNode().url);
-    }
-
-    private SeedNode getSeedNode() {
-        var seed = getApplicationProperties().getValue(RAD_SEED_KEY);
-        if (Strings.isNullOrEmpty(seed)) {
-            return new SeedNode("");
-        }
-        return new SeedNode(seed);
+        return Strings.isNullOrEmpty(getPath()) || Strings.isNullOrEmpty(getRadHome());
     }
 
     public void saveRadHome(String radHome) {
@@ -59,23 +46,12 @@ public class RadicleProjectSettingsHandler {
         getApplicationProperties().setValue(PATH_KEY, path);
     }
 
-    public void saveSeedNode(String seedNode) {
-        getApplicationProperties().setValue(RAD_SEED_KEY, Strings.nullToEmpty(seedNode));
-    }
-
     public void savePassphrase(String key, String passphrase) {
         storeCredentials(key, passphrase);
     }
 
-    private void saveDefaultSeedNodes() {
-        var loadedSeedNode = getSeedNode();
-        if (Strings.isNullOrEmpty(loadedSeedNode.url)) {
-            saveSeedNode(DEFAULT_SEED_NODES);
-        }
-    }
-
     public RadicleProjectSettings loadSettings() {
-        return new RadicleProjectSettings(getRadHome(), getPath(), getSeedNode());
+        return new RadicleProjectSettings(getRadHome(), getPath());
     }
 
     private PropertiesComponent getApplicationProperties() {

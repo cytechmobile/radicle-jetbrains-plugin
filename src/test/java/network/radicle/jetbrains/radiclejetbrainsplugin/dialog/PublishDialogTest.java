@@ -14,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(JUnit4.class)
 public class PublishDialogTest extends AbstractIT {
-
     private static final String BRANCHNAME = "main";
     private static final String NAME = "testName";
     private static final String DESCRIPTION = "testDesc";
@@ -28,8 +27,6 @@ public class PublishDialogTest extends AbstractIT {
         var publishDialog = new PublishDialog(List.of(firstRepo, secondRepo), super.getProject());
         assertThat(publishDialog.getProjectSelect().isVisible()).isTrue();
         assertThat(publishDialog.getProjectNameLabel().isVisible()).isTrue();
-        assertThat(publishDialog.getSeedNodeSelect().isVisible()).isTrue();
-        assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
     }
 
     @Test
@@ -40,11 +37,8 @@ public class PublishDialogTest extends AbstractIT {
 
         assertThat(publishDialog.getProjectSelect().isVisible()).isTrue();
         assertThat(publishDialog.getProjectNameLabel().isVisible()).isTrue();
-        assertThat(publishDialog.getSeedNodeSelect().isVisible()).isTrue();
-        assertThat(publishDialog.getSeedNodeLabel().isVisible()).isTrue();
 
         publishDialog.getVisibilitySelect().setSelectedIndex(0);
-        publishDialog.getSeedNodeSelect().setSelectedIndex(0);
         publishDialog.getBranchField().setText(BRANCHNAME);
         publishDialog.getNameField().setText(NAME);
         publishDialog.getDescriptionField().setText(DESCRIPTION);

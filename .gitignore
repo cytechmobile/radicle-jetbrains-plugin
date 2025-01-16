@@ -8,5 +8,5 @@ video
 *.iml
 target/
 macos-sdk-11.3/
-META-INF/jrad/
+**/META-INF/jrad/**
 artifacts/

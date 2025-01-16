@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Strings;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.EDT;
 import jnr.ffi.LibraryLoader;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -103,6 +105,13 @@ public class RadicleNativeService {
         if (aliases.containsKey(nid)) {
             return aliases.get(nid);
         }
+        if (EDT.isCurrentThreadEdt()) {
+            final var resolveNid = nid;
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                getAlias(resolveNid);
+            });
+            return null;
+        }
         var jrad = checkGetJRad();
         if (jrad == null) {
             return null;
@@ -124,9 +133,16 @@ public class RadicleNativeService {
         if (missing.isEmpty()) {
             return result;
         }
+        if (EDT.isCurrentThreadEdt()) {
+            final var resolveNids = nids;
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                getAlias(resolveNids);
+            });
+            return result;
+        }
         var jrad = checkGetJRad();
         if (jrad == null) {
-            return null;
+            return result;
         }
         try {
             var json = RadicleCliService.MAPPER.writeValueAsString(Map.of("ids", missing));
@@ -345,9 +361,7 @@ public class RadicleNativeService {
             var libName = System.mapLibraryName("jrad");
             libFile = createTempFileFromJar(libName);
             jRad = LibraryLoader.create(JRad.class)
-                    .search(Paths.get("./jrad/target/release").toAbsolutePath().normalize().toString())
-                    .search(Paths.get("./jrad/target/debug").toAbsolutePath().normalize().toString())
-                    .search(libFile == null ? "." : libFile.toAbsolutePath().getParent().toString())
+                    .search(libFile.toAbsolutePath().getParent().toString())
                     .failImmediately()
                     .load("jrad");
         } catch (Throwable t) {

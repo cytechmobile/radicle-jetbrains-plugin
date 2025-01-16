@@ -2,9 +2,7 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.LightPlatform4TestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadStub;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
@@ -32,7 +30,6 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         radicleSettingsHandler = new RadicleProjectSettingsHandler(getProject());
         radicleSettingsHandler.saveRadHome(AbstractIT.RAD_HOME);
         radicleSettingsHandler.savePath(AbstractIT.RAD_PATH);
-        radicleSettingsHandler.saveSeedNode("http://localhost:8080");
         radStub.commands.clear();
     }
 
@@ -260,12 +257,7 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
     }
 
     public void executeUiTasks() {
-        for (int i = 0; i < 10; i++) {
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-            CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-            Thread.yield();
-        }
+        AbstractIT.executeUiTasks(getProject());
     }
 
     public GeneralCommandLine pollCmd() throws InterruptedException {

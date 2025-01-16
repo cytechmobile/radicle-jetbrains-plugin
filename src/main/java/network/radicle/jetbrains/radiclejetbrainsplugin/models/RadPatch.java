@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 public class RadPatch {
     private static final Logger logger = LoggerFactory.getLogger(RadPatch.class);
 
-    public SeedNode seedNode;
     public GitRepository repo;
     public Project project;
     public RadProject radProject;
@@ -69,7 +68,6 @@ public class RadPatch {
     }
 
     public RadPatch(RadPatch other) {
-        this.seedNode = other.seedNode;
         this.repo = other.repo;
         this.project = other.project;
         this.radProject = other.radProject;

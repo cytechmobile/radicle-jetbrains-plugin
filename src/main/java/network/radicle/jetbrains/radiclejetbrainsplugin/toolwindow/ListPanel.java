@@ -1,6 +1,5 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow;
 
-import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -107,11 +106,6 @@ public abstract class ListPanel<P, Q extends ReviewListSearchValue, S extends Se
         var countDown = new CountDownLatch(1);
         if (searchVm != null) {
             searchVm.setCountDown(countDown);
-        }
-        var settings =  radicleProjectSettingsHandler.loadSettings();
-        var seedNode = settings.getSeedNode();
-        if (seedNode == null || Strings.isNullOrEmpty(seedNode.url)) {
-            return;
         }
         var gitRepoManager = GitRepositoryManager.getInstance(project);
         var repos = gitRepoManager.getRepositories();

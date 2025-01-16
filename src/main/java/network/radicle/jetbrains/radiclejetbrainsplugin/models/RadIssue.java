@@ -34,7 +34,6 @@ public class RadIssue {
     public GitRepository repo;
     public Project project;
     public String projectId;
-    public SeedNode seedNode;
 
     public RadIssue() {
         // for json
@@ -61,7 +60,6 @@ public class RadIssue {
         this.repo = other.repo;
         this.project = other.project;
         this.projectId = other.projectId;
-        this.seedNode = other.seedNode;
     }
 
     public RadDiscussion findDiscussion(String commentId) {
@@ -70,7 +68,7 @@ public class RadIssue {
 
     @JsonIgnore
     public String getDescription() {
-        return discussion == null || discussion.isEmpty() ? "" : discussion.get(0).body;
+        return discussion == null || discussion.isEmpty() ? "" : discussion.getFirst().body;
     }
 
     @JsonFormat(shape = JsonFormat.Shape.OBJECT)

@@ -1,5 +1,6 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.dialog;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -12,7 +13,6 @@ import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadInit;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.RadicleToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,18 +37,15 @@ public class PublishDialog extends DialogWrapper {
     private JTextField branchField;
     private JTextField nameField;
     private JBTextArea descriptionField;
-    private JComboBox<String> seedNodeSelect;
     private JComboBox<GitRepository> projectSelect;
     private JLabel projectNameLabel;
     private JLabel branchLabel;
     private JLabel nameLabel;
     private JLabel descrLabel;
-    private JLabel seedNodeLabel;
     private JComboBox<Visibility> visibilitySelect;
     private JLabel visibilityLabel;
     private final List<GitRepository> repos;
     private final Project project;
-    private final RadicleProjectSettingsHandler radicleProjectSettingsHandler;
     private boolean isSelectedRepoInitialized;
     public CountDownLatch isUiLoaded = new CountDownLatch(1);
 
@@ -56,7 +53,6 @@ public class PublishDialog extends DialogWrapper {
         super(true);
         this.repos = repos;
         this.project = project;
-        this.radicleProjectSettingsHandler = new RadicleProjectSettingsHandler(project);
         init();
     }
 
@@ -99,8 +95,6 @@ public class PublishDialog extends DialogWrapper {
         super.init();
         setOKActionEnabled(false);
         setTitle(RadicleBundle.message("shareProject"));
-        var settings = radicleProjectSettingsHandler.loadSettings();
-        var seedNode = settings.getSeedNode();
         var textFieldListener = new TextFieldListener();
         nameField.getDocument().addDocumentListener(textFieldListener);
         branchField.getDocument().addDocumentListener(textFieldListener);
@@ -115,7 +109,7 @@ public class PublishDialog extends DialogWrapper {
         for (var vi : Visibility.values()) {
             visibilitySelect.addItem(vi);
         }
-        seedNodeSelect.addItem(seedNode.url);
+        //seedNodeSelect.addItem(seedNode.url);
         for (var repo : repos) {
             projectSelect.addItem(repo);
         }
@@ -136,44 +130,13 @@ public class PublishDialog extends DialogWrapper {
                 branchLabel.setVisible(showInitFields);
                 descrLabel.setVisible(showInitFields);
                 nameLabel.setVisible(showInitFields);
+                visibilityLabel.setVisible(showInitFields);
+                visibilitySelect.setVisible(showInitFields);
 
-                if (isInitialized || (!nameField.getText().isEmpty() && !branchField.getText().isEmpty() &&
-                        !descriptionField.getText().isEmpty() && seedNodeSelect.getSelectedItem() != null)) {
-                    setOKActionEnabled(true);
-                } else {
-                    setOKActionEnabled(false);
-                }
+                var ok = isInitialized || (!nameField.getText().isEmpty() && !branchField.getText().isEmpty() && !descriptionField.getText().isEmpty());
+                setOKActionEnabled(ok);
             }, ModalityState.any());
         });
-    }
-
-    public static class ComboBoxCellRenderer extends DefaultListCellRenderer {
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                                                      boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof GitRepository) {
-                var repo = (GitRepository) value;
-                setText(repo.getRoot().getName());
-            }
-            if (value instanceof Visibility) {
-                var val = ((Visibility) value).label;
-                setText(val);
-            }
-            return this;
-        }
-    }
-
-    public class TextFieldListener extends DocumentAdapter {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-            if (nameField.getText().isEmpty() || branchField.getText().isEmpty() ||
-                    descriptionField.getText().isEmpty() || seedNodeSelect.getSelectedItem() == null) {
-                setOKActionEnabled(false);
-            } else {
-                setOKActionEnabled(true);
-            }
-        }
     }
 
     public JTextField getBranchField() {
@@ -188,16 +151,8 @@ public class PublishDialog extends DialogWrapper {
         return descriptionField;
     }
 
-    public JComboBox<String> getSeedNodeSelect() {
-        return seedNodeSelect;
-    }
-
     public JComboBox<Visibility> getVisibilitySelect() {
         return visibilitySelect;
-    }
-
-    public JLabel getSeedNodeLabel() {
-        return seedNodeLabel;
     }
 
     public JComboBox<GitRepository> getProjectSelect() {
@@ -206,6 +161,29 @@ public class PublishDialog extends DialogWrapper {
 
     public JLabel getProjectNameLabel() {
         return projectNameLabel;
+    }
+
+    public class TextFieldListener extends DocumentAdapter {
+        @Override
+        protected void textChanged(@NotNull DocumentEvent e) {
+            var err = Strings.isNullOrEmpty(nameField.getText()) || Strings.isNullOrEmpty(branchField.getText()) ||
+                      Strings.isNullOrEmpty(descriptionField.getText());
+            setOKActionEnabled(!err);
+        }
+    }
+
+    public static class ComboBoxCellRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof GitRepository repo) {
+                setText(repo.getRoot().getName());
+            }
+            if (value instanceof Visibility val) {
+                setText(val.label);
+            }
+            return this;
+        }
     }
 
     public enum Visibility {

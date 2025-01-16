@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,9 +73,8 @@ public class RadicleOpenInBrowserAction extends AnAction {
     }
 
     public void openInBrowser(Project project, GitRepository repo, String fileToOpen, BrowserLauncher browserLauncher) {
-        var radicleSettingsHandler = new RadicleProjectSettingsHandler(project);
-        var nodeUrl = radicleSettingsHandler.loadSettings().getSeedNode().url
-                .replace("http://", "").replace("https://", "");
+        var cli = project.getService(RadicleCliService.class);
+        var nodeUrl = cli.getWebUrl();
         if (Strings.isNullOrEmpty(nodeUrl)) {
             return;
         }

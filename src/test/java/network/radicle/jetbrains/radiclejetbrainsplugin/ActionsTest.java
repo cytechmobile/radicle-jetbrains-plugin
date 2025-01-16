@@ -10,7 +10,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.actions.RadicleSyncFetch
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadClone;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSelf;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadSync;
-import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.listeners.RadicleManagerListener;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import org.junit.Test;
@@ -204,10 +203,7 @@ public class ActionsTest extends AbstractIT {
         ArgumentCaptor<URI> urlCaptor = ArgumentCaptor.forClass(URI.class);
         verify(browserUtilMock).browse(urlCaptor.capture());
         String url = String.valueOf(urlCaptor.getValue());
-        var settings = new RadicleProjectSettingsHandler(getProject());
-        var seedNodeUrl = settings.loadSettings().getSeedNode().url;
-        var host = seedNodeUrl.replace("http://", "").replace("https://", "");
-        var expected = RadicleOpenInBrowserAction.UI_URL + host + "/rad:123/tree" + fileToOpen;
+        var expected = RadicleOpenInBrowserAction.UI_URL + radCli.getWebUrl() + "/rad:123/tree" + fileToOpen;
         assertThat(url).isEqualTo(expected);
     }
 
