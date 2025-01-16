@@ -3,7 +3,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadTrack extends RadAction {
     protected RadTrackType type;
@@ -29,7 +28,6 @@ public class RadTrack extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = project.getService(RadicleProjectService.class);
         if (type == RadTrackType.TRACK_PEER) {
             return rad.trackPeer(peer);
         } else {

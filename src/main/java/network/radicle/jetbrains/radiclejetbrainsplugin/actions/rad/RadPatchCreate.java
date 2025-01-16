@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadPatchCreate extends RadAction {
     private final String title;
@@ -18,7 +17,6 @@ public class RadPatchCreate extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = project.getService(RadicleProjectService.class);
         return rad.createPatch(repo, title, description, branch);
     }
 

@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 import java.util.List;
 
@@ -20,7 +19,6 @@ public class RadIssueLabel extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = project.getService(RadicleProjectService.class);
         return rad.addRemoveIssueLabels(repo, issueId, addedLabels, deleteLabels);
     }
 

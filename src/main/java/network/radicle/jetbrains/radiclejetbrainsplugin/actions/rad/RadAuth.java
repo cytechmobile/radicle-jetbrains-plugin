@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadAuth extends RadAction {
     private final String alias;
@@ -49,7 +48,6 @@ public class RadAuth extends RadAction {
     }
 
     public ProcessOutput createNewIdentity() {
-        var rad = project.getService(RadicleProjectService.class);
         var output = rad.auth(passphrase, alias, radHome, radPath);
         return validateOutput(output);
     }

@@ -4,10 +4,10 @@ import com.google.common.base.Strings;
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadSync extends RadAction {
     private boolean fetch;
+
     public RadSync(GitRepository repo, boolean fetch) {
         super(repo);
         this.fetch = fetch;
@@ -23,7 +23,6 @@ public class RadSync extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = repo.getProject().getService(RadicleProjectService.class);
         var output = rad.sync(repo, this.fetch);
         /* rad fetch return success exit code (0) and a failed msg if fetch command failed */
         var isSuccess = RadAction.isSuccess(output) && !output.getStdout().contains("Failed");

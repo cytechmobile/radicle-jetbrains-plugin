@@ -38,14 +38,19 @@ public class RadAuthor {
         return "{\"id\": " + id + "\", \"alias\": \"" + alias + "\"}";
     }
 
-    public void tryResolveAlias(RadicleCliService rad) {
-        if (Strings.isNullOrEmpty(alias) && rad != null) {
-            alias = Strings.nullToEmpty(rad.getAlias(id));
+    public void tryResolveAlias(RadicleCliService cli) {
+        if (Strings.isNullOrEmpty(alias) && cli != null) {
+            alias = Strings.nullToEmpty(cli.getAlias(id));
         }
     }
 
     public boolean contains(RadicleCliService rad, String query) {
         tryResolveAlias(rad);
+        final var cq = Strings.nullToEmpty(query).toLowerCase();
+        return Strings.nullToEmpty(id).toLowerCase().contains(cq) || Strings.nullToEmpty(alias).toLowerCase().contains(cq);
+    }
+
+    public boolean contains(String query) {
         final var cq = Strings.nullToEmpty(query).toLowerCase();
         return Strings.nullToEmpty(id).toLowerCase().contains(cq) || Strings.nullToEmpty(alias).toLowerCase().contains(cq);
     }

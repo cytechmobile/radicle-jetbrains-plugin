@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadComment extends RadAction {
     private String replyTo;
@@ -27,7 +26,6 @@ public class RadComment extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = repo.getProject().getService(RadicleProjectService.class);
         return rad.comment(repo, id, comment, replyTo, type);
     }
 

@@ -19,6 +19,7 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSet
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleSettingsView;
 import network.radicle.jetbrains.radiclejetbrainsplugin.dialog.IdentityDialog;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
+import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.auth.AuthService;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +37,8 @@ public abstract class RadAction {
 
     protected Project project;
     protected GitRepository repo;
-
-    public RadAction() {
-        this(null, null);
-    }
+    protected RadicleCliService cli;
+    protected RadicleProjectService rad;
 
     public RadAction(Project project) {
         this(project, null);
@@ -52,6 +51,8 @@ public abstract class RadAction {
     public RadAction(Project project, GitRepository repo) {
         this.project = project;
         this.repo = repo;
+        this.cli = project.getService(RadicleCliService.class);
+        this.rad = project.getService(RadicleProjectService.class);
     }
 
     public abstract ProcessOutput run();
@@ -96,7 +97,6 @@ public abstract class RadAction {
             return new ProcessOutput(0);
         }
         var pr = project != null ? project : repo.getProject();
-        var rad = pr.getService(RadicleProjectService.class);
         var output = rad.self(radHome, radPath);
         var lines = output.getStdoutLines(true);
         var radDetails = new RadDetails(lines);

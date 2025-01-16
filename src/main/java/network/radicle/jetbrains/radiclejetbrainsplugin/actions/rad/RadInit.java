@@ -2,7 +2,6 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad;
 
 import com.intellij.execution.process.ProcessOutput;
 import git4idea.repo.GitRepository;
-import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleProjectService;
 
 public class RadInit extends RadAction {
     private final String name;
@@ -25,7 +24,6 @@ public class RadInit extends RadAction {
 
     @Override
     public ProcessOutput run() {
-        var rad = repo.getProject().getService(RadicleProjectService.class);
         return rad.init(repo, name, description, branch, visibility);
     }
 }

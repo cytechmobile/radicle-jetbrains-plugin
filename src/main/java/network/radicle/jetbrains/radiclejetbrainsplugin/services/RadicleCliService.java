@@ -104,8 +104,7 @@ public class RadicleCliService {
     public List<RadIssue> getIssues(GitRepository repo, String projectId) {
         var cobList = new RadCobList(repo, projectId, RadCobList.Type.ISSUE);
         var listOutput = cobList.perform();
-        var listOutputSuccess = RadAction.isSuccess(listOutput);
-        if (!listOutputSuccess) {
+        if (!RadAction.isSuccess(listOutput)) {
             return List.of();
         }
         var issueIds = listOutput.getStdoutLines();
@@ -350,6 +349,9 @@ public class RadicleCliService {
                     }
                 }
                 delegates.add(new RadAuthor(key, alias));
+                if (!Strings.isNullOrEmpty(alias)) {
+                    jrad.aliases.put(RadicleNativeService.normalizeNid(key), alias);
+                }
             }
 
             radRepo = new RadProject(radProjectId, name, description, defaultBranch, delegates);
