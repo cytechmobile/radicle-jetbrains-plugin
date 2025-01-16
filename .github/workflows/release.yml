@@ -7,11 +7,62 @@ on:
     types: [prereleased, released]
 
 jobs:
+  buildRustLibrary:
+    name: Create Rust Library Artifact
+    runs-on: ubuntu-latest
+    container:
+      image: rust:alpine
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+      - name: Setup dependencies
+        shell: sh
+        working-directory: ./jrad
+        run: |
+          apk update && apk add --no-cache git musl-dev xz asciidoctor zig
+          xz -d -c macos-sdk-11.3.tar.xz | tar -x
+          echo "SDKROOT=${{ github.workspace }}/jrad/macos-sdk-11.3" >> $GITHUB_ENV
+      - name: Install zig
+        shell: sh
+        working-directory: ./jrad
+        run: |
+          rustup target add \
+              x86_64-unknown-linux-gnu \
+              aarch64-unknown-linux-gnu \
+              x86_64-apple-darwin \
+              aarch64-apple-darwin
+          # cargo install cargo-zigbuild@0.19.3
+          cargo install cargo-zigbuild
+      - name: Build library artifacts
+        shell: sh
+        working-directory: ./jrad
+        run: |
+          cargo zigbuild --locked --release \
+              --target=x86_64-apple-darwin \
+              --target=aarch64-apple-darwin \
+              --target=x86_64-unknown-linux-gnu \
+              --target=aarch64-unknown-linux-gnu
+      - name: Gather artifacts for upload
+        shell: sh
+        run: |
+          mkdir -p ./artifacts
+          cp ./jrad/target/aarch64-unknown-linux-gnu/release/libjrad.so ./artifacts/aarch64_libjrad.so
+          cp ./jrad/target/aarch64-unknown-linux-gnu/release/jrad ./artifacts/aarch64_jrad
+          cp ./jrad/target/aarch64-apple-darwin/release/libjrad.dylib ./artifacts/aarch64_libjrad.dylib
+          cp ./jrad/target/x86_64-apple-darwin/release/libjrad.dylib ./artifacts/x86_64_libjrad.dylib
+          cp ./jrad/target/x86_64-unknown-linux-gnu/release/libjrad.so ./artifacts/x86_64_libjrad.so
+          cp ./jrad/target/x86_64-unknown-linux-gnu/release/jrad ./artifacts/x86_64_jrad
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jrad
+          path: artifacts
 
   # Prepare and publish the plugin to the Marketplace repository
   release:
     name: Publish Plugin
     runs-on: ubuntu-latest
+    needs: buildRustLibrary
     permissions:
       contents: write
       pull-requests: write
@@ -43,19 +94,15 @@ jobs:
           ${{ github.event.release.body }}
           EOM
           )"
-          
           # remove empty lines, otherwise changelog plugin will lose rest of content
           CHANGELOG="$(echo "$CHANGELOG" | grep -v '^$')"
-          
           if [[ "${CHANGELOG}" == "" ]]; then
             echo "ERROR! Empty changelog! Aborting release!"
             exit 1
           fi
-
           echo 'changelog<<EOF' >> $GITHUB_OUTPUT
           echo "${CHANGELOG}" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
-
       # Update Unreleased section with the current release note
       - name: Patch Changelog
         if: ${{ steps.changelog.outputs.changelog != '' }}
@@ -78,6 +125,22 @@ jobs:
           Signed-off-by: github-actions <action@github.com>
           "
           git push --set-upstream origin main
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jrad
+          path: ./artifacts
+      - name: Copy jrad libraries/binaries
+        run: |
+          mkdir -p ./src/main/resources/META-INF/jrad/aarch64
+          mkdir -p ./src/main/resources/META-INF/jrad/x86_64
+          cp ./artifacts/aarch64_libjrad.so ./src/main/resources/META-INF/jrad/aarch64/libjrad.so
+          cp ./artifacts/aarch64_jrad ./src/main/resources/META-INF/jrad/aarch64/jrad
+          cp ./artifacts/aarch64_libjrad.dylib ./src/main/resources/META-INF/jrad/aarch64/libjrad.dylib
+          cp ./artifacts/x86_64_libjrad.dylib ./src/main/resources/META-INF/jrad/x86_64/libjrad.dylib
+          cp ./artifacts/x86_64_libjrad.so ./src/main/resources/META-INF/jrad/x86_64/libjrad.so
+          cp ./artifacts/x86_64_jrad ./src/main/resources/META-INF/jrad/x86_64/jrad
+          ls -R ./src/main/resources/META-INF
       # Publish the plugin to the Marketplace
       - name: Publish Plugin
         env:
@@ -86,10 +149,13 @@ jobs:
           CERTIFICATE_CHAIN: ${{ secrets.CERTIFICATE_CHAIN }}
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-        run: ./gradlew :publishPlugin
-
+        run: |
+          ./gradlew :publishPlugin
       # Upload artifact as a release asset
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} ./build/distributions/*
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} ./build/distributions/* --clobber
+          zip -r jrad.zip ./artifacts
+          gh release upload ${{ github.event.release.tag_name }} ./jrad.zip --clobber
