@@ -206,7 +206,7 @@ public class IssueComponent {
                 issueModel.setValue(edited);
             }
             return success;
-        }).enableDragAndDrop(false).build();
+        }).enableDragAndDrop(false).oneLine(true).build();
         var contentPanel = panelHandle.panel;
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(RadicleIcons.DEFAULT_AVATAR), contentPanel);

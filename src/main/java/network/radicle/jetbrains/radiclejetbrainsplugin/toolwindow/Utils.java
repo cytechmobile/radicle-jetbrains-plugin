@@ -96,9 +96,10 @@ public class Utils {
 
     public static JPanel descriptionPanel(
             MarkDownEditorPaneFactory editorPane, Project project, String changeTitle, Function<DragAndDropField, Boolean> editAction) {
-        var panelHandle = new EditablePanelHandler.PanelBuilder(project, editorPane.htmlEditorPane(),
-                RadicleBundle.message(changeTitle),
-                new SingleValueModel<>(editorPane.getRawContent()), editAction).build();
+        var panel = Utils.getVerticalPanel(1);
+        panel.add(editorPane.htmlEditorPane());
+        var panelHandle = new EditablePanelHandler.PanelBuilder(project, panel, RadicleBundle.message(changeTitle),
+                new SingleValueModel<>(editorPane.getRawContent()), editAction).oneLine(false).enableDragAndDrop(false).build();
         var contentPanel = panelHandle.panel;
         var b = new CodeReviewChatItemUIUtil.Builder(CodeReviewChatItemUIUtil.ComponentType.FULL,
                 i -> new SingleValueModel<>(new ImageIcon()), contentPanel);
@@ -107,8 +108,10 @@ public class Utils {
             panelHandle.showAndFocusEditor();
             return null;
         }));
-        b.withHeader(contentPanel, actionsPanel);
-        b.setMaxContentWidth(Integer.MAX_VALUE);
+        var malakia = new JPanel(null);
+        malakia.setOpaque(false);
+        b.withHeader(malakia, actionsPanel);
+        //b.setMaxContentWidth(Integer.MAX_VALUE);
         return (JPanel) b.build();
     }
 

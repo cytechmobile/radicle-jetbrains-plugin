@@ -38,6 +38,7 @@ public class EditablePanelHandler {
     private final boolean hideCancelAction;
     private final boolean closeEditorAfterSubmit;
     private final boolean allowDragAndDrop;
+    private final boolean oneLine;
     private DragAndDropField dragAndDropField;
     private SingleValueModel<Boolean> isLoading = new SingleValueModel<>(false);
     private OnCloseListener onCloseListener;
@@ -48,6 +49,7 @@ public class EditablePanelHandler {
         this.allowDragAndDrop = builder.allowDragAndDrop;
         this.project = builder.project;
         this.paneComponent = builder.paneComponent;
+        this.oneLine = builder.oneLine;
         this.editorPaneLayout = SizeRestrictedSingleComponentLayout.Companion.constant(null, null);
         this.panel = new JPanel(null);
         this.panel.setOpaque(false);
@@ -81,7 +83,7 @@ public class EditablePanelHandler {
                 hideEditor();
                 return null;
             });
-            dragAndDropField = new DragAndDropField(project, this.allowDragAndDrop);
+            dragAndDropField = new DragAndDropField(project, this.allowDragAndDrop, this.oneLine);
             dragAndDropField.setText(content.getValue());
             //CollaborationToolsUIUtil.installValidator(textField, model.errorValue.map { it?.localizedMessage })
             //var inputField = wrapWithProgressOverlay(textField, model.isBusyValue);
@@ -165,6 +167,7 @@ public class EditablePanelHandler {
         private boolean hideCancelAction = false;
         private boolean closeEditorAfterSubmit = true;
         private boolean allowDragAndDrop = true;
+        private boolean oneLine = false;
 
         public PanelBuilder(Project project, JComponent paneComponent, String actionName,
                             SingleValueModel<String> content, Function<DragAndDropField, Boolean> okAction) {
@@ -187,6 +190,11 @@ public class EditablePanelHandler {
 
         public PanelBuilder closeEditorAfterSubmit(boolean close) {
             this.closeEditorAfterSubmit = close;
+            return this;
+        }
+
+        public PanelBuilder oneLine(boolean one) {
+            this.oneLine = one;
             return this;
         }
 

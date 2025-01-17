@@ -37,12 +37,14 @@ public class DragAndDropField extends EditorTextField {
     private static final Logger logger = LoggerFactory.getLogger(DragAndDropField.class);
     private int border = 0;
     private final boolean enableDragAndDrop;
+    private final boolean oneLine;
     private final FileService fileService;
     private final Project project;
     private List<Embed> embedList;
 
-    public DragAndDropField(Project project, boolean allowDragAndDrop) {
+    public DragAndDropField(Project project, boolean allowDragAndDrop, boolean oneLine) {
         this.enableDragAndDrop = allowDragAndDrop;
+        this.oneLine = oneLine;
         this.fileService = project.getService(FileService.class);
         this.embedList = new ArrayList<>();
         this.project = project;
@@ -50,8 +52,8 @@ public class DragAndDropField extends EditorTextField {
         this.addDocumentListener(new MyListener(this));
     }
 
-    public DragAndDropField(Project project, int border, boolean allowDragAndDrop) {
-        this(project, allowDragAndDrop);
+    public DragAndDropField(Project project, int border, boolean allowDragAndDrop, boolean oneLine) {
+        this(project, allowDragAndDrop, oneLine);
         this.border = border;
     }
 
@@ -60,7 +62,7 @@ public class DragAndDropField extends EditorTextField {
         var editor =  super.createEditor();
         editor.getSettings().setUseSoftWraps(true);
         editor.setBorder(JBUI.Borders.empty(border));
-        editor.setOneLineMode(false);
+        editor.setOneLineMode(oneLine);
         editor.setVerticalScrollbarVisible(true);
         editor.getComponent().setOpaque(false);
         editor.getScrollPane().setOpaque(false);

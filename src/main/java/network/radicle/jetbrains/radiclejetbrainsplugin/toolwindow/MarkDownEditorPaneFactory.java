@@ -56,7 +56,8 @@ public class MarkDownEditorPaneFactory {
     public JEditorPane htmlEditorPane() {
         var textPane = new JTextPane();
         var editorKit = new HTMLEditorKitBuilder();
-        editorKit.withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, HtmlEditorPaneUtil.INSTANCE.getCONTENT_TOOLTIP(),
+        editorKit.withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES,
+                HtmlEditorPaneUtil.INSTANCE.getCONTENT_TOOLTIP(),
                 HtmlEditorPaneUtil.INSTANCE.getINLINE_ICON_EXTENSION(),
                 HtmlEditorPaneUtil.INSTANCE.getIMAGES_EXTENSION());
         editorKit.withStyleSheet(StyleSheetUtil.getDefaultStyleSheet());

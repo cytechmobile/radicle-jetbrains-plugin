@@ -44,9 +44,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getHorizontalPanel;
-import static network.radicle.jetbrains.radiclejetbrainsplugin.toolwindow.Utils.getVerticalPanel;
-
 public class TimelineComponentFactory {
     private static final String PATTERN_FORMAT = "dd/MM/yyyy HH:mm";
     private static final DateTimeFormatter DATE_TIME_FORMATTER =
@@ -96,7 +93,7 @@ public class TimelineComponentFactory {
     }
 
     public JComponent createTimeline() {
-        mainPanel = getVerticalPanel(0);
+        mainPanel = Utils.getVerticalPanel(0);
         var loadingIcon = new JLabel(new AnimatedIcon.Default());
         mainPanel.add(loadingIcon);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -141,23 +138,23 @@ public class TimelineComponentFactory {
     }
 
     private JComponent createRevisionComponent(RadPatch.Revision rev) {
-        var contentPanel = getVerticalPanel(4);
+        var contentPanel = Utils.getVerticalPanel(4);
         contentPanel.setOpaque(false);
-        var horizontalPanel = getHorizontalPanel(8);
+        var horizontalPanel = Utils.getHorizontalPanel(8);
         horizontalPanel.setOpaque(false);
         var revAuthor = rev.author().generateLabelText(cli);
         return createTimeLineItem(contentPanel, horizontalPanel, RadicleBundle.message("revisionPublish", rev.id(), revAuthor), rev.timestamp());
     }
 
     private JComponent createReviewComponent(RadPatch.Review review) {
-        var reviewPanel = getVerticalPanel(0);
+        var reviewPanel = Utils.getVerticalPanel(0);
         var textHtmlEditor = new BaseHtmlEditorPane();
         textHtmlEditor.setOpaque(false);
         var message = Strings.nullToEmpty(review.summary());
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
         var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
-        var myPanel = getVerticalPanel(1);
+        var myPanel = Utils.getVerticalPanel(1);
         myPanel.setOpaque(false);
         myPanel.add(editorPane.htmlEditorPane());
         var verdictMsg = review.verdict() == RadPatch.Review.Verdict.ACCEPT ? RadicleBundle.message("approved") : RadicleBundle.message("requestChanges");
@@ -175,7 +172,7 @@ public class TimelineComponentFactory {
     }
 
     private JComponent createCommentComponent(RadDiscussion com) {
-        var myMainPanel = getVerticalPanel(0);
+        var myMainPanel = Utils.getVerticalPanel(0);
         var textHtmlEditor = new BaseHtmlEditorPane();
         textHtmlEditor.setOpaque(false);
         var message = com.body;
@@ -188,7 +185,7 @@ public class TimelineComponentFactory {
         var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
         panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
         emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
-        var verticalPanel = getVerticalPanel(5);
+        var verticalPanel = Utils.getVerticalPanel(5);
         verticalPanel.setOpaque(false);
         emojiJPanel = emojiPanel.getEmojiPanel();
         verticalPanel.add(emojiJPanel);
@@ -196,7 +193,7 @@ public class TimelineComponentFactory {
         verticalPanel.add(replyPanel);
         panel.addToBottom(verticalPanel);
         if (com.isReviewComment()) {
-            var infoPanel = getHorizontalPanel(0);
+            var infoPanel = Utils.getHorizontalPanel(0);
             infoPanel.setOpaque(false);
             var msg = RadicleBundle.message("comment.on", com.location.path, com.location.start);
             if (!patch.isDiscussionBelongedToLatestRevision(com)) {
@@ -217,7 +214,7 @@ public class TimelineComponentFactory {
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         var self = cli.getCurrentIdentity();
-        if (self != null && com.author.id.contains(self.nodeId)) {
+        if (self != null && com.author != null && com.author.contains(self.nodeId)) {
             final var editButton = CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {
                 panelHandle.showAndFocusEditor();
                 return null;
@@ -235,7 +232,7 @@ public class TimelineComponentFactory {
             actionsPanel.add(editButton);
             actionsPanel.add(deleteButton);
         }
-        commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author.generateLabelText(cli), com.timestamp);
+        commentPanel = createTimeLineItem(contentPanel, actionsPanel, com.author == null ? "" : com.author.generateLabelText(cli), com.timestamp);
         myMainPanel.add(commentPanel);
         myMainPanel.setName(JPANEL_PREFIX_NAME + com.id);
         return myMainPanel;

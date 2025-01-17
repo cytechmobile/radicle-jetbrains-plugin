@@ -104,7 +104,7 @@ public class TimelineComponent {
                 RadicleBundle.message("patch.comment"), new SingleValueModel<>(""),
                 this::createComment)
                 .hideCancelAction(true)
-                .enableDragAndDrop(false)
+                .enableDragAndDrop(true)
                 .closeEditorAfterSubmit(false)
                 .build();
         panelHandle.showAndFocusEditor();
@@ -134,7 +134,7 @@ public class TimelineComponent {
                 radPatchModel.setValue(edited);
             }
             return success;
-        }).enableDragAndDrop(false).build();
+        }).enableDragAndDrop(false).oneLine(true).build();
         var contentPanel = panelHandle.panel;
         var actionsPanel = CollaborationToolsUIUtilKt.HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP);
         actionsPanel.add(CodeReviewCommentUIUtil.INSTANCE.createEditButton(e -> {

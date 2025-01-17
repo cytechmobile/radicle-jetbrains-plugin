@@ -137,7 +137,7 @@ public class CreateIssuePanel {
         borderPanel.add(projectSelect, BorderLayout.NORTH);
         borderPanel.add(titleField, BorderLayout.CENTER);
 
-        descriptionField = new DragAndDropField(project, 0, false);
+        descriptionField = new DragAndDropField(project, 0, false, false);
         descriptionField.setBackground(UIUtil.getListBackground());
         descriptionField.setFont(JBFont.label());
         descriptionField.getComponent().setBorder(JBUI.Borders.empty(8));
