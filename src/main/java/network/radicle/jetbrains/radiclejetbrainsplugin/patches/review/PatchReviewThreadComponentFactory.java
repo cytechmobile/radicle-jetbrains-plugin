@@ -126,7 +126,8 @@ public class PatchReviewThreadComponentFactory {
     }
 
     private JComponent createComponent(RadDiscussion disc) {
-        var editorPane = new MarkDownEditorPaneFactory(disc.body, patch.project, patch.radProject.id, patch.repo.getRoot());
+        final var verticalPanel = getVerticalPanel(5);
+        var editorPane = new MarkDownEditorPaneFactory(disc.body, patch.project, patch.radProject.id, patch.repo.getRoot(), verticalPanel);
         var revisionId = patch.findRevisionId(disc.id);
         var isOutDated = !patch.isDiscussionBelongedToLatestRevision(disc);
         var panelHandle = new EditablePanelHandler.PanelBuilder(patch.project, editorPane.htmlEditorPane(),
@@ -171,7 +172,6 @@ public class PatchReviewThreadComponentFactory {
             titleText.append(" (OUTDATED)");
         }
         builder.withHeader(new JLabel(MarkDownEditorPaneFactory.wrapHtml(titleText.toString())), actionsPanel);
-        var verticalPanel = getVerticalPanel(5);
         verticalPanel.add(builder.build());
         var emojiJPanel = emojiPanel.getEmojiPanel();
         emojiJPanel.setBorder(BorderFactory.createEmptyBorder(PADDING_TOP_BOTTOM, PADDING_LEFT, PADDING_TOP_BOTTOM, 0));

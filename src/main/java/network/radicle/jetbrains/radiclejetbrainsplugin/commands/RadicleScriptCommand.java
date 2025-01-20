@@ -2,8 +2,8 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.commands;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
@@ -104,7 +104,7 @@ public abstract class RadicleScriptCommand {
         if (Strings.isNullOrEmpty(password)) {
             return "";
         }
-        return "export RAD_PASSPHRASE=" + ExecUtil.escapeUnixShellArgument(password);
+        return "export RAD_PASSPHRASE=" + CommandLineUtil.posixQuote(password);
     }
 
     private String getRandomScriptName() {

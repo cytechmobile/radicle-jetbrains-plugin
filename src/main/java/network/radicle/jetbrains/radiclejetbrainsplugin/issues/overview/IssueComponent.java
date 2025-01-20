@@ -118,7 +118,7 @@ public class IssueComponent {
             }
             var panel = new BorderLayoutPanel();
             panel.setOpaque(false);
-            var editorPane = new MarkDownEditorPaneFactory(message, radIssue.project, radIssue.projectId, file);
+            var editorPane = new MarkDownEditorPaneFactory(message, radIssue.project, radIssue.projectId, file, panel);
             panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
             emojiPanel = new IssueEmojiPanel(issueModel, com.reactions, com.id, radDetails);
             var verticalPanel = getVerticalPanel(5);
@@ -173,8 +173,7 @@ public class IssueComponent {
 
     private JComponent getDescription() {
         var bodyIssue = radIssue.getDescription();
-        var editorPane = new MarkDownEditorPaneFactory(bodyIssue, radIssue.project, radIssue.projectId, file);
-        descPanel = Utils.descriptionPanel(editorPane, radIssue.project, "issue.change.description", f -> {
+        descPanel = Utils.descriptionPanel(bodyIssue, radIssue.project, radIssue.projectId, file, "issue.change.description", f -> {
             var newDesc = f.getText();
             if (Strings.isNullOrEmpty(newDesc)) {
                 return false;

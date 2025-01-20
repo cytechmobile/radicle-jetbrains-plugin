@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.config;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.LightPlatform4TestCase;
 import network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT;
@@ -18,8 +19,8 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.AbstractIT.assert
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RadicleSettingsViewTest extends LightPlatform4TestCase {
-    private static final String ALIAS = "myAlias";
     private static final Logger logger = LoggerFactory.getLogger(RadicleSettingsViewTest.class);
+    private static final String ALIAS = "myAlias";
     public static final String NEW_RAD_INSTALLATION = "/newRadInstallation";
     private RadicleProjectSettingsHandler radicleSettingsHandler;
     private RadStub radStub;
@@ -139,6 +140,12 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var radicleSettingsView = new RadicleSettingsView(identityDialog, getProject());
         radicleSettingsView.init.await(10, TimeUnit.SECONDS);
         radStub.commands.clear();
+        radStub.commandOverride = cmd -> {
+            if (cmd.getCommandLineString().contains("ssh-keygen -y -P '' -f")) {
+                return new ProcessOutput(-1);
+            }
+            return null;
+        };
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
@@ -146,6 +153,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertSelfCommands(AbstractIT.RAD_HOME1);
         //Remove ssh
         pollCmd();
+        var pwdCheck = pollCmd();
+        assertThat(pwdCheck.getCommandLineString()).contains("ssh-keygen -y -P " + RadicleGlobalSettingsHandlerTest.PASSWORD);
         var auth = pollCmd();
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getCommandLineString()).doesNotContain("--alias");
@@ -165,6 +174,8 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         assertSelfCommands(AbstractIT.RAD_HOME1);
         //remove ssh
         pollCmd();
+        var emptyCheck = pollCmd();
+        assertThat(emptyCheck.getCommandLineString()).contains("ssh-keygen -y -P '' -f");
         var auth = pollCmd();
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getEnvironment().get("stdin")).isEqualTo("");
@@ -177,12 +188,20 @@ public class RadicleSettingsViewTest extends LightPlatform4TestCase {
         var radicleSettingsView = new RadicleSettingsView(getProject());
         radicleSettingsView.init.await(10, TimeUnit.SECONDS);
         radStub.commands.clear();
+        radStub.commandOverride = cmd -> {
+            if (cmd.getCommandLineString().contains("ssh-keygen -y -P '' -f")) {
+                return new ProcessOutput(-1);
+            }
+            return null;
+        };
         var testButton = radicleSettingsView.getRadHomeTestButton();
         testButton.doClick();
         radicleSettingsView.getLatch().await(20, TimeUnit.SECONDS);
         assertSelfCommands(AbstractIT.RAD_HOME1);
         //Remove ssh
         pollCmd();
+        var pwdCheck = pollCmd();
+        assertThat(pwdCheck.getCommandLineString()).contains("ssh-keygen -y -P " + RadicleGlobalSettingsHandlerTest.PASSWORD);
         var auth = pollCmd();
         assertThat(auth.getCommandLineString()).contains("rad auth --stdin");
         assertThat(auth.getEnvironment().get("stdin")).isEqualTo(RadicleGlobalSettingsHandlerTest.PASSWORD);

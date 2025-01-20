@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.ListLayout;
@@ -95,8 +96,10 @@ public class Utils {
     }
 
     public static JPanel descriptionPanel(
-            MarkDownEditorPaneFactory editorPane, Project project, String changeTitle, Function<DragAndDropField, Boolean> editAction) {
-        var panel = Utils.getVerticalPanel(1);
+            String content, Project project, String radProjectId, VirtualFile file,
+            String changeTitle, Function<DragAndDropField, Boolean> editAction) {
+        final var panel = Utils.getVerticalPanel(1);
+        final var editorPane = new MarkDownEditorPaneFactory(content, project, radProjectId, file, panel);
         panel.add(editorPane.htmlEditorPane());
         var panelHandle = new EditablePanelHandler.PanelBuilder(project, panel, RadicleBundle.message(changeTitle),
                 new SingleValueModel<>(editorPane.getRawContent()), editAction).oneLine(false).enableDragAndDrop(false).build();

@@ -76,8 +76,7 @@ public class TimelineComponentFactory {
         if (Strings.isNullOrEmpty(description)) {
             description = RadicleBundle.message("noDescription");
         }
-        var editorPane = new MarkDownEditorPaneFactory(description, patch.project, patch.radProject.id, file);
-        descSection = Utils.descriptionPanel(editorPane, patch.project, "patch.proposal.change.description", f -> {
+        descSection = Utils.descriptionPanel(description, patch.project, patch.radProject.id, file, "patch.proposal.change.description", f -> {
             var newDesc = f.getText();
             if (Strings.isNullOrEmpty(newDesc)) {
                 return false;
@@ -153,8 +152,8 @@ public class TimelineComponentFactory {
         var message = Strings.nullToEmpty(review.summary());
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
-        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
         var myPanel = Utils.getVerticalPanel(1);
+        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file, myPanel);
         myPanel.setOpaque(false);
         myPanel.add(editorPane.htmlEditorPane());
         var verdictMsg = review.verdict() == RadPatch.Review.Verdict.ACCEPT ? RadicleBundle.message("approved") : RadicleBundle.message("requestChanges");
@@ -182,7 +181,7 @@ public class TimelineComponentFactory {
         }
         var panel = new BorderLayoutPanel();
         panel.setOpaque(false);
-        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file);
+        var editorPane = new MarkDownEditorPaneFactory(message, patch.project, patch.radProject.id, file, panel);
         panel.addToCenter(StatusMessageComponentFactory.INSTANCE.create(editorPane.htmlEditorPane(), StatusMessageType.WARNING));
         emojiPanel = new PatchEmojiPanel(patchModel, com.reactions, com.id, radDetails);
         var verticalPanel = Utils.getVerticalPanel(5);

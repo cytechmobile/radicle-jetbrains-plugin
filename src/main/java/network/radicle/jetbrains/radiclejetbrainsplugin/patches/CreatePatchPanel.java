@@ -134,7 +134,7 @@ public class CreatePatchPanel {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
             //Start loading indicator
             progressStripe.startLoading();
-            //Get project information from httpd
+            //Get project information
             projectInfo = getProjectInfo(mySelectedRepo);
             if (projectInfo == null) {
                 return;
@@ -305,7 +305,8 @@ public class CreatePatchPanel {
                     RadicleBundle.message("findRemoteErrorDesc"));
             return;
         }
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        // execute in background via rad, so that the jobs get assigned a progress indicator and ij stops throwing useless errors
+        radicleProjectService.executeInBackground(() -> {
             newPatchButton.setEnabled(false);
             loadingPanel.setVisible(true);
             var cli = project.getService(RadicleCliService.class);

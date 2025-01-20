@@ -119,15 +119,18 @@ public class RadicleSettingsView  implements SearchableConfigurable {
             var radHome = getPathFromTextField(radHomeField);
             var radPath = getPathFromTextField(radPathField);
             var radSelf = new RadSelf(radHome, radPath, myProject);
-            var output = radSelf.perform(radHome, radPath, dialog);
+            final var output = radSelf.perform(radHome, radPath, dialog);
             var lines = output.getStdoutLines(true);
             radDetails = new RadDetails(lines);
-            logger.debug("got rad details: {}", radDetails.did);
             var cli = myProject.getService(RadicleCliService.class);
             if (cli != null) {
                 cli.resetIdentity();
             }
             myLatch.countDown();
+            if (!RadAction.isSuccess(output)) {
+                ApplicationManager.getApplication().invokeLater(() -> this.msgLabel.setText(RadicleBundle.message("unableToUnlock")), ModalityState.any());
+                return;
+            }
             // check if rad home is non-default
             if (Strings.isNullOrEmpty(autoDetectRadHome.detected)) {
                 autoDetectRadHome.detect();

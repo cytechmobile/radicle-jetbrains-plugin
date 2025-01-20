@@ -1,8 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Strings;
-import com.intellij.execution.util.ExecUtil;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,7 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.EDT;
 import jnr.ffi.LibraryLoader;
+import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
+import network.radicle.jetbrains.radiclejetbrainsplugin.config.RadicleProjectSettingsHandler;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDiscussion;
 
@@ -39,6 +42,7 @@ public class RadicleNativeService {
     public RadicleNativeService(Project project) {
         this.project = project;
         aliases = new HashMap<>();
+
     }
 
     public String radHome() {
@@ -56,7 +60,7 @@ public class RadicleNativeService {
         }
 
         try {
-            var json = RadicleCliService.MAPPER.writeValueAsString(
+            var json = createNativeInput(
                     Map.of("repo_id", repoId,
                             "issue_id", issueId,
                             "title", Strings.nullToEmpty(title),
@@ -66,6 +70,10 @@ public class RadicleNativeService {
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("error response from native service: " + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 if (resp == null) {
                     resp = new JRadResponse(false, "no resp");
                 }
@@ -84,11 +92,15 @@ public class RadicleNativeService {
         }
 
         try {
-            var json = RadicleCliService.MAPPER.writeValueAsString(Map.of("repo_id", repoId, "oids", oids));
+            var json = createNativeInput(Map.of("repo_id", repoId, "oids", oids));
             var res = jrad.getEmbeds(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("error response from native service: " + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return null;
             }
             var tree = RadicleCliService.MAPPER.readTree(res);
@@ -145,7 +157,7 @@ public class RadicleNativeService {
             return result;
         }
         try {
-            var json = RadicleCliService.MAPPER.writeValueAsString(Map.of("ids", missing));
+            var json = createNativeInput(Map.of("ids", missing));
             var res = jrad.getAlias(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
@@ -192,11 +204,15 @@ public class RadicleNativeService {
             jsonMap.put("reply_to", Strings.nullToEmpty(replyTo));
             jsonMap.put("location", location == null ? null : location.getMapObject());
             jsonMap.put("embeds", embeds == null ? List.of() : embeds);
-            var json = RadicleCliService.MAPPER.writeValueAsString(jsonMap);
+            var json = createNativeInput(jsonMap);
             var res = jrad.createPatchComment(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("Error creating patch comment:" + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return false;
             }
             return true;
@@ -220,11 +236,15 @@ public class RadicleNativeService {
             jsonMap.put("comment_id", commentId);
             jsonMap.put("comment", comment);
             jsonMap.put("embeds", embeds == null ? List.of() : embeds);
-            var json = RadicleCliService.MAPPER.writeValueAsString(jsonMap);
+            var json = createNativeInput(jsonMap);
             var res = jrad.editPatchComment(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("Error creating patch comment:" + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return false;
             }
             return true;
@@ -247,11 +267,15 @@ public class RadicleNativeService {
             jsonMap.put("comment_id", commentId);
             jsonMap.put("comment", "");
             jsonMap.put("embeds", List.of());
-            var json = RadicleCliService.MAPPER.writeValueAsString(jsonMap);
+            var json = createNativeInput(jsonMap);
             var res = jrad.deletePatchComment(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("Error deleting patch comment:" + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return false;
             }
             return true;
@@ -274,11 +298,15 @@ public class RadicleNativeService {
             jsonMap.put("comment_id", commentId);
             jsonMap.put("comment", comment);
             jsonMap.put("embeds", embeds == null ? List.of() : embeds);
-            var json = RadicleCliService.MAPPER.writeValueAsString(jsonMap);
+            var json = createNativeInput(jsonMap);
             var res = jrad.editIssueComment(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("Error editing issue comment:" + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return false;
             }
             return true;
@@ -302,11 +330,15 @@ public class RadicleNativeService {
             jsonMap.put("comment_id", commentId);
             jsonMap.put("reaction", reaction);
             jsonMap.put("active", active);
-            var json = RadicleCliService.MAPPER.writeValueAsString(jsonMap);
+            var json = createNativeInput(jsonMap);
             var res = jrad.patchCommentReact(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("Error adding patch comment reaction:" + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return false;
             }
             return true;
@@ -329,11 +361,15 @@ public class RadicleNativeService {
             jsonMap.put("comment_id", commentId);
             jsonMap.put("reaction", reaction);
             jsonMap.put("active", active);
-            var json = RadicleCliService.MAPPER.writeValueAsString(jsonMap);
+            var json = createNativeInput(jsonMap);
             var res = jrad.issueCommentReact(json);
             var resp = RadicleCliService.MAPPER.readValue(res, JRadResponse.class);
             if (resp == null || !resp.ok) {
                 logger.warn("Error adding issue comment reaction:" + resp);
+                if (resp != null) {
+                    RadAction.showErrorNotification(project, RadicleBundle.message("radNativeError"),
+                            RadicleBundle.message("radNativeErrorText") + "\n" + resp.msg());
+                }
                 return false;
             }
             return true;
@@ -401,6 +437,22 @@ public class RadicleNativeService {
             logger.warn("error creating WSL temp directory", e);
             loadError = true;
         }
+    }
+
+    protected String createNativeInput(Map<String, Object> prms) throws JsonProcessingException {
+        var map = new HashMap<>(prms);
+        var conf = new RadicleProjectSettingsHandler(project);
+        var home = conf.getRadHome();
+        if (!Strings.isNullOrEmpty(home)) {
+            map.put("home", home);
+        }
+        var cli = project.getService(RadicleCliService.class);
+        var curr = cli.getCurrentIdentity();
+        var pwd = conf.getPassword(curr.nodeId);
+        if (!Strings.isNullOrEmpty(pwd)) {
+            map.put("passphrase", pwd);
+        }
+        return RadicleCliService.MAPPER.writeValueAsString(map);
     }
 
     public static String normalizeNid(String nid) {
@@ -503,7 +555,7 @@ public class RadicleNativeService {
         }
 
         public String execute(String method, String input) {
-            var out = rad.executeCommandFromFile(wslBin, null, List.of(method, ExecUtil.escapeUnixShellArgument(input)));
+            var out = rad.executeCommandFromFile(wslBin, null, List.of(method, CommandLineUtil.posixQuote(input)));
             if (!RadAction.isSuccess(out)) {
                 return "{\"ok\": false, \"msg\": \"error executing command with exit code:" + out.getExitCode() + " \"}";
             }

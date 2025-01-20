@@ -10,8 +10,8 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.Side;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUiKind;
@@ -289,7 +289,7 @@ public class TimelineTest extends AbstractIT {
         executeUiTasks();
         var command = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
         assertThat(command).contains(RadPatch.Review.Verdict.ACCEPT.getValue());
-        assertThat(command).contains(ExecUtil.escapeUnixShellArgument(REVIEW_SUMMARY));
+        assertThat(command).contains(CommandLineUtil.posixQuote(REVIEW_SUMMARY));
         assertThat(command).contains("review");
     }
 
@@ -621,7 +621,7 @@ public class TimelineTest extends AbstractIT {
         popupListener.onClosed(new LightweightWindowEvent(tagSelect.jbPopup));
         executeUiTasks();
         var command = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
-        assertThat(command).contains("--delete " + ExecUtil.escapeUnixShellArgument(firstTag.value.label()));
+        assertThat(command).contains("--delete " + CommandLineUtil.posixQuote(firstTag.value.label()));
     }
 
     @Test

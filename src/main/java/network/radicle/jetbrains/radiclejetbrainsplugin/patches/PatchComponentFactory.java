@@ -98,7 +98,7 @@ public class PatchComponentFactory {
     }
 
     public void updateFileAndCommitComponents(GitRepository repo, String revNumber, String mainBranchHead, int retriesAttempt) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        radicleProjectService.executeInBackground(() -> {
             try {
                 var changes = calculatePatchCommits(repo, mainBranchHead, revNumber);
                 calculatePatchChanges(repo, mainBranchHead, revNumber);

@@ -92,52 +92,61 @@ public abstract class RadAction {
         return projectHandler.loadSettings();
     }
 
+
     private ProcessOutput unlockIdentity(String radHome, String radPath, IdentityDialog dialog) {
         if (project == null && repo == null) {
             return new ProcessOutput(0);
         }
         var pr = project != null ? project : repo.getProject();
-        var output = rad.self(radHome, radPath);
-        var lines = output.getStdoutLines(true);
+        final var idOutput = rad.self(radHome, radPath);
+        final var hasIdentity = RadAction.isSuccess(idOutput);
+        var lines = idOutput.getStdoutLines(true);
         var radDetails = new RadDetails(lines);
-        var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
-        var hasIdentity = RadAction.isSuccess(output);
-        var projectSettings = new RadicleProjectSettingsHandler(pr);
+        final var isIdentityUnlocked = rad.isIdentityUnlocked(radDetails.keyHash);
+        if (isIdentityUnlocked) {
+            return new ProcessOutput(0);
+        }
+        final var projectSettings = new RadicleProjectSettingsHandler(pr);
         String storedPassword =  null;
         if (hasIdentity) {
+            // check if key has no passphrase
+            var ok = rad.isPassphraseCorrect("", radHome);
+            if (ok) {
+                projectSettings.savePassphrase(radDetails.nodeId, "");
+                rad.auth("", "", radHome, radPath);
+                return new ProcessOutput(0);
+            }
+            // the key has a non-empty passphrase, check if we have saved a password
             storedPassword = projectSettings.getPassword(radDetails.nodeId);
         }
-        var hasStoredPassword = storedPassword != null;
-        var showDialog = ((!hasIdentity || !isIdentityUnlocked) && !hasStoredPassword);
-        IdentityDialog.IdentityDialogData dialogData = null;
-        if (showDialog) {
-            var authService = project.getService(AuthService.class);
-            var title = !hasIdentity ? RadicleBundle.message("newIdentity") :
-                    RadicleBundle.message("unlockIdentity");
-            dialogData = authService.showIdentityDialog(title, hasIdentity, dialog);
+        final var hasStoredPassword = storedPassword != null;
+        boolean hasCorrectStoredPassword = hasStoredPassword;
+        if (hasIdentity && hasStoredPassword) {
+            hasCorrectStoredPassword = rad.isPassphraseCorrect(storedPassword, radHome);
         }
-        if (!isIdentityUnlocked && hasIdentity && hasStoredPassword) {
-            var authOutput = rad.auth(storedPassword, "", radHome, radPath);
-            var success = RadAuth.validateOutput(authOutput);
-            if (!RadAction.isSuccess(success)) {
-                projectSettings.savePassphrase(radDetails.nodeId, null);
+        var showDialog = !hasIdentity || !hasStoredPassword || !hasCorrectStoredPassword;
+        if (!showDialog) {
+            // attempt to unlock identity (add key to ssh-agent)
+            rad.auth(storedPassword, "", radHome, radPath);
+            return new ProcessOutput(0);
+        }
+        var authService = project.getService(AuthService.class);
+        var title = !hasIdentity ? RadicleBundle.message("newIdentity") : RadicleBundle.message("unlockIdentity");
+        final var dialogData = authService.showIdentityDialog(title, hasIdentity, dialog);
+        if (hasIdentity) {
+            // we already had an identity, so check the passphrase again
+            hasCorrectStoredPassword = rad.isPassphraseCorrect(dialogData.passphrase(), radHome);
+            if (!hasCorrectStoredPassword) {
+                return new ProcessOutput(-1);
             }
-            return success;
         }
-        if (dialogData != null) {
-              var authOutput = rad.auth(dialogData.passphrase(), dialogData.alias(), radHome, radPath);
-              var success = RadAuth.validateOutput(authOutput);
-              if (RadAction.isSuccess(success)) {
-                  output = rad.self(radHome, radPath);
-                  lines = output.getStdoutLines(true);
-                  radDetails = new RadDetails(lines);
-                  projectSettings.savePassphrase(radDetails.nodeId, dialogData.passphrase());
-              }
-              return success;
-        }
-        var newOutput = new ProcessOutput(showDialog ? -1 : 0);
-        newOutput.appendStderr(RadicleBundle.message("unableToUnlock"));
-        return newOutput;
+        // either create the new identity, or attempt to unlock the existing one
+        rad.auth(dialogData.passphrase(), dialogData.alias(), radHome, radPath);
+        var output = rad.self(radHome, radPath);
+        lines = output.getStdoutLines(true);
+        radDetails = new RadDetails(lines);
+        projectSettings.savePassphrase(radDetails.nodeId, dialogData.passphrase());
+        return new ProcessOutput(0);
     }
 
     public ProcessOutput perform(CountDownLatch latch, String radHome, String radPath, IdentityDialog dialog) {
@@ -290,6 +299,18 @@ public abstract class RadAction {
 
     public static boolean isSuccess(ProcessOutput out) {
         return !out.isTimeout() && !out.isCancelled() && out.getExitCode() == 0;
+    }
+
+    public static ProcessOutput validateAuthOutput(ProcessOutput output) {
+        /* rad auth return success exit code (0) and a failed msg if the password is wrong */
+        var isSuccess = RadAction.isSuccess(output) && !output.getStdout().contains("failed") &&
+                !output.getStdout().contains("Nothing to do, ssh-agent is not running.");
+        var pr = new ProcessOutput(isSuccess ? 0 : -1);
+        /* Write from stdOut to stdErr in order to appear the message in the notification */
+        var stdOut = output.getStdout();
+        var errorMessage = !Strings.isNullOrEmpty(stdOut) ? stdOut : RadicleBundle.message("radCliError");
+        pr.appendStderr(errorMessage);
+        return pr;
     }
 
     public static class ConfigureRadCliNotificationAction extends NotificationAction {

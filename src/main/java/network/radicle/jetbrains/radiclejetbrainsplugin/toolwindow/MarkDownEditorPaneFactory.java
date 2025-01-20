@@ -4,9 +4,11 @@ import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.HtmlEditorPaneUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
@@ -19,6 +21,7 @@ import org.apache.tika.Tika;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
@@ -34,27 +37,30 @@ public class MarkDownEditorPaneFactory {
     public static final Pattern EMBED_PATTERN = Pattern.compile(EMBED_REGEX);
     public static final String IMG_REGEX = "<img\\s+[^>]*>";
     public static final Pattern IMG_PATTERN = Pattern.compile(IMG_REGEX);
-    protected RadicleCliService rad;
+    protected RadicleCliService cli;
     private final String radProjectId;
     private final VirtualFile file;
     private final Project project;
     private final String rawContent;
     private String content;
     private Map<String, String> embedMap;
+    private JTextPane textPane;
+    private final JComponent parent;
 
-    public MarkDownEditorPaneFactory(String content, Project project, String radProjectId, VirtualFile file) {
+    public MarkDownEditorPaneFactory(String content, Project project, String radProjectId, VirtualFile file, JComponent parentPanel) {
         this.content = content;
         this.radProjectId = radProjectId;
         this.file = file;
         this.project = project;
         this.rawContent = content;
-        this.rad = project.getService(RadicleCliService.class);
+        this.cli = project.getService(RadicleCliService.class);
         this.convertMarkdownToHtml();
         this.replaceHtmlTags();
+        this.parent = parentPanel;
     }
 
     public JEditorPane htmlEditorPane() {
-        var textPane = new JTextPane();
+        textPane = new JTextPane();
         var editorKit = new HTMLEditorKitBuilder();
         editorKit.withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES,
                 HtmlEditorPaneUtil.INSTANCE.getCONTENT_TOOLTIP(),
@@ -67,7 +73,7 @@ public class MarkDownEditorPaneFactory {
         textPane.setEditorKit(editorKit.build());
         textPane.setMargin(JBInsets.emptyInsets());
         GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
-        textPane.setText(wrapHtml(this.content));
+        setTextPaneContent();
         textPane.addHyperlinkListener(new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
@@ -114,15 +120,22 @@ public class MarkDownEditorPaneFactory {
         if (imgTags.isEmpty()) {
             return;
         }
+        if (embedMap == null) {
+            embedMap = new HashMap<>();
+        }
+        if (EDT.isCurrentThreadEdt()) {
+            ApplicationManager.getApplication().executeOnPooledThread(this::replaceHtmlTags);
+            return;
+        }
         var map = new HashMap<String, String>();
         var embedOids = embedList.stream().map(Embed::getOid).filter(oid -> !Strings.isNullOrEmpty(oid)).filter(oid -> !isExternalFile(oid)).toList();
         var repoId = radProjectId;
         if (repoId.startsWith("rad:")) {
             repoId = repoId.substring(4);
         }
-        embedMap = rad.getEmbeds(repoId, embedOids);
-        if (embedMap == null) {
-            embedMap = new HashMap<>();
+        var resolvedMap = cli.getEmbeds(repoId, embedOids);
+        if (resolvedMap != null) {
+            embedMap.putAll(resolvedMap);
         }
         for (var embed : embedList) {
             var objectId = embed.getOid();
@@ -150,6 +163,22 @@ public class MarkDownEditorPaneFactory {
             var newTag = map.get(oldTag);
             this.content = this.content.replace(oldTag, newTag);
         }
+        ApplicationManager.getApplication().invokeLater(() -> {
+            setTextPaneContent();
+            textPane.revalidate();
+            textPane.repaint();
+            if (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+            }
+        });
+    }
+
+    private void setTextPaneContent() {
+        if (this.textPane == null) {
+            return;
+        }
+        this.textPane.setText(wrapHtml(this.content));
     }
 
     private String getBlobUrl(String objectId, String mimeType) {

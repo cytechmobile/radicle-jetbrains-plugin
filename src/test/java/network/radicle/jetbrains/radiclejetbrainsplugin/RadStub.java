@@ -1,9 +1,9 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -62,6 +62,7 @@ public class RadStub extends RadicleProjectService {
     public final BlockingQueue<String> commandsStr = new LinkedBlockingQueue<>();
     public String firstCommitHash;
     private int counter = 0;
+    public CommandOverride commandOverride;
 
     public RadStub(String commitHash, Project project) {
         super(project);
@@ -86,7 +87,7 @@ public class RadStub extends RadicleProjectService {
         var command = String.join(" ", params);
         commandsStr.add(command);
         var pr = new ProcessOutput(0);
-        if (command.contains("comment") && command.contains(ExecUtil.escapeUnixShellArgument("break"))) {
+        if (command.contains("comment") && command.contains(CommandLineUtil.posixQuote("break"))) {
             pr = new ProcessOutput(-1);
         }
         var stdout = "stdout";
@@ -106,6 +107,12 @@ public class RadStub extends RadicleProjectService {
 
     @Override
     public ProcessOutput execAndGetOutput(GeneralCommandLine cmdLine) {
+        if (commandOverride != null) {
+            var result = commandOverride.exec(cmdLine);
+            if (result != null) {
+                return result;
+            }
+        }
         commands.add(cmdLine);
         var pr = new ProcessOutput(0);
         var stdout = "stdout";
@@ -251,5 +258,9 @@ public class RadStub extends RadicleProjectService {
         var stub = new RadStub(commitHash, project);
         ServiceContainerUtil.replaceService(project, RadicleProjectService.class, stub, utc.getTestRootDisposable());
         return stub;
+    }
+
+    public interface CommandOverride {
+        ProcessOutput exec(GeneralCommandLine cmd);
     }
 }

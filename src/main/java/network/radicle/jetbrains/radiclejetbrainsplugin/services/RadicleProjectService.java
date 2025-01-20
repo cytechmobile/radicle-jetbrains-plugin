@@ -3,12 +3,14 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 import com.google.common.base.Strings;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushSpec;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -48,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class RadicleProjectService {
@@ -74,8 +77,8 @@ public class RadicleProjectService {
         }
         var pathInfo = output.getStdoutLines();
         // which command return empty and where command return INFO if the os  cant find the program path
-        if (!pathInfo.isEmpty() && !Strings.isNullOrEmpty(pathInfo.get(0)) && !pathInfo.get(0).contains("INFO")) {
-            return pathInfo.get(0);
+        if (!pathInfo.isEmpty() && !Strings.isNullOrEmpty(pathInfo.getFirst()) && !pathInfo.getFirst().contains("INFO")) {
+            return pathInfo.getFirst();
         }
         return "";
     }
@@ -132,13 +135,26 @@ public class RadicleProjectService {
     }
 
     public String getBranchRevision(Project myProject, GitRepository repo, String branchName) {
-        var gitRevisionNumber = "";
+        AtomicReference<String> gitRevisionNumber = new AtomicReference<>("");
         try {
-            gitRevisionNumber = GitChangeUtils.resolveReference(myProject, repo.getRoot(), branchName).getRev();
+            var waiter = new CountDownLatch(1);
+            new Task.Backgroundable(myProject, "Getting revision number", true) {
+                @Override
+                public void run(@NotNull ProgressIndicator progressIndicator) {
+                    try {
+                        var rev = GitChangeUtils.resolveReference(project, repo.getRoot(), branchName).getRev();
+                        gitRevisionNumber.set(rev);
+                    } catch (Exception e) {
+                        logger.warn("Unable to get revision number. repo: " + repo + ", branch name: {}" + branchName);
+                    }
+                    waiter.countDown();
+                }
+            }.queue();
+            waiter.await(10, TimeUnit.SECONDS);
         } catch (Exception e) {
             logger.warn("Unable to get revision number. repo: " + repo + ", branch name: {}" + branchName);
         }
-        return gitRevisionNumber;
+        return gitRevisionNumber.get();
     }
 
     public Map<String, Object> pushChanges(GitRepository gitRepository, GitLocalBranch gitLocalBranch, GitRemote gitRemote) {
@@ -206,8 +222,8 @@ public class RadicleProjectService {
 
     public ProcessOutput createPatch(GitRepository repo, String title, String description, String branch) {
         branch = branch + ":refs/patches";
-        var params = List.of("push", "rad", "-o", "patch.message=" + ExecUtil.escapeUnixShellArgument(title),
-                 "-o", "patch.message=" + ExecUtil.escapeUnixShellArgument(description), branch);
+        var params = List.of("push", "rad", "-o", "patch.message=" + CommandLineUtil.posixQuote(title),
+                 "-o", "patch.message=" + CommandLineUtil.posixQuote(description), branch);
         return executeCommandFromFile("git", repo, params);
     }
 
@@ -228,6 +244,13 @@ public class RadicleProjectService {
             return false;
         }
         return output.getStdout().contains(key);
+    }
+
+    public boolean isPassphraseCorrect(String passphrase, String radHome) {
+        //ssh-keygen -y -P "1" -f ~/.radicle/keys/radicle
+        var output = executeCommand("ssh-keygen", "", ".",
+                List.of("-y", "-P", CommandLineUtil.posixQuote(Strings.nullToEmpty(passphrase)), "-f", radHome + "/keys/radicle"), null);
+        return RadAction.isSuccess(output);
     }
 
     public ProcessOutput getVersion(String path) {
@@ -346,8 +369,8 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput addRemoveIssueAssignee(GitRepository root, String issueId, List<String> addedAssignees, List<String> deletedAssignees) {
-        var addAssigneesStr = addedAssignees.stream().map(s -> "--add " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
-        var deletedAssigneesStr = deletedAssignees.stream().map(s -> "--delete " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
+        var addAssigneesStr = addedAssignees.stream().map(s -> "--add " + CommandLineUtil.posixQuote(s)).collect(Collectors.joining(" "));
+        var deletedAssigneesStr = deletedAssignees.stream().map(s -> "--delete " + CommandLineUtil.posixQuote(s)).collect(Collectors.joining(" "));
         List<String> params = new ArrayList<>(Arrays.asList("issue", "assign", issueId));
         if (!Strings.isNullOrEmpty(addAssigneesStr)) {
             params.add(addAssigneesStr);
@@ -360,13 +383,13 @@ public class RadicleProjectService {
 
     public ProcessOutput editPatchTitleDescription(GitRepository repo, String patchId, String title, String description) {
         return executeCommandFromFile(repo, List.of("patch", "edit", patchId, "--message",
-                ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title) + "\n\n" + Strings.nullToEmpty(description))));
+                CommandLineUtil.posixQuote(Strings.nullToEmpty(title) + "\n\n" + Strings.nullToEmpty(description))));
     }
 
     public ProcessOutput editIssueTitleDescription(GitRepository repo, String issueId, String title, String description) {
         // TODO: this is not going to work, as `rad issue edit` does not support `--title` and `--description` yet
-        return executeCommandFromFile(repo, List.of("issue", "edit", issueId, "--title", ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(title)),
-                "--description", ExecUtil.escapeUnixShellArgument(Strings.nullToEmpty(description))));
+        return executeCommandFromFile(repo, List.of("issue", "edit", issueId, "--title", CommandLineUtil.posixQuote(Strings.nullToEmpty(title)),
+                "--description", CommandLineUtil.posixQuote(Strings.nullToEmpty(description))));
     }
 
     public ProcessOutput addRemovePatchLabels(GitRepository root, String patchId, List<String> addedLabels, List<String> deletedLabels) {
@@ -378,8 +401,8 @@ public class RadicleProjectService {
     }
 
     private ProcessOutput addRemoveLabels(GitRepository root, String id, List<String> addedLabels, List<String> deletedLabels, boolean isPatch) {
-        var addLabelsStr = addedLabels.stream().map(s -> "--add " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
-        var deletedLabelsStr = deletedLabels.stream().map(s -> "--delete " + ExecUtil.escapeUnixShellArgument(s)).collect(Collectors.joining(" "));
+        var addLabelsStr = addedLabels.stream().map(s -> "--add " + CommandLineUtil.posixQuote(s)).collect(Collectors.joining(" "));
+        var deletedLabelsStr = deletedLabels.stream().map(s -> "--delete " + CommandLineUtil.posixQuote(s)).collect(Collectors.joining(" "));
         var type = isPatch ? "patch" : "issue";
         List<String> params = new ArrayList<>(Arrays.asList(type, "label", id));
         if (!Strings.isNullOrEmpty(addLabelsStr)) {
@@ -392,10 +415,10 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput createIssue(GitRepository root, String title, String description, List<String> assignees, List<String> labels) {
-        var labelsStr = labels.stream().map(label -> "--label " + ExecUtil.escapeUnixShellArgument(label)).collect(Collectors.joining(" "));
-        var assigneesStr = assignees.stream().map(assignee -> "--assign " + ExecUtil.escapeUnixShellArgument(assignee)).collect(Collectors.joining(" "));
+        var labelsStr = labels.stream().map(label -> "--label " + CommandLineUtil.posixQuote(label)).collect(Collectors.joining(" "));
+        var assigneesStr = assignees.stream().map(assignee -> "--assign " + CommandLineUtil.posixQuote(assignee)).collect(Collectors.joining(" "));
         List<String> params = new ArrayList<>(Arrays.asList("issue", "open", "--title",
-                ExecUtil.escapeUnixShellArgument(title), "--description", ExecUtil.escapeUnixShellArgument(description)));
+                CommandLineUtil.posixQuote(title), "--description", CommandLineUtil.posixQuote(description)));
         if (!Strings.isNullOrEmpty(labelsStr)) {
             params.add(labelsStr);
         }
@@ -414,7 +437,7 @@ public class RadicleProjectService {
         List<String> params = new ArrayList<>(Arrays.asList("patch", "review", id, verdict));
         if (!Strings.isNullOrEmpty(message)) {
             params.add("--message");
-            params.add(ExecUtil.escapeUnixShellArgument(message));
+            params.add(CommandLineUtil.posixQuote(message));
         }
         return executeCommandFromFile(repo, params);
     }
@@ -452,7 +475,7 @@ public class RadicleProjectService {
     }
 
     public ProcessOutput comment(GitRepository root, String id, String message, String replyTo, RadComment.Type type) {
-        List<String> params = new ArrayList<>(Arrays.asList(type.value, "comment", id, "--message", ExecUtil.escapeUnixShellArgument(message)));
+        List<String> params = new ArrayList<>(Arrays.asList(type.value, "comment", id, "--message", CommandLineUtil.posixQuote(message)));
         if (!Strings.isNullOrEmpty(replyTo)) {
             params.add("--reply-to");
             params.add(replyTo);
@@ -493,17 +516,6 @@ public class RadicleProjectService {
         final var projectSettings = projectSettingsHandler.loadSettings();
         final var radHome = projectSettings.getRadHome();
         // if command must be run in the context of a repo (e.g. `rad patch list`), then `repo` must NOT be null
-        /* String workDir;
-        if (repo != null) {
-            workDir = repo.getRoot().getPath();
-        } else {
-            workDir = exePath;
-            if (workDir.contains("\\")) {
-                workDir = workDir.substring(0, workDir.lastIndexOf("\\"));
-            } else if (workDir.contains("/")) {
-                workDir = workDir.substring(0, workDir.lastIndexOf("/"));
-            }
-        } */
         var workDir = repo == null ? "." : repo.getRoot().getPath();
         var scriptCommand = RadicleScriptCommandFactory.create(workDir, exePath, radHome, params, this, project);
         var output = runCommand(scriptCommand.getCommandLine(), repo, workDir, null);
@@ -552,13 +564,12 @@ public class RadicleProjectService {
     public ProcessOutput executeCommand(
             String exePath, String radHome, String workDir, List<String> args, @Nullable GitRepository repo, String stdin) {
         final var cmdLine = new GeneralCommandLine();
-        var params = "";
-        if (!Strings.isNullOrEmpty(radHome)) {
-            params = "export RAD_HOME=" + radHome + "; " + exePath + " " + String.join(" ", args);
-        } else {
-            params = exePath + " " + String.join(" ", args);
-        }
         if (SystemInfo.isWindows) {
+            var params = "";
+            if (!Strings.isNullOrEmpty(radHome)) {
+                params = "export RAD_HOME=" + radHome + "; ";
+            }
+            params += exePath + " " + String.join(" ", args);
             cmdLine.withExePath("wsl").withParameters("bash", "-ic").withParameters(params);
         } else {
             cmdLine.withExePath(exePath).withParameters(args);
@@ -587,5 +598,25 @@ public class RadicleProjectService {
 
     public ProcessOutput execAndGetOutput(GeneralCommandLine cmdLine) throws ExecutionException {
         return ExecUtil.execAndGetOutput(cmdLine, TIMEOUT);
+    }
+
+    public void executeInBackground(Runnable task) {
+        try {
+            final var latch = new CountDownLatch(1);
+            ProgressManager.getInstance().run(new Task.Backgroundable(project, RadicleBundle.message("loading"), false) {
+                @Override
+                public void run(@NotNull ProgressIndicator progressIndicator) {
+                    try {
+                        task.run();
+                    } catch (Exception e) {
+                        logger.warn("Error while executing task", e);
+                    } finally {
+                        latch.countDown();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            logger.warn("Error while executing task", e);
+        }
     }
 }

@@ -105,6 +105,12 @@ pub extern "system" fn issueCommentReact(inp: *const c_char) -> *const c_char {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+struct BaseProfileInfo {
+    home: Option<String>,
+    passphrase: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct ChangeIssueTitleDesc {
     repo_id: RepoId,
     issue_id: Oid,
@@ -371,6 +377,14 @@ pub fn resolve_embed(repo: &Repository, embed: ContentEmbed) -> Result<Embed<Uri
 fn read_input(input: *const c_char) -> Result<String, anyhow::Error> {
     let input_str = unsafe { std::ffi::CStr::from_ptr(input) };
     let input_string = input_str.to_str()?;
+    let base_info: BaseProfileInfo = serde_json::from_str(input_string)?;
+    if base_info.home.is_some() {
+        std::env::set_var("RAD_HOME", base_info.home.unwrap());
+    }
+    if base_info.passphrase.is_some() {
+        std::env::set_var("RAD_PASSPHRASE", base_info.passphrase.unwrap());
+    }
+
     Ok(String::from(input_string))
 }
 

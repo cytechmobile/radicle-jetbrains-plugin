@@ -2,8 +2,8 @@ package network.radicle.jetbrains.radiclejetbrainsplugin.issues;
 
 import com.google.common.base.Strings;
 import com.intellij.collaboration.ui.SingleValueModel;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.ClipboardSynchronizer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -192,7 +192,7 @@ public class OverviewTest extends AbstractIT {
         Thread.sleep(1000);
         executeUiTasks();
         var command = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
-        assertThat(command).contains("--delete " + ExecUtil.escapeUnixShellArgument(firstTag.value.value()));
+        assertThat(command).contains("--delete " + CommandLineUtil.posixQuote(firstTag.value.value()));
     }
 
     @Test
@@ -278,10 +278,10 @@ public class OverviewTest extends AbstractIT {
         executeUiTasks();
         var issueCommand = radStub.commandsStr.poll(1, TimeUnit.SECONDS);
         assertThat(issueCommand).isNotNull();
-        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueName));
-        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(issueDescription));
-        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(label2));
-        assertThat(issueCommand).contains(ExecUtil.escapeUnixShellArgument(getTestProjects().getFirst().delegates.getFirst().id));
+        assertThat(issueCommand).contains(CommandLineUtil.posixQuote(issueName));
+        assertThat(issueCommand).contains(CommandLineUtil.posixQuote(issueDescription));
+        assertThat(issueCommand).contains(CommandLineUtil.posixQuote(label2));
+        assertThat(issueCommand).contains(CommandLineUtil.posixQuote(getTestProjects().getFirst().delegates.getFirst().id));
     }
 
     @Test
@@ -415,9 +415,9 @@ public class OverviewTest extends AbstractIT {
         executeUiTasks();
 
         var commandStr = radStub.commandsStr.poll(5, TimeUnit.SECONDS);
-        assertThat(commandStr).contains("--delete " + ExecUtil.escapeUnixShellArgument(firstAssignee.value.did()));
-        assertThat(commandStr).contains("--delete " + ExecUtil.escapeUnixShellArgument(secondAssignee.value.did()));
-        assertThat(commandStr).contains("--add " + ExecUtil.escapeUnixShellArgument(thirdAssignee.value.did()));
+        assertThat(commandStr).contains("--delete " + CommandLineUtil.posixQuote(firstAssignee.value.did()));
+        assertThat(commandStr).contains("--delete " + CommandLineUtil.posixQuote(secondAssignee.value.did()));
+        assertThat(commandStr).contains("--add " + CommandLineUtil.posixQuote(thirdAssignee.value.did()));
     }
 
     @Test
@@ -613,7 +613,7 @@ public class OverviewTest extends AbstractIT {
         executeUiTasks();
         var command = radStub.commandsStr.poll();
         assertThat(command).contains("comment");
-        assertThat(command).contains(ExecUtil.escapeUnixShellArgument(dummyComment));
+        assertThat(command).contains(CommandLineUtil.posixQuote(dummyComment));
         assertThat(command).contains(issue.id);
         issue.discussion.add(new RadDiscussion("542", randomAuthor(), dummyComment, Instant.now(), "", List.of(), List.of(), null, null));
 
