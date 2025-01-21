@@ -4,14 +4,46 @@
 
 ## [Unreleased]
 
+## [0.14.0] - 2025-01-21
+
+- build: Implement a wrapper for radicle as a native library (.so and .dylib) in Linux/mac, which is loaded from Java to invoke functionality not available from CLI.
+
+- build: Implement a wrapper for radicle as a WSL2 binary over the native library (achieving the same functionality).
+
+- issue: Add support for changing issue title/description, with optional embeds, via native library.
+
+- issue/patch: Add support for resolving embeds via native library.
+
+- issue/patch: Add support for resolving aliases via native library.
+
+- patch: Add support for creating a patch comment, with optional embeds and/or code location, via native library.
+
+- patch: Add support for editing a patch comment, with optional embeds and/or code location, via native library.
+
+- patch: Add support for deleting a patch comment, via native library.
+
+- issue: Add support for editing an issue comment, with optional embeds, via native library.
+
+- patch: Add support for reacting to a patch comment, or removing previous reaction, via native library.
+
+- issue: Add support for reacting to an issue comment, or removing previous reaction, via native library.
+
+- patch/issue: The description now properly expands for multi-line content.
+
+- settings: remove obsolete references to seed node (which defaulted to localhost:8080). When showing web urls, use the first preferred seed in config.
+
+- patch/issue: Resolve aliases off the EDT thread, preventing IDE freezes and/or errors for slow operations on EDT thread.
+
+- patch/issue: Resolve embeds off the EDT thread, preventing IDE freezes and/or errors for slow operations on EDT thread. When the resolution is complete, properly request to re-render the affected components.
+
+- settings: When testing the identity, make sure that the persisted passphrase is correct. `rad auth` may not always be enough, e.g. when no ssh-agent present, rad auth exits successfully with a message that nothing was done.
+**Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.13.0...v0.14.0
+
 ## [0.13.0] - 2024-12-24
 
 - Requires Jetbrains IDE version 243+ (2024.3+)
-
 - Fix compatibility with Jetbrains IDE version 243+
-
 - Upgrade to the latest major version of the jetbrains platform gradle plugin (v2)
-
 - Update all tests to use the "New UI" of the Jetbrains IDE
 **Full Changelog**: https://github.com/cytechmobile/radicle-jetbrains-plugin/compare/v0.12.0...v0.13.0
 
@@ -474,7 +506,8 @@ Others:
 - @JChrist made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/12
 - @Stelios123 made their first contribution in https://github.com/cytechmobile/radicle-jetbrains-plugin/pull/19
 
-[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.13.0...HEAD
+[Unreleased]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.14.0...HEAD
+[0.14.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.13.0...v0.14.0
 [0.13.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.12.0...v0.13.0
 [0.12.0]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.1...v0.12.0
 [0.11.1]: https://app.radicle.xyz/nodes/seed.radicle.garden/rad:z3WHS4GSf8hChLjGYfPkJY7vCxsBK/compare/v0.11.0...v0.11.1
