@@ -4,7 +4,7 @@ gradleIntelliJPlugin = "2.2.1"
 changelog = "2.2.1"
 
 # libraries
-annotations = "26.0.1"
+annotations = "26.0.2"
 jacksonJsr310 = "2.18.2"
 tika = "3.0.0"
 sshTools = "3.1.2"
