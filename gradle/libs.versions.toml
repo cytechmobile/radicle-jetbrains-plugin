@@ -1,6 +1,6 @@
 [versions]
 # plugins
-gradleIntelliJPlugin = "2.2.1"
+gradleIntelliJPlugin = "2.3.0"
 changelog = "2.2.1"
 
 # libraries
