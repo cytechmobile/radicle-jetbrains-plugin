@@ -22,7 +22,6 @@ import com.intellij.util.ui.InlineIconButton;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JButtonAction;
-import com.intellij.util.ui.UIUtil;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -215,7 +214,6 @@ public class ReviewSubmitAction extends JButtonAction {
     private EditorTextField createEditor() {
         editor = new EditorTextField();
         editor.setOneLineMode(false);
-        editor.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true);
         editor.setPlaceholder(RadicleBundle.message("review"));
         var settingsProvider = new EditorSettingsProvider() {
             @Override

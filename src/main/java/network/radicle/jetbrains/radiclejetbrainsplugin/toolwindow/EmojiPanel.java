@@ -15,7 +15,6 @@ import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadAuthor;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadDetails;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Reaction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.services.RadicleCliService;
-import org.assertj.core.util.Strings;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -156,7 +155,7 @@ public abstract class EmojiPanel<T> {
         horizontalPanel.add(progressLabel);
         for (var r : reactions) {
             for (var a : r.authors()) {
-                if (Strings.isNullOrEmpty(a.alias)) {
+                if (a.alias == null || a.alias.isEmpty()) {
                     a.alias = rad.getAlias(a.id);
                 }
             }

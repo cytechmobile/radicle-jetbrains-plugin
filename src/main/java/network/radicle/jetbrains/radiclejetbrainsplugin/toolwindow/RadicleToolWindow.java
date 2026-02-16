@@ -88,7 +88,7 @@ public class RadicleToolWindow extends VcsToolWindowFactory {
 
     @Override
     public boolean isAvailable(@NotNull Project project) {
-       return false;
+       return true;
     }
 
     public ContentManager getContentManager() {

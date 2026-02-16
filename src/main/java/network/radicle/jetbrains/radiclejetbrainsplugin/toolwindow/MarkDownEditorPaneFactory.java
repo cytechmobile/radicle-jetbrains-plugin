@@ -72,7 +72,7 @@ public class MarkDownEditorPaneFactory {
         textPane.setFont(JBFont.h4().asPlain());
         textPane.setEditorKit(editorKit.build());
         textPane.setMargin(JBInsets.emptyInsets());
-        GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
+        GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAATextInfoForSwingComponent());
         setTextPaneContent();
         textPane.addHyperlinkListener(new HyperlinkAdapter() {
             @Override

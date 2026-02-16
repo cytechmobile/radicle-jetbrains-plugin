@@ -45,8 +45,8 @@ public class RadCheckoutProvider implements CheckoutProvider {
         return new VcsCloneComponentExt(project, "", new DvcsRememberedInputs(), dialogStateListener);
     }
 
-    public void doCheckout(@NotNull Project project, @Nullable Listener listener) {
-
+    @Override
+    public void doCheckout(@NotNull Project project, @Nullable CheckoutProvider.Listener listener) {
     }
 
     @Override

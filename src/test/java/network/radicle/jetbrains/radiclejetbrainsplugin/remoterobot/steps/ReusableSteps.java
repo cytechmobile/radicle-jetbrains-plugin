@@ -2,7 +2,6 @@
 
 package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.steps;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.fixtures.JButtonFixture;
@@ -31,6 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ReusableSteps {
     private static final Logger log = LoggerFactory.getLogger(ReusableSteps.class);
+    private static final boolean IS_WINDOWS = System.getProperty("os.name", "").toLowerCase().contains("win");
+    private static final boolean IS_LINUX = System.getProperty("os.name", "").toLowerCase().contains("linux");
     private final RemoteRobot remoteRobot;
     private final Keyboard keyboard;
     public static final int COMPONENT_SEARCH_TIMEOUT_IN_SECONDS = 60;
@@ -79,7 +80,7 @@ public class ReusableSteps {
 
     public void radInitializeProject(Path localDir) {
             String path = "";
-            if (SystemInfo.isWindows) {
+            if (IS_WINDOWS) {
                 path = localDir.toAbsolutePath().toString().replace("\\", "\\\\") + "\\.git\\config";
             } else {
                 path = localDir.toAbsolutePath() + "/.git/config";
@@ -118,7 +119,7 @@ public class ReusableSteps {
             //create tmp dir to clone project to:
             keyboard.selectAll();
             keyboard.backspace();
-            if (SystemInfo.isWindows) {
+            if (IS_WINDOWS) {
                 keyboard.enterText(localDir.toAbsolutePath().toString().replace("\\", "\\\\"), 0);
             } else {
                 keyboard.enterText(localDir.toAbsolutePath().toString(), 0);
@@ -274,7 +275,7 @@ public class ReusableSteps {
         //shortcut to open settings
         for (int i = 0; i < 10; i++) {
             try {
-                if (SystemInfo.isWindows || SystemInfo.isLinux) {
+                if (IS_WINDOWS || IS_LINUX) {
                     keyboard.hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_S);
                 } else {
                     keyboard.hotKey(KeyEvent.VK_META, KeyEvent.VK_COMMA);

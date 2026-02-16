@@ -32,7 +32,7 @@ var remoteRobotVersion: String = libs.versions.remoteRobot.get();
 dependencies {
     intellijPlatform {
         //intellijIdeaCommunity('LATEST-EAP-SNAPSHOT')
-        intellijIdeaCommunity(properties("platformVersion").get())
+        intellijIdea(properties("platformVersion").get())
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
         bundledPlugins(providers.gradleProperty("platformPlugins").map { it.split(',').map { it2 -> it2.trim()} })
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
@@ -63,6 +63,12 @@ dependencies {
 
     // java -> rust
     implementation("com.github.jnr:jnr-ffi:2.2.17")
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(properties("javaVersion").get()))
+    }
 }
 
 checkstyle {
@@ -182,11 +188,24 @@ tasks {
     }
 }
 
+val remoteRobotJvmArgs = listOf(
+    "--add-modules", "java.se",
+    "--add-exports", "java.base/jdk.internal.ref=ALL-UNNAMED",
+    "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+    "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+    "--add-opens", "java.management/sun.management=ALL-UNNAMED",
+    "--add-opens", "jdk.management/com.sun.management.internal=ALL-UNNAMED",
+    "--add-opens", "java.xml/javax.xml.transform=ALL-UNNAMED",
+    "--add-exports", "java.desktop/sun.awt.image=ALL-UNNAMED",
+)
+
 val uiTestTask = tasks.register<Test>("uiTest") {
     useJUnitPlatform()
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     environment(mapOf("RADICLE_REPO" to System.getenv("RADICLE_REPO")))
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/ui/**")
+    jvmArgs(remoteRobotJvmArgs)
 }
 
 val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
@@ -217,4 +236,5 @@ val e2eTestTask = tasks.register<Test>("endToEndTests") {
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     environment(mapOf("RADICLE_REPO" to System.getenv("RADICLE_REPO")))
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/e2e/**")
+    jvmArgs(remoteRobotJvmArgs)
 }

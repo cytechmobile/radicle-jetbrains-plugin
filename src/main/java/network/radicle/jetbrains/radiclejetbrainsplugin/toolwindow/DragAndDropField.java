@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import network.radicle.jetbrains.radiclejetbrainsplugin.RadicleBundle;
 import network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAction;
 import network.radicle.jetbrains.radiclejetbrainsplugin.models.Embed;
@@ -48,7 +47,6 @@ public class DragAndDropField extends EditorTextField {
         this.fileService = project.getService(FileService.class);
         this.embedList = new ArrayList<>();
         this.project = project;
-        this.putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true);
         this.addDocumentListener(new MyListener(this));
     }
 
