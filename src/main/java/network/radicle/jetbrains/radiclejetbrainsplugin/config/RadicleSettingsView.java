@@ -40,7 +40,7 @@ import static network.radicle.jetbrains.radiclejetbrainsplugin.actions.rad.RadAc
 
 public class RadicleSettingsView  implements SearchableConfigurable {
     private static final Version MIN_VERSION = new Version("1.0.0");
-    private static final Version MAX_VERSION = new Version("1.1.0");
+    private static final Version MAX_VERSION = new Version("2.0.0");
     private static final Logger logger = Logger.getInstance(RadicleSettingsView.class);
     public static final String ID = RadicleBundle.message("radicle");
 
