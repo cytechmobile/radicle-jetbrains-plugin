@@ -99,7 +99,7 @@ public class RadicleMenusJavaTest {
         step("Wait for project to load", () -> {
             waitFor(Duration.ofMinutes(5), () -> !idea.isDumbMode());
 
-            var projectView = remoteRobot.find(ContainerFixture.class, byXpath("ProjectViewTree", "//div[@class='ProjectViewTree']"), Duration.ofMinutes(5));
+            var projectView = remoteRobot.find(ContainerFixture.class, byXpath("ProjectViewTree", "//div[contains(@javaclass, 'ProjectViewTree')]"), Duration.ofMinutes(5));
             waitFor(Duration.ofMinutes(5), () -> projectView.hasText("radicle"));
         });
 
