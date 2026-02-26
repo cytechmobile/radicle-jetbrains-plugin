@@ -1,13 +1,13 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.remoterobot.pages;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.data.RemoteComponent;
 import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.fixtures.FixtureName;
 import com.intellij.remoterobot.search.locators.Locator;
 import com.intellij.remoterobot.utils.RepeatUtilsKt;
-import network.radicle.jetbrains.radiclejetbrainsplugin.models.RadIssue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.List;
@@ -16,7 +16,7 @@ import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 
 @FixtureName(name = "ActionMenuItem")
 public class ActionMenuItemFixture extends ComponentFixture {
-    private static final Logger logger = Logger.getInstance(RadIssue.class);
+    private static final Logger logger = LoggerFactory.getLogger(ActionMenuItemFixture.class);
     public ActionMenuItemFixture(RemoteRobot remoteRobot, RemoteComponent remoteComponent) {
         super(remoteRobot, remoteComponent);
     }

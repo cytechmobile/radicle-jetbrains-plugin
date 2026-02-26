@@ -550,6 +550,7 @@ public class OverviewTest extends AbstractIT {
 
     @Test
     public void testDescSection() {
+        executeUiTasks();
         var descSection = issueEditorProvider.getIssueComponent().getDescPanel();
         var elements = UIUtil.findComponentsOfType(descSection, JEditorPane.class);
         var timeline = "";

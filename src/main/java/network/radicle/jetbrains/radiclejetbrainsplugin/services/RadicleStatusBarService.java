@@ -1,6 +1,7 @@
 package network.radicle.jetbrains.radiclejetbrainsplugin.services;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
@@ -19,9 +20,9 @@ public class RadicleStatusBarService {
     private static final int PERIOD = 10;
 
     private final Project project;
-    private Boolean isNodeRunning = null;
-    private Boolean isHttpdRunning = null;
-    private boolean isRadInitialized = false;
+    private volatile Boolean isNodeRunning = null;
+    private volatile Boolean isHttpdRunning = null;
+    private volatile boolean isRadInitialized = false;
 
     public RadicleStatusBarService(Project myProject) {
         this.project = myProject;
@@ -93,9 +94,17 @@ public class RadicleStatusBarService {
     }
 
     private void updateStatusBar() {
-        //Update status bar availability (show / hide)
-        project.getService(StatusBarWidgetsManager.class).updateWidget(RadStatusBar.class);
-        //Update status bar icon and component
-        WindowManager.getInstance().getStatusBar(project).updateWidget(RadStatusBar.ID);
+        ApplicationManager.getApplication().invokeLater(() -> {
+            //Update status bar availability (show / hide)
+            var widgetsManager = project.getService(StatusBarWidgetsManager.class);
+            if (widgetsManager != null) {
+                widgetsManager.updateWidget(RadStatusBar.class);
+            }
+            //Update status bar icon and component
+            var statusBar = WindowManager.getInstance().getStatusBar(project);
+            if (statusBar != null) {
+                statusBar.updateWidget(RadStatusBar.ID);
+            }
+        });
     }
 }

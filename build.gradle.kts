@@ -204,8 +204,13 @@ val uiTestTask = tasks.register<Test>("uiTest") {
     useJUnitPlatform()
     testLogging { exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
     environment(mapOf("RADICLE_REPO" to System.getenv("RADICLE_REPO")))
+    val display = System.getenv("DISPLAY")
+    if (display != null) {
+        environment("DISPLAY", display)
+    }
     include("network/radicle/jetbrains/radiclejetbrainsplugin/remoterobot/ui/**")
     jvmArgs(remoteRobotJvmArgs)
+    jvmArgs("-Djava.awt.headless=false")
 }
 
 val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
@@ -221,6 +226,10 @@ val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
                 "-DjbScreenMenuBar.enabled=false",
                 "-Didea.trust.all.projects=true",
                 "-Dide.show.tips.on.startup.default.value=false",
+                // Redirect config/system dirs to /tmp (native ext4) to avoid vboxsf AF_UNIX socket restrictions
+                "-Didea.config.path=/tmp/idea-sandbox/config_runIdeForUiTests",
+                "-Didea.system.path=/tmp/idea-sandbox/system_runIdeForUiTests",
+                "-Didea.log.path=/tmp/idea-sandbox/log_runIdeForUiTests",
             )
         }
     }

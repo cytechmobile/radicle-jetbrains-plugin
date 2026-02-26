@@ -69,6 +69,7 @@ public class StatusPanelTest extends AbstractIT {
     @Test
     public void testStatusPanelWithServicesRunning() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("/mypath");
+        radicleProjectSettingsHandler.saveRadHome(RAD_HOME);
         var statusBarServiceStub = new StatusBarServiceStub(getProject(), true);
         stubStatusBarService(statusBarServiceStub);
         var radStatusBar = new RadStatusBar();
@@ -91,6 +92,7 @@ public class StatusPanelTest extends AbstractIT {
     @Test
     public void testStatusPanelWithServicesNotRunning() throws InterruptedException {
         radicleProjectSettingsHandler.savePath("/mypath");
+        radicleProjectSettingsHandler.saveRadHome(RAD_HOME);
         var statusBarServiceStub = new StatusBarServiceStub(getProject(), false);
         stubStatusBarService(statusBarServiceStub);
         var radStatusBar = new RadStatusBar();

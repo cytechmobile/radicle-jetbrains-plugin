@@ -153,6 +153,11 @@ public class RadCheckoutProvider implements CheckoutProvider {
                         radHomeField.setText(radHome);
                     }
                 });
+            } else {
+                var rsh = new RadicleProjectSettingsHandler(project);
+                var rs = rsh.loadSettings();
+                radPathField.setText(rs.getPath());
+                radHomeField.setText(rs.getRadHome());
             }
             mainPanel.add(panel, BorderLayout.NORTH);
             return mainPanel;

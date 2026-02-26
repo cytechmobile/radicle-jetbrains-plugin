@@ -10,3 +10,4 @@ target/
 macos-sdk-11.3/
 **/META-INF/jrad/**
 artifacts/
+.vagrant

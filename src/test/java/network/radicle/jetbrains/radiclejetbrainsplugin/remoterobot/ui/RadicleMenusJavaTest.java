@@ -43,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RadicleMenusJavaTest {
     private static final Logger logger = LoggerFactory.getLogger(RadicleMenusJavaTest.class);
     Path tmpDir;
+    Path projectDir;
 
     @BeforeAll
     public static void initLogging() {
@@ -54,6 +55,8 @@ public class RadicleMenusJavaTest {
         step("Create tmp dir", () -> {
             try {
                 tmpDir = Files.createTempDirectory("test-project");
+                // Clone into a subdirectory named "radicle" so the project view root shows exactly "radicle"
+                projectDir = Files.createDirectory(tmpDir.resolve("radicle"));
             } catch (Exception e) {
                 logger.warn("error creating temp directory", e);
                 Assertions.fail("error creating temp directory", e);
@@ -92,19 +95,21 @@ public class RadicleMenusJavaTest {
         }
         var keyboard = new Keyboard(remoteRobot);
         var sharedSteps = new ReusableSteps(remoteRobot);
-        sharedSteps.importProjectFromVCS(tmpDir);
+        sharedSteps.importProjectFromVCS(projectDir);
 
         final IdeaFrame idea = remoteRobot.find(IdeaFrame.class, Duration.ofMinutes(5));
 
         step("Wait for project to load", () -> {
             waitFor(Duration.ofMinutes(5), () -> !idea.isDumbMode());
 
-            var projectView = remoteRobot.find(ContainerFixture.class, byXpath("ProjectViewTree", "//div[contains(@javaclass, 'ProjectViewTree')]"), Duration.ofMinutes(5));
+            var projectView = remoteRobot.find(ContainerFixture.class,
+                    byXpath("ProjectViewTree", "//div[contains(@javaclass, 'ProjectViewTree')]"),
+                    Duration.ofMinutes(5));
             waitFor(Duration.ofMinutes(5), () -> projectView.hasText("radicle"));
         });
 
         step("initialize project", () -> {
-            sharedSteps.radInitializeProject(tmpDir);
+            sharedSteps.radInitializeProject(projectDir);
             sharedSteps.refreshFromDisk();
         });
 

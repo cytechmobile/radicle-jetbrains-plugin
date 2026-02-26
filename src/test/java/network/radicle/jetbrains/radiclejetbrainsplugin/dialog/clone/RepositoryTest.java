@@ -25,6 +25,7 @@ public class RepositoryTest extends AbstractIT {
 
     @Before
     public void beforeTest() {
+        radicleProjectSettingsHandler.saveRadHome(RAD_HOME);
         radCheckoutComponent = new RadCheckoutProvider.VcsCloneComponentExt(super.myProject, "",
                 new DvcsRememberedInputs(), new MyListener());
     }
