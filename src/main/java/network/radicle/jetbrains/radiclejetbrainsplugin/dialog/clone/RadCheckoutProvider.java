@@ -147,17 +147,13 @@ public class RadCheckoutProvider implements CheckoutProvider {
                     if (Strings.isNullOrEmpty(radPath)) {
                         return;
                     }
-                    radPathField.setText(radPath);
                     var radHome = detectRadHome(radPath);
-                    if (!Strings.isNullOrEmpty(radHome)) {
-                        radHomeField.setText(radHome);
-                    }
+                    applySettingsToFields(radPath, radHome);
                 });
             } else {
                 var rsh = new RadicleProjectSettingsHandler(project);
                 var rs = rsh.loadSettings();
-                radPathField.setText(rs.getPath());
-                radHomeField.setText(rs.getRadHome());
+                applySettingsToFields(rs.getPath(), rs.getRadHome());
             }
             mainPanel.add(panel, BorderLayout.NORTH);
             return mainPanel;
@@ -247,6 +243,15 @@ public class RadCheckoutProvider implements CheckoutProvider {
                 RadAction.showErrorNotification(project, "radCliError", RadicleBundle.message("radNotInstalled"));
             }
             return isValid;
+        }
+
+        private void applySettingsToFields(String radPath, String radHome) {
+            if (!Strings.isNullOrEmpty(radPath)) {
+                radPathField.setText(radPath);
+            }
+            if (!Strings.isNullOrEmpty(radHome)) {
+                radHomeField.setText(radHome);
+            }
         }
 
         private boolean hasSettings() {

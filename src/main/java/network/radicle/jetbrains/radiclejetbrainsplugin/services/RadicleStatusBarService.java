@@ -94,7 +94,13 @@ public class RadicleStatusBarService {
     }
 
     private void updateStatusBar() {
+        if (project.isDisposed()) {
+            return;
+        }
         ApplicationManager.getApplication().invokeLater(() -> {
+            if (project.isDisposed()) {
+                return;
+            }
             //Update status bar availability (show / hide)
             var widgetsManager = project.getService(StatusBarWidgetsManager.class);
             if (widgetsManager != null) {
